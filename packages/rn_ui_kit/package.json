@@ -41,7 +41,7 @@
   "peerDependencies": {
     "@expo/ui": "=55.0.17",
     "@gorhom/bottom-sheet": "^5.2.14",
-    "@lodev09/react-native-true-sheet": "=3.11.1",
+    "@lodev09/react-native-true-sheet": "=3.11.6",
     "@react-native-picker/picker": "^2.11.4",
     "@react-navigation/elements": "^2.9.26",
     "@react-navigation/native": "^7.3.4",
@@ -99,7 +99,7 @@
   "devDependencies": {
     "@expo/ui": "=55.0.17",
     "@gorhom/bottom-sheet": "^5.2.14",
-    "@lodev09/react-native-true-sheet": "=3.11.1",
+    "@lodev09/react-native-true-sheet": "=3.11.6",
     "@react-native-picker/picker": "^2.11.4",
     "@react-navigation/elements": "^2.9.26",
     "@react-navigation/native": "^7.3.4",

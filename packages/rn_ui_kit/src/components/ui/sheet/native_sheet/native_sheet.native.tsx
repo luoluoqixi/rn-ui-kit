@@ -105,6 +105,12 @@ function resolveNativeDetent(
     : normalizePercentDetent(Number.parseFloat(matchedPercent[1]));
 }
 
+function compareNativeDetents(left: NativeSheetDetent, right: NativeSheetDetent) {
+  if (typeof left !== "number") return typeof right !== "number" ? 0 : -1;
+  if (typeof right !== "number") return 1;
+  return left - right;
+}
+
 function supportsCustomDetents() {
   if (os() !== "ios") {
     return true;
@@ -130,11 +136,9 @@ function normalizeIos15Detents(
     };
   }
 
-  const sortedDetents = [...indexedDetents].sort((left, right) => {
-    if (left.detent === "auto") return -1;
-    if (right.detent === "auto") return 1;
-    return left.detent - right.detent;
-  });
+  const sortedDetents = [...indexedDetents].sort((left, right) =>
+    compareNativeDetents(left.detent, right.detent),
+  );
   const lowerDetent = sortedDetents[0];
   const upperDetent = sortedDetents[sortedDetents.length - 1];
   const originalToNative = new Map<number, number>();
@@ -180,11 +184,9 @@ function resolveNativeDetents(
     return normalizeIos15Detents(indexedDetents);
   }
 
-  const normalizedDetents = [...indexedDetents].sort((left, right) => {
-    if (left.detent === "auto") return -1;
-    if (right.detent === "auto") return 1;
-    return left.detent - right.detent;
-  });
+  const normalizedDetents = [...indexedDetents].sort((left, right) =>
+    compareNativeDetents(left.detent, right.detent),
+  );
   const originalToNative = new Map<number, number>();
   const nativeToOriginal = new Map<number, number>();
 
