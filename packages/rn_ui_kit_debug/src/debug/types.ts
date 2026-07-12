@@ -1,7 +1,7 @@
 import type { ComponentProps, ComponentType, ReactNode } from "react";
 import type { YStack } from "tamagui";
 
-export type RnUiKitDebugRouteKey = "components" | "controls" | "layout";
+export type RnUiKitDebugRouteKey = string;
 export type RnUiKitDebugSectionPresentation = "scroll" | "static";
 
 export type RnUiKitDebugSectionContentProps = {
@@ -13,8 +13,10 @@ export type RnUiKitDebugRouteDefinition = {
   description?: string;
   key: RnUiKitDebugRouteKey;
   label: string;
+  order?: number;
   Page: ComponentType<RnUiKitDebugSectionContentProps>;
   presentation: RnUiKitDebugSectionPresentation;
+  section?: string;
 };
 
 export type RnUiKitDebugPanelProps = ComponentProps<typeof YStack> & {
@@ -22,6 +24,7 @@ export type RnUiKitDebugPanelProps = ComponentProps<typeof YStack> & {
   initialRouteKey?: RnUiKitDebugRouteKey;
   onOpenChange?: (open: boolean) => void;
   open?: boolean;
+  pages?: RnUiKitDebugRouteDefinition[];
   sheetMode?: boolean;
 };
 

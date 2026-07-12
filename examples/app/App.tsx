@@ -6,6 +6,7 @@ import { RnUiKitDebugPanel } from "rn_ui_kit_debug";
 
 import config from "./tamagui.config";
 import { accentThemeNames } from "./themes";
+import { appDebugPages } from "./debug_pages";
 
 const preferences = {
   appearance: {
@@ -22,7 +23,7 @@ export default function App() {
       preferences={preferences}
       tamaguiConfig={config}
     >
-      <RnUiKitDebugPanel />
+      <RnUiKitDebugPanel pages={appDebugPages} />
     </RootProvider>
   );
 }

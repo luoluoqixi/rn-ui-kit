@@ -4,20 +4,22 @@ import { NativeSheetScrollContent, Text } from "rn_ui_kit";
 
 import { getRnUiKitDebugRouteDefinition } from "../routes";
 
-import type { RnUiKitDebugRouteKey } from "../types";
+import type { RnUiKitDebugRouteDefinition, RnUiKitDebugRouteKey } from "../types";
 
 export function RnUiKitDebugSectionPage({
   contentTitle,
   instanceId,
   layoutHost = "default",
+  pages,
   sectionKey,
 }: {
   contentTitle?: string;
   instanceId?: string;
   layoutHost?: "default" | "nativeSheet";
+  pages: RnUiKitDebugRouteDefinition[];
   sectionKey: RnUiKitDebugRouteKey;
 }) {
-  const definition = getRnUiKitDebugRouteDefinition(sectionKey);
+  const definition = getRnUiKitDebugRouteDefinition(sectionKey, pages);
   const SectionPage = definition.Page;
   const header =
     contentTitle == null ? undefined : (

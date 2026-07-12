@@ -9,7 +9,11 @@ import { RnUiKitDebugHomePage } from "./pages/debug_home_page";
 import { RnUiKitDebugSectionPage } from "./pages/debug_section_page";
 import { rnUiKitDebugRouteDefinitions } from "./routes";
 
-import type { RnUiKitDebugPanelProps, RnUiKitDebugRouteKey } from "./types";
+import type {
+  RnUiKitDebugPanelProps,
+  RnUiKitDebugRouteDefinition,
+  RnUiKitDebugRouteKey,
+} from "./types";
 
 type RnUiKitDebugStackParamList = {
   index: undefined;
@@ -30,9 +34,15 @@ export function RnUiKitDebugPanel({
   initialRouteKey = "components",
   onOpenChange,
   open: openProp,
+  pages: pagesProp,
   sheetMode = false,
   ...props
 }: RnUiKitDebugPanelProps) {
+  const pages = Array.from(
+    new Map(
+      [...rnUiKitDebugRouteDefinitions, ...(pagesProp ?? [])].map((page) => [page.key, page]),
+    ).values(),
+  );
   const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
   const open = openProp ?? uncontrolledOpen;
 
@@ -47,19 +57,21 @@ export function RnUiKitDebugPanel({
         initialRouteKey={initialRouteKey}
         onOpenChange={handleOpenChange}
         open={open}
+        pages={pages}
         {...props}
       />
     );
   }
 
-  return <RnUiKitDebugPanelContent initialRouteKey={initialRouteKey} {...props} />;
+  return <RnUiKitDebugPanelContent initialRouteKey={initialRouteKey} pages={pages} {...props} />;
 }
 
 function RnUiKitDebugPanelSheet({
   onOpenChange,
   open,
+  pages,
   ...props
-}: RnUiKitDebugPanelProps & { onOpenChange: (open: boolean) => void; open: boolean }) {
+}: RnUiKitDebugPanelProps & { onOpenChange: (open: boolean) => void; open: boolean; pages: RnUiKitDebugRouteDefinition[] }) {
   const [openSectionsInSheet, setOpenSectionsInSheet] = useState(false);
   const [sectionSheetPosition, setSectionSheetPosition] = useState(0);
   const [openSectionSheets, setOpenSectionSheets] = useState<Set<RnUiKitDebugRouteKey>>(new Set());
@@ -73,6 +85,7 @@ function RnUiKitDebugPanelSheet({
     return (
       <RnUiKitDebugHomeRoute
         onOpenInSheet={(key) => setOpenSectionSheets((current) => new Set(current).add(key))}
+        pages={pages}
         onOpenSectionsInSheetChange={(enabled) => {
           setOpenSectionsInSheet(enabled);
           if (!enabled) setOpenSectionSheets(new Set());
@@ -93,12 +106,12 @@ function RnUiKitDebugPanelSheet({
         open={open}
         overlayPortalHostName={DEBUG_PANEL_SHEET_OVERLAY_HOST}
         screenOptions={debugSheetStackScreenOptions}
-        sheetProps={{ grabber: true, snapPoints: [88], snapPointsMode: "percent" }}
+        sheetProps={{ snapPoints: [88], snapPointsMode: "percent" }}
       >
         <NativeSheetStack.Screen name="index" options={{ title: "rn_ui_kit 调试" }}>
           {() => <HomeRoute />}
         </NativeSheetStack.Screen>
-        {rnUiKitDebugRouteDefinitions.map((definition) => (
+        {pages.map((definition) => (
           <NativeSheetStack.Screen
             key={definition.key}
             name={definition.key}
@@ -109,6 +122,7 @@ function RnUiKitDebugPanelSheet({
                 contentTitle={definition.label}
                 instanceId={`panel-sheet-stack-${definition.key}`}
                 layoutHost="nativeSheet"
+                pages={pages}
                 sectionKey={definition.key}
               />
             )}
@@ -117,6 +131,7 @@ function RnUiKitDebugPanelSheet({
       </NativeSheetStack>
 
       <RnUiKitDebugSectionSheets
+        pages={pages}
         instancePrefix="panel-sheet-section"
         onOpenChange={setOpenSectionSheets}
         openKeys={openSectionSheets}
@@ -128,8 +143,9 @@ function RnUiKitDebugPanelSheet({
 
 function RnUiKitDebugPanelContent({
   initialRouteKey = "components",
+  pages,
   ...props
-}: RnUiKitDebugPanelProps) {
+}: RnUiKitDebugPanelProps & { pages: RnUiKitDebugRouteDefinition[] }) {
   const [openSectionsInSheet, setOpenSectionsInSheet] = useState(false);
   const [panelSheetOpen, setPanelSheetOpen] = useState(false);
   const [sectionSheetPosition, setSectionSheetPosition] = useState(0);
@@ -138,7 +154,7 @@ function RnUiKitDebugPanelContent({
   return (
     <YStack background="$background" flex={1} {...props}>
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="index">
+        <Stack.Navigator id="rn-ui-kit-debug-stack" initialRouteName="index">
           <Stack.Screen name="index" options={{ title: "rn_ui_kit 调试" }}>
             {() => (
               <RnUiKitDebugHomeRoute
@@ -146,6 +162,7 @@ function RnUiKitDebugPanelContent({
                   setOpenSectionSheets((current) => new Set(current).add(key))
                 }
                 onOpenPanelSheet={() => setPanelSheetOpen(true)}
+                pages={pages}
                 onOpenSectionsInSheetChange={(enabled) => {
                   setOpenSectionsInSheet(enabled);
                   if (!enabled) setOpenSectionSheets(new Set());
@@ -156,7 +173,7 @@ function RnUiKitDebugPanelContent({
               />
             )}
           </Stack.Screen>
-          {rnUiKitDebugRouteDefinitions.map((definition) => (
+          {pages.map((definition) => (
             <Stack.Screen
               key={definition.key}
               name={definition.key}
@@ -166,6 +183,7 @@ function RnUiKitDebugPanelContent({
                 <RnUiKitDebugSectionPage
                   contentTitle={definition.label}
                   instanceId={`stack-${definition.key}`}
+                  pages={pages}
                   sectionKey={definition.key}
                 />
               )}
@@ -175,6 +193,7 @@ function RnUiKitDebugPanelContent({
       </NavigationContainer>
 
       <RnUiKitDebugSectionSheets
+        pages={pages}
         instancePrefix="sheet"
         onOpenChange={setOpenSectionSheets}
         openKeys={openSectionSheets}
@@ -184,6 +203,7 @@ function RnUiKitDebugPanelContent({
       <RnUiKitDebugPanel
         onOpenChange={setPanelSheetOpen}
         open={panelSheetOpen}
+        pages={pages}
         sheetMode
       />
     </YStack>
@@ -192,6 +212,7 @@ function RnUiKitDebugPanelContent({
 
 function RnUiKitDebugHomeRoute({
   onOpenInSheet,
+  pages,
   onOpenPanelSheet,
   onOpenSectionsInSheetChange,
   onSectionSheetPositionChange,
@@ -199,6 +220,7 @@ function RnUiKitDebugHomeRoute({
   sectionSheetPosition,
 }: {
   onOpenInSheet: (key: RnUiKitDebugRouteKey) => void;
+  pages: RnUiKitDebugRouteDefinition[];
   onOpenPanelSheet?: () => void;
   onOpenSectionsInSheetChange: (openInSheet: boolean) => void;
   onSectionSheetPositionChange: (position: number) => void;
@@ -217,6 +239,7 @@ function RnUiKitDebugHomeRoute({
       onOpenSectionsInSheetChange={onOpenSectionsInSheetChange}
       onSectionSheetPositionChange={onSectionSheetPositionChange}
       openSectionsInSheet={openSectionsInSheet}
+      pages={pages}
       sectionSheetPosition={sectionSheetPosition}
     />
   );
@@ -224,16 +247,18 @@ function RnUiKitDebugHomeRoute({
 
 function RnUiKitDebugSectionSheets({
   instancePrefix,
+  pages,
   onOpenChange,
   openKeys,
   position,
 }: {
   instancePrefix: string;
+  pages: RnUiKitDebugRouteDefinition[];
   onOpenChange: (keys: Set<RnUiKitDebugRouteKey>) => void;
   openKeys: Set<RnUiKitDebugRouteKey>;
   position: number;
 }) {
-  return rnUiKitDebugRouteDefinitions.map((definition) => (
+  return pages.map((definition) => (
     <NativeSheet
       handle
       key={definition.key}
@@ -256,6 +281,7 @@ function RnUiKitDebugSectionSheets({
           contentTitle={definition.label}
           instanceId={`${instancePrefix}-${definition.key}`}
           layoutHost={Platform.OS === "ios" || Platform.OS === "android" ? "nativeSheet" : "default"}
+          pages={pages}
           sectionKey={definition.key}
         />
       </View>

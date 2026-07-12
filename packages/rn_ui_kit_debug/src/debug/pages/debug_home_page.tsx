@@ -10,12 +10,11 @@ import {
   Slider,
 } from "rn_ui_kit";
 
-import { rnUiKitDebugRouteDefinitions } from "../routes";
-
-import type { RnUiKitDebugRouteKey } from "../types";
+import type { RnUiKitDebugRouteDefinition, RnUiKitDebugRouteKey } from "../types";
 
 export function RnUiKitDebugHomePage({
   openSectionsInSheet,
+  pages,
   onOpenPanelSheet,
   sectionSheetPosition,
   onOpenSection,
@@ -23,24 +22,39 @@ export function RnUiKitDebugHomePage({
   onOpenSectionsInSheetChange,
 }: {
   openSectionsInSheet: boolean;
+  pages: RnUiKitDebugRouteDefinition[];
   onOpenPanelSheet?: () => void;
   sectionSheetPosition: number;
   onOpenSection?: (key: RnUiKitDebugRouteKey) => void;
   onSectionSheetPositionChange?: (position: number) => void;
   onOpenSectionsInSheetChange?: (openInSheet: boolean) => void;
 }) {
+  const sections = Array.from(
+    pages.reduce((groups, page) => {
+      const section = page.section ?? "调试分区";
+      const group = groups.get(section) ?? [];
+      group.push(page);
+      groups.set(section, group);
+      return groups;
+    }, new Map<string, RnUiKitDebugRouteDefinition[]>()),
+  );
+
   return (
     <NativeList>
-      <NativeListSection title="调试分区">
-        {rnUiKitDebugRouteDefinitions.map((definition) => (
-          <NativeListNavigationItem
-            key={definition.key}
-            onPress={() => onOpenSection?.(definition.key)}
-            subtitle={definition.description}
-            title={definition.label}
-          />
-        ))}
-      </NativeListSection>
+      {sections.map(([section, sectionPages]) => (
+        <NativeListSection key={section} title={section}>
+          {[...sectionPages]
+            .sort((left, right) => (left.order ?? 0) - (right.order ?? 0))
+            .map((definition) => (
+              <NativeListNavigationItem
+                key={definition.key}
+                onPress={() => onOpenSection?.(definition.key)}
+                subtitle={definition.description}
+                title={definition.label}
+              />
+            ))}
+        </NativeListSection>
+      ))}
 
       <NativeListSection title="分区行为">
         <NativeListSwitchItem
