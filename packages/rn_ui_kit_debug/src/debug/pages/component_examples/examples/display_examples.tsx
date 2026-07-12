@@ -1,14 +1,15 @@
 import { StyleSheet, View } from "react-native";
 import { Avatar, Card, H1, H3, Image, Link, Paragraph, Separator, Text } from "rn_ui_kit";
 
-import { ExampleBlock, ExampleStack } from "../shared";
+import { ExampleBlock, ExampleRow, ExampleStack } from "../shared";
 import type { ComponentExampleDefinition } from "../types";
 
 function AvatarExample() {
   return (
     <ExampleStack>
-      <ExampleBlock description="图片不可用时显示 fallback。">
+      <ExampleBlock description="在成员列表中混合展示远程头像、缩写 fallback 和不同尺寸。" title="协作者">
         <View style={styles.avatarRow}>
+          <Avatar alt="Ada Lovelace" fallback="AL" size="$6" src="https://i.pravatar.cc/160?img=47" />
           <Avatar fallback="RN" size="$6" />
           <Avatar fallback="UI" size="$5" />
           <Avatar fallback="KIT" size="$4" />
@@ -21,10 +22,10 @@ function AvatarExample() {
 function TextExample() {
   return (
     <ExampleStack>
-      <ExampleBlock>
+      <ExampleBlock description="标题、段落、强调与辅助文案组合成一段可阅读的内容。" title="发布说明">
         <H1>一级标题</H1>
         <H3>三级标题</H3>
-        <Paragraph>Paragraph 适合较长的正文内容，并继承当前主题颜色。</Paragraph>
+        <Paragraph>Paragraph 适合较长的正文内容，并继承当前主题颜色。这里展示了一个完整的版本更新摘要。</Paragraph>
         <Text fontWeight="600">普通 Text 可以自由组合字号和字重。</Text>
         <Text opacity={0.6}>辅助说明文字</Text>
       </ExampleBlock>
@@ -35,7 +36,7 @@ function TextExample() {
 function ImageExample() {
   return (
     <ExampleStack>
-      <ExampleBlock description="远程图片、尺寸和圆角。">
+      <ExampleBlock description="使用 cover、固定容器、圆角和替代文本组成内容预览。" title="文章封面">
         <View style={styles.imageHost}>
           <Image
             alt="组件示例图片"
@@ -54,13 +55,15 @@ function ImageExample() {
 function CardExample() {
   return (
     <ExampleStack>
-      <Card
-        description="Card 默认组合标题、说明、内容和 footer。"
-        footer={<Text opacity={0.6}>Footer 内容</Text>}
-        title="组件卡片"
-      >
-        <Text>这里是 Card 的正文区域。</Text>
-      </Card>
+      <ExampleBlock description="默认 API 可以统一标题、说明、正文与 footer 的节奏。" title="项目摘要">
+        <Card
+          description="上次同步于今天 10:42，包含 12 个组件示例。"
+          footer={<ExampleRow><Text opacity={0.6}>2 位协作者</Text><Link href="https://tamagui.dev" target="_blank">查看详情</Link></ExampleRow>}
+          title="rn_ui_kit 调试工作区"
+        >
+          <Text>这里是 Card 的正文区域，可放置项目摘要、状态和后续操作。</Text>
+        </Card>
+      </ExampleBlock>
     </ExampleStack>
   );
 }
@@ -68,7 +71,7 @@ function CardExample() {
 function SeparatorExample() {
   return (
     <ExampleStack>
-      <ExampleBlock>
+      <ExampleBlock description="水平分隔内容区块，垂直分隔并列信息。" title="内容层级">
         <Text>上方内容</Text>
         <Separator />
         <Text>下方内容</Text>
@@ -85,10 +88,11 @@ function SeparatorExample() {
 function LinkExample() {
   return (
     <ExampleStack>
-      <ExampleBlock description="点击后交给平台打开外部链接。">
-        <Link href="https://tamagui.dev" target="_blank">
-          打开 Tamagui 文档
-        </Link>
+      <ExampleBlock description="链接可用于正文内跳转和单独的帮助入口。" title="相关资源">
+        <ExampleRow>
+          <Link href="https://tamagui.dev" target="_blank">Tamagui 文档</Link>
+          <Link href="https://reactnative.dev" target="_blank">React Native</Link>
+        </ExampleRow>
       </ExampleBlock>
     </ExampleStack>
   );
@@ -97,42 +101,42 @@ function LinkExample() {
 export const displayExamples = [
   {
     Component: AvatarExample,
-    description: "头像与 fallback。",
+    description: "远程头像、fallback 和尺寸组合。",
     group: "内容展示",
     key: "avatar",
     label: "Avatar",
   },
   {
     Component: TextExample,
-    description: "标题、正文与辅助文本。",
+    description: "完整的标题、正文、强调与辅助文案层级。",
     group: "内容展示",
     key: "text",
     label: "Text",
   },
   {
     Component: ImageExample,
-    description: "远程图片展示。",
+    description: "带替代文本和裁切方式的远程图片。",
     group: "内容展示",
     key: "image",
     label: "Image",
   },
   {
     Component: CardExample,
-    description: "组合式卡片结构。",
+    description: "标题、说明、正文与 footer 的项目摘要。",
     group: "内容展示",
     key: "card",
     label: "Card",
   },
   {
     Component: SeparatorExample,
-    description: "水平与垂直分隔线。",
+    description: "内容区块与并列信息的分隔线。",
     group: "内容展示",
     key: "separator",
     label: "Separator",
   },
   {
     Component: LinkExample,
-    description: "外部链接行为。",
+    description: "多资源的外部链接入口。",
     group: "内容展示",
     key: "link",
     label: "Link",

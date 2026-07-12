@@ -16,7 +16,7 @@ import type { ComponentExampleDefinition } from "../types";
 function AccordionExample() {
   return (
     <ExampleStack>
-      <ExampleBlock description="每一项都可以独立展开和收起。">
+      <ExampleBlock description="单选模式适合 FAQ、设置分组等一次只关注一项的内容。" title="单项展开">
         <Accordion
           collapsible
           items={[
@@ -26,12 +26,26 @@ function AccordionExample() {
               value: "structure",
             },
             {
-              content: <Text>通过 items 可以快速生成多个条目。</Text>,
+              content: <Text>通过 items 可以快速生成多个条目，也能统一配置 Header 和 Trigger。</Text>,
               title: "数据驱动",
               value: "items",
             },
+            {
+              content: <Text>关闭当前项后，页面会保留完整的列表结构。</Text>,
+              title: "可收起",
+              value: "collapsible",
+            },
           ]}
           type="single"
+        />
+      </ExampleBlock>
+      <ExampleBlock description="多选模式允许同时对照多个说明。" title="多项展开">
+        <Accordion
+          items={[
+            { content: <Text>支持同时展开多个面板。</Text>, title: "缓存策略", value: "cache" },
+            { content: <Text>内容区域可以放任意 React 节点。</Text>, title: "同步策略", value: "sync" },
+          ]}
+          type="multiple"
         />
       </ExampleBlock>
     </ExampleStack>
@@ -43,7 +57,7 @@ function TabsExample() {
 
   return (
     <ExampleStack>
-      <ExampleBlock description={`当前标签：${value}`}>
+      <ExampleBlock description={`当前标签：${value}；每个 Tab 的内容会保留在自己的区域。`} title="编辑器工作区">
         <Tabs
           items={[
             {
@@ -52,9 +66,14 @@ function TabsExample() {
               value: "preview",
             },
             {
-              content: <Text style={styles.tabContent}>这是说明标签的内容。</Text>,
+              content: <Text style={styles.tabContent}>这里可以放接口说明、快捷键或辅助信息。</Text>,
               label: "说明",
               value: "notes",
+            },
+            {
+              content: <Text style={styles.tabContent}>提交记录、构建日志等较长内容也可以独立组织。</Text>,
+              label: "历史",
+              value: "history",
             },
           ]}
           onValueChange={setValue}
@@ -120,21 +139,21 @@ function SplitLayoutExample() {
 export const compositionExamples = [
   {
     Component: AccordionExample,
-    description: "可展开内容分组。",
+    description: "单选与多选两种可展开内容分组。",
     group: "组合与布局",
     key: "accordion",
     label: "Accordion",
   },
   {
     Component: TabsExample,
-    description: "标签切换与内容区域。",
+    description: "三种工作区视图和独立内容区域。",
     group: "组合与布局",
     key: "tabs",
     label: "Tabs",
   },
   {
     Component: SplitLayoutExample,
-    description: "可拖拽分栏，不传存储配置。",
+    description: "可拖拽分栏、显隐控制和重置尺寸。",
     group: "组合与布局",
     key: "split-view",
     label: "SplitView / SplitLayout",

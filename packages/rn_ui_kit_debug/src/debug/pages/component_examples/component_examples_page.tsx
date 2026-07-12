@@ -1,36 +1,23 @@
-import { useEffect, useMemo, useState } from "react";
-import { BackHandler, StyleSheet, View } from "react-native";
-import {
-  Button,
-  NativeList,
-  NativeListNavigationItem,
-  NativeListSection,
-  ScrollView,
-  Text,
-} from "rn_ui_kit";
+import { type NavigationProp, useNavigation } from "@react-navigation/native";
+import { useMemo } from "react";
+import { StyleSheet, View } from "react-native";
+import { NativeList, NativeListNavigationItem, NativeListSection, ScrollView, Text } from "rn_ui_kit";
 
 import type { RnUiKitDebugSectionContentProps } from "../../types";
-import { componentExampleDefinitions, getComponentExampleDefinition } from "./catalog";
+import { componentExampleDefinitions } from "./catalog";
 import type { ComponentExampleDefinition } from "./types";
 
+type DebugPanelNavigationParamList = Record<string, undefined>;
+
+export function getComponentExampleRouteName(key: string) {
+  return `component-example:${key}`;
+}
+
+/** The examples list lives on the debug panel stack; only its detail routes are separate screens. */
 export function RnUiKitComponentExamplesDebugPage({
   header,
 }: RnUiKitDebugSectionContentProps) {
-  const [activeKey, setActiveKey] = useState<string | null>(null);
-  const activeDefinition =
-    activeKey == null ? null : getComponentExampleDefinition(activeKey);
-
-  useEffect(() => {
-    if (activeDefinition == null) return;
-
-    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
-      setActiveKey(null);
-      return true;
-    });
-
-    return () => subscription.remove();
-  }, [activeDefinition]);
-
+  const navigation = useNavigation<NavigationProp<DebugPanelNavigationParamList>>();
   const groupedDefinitions = useMemo(() => {
     return Array.from(
       componentExampleDefinitions.reduce((groups, definition) => {
@@ -42,41 +29,6 @@ export function RnUiKitComponentExamplesDebugPage({
     );
   }, []);
 
-  if (activeDefinition != null) {
-    const ActiveExample = activeDefinition.Component;
-
-    return (
-      <View style={styles.root}>
-        <View style={styles.detailHeader}>
-          <Button chromeless onPress={() => setActiveKey(null)} size="$3">
-            返回组件列表
-          </Button>
-          <View style={styles.detailTitle}>
-            <Text fontSize="$7" fontWeight="700">
-              {activeDefinition.label}
-            </Text>
-            <Text opacity={0.6}>{activeDefinition.description}</Text>
-          </View>
-        </View>
-        {activeDefinition.layout === "fill" ? (
-          <View style={styles.detailBody}>
-            <ActiveExample />
-          </View>
-        ) : (
-          <ScrollView
-            nestedScrollEnabled
-            showsVerticalScrollIndicator
-            style={styles.detailBody}
-          >
-            <View style={styles.scrollContent}>
-              <ActiveExample />
-            </View>
-          </ScrollView>
-        )}
-      </View>
-    );
-  }
-
   return (
     <View style={styles.root}>
       {header != null ? <View style={styles.routeHeader}>{header}</View> : null}
@@ -86,7 +38,7 @@ export function RnUiKitComponentExamplesDebugPage({
             {definitions.map((definition) => (
               <NativeListNavigationItem
                 key={definition.key}
-                onPress={() => setActiveKey(definition.key)}
+                onPress={() => navigation.navigate(getComponentExampleRouteName(definition.key))}
                 subtitle={definition.description}
                 title={definition.label}
               />
@@ -98,17 +50,34 @@ export function RnUiKitComponentExamplesDebugPage({
   );
 }
 
+export function RnUiKitComponentExampleDetailPage({
+  definition,
+}: {
+  definition: ComponentExampleDefinition;
+}) {
+  const ActiveExample = definition.Component;
+
+  if (definition.layout === "fill") {
+    return (
+      <View style={styles.detailBody}>
+        <ActiveExample />
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView nestedScrollEnabled showsVerticalScrollIndicator style={styles.detailBody}>
+      <View style={styles.scrollContent}>
+        <Text opacity={0.6}>{definition.description}</Text>
+        <ActiveExample />
+      </View>
+    </ScrollView>
+  );
+}
+
 const styles = StyleSheet.create({
   detailBody: { flex: 1, minHeight: 0 },
-  detailHeader: {
-    borderBottomColor: "rgba(128, 128, 128, 0.24)",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  detailTitle: { gap: 4 },
   root: { flex: 1, minHeight: 0 },
   routeHeader: { paddingHorizontal: 20, paddingTop: 8 },
-  scrollContent: { padding: 16, paddingBottom: 32 },
+  scrollContent: { gap: 16, padding: 16, paddingBottom: 32 },
 });

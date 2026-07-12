@@ -14,11 +14,3 @@ export const componentExampleDefinitions: ComponentExampleDefinition[] = [
   ...collectionExamples,
   ...displayExamples,
 ];
-
-const componentExampleDefinitionByKey = new Map(
-  componentExampleDefinitions.map((definition) => [definition.key, definition]),
-);
-
-export function getComponentExampleDefinition(key: string) {
-  return componentExampleDefinitionByKey.get(key) ?? null;
-}

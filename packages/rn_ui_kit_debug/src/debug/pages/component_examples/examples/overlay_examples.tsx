@@ -18,19 +18,37 @@ import type { ComponentExampleDefinition } from "../types";
 
 function DialogExample() {
   const [open, setOpen] = useState(false);
+  const [draftName, setDraftName] = useState("组件实验室");
+  const [savedName, setSavedName] = useState("尚未保存");
 
   return (
     <ExampleStack>
-      <ExampleBlock description={`当前状态：${open ? "打开" : "关闭"}`}>
+      <ExampleBlock description={`已保存名称：${savedName}`} title="编辑工作区">
         <Dialog
-          actions={<Button onPress={() => setOpen(false)}>完成</Button>}
-          description="Dialog 会渲染到全局浮层。"
+          actions={
+            <ExampleRow>
+              <Button onPress={() => setOpen(false)} variant="outlined">取消</Button>
+              <Button
+                onPress={() => {
+                  setSavedName(draftName || "未命名工作区");
+                  setOpen(false);
+                }}
+                theme="accent"
+              >
+                保存
+              </Button>
+            </ExampleRow>
+          }
+          description="受控 Dialog 可承载一个小型编辑流程，并在关闭前提交结果。"
           onOpenChange={setOpen}
           open={open}
-          title="Dialog 示例"
-          trigger={<Button onPress={() => setOpen(true)}>打开 Dialog</Button>}
+          title="重命名工作区"
+          trigger={<Button onPress={() => setOpen(true)}>编辑名称</Button>}
         >
-          <Text>这里是 Dialog 的正文内容。</Text>
+          <View style={styles.dialogContent}>
+            <Text opacity={0.6}>新名称</Text>
+            <Input onChangeText={setDraftName} value={draftName} />
+          </View>
         </Dialog>
       </ExampleBlock>
     </ExampleStack>
@@ -43,14 +61,14 @@ function AlertDialogExample() {
 
   return (
     <ExampleStack>
-      <ExampleBlock description={`最近结果：${result}`}>
+      <ExampleBlock description={`最近结果：${result}`} title="危险操作确认">
         <AlertDialog
           cancelLabel="取消"
           destructiveLabel="删除"
-          description="此操作仅用于演示，不会删除真实数据。"
+          description="先在弹窗中做最后确认；此操作仅用于演示，不会删除真实数据。"
           onOpenChange={setOpen}
           open={open}
-          title="删除项目"
+          title="删除 3 个草稿？"
           trigger={<Button onPress={() => setOpen(true)}>打开 AlertDialog</Button>}
           actions={
             <Button
@@ -74,11 +92,12 @@ function ContextMenuExample() {
 
   return (
     <ExampleStack>
-      <ExampleBlock description={`最近动作：${action}`}>
+      <ExampleBlock description="在桌面端右键、在触控设备长按，均会打开同一组操作。" title="文件操作">
         <ContextMenu
           arrow
           items={[
             { label: "重命名", onSelect: () => setAction("重命名"), value: "rename" },
+            { label: "复制链接", onSelect: () => setAction("复制链接"), value: "copy-link" },
             { label: "separator", separator: true, value: "separator" },
             {
               destructive: true,
@@ -89,6 +108,7 @@ function ContextMenuExample() {
           ]}
           trigger={<Button variant="outlined">右键或长按</Button>}
         />
+        <Text opacity={0.6}>最近动作：{action}</Text>
       </ExampleBlock>
     </ExampleStack>
   );
@@ -99,12 +119,13 @@ function MenuExample() {
 
   return (
     <ExampleStack>
-      <ExampleBlock description={`最近动作：${action}`}>
+      <ExampleBlock description="Menu 适合由普通按钮触发的一组轻量操作。" title="项目菜单">
         <Menu
           arrow
           items={[
             { label: "新建文件", onSelect: () => setAction("新建文件"), value: "new" },
             { label: "打开设置", onSelect: () => setAction("打开设置"), value: "settings" },
+            { label: "导出快照", onSelect: () => setAction("导出快照"), value: "export" },
             { label: "separator", separator: true, value: "separator" },
             {
               destructive: true,
@@ -115,6 +136,7 @@ function MenuExample() {
           ]}
           trigger={<Button variant="outlined">打开 Menu</Button>}
         />
+        <Text opacity={0.6}>最近动作：{action}</Text>
       </ExampleBlock>
     </ExampleStack>
   );
@@ -125,7 +147,7 @@ function PopoverExample() {
 
   return (
     <ExampleStack>
-      <ExampleBlock description={`当前名称：${name}`}>
+      <ExampleBlock description="Popover 更适合锚定在触发元素旁的小范围编辑。" title={`当前名称：${name}`}>
         <Popover
           arrow
           content={
@@ -152,7 +174,7 @@ function SheetExample() {
 
   return (
     <ExampleStack>
-      <ExampleBlock description={`状态：${open ? `打开，position=${position}` : "关闭"}`}>
+      <ExampleBlock description={`状态：${open ? `打开，position=${position}` : "关闭"}`} title="多档位操作面板">
         <Button onPress={openSheet}>打开 Sheet</Button>
         <Sheet
           content={
@@ -189,10 +211,15 @@ function SheetExample() {
 function TooltipExample() {
   return (
     <ExampleStack>
-      <ExampleBlock description="Web 悬停显示；Native 主要提供可访问性语义。">
-        <Tooltip arrow content="这是 Tooltip 内容">
-          <Button variant="outlined">悬停或聚焦</Button>
-        </Tooltip>
+      <ExampleBlock description="Web 悬停显示；Native 主要提供可访问性语义。" title="补充说明">
+        <ExampleRow>
+          <Tooltip arrow content="这会把当前版本发布到预览环境。">
+            <Button variant="outlined">发布说明</Button>
+          </Tooltip>
+          <Tooltip arrow content="删除后将无法恢复。">
+            <Button theme="red">危险操作</Button>
+          </Tooltip>
+        </ExampleRow>
       </ExampleBlock>
     </ExampleStack>
   );
@@ -201,49 +228,49 @@ function TooltipExample() {
 export const overlayExamples = [
   {
     Component: DialogExample,
-    description: "通用模态对话框。",
+    description: "包含输入、取消和保存的受控对话框。",
     group: "浮层与菜单",
     key: "dialog",
     label: "Dialog",
   },
   {
     Component: AlertDialogExample,
-    description: "确认与危险操作对话框。",
+    description: "危险操作的确认、取消和结果反馈。",
     group: "浮层与菜单",
     key: "alert-dialog",
     label: "AlertDialog",
   },
   {
     Component: ContextMenuExample,
-    description: "右键或长按上下文菜单。",
+    description: "右键/长按文件操作与结果反馈。",
     group: "浮层与菜单",
     key: "context-menu",
     label: "ContextMenu",
   },
   {
     Component: MenuExample,
-    description: "按钮触发的菜单。",
+    description: "按钮触发的多操作项目菜单。",
     group: "浮层与菜单",
     key: "menu",
     label: "Menu",
   },
   {
     Component: PopoverExample,
-    description: "带输入内容的浮层。",
+    description: "锚定触发器的小范围内容编辑。",
     group: "浮层与菜单",
     key: "popover",
     label: "Popover",
   },
   {
     Component: SheetExample,
-    description: "多档位可拖拽 Sheet。",
+    description: "多档位、可拖拽并可编程切换的 Sheet。",
     group: "浮层与菜单",
     key: "sheet",
     label: "Sheet",
   },
   {
     Component: TooltipExample,
-    description: "悬停或聚焦提示。",
+    description: "多触发器的补充说明与危险提示。",
     group: "浮层与菜单",
     key: "tooltip",
     label: "Tooltip",
@@ -251,6 +278,7 @@ export const overlayExamples = [
 ] satisfies ComponentExampleDefinition[];
 
 const styles = StyleSheet.create({
+  dialogContent: { gap: 8 },
   popoverContent: { gap: 12, minWidth: 240, padding: 12 },
   sheetContent: { gap: 16, padding: 24 },
 });

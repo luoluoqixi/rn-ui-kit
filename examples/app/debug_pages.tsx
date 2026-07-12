@@ -1,13 +1,10 @@
 import { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
 import {
-  Card,
   NativeList,
-  NativeListCustomItem,
   NativeListSection,
   NativeListSelectItem,
   NativeListSwitchItem,
-  Text,
   type UiPreferences,
 } from "rn_ui_kit";
 import { RnUiKitUiComponentsDebugPage, type RnUiKitDebugRouteDefinition } from "rn_ui_kit_debug";
@@ -77,15 +74,6 @@ function createThemeDebugPage(preferences: UiPreferences, updatePreferences: Upd
               }}
               title="背景跟随主题"
             />
-          </NativeListSection>
-          <NativeListSection title="预览">
-            <NativeListCustomItem>
-              <View style={styles.preview}>
-                <Card borderWidth={1} padding="$4">
-                  <Text>修改设置后，RootProvider 会立即应用新的主题。</Text>
-                </Card>
-              </View>
-            </NativeListCustomItem>
           </NativeListSection>
         </NativeList>
       </View>

@@ -7,6 +7,12 @@ import { NativeSheet, NativeSheetStack } from "rn_ui_kit";
 
 import { RnUiKitDebugHomePage } from "./pages/debug_home_page";
 import { RnUiKitDebugSectionPage } from "./pages/debug_section_page";
+import {
+  getComponentExampleRouteName,
+  RnUiKitComponentExampleDetailPage,
+  RnUiKitComponentExamplesDebugPage,
+} from "./pages/component_examples/component_examples_page";
+import { componentExampleDefinitions } from "./pages/component_examples/catalog";
 import { rnUiKitDebugRouteDefinitions } from "./routes";
 
 import type {
@@ -71,7 +77,11 @@ function RnUiKitDebugPanelSheet({
   open,
   pages,
   ...props
-}: RnUiKitDebugPanelProps & { onOpenChange: (open: boolean) => void; open: boolean; pages: RnUiKitDebugRouteDefinition[] }) {
+}: RnUiKitDebugPanelProps & {
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+  pages: RnUiKitDebugRouteDefinition[];
+}) {
   const [openSectionsInSheet, setOpenSectionsInSheet] = useState(false);
   const [sectionSheetPosition, setSectionSheetPosition] = useState(0);
   const [openSectionSheets, setOpenSectionSheets] = useState<Set<RnUiKitDebugRouteKey>>(new Set());
@@ -108,7 +118,7 @@ function RnUiKitDebugPanelSheet({
         screenOptions={debugSheetStackScreenOptions}
         sheetProps={{ snapPoints: [88], snapPointsMode: "percent" }}
       >
-        <NativeSheetStack.Screen name="index" options={{ title: "rn_ui_kit 调试" }}>
+        <NativeSheetStack.Screen name="index" options={{ title: "rn_ui_kit" }}>
           {() => <HomeRoute />}
         </NativeSheetStack.Screen>
         {pages.map((definition) => (
@@ -126,6 +136,15 @@ function RnUiKitDebugPanelSheet({
                 sectionKey={definition.key}
               />
             )}
+          </NativeSheetStack.Screen>
+        ))}
+        {componentExampleDefinitions.map((definition) => (
+          <NativeSheetStack.Screen
+            key={getComponentExampleRouteName(definition.key)}
+            name={getComponentExampleRouteName(definition.key)}
+            options={{ title: definition.label }}
+          >
+            {() => <RnUiKitComponentExampleDetailPage definition={definition} />}
           </NativeSheetStack.Screen>
         ))}
       </NativeSheetStack>
@@ -155,7 +174,7 @@ function RnUiKitDebugPanelContent({
     <YStack background="$background" flex={1} {...props}>
       <NavigationContainer>
         <Stack.Navigator id="rn-ui-kit-debug-stack" initialRouteName="index">
-          <Stack.Screen name="index" options={{ title: "rn_ui_kit 调试" }}>
+          <Stack.Screen name="index" options={{ title: "rn_ui_kit" }}>
             {() => (
               <RnUiKitDebugHomeRoute
                 onOpenInSheet={(key) =>
@@ -187,6 +206,15 @@ function RnUiKitDebugPanelContent({
                   sectionKey={definition.key}
                 />
               )}
+            </Stack.Screen>
+          ))}
+          {componentExampleDefinitions.map((definition) => (
+            <Stack.Screen
+              key={getComponentExampleRouteName(definition.key)}
+              name={getComponentExampleRouteName(definition.key)}
+              options={{ title: definition.label }}
+            >
+              {() => <RnUiKitComponentExampleDetailPage definition={definition} />}
             </Stack.Screen>
           ))}
         </Stack.Navigator>
@@ -258,33 +286,75 @@ function RnUiKitDebugSectionSheets({
   openKeys: Set<RnUiKitDebugRouteKey>;
   position: number;
 }) {
-  return pages.map((definition) => (
-    <NativeSheet
-      handle
-      key={definition.key}
-      name={`rn-ui-kit-debug-${instancePrefix}-${definition.key}`}
-      onOpenChange={(nextOpen) => {
-        if (!nextOpen) {
-          const next = new Set(openKeys);
-          next.delete(definition.key);
-          onOpenChange(next);
-        }
-      }}
-      open={openKeys.has(definition.key)}
-      overlayPortalHostName={`${DEBUG_SECTION_SHEET_OVERLAY_HOST}:${instancePrefix}:${definition.key}`}
-      position={position}
-      snapPoints={DEBUG_SECTION_SHEET_SNAP_POINTS}
-      snapPointsMode="percent"
-    >
-      <View style={{ flex: 1 }}>
-        <RnUiKitDebugSectionPage
-          contentTitle={definition.label}
-          instanceId={`${instancePrefix}-${definition.key}`}
-          layoutHost={Platform.OS === "ios" || Platform.OS === "android" ? "nativeSheet" : "default"}
-          pages={pages}
-          sectionKey={definition.key}
-        />
-      </View>
-    </NativeSheet>
-  ));
+  const closeSheet = (key: RnUiKitDebugRouteKey, nextOpen: boolean) => {
+    if (!nextOpen) {
+      const next = new Set(openKeys);
+      next.delete(key);
+      onOpenChange(next);
+    }
+  };
+
+  return pages.map((definition) => {
+    const name = `rn-ui-kit-debug-${instancePrefix}-${definition.key}`;
+    const overlayPortalHostName = `${DEBUG_SECTION_SHEET_OVERLAY_HOST}:${instancePrefix}:${definition.key}`;
+
+    // The examples list needs actual stack history even when a section is opened directly in a sheet.
+    if (definition.key === "component-examples") {
+      return (
+        <NativeSheetStack
+          initialRouteName="index"
+          key={definition.key}
+          name={name}
+          onOpenChange={(nextOpen) => closeSheet(definition.key, nextOpen)}
+          open={openKeys.has(definition.key)}
+          overlayPortalHostName={overlayPortalHostName}
+          screenOptions={debugSheetStackScreenOptions}
+          sheetProps={{
+            initialDetentIndex: position,
+            snapPoints: DEBUG_SECTION_SHEET_SNAP_POINTS,
+            snapPointsMode: "percent",
+          }}
+        >
+          <NativeSheetStack.Screen name="index" options={{ title: definition.label }}>
+            {() => <RnUiKitComponentExamplesDebugPage />}
+          </NativeSheetStack.Screen>
+          {componentExampleDefinitions.map((example) => (
+            <NativeSheetStack.Screen
+              key={getComponentExampleRouteName(example.key)}
+              name={getComponentExampleRouteName(example.key)}
+              options={{ title: example.label }}
+            >
+              {() => <RnUiKitComponentExampleDetailPage definition={example} />}
+            </NativeSheetStack.Screen>
+          ))}
+        </NativeSheetStack>
+      );
+    }
+
+    return (
+      <NativeSheet
+        handle
+        key={definition.key}
+        name={name}
+        onOpenChange={(nextOpen) => closeSheet(definition.key, nextOpen)}
+        open={openKeys.has(definition.key)}
+        overlayPortalHostName={overlayPortalHostName}
+        position={position}
+        snapPoints={DEBUG_SECTION_SHEET_SNAP_POINTS}
+        snapPointsMode="percent"
+      >
+        <View style={{ flex: 1 }}>
+          <RnUiKitDebugSectionPage
+            contentTitle={definition.label}
+            instanceId={`${instancePrefix}-${definition.key}`}
+            layoutHost={
+              Platform.OS === "ios" || Platform.OS === "android" ? "nativeSheet" : "default"
+            }
+            pages={pages}
+            sectionKey={definition.key}
+          />
+        </View>
+      </NativeSheet>
+    );
+  });
 }
