@@ -4,46 +4,28 @@ import {
   copyFileSync,
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
-  realpathSync,
   writeFileSync,
 } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-
-const uiPatches = [
-  ["@expo/ui@55.0.17", "@expo+ui@55.0.17.patch"],
-  ["@gorhom/bottom-sheet@5.2.14", "@gorhom+bottom-sheet@5.2.14.patch"],
-  [
-    "@lodev09/react-native-true-sheet@3.11.1",
-    "@lodev09+react-native-true-sheet@3.11.1.patch",
-  ],
-  ["@react-native-picker/picker@2.11.4", "@react-native-picker+picker@2.11.4.patch"],
-  ["@tamagui/create-menu@2.4.0", "@tamagui+create-menu@2.4.0.patch"],
-  ["@tamagui/dialog@2.4.0", "@tamagui+dialog@2.4.0.patch"],
-  ["@tamagui/native@2.4.0", "@tamagui+native@2.4.0.patch"],
-  ["@tamagui/portal@2.4.0", "@tamagui+portal@2.4.0.patch"],
-  ["@tamagui/toast@2.4.0", "@tamagui+toast@2.4.0.patch"],
-  ["@tamagui/web@2.4.0", "@tamagui+web@2.4.0.patch"],
-  ["expo-haptics@55.0.14", "expo-haptics@55.0.14.patch"],
-  ["react-native-reanimated@4.3.0", "react-native-reanimated@4.3.0.patch"],
-  ["zeego@3.0.6", "zeego@3.0.6.patch"],
-];
+const patchDir = resolve(packageRoot, "patches");
 
 function parseArgs(argv) {
   const options = {
-    copy: true,
+    copy: false,
     cwd: process.cwd(),
-    pathRoot: process.cwd(),
+    pathRoot: undefined,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
 
-    if (arg === "--no-copy") {
-      options.copy = false;
+    if (arg === "--copy") {
+      options.copy = true;
       continue;
     }
 
@@ -80,15 +62,51 @@ function parseArgs(argv) {
     throw new Error(`Unknown argument: ${arg}`);
   }
 
+  const cwd = resolve(options.cwd);
+
   return {
     ...options,
-    cwd: resolve(options.cwd),
-    pathRoot: resolve(options.pathRoot),
+    cwd,
+    pathRoot: options.pathRoot == null ? findPathRoot(cwd) : resolve(options.pathRoot),
   };
+}
+
+function findPathRoot(startDir) {
+  let current = startDir;
+
+  while (true) {
+    if (existsSync(resolve(current, "bun.lock"))) {
+      return current;
+    }
+
+    const parent = dirname(current);
+    if (parent === current) {
+      return startDir;
+    }
+
+    current = parent;
+  }
 }
 
 function toPackageJsonPath(fromCwd, filePath) {
   return relative(fromCwd, filePath).replace(/\\/g, "/");
+}
+
+function getPatchDependencies() {
+  return readdirSync(patchDir)
+    .filter((fileName) => fileName.endsWith(".patch"))
+    .map((patchFile) => [toPatchedDependencyName(patchFile), patchFile])
+    .sort(([left], [right]) => left.localeCompare(right));
+}
+
+function toPatchedDependencyName(patchFile) {
+  const patchName = patchFile.slice(0, -".patch".length);
+
+  if (!patchName.startsWith("@")) {
+    return patchName;
+  }
+
+  return patchName.replace("+", "/");
 }
 
 function sortObject(value) {
@@ -104,6 +122,7 @@ if (!existsSync(packageJsonPath)) {
 
 const targetPackage = JSON.parse(readFileSync(packageJsonPath, "utf8"));
 const targetPatchDir = resolve(options.cwd, "patches");
+const installedPatchDir = resolve(options.cwd, "node_modules", "rn_ui_kit", "patches");
 
 if (options.copy) {
   mkdirSync(targetPatchDir, { recursive: true });
@@ -113,23 +132,22 @@ const patchedDependencies = {
   ...(targetPackage.patchedDependencies ?? {}),
 };
 
-for (const [dependency, patchFile] of uiPatches) {
-  const sourcePath = resolve(packageRoot, "patches", patchFile);
-  const targetPath = join(targetPatchDir, patchFile);
+const patchDependencies = getPatchDependencies();
+
+for (const [dependency, patchFile] of patchDependencies) {
+  const sourcePath = resolve(patchDir, patchFile);
 
   if (!existsSync(sourcePath)) {
     throw new Error(`Missing source patch: ${sourcePath}`);
   }
 
+  const patchPath = options.copy ? join(targetPatchDir, patchFile) : join(installedPatchDir, patchFile);
+
   if (options.copy) {
-    const sourceRealPath = realpathSync(sourcePath);
-    const targetRealPath = existsSync(targetPath) ? realpathSync(targetPath) : targetPath;
-    if (sourceRealPath !== targetRealPath) {
-      copyFileSync(sourcePath, targetPath);
-    }
+    copyFileSync(sourcePath, patchPath);
   }
 
-  patchedDependencies[dependency] = toPackageJsonPath(options.pathRoot, targetPath);
+  patchedDependencies[dependency] = toPackageJsonPath(options.pathRoot, patchPath);
 }
 
 targetPackage.patchedDependencies = sortObject(patchedDependencies);
@@ -137,7 +155,7 @@ targetPackage.patchedDependencies = sortObject(patchedDependencies);
 writeFileSync(packageJsonPath, `${JSON.stringify(targetPackage, null, 2)}\n`);
 
 console.log(
-  `Synced ${uiPatches.length} rn_ui_kit patches into ${toPackageJsonPath(
+  `Synced ${patchDependencies.length} rn_ui_kit patches into ${toPackageJsonPath(
     process.cwd(),
     packageJsonPath,
   )}`,

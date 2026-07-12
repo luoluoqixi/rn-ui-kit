@@ -12,6 +12,9 @@
   "main": "src/index.ts",
   "react-native": "src/index.ts",
   "types": "src/index.ts",
+  "bin": {
+    "rn-ui-sync-patches": "./scripts/sync-patches.mjs"
+  },
   "exports": {
     ".": {
       "react-native": "./src/index.ts",
@@ -39,7 +42,6 @@
   ],
   "scripts": {
     "typecheck": "tsc --noEmit --pretty false",
-    "doctor": "bun scripts/doctor.mjs",
     "sync-patches": "bun scripts/sync-patches.mjs"
   },
   "peerDependencies": {

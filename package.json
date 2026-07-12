@@ -7,8 +7,6 @@
     "examples/*"
   ],
   "scripts": {
-    "typecheck": "bun run --cwd packages/rn_ui_kit typecheck && bun run --cwd examples/app typecheck",
-    "doctor": "bun run --cwd packages/rn_ui_kit doctor",
-    "sync-patches": "bun packages/rn_ui_kit/scripts/sync-patches.mjs --cwd examples/app --path-root ."
+    "typecheck": "bun run --cwd packages/rn_ui_kit typecheck && bun run --cwd examples/app typecheck"
   }
 }

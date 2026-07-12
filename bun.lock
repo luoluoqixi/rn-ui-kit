@@ -4,6 +4,9 @@
   "workspaces": {
     "": {
       "name": "rn_ui_kit",
+      "devDependencies": {
+        "rn_ui_kit": "workspace:*",
+      },
     },
     "examples/app": {
       "name": "rn-ui-kit-example",
@@ -80,6 +83,9 @@
     "packages/rn_ui_kit": {
       "name": "rn_ui_kit",
       "version": "0.1.0",
+      "bin": {
+        "rn-ui-sync-patches": "./scripts/sync-patches.mjs",
+      },
       "devDependencies": {
         "@expo/ui": "=55.0.17",
         "@gorhom/bottom-sheet": "^5.2.14",
@@ -201,19 +207,19 @@
     },
   },
   "patchedDependencies": {
-    "zeego@3.0.6": "examples/app/patches/zeego@3.0.6.patch",
-    "@react-native-picker/picker@2.11.4": "examples/app/patches/@react-native-picker+picker@2.11.4.patch",
-    "expo-haptics@55.0.14": "examples/app/patches/expo-haptics@55.0.14.patch",
-    "@gorhom/bottom-sheet@5.2.14": "examples/app/patches/@gorhom+bottom-sheet@5.2.14.patch",
-    "@tamagui/create-menu@2.4.0": "examples/app/patches/@tamagui+create-menu@2.4.0.patch",
-    "@tamagui/portal@2.4.0": "examples/app/patches/@tamagui+portal@2.4.0.patch",
-    "@lodev09/react-native-true-sheet@3.11.1": "examples/app/patches/@lodev09+react-native-true-sheet@3.11.1.patch",
-    "@tamagui/native@2.4.0": "examples/app/patches/@tamagui+native@2.4.0.patch",
-    "@tamagui/web@2.4.0": "examples/app/patches/@tamagui+web@2.4.0.patch",
-    "@expo/ui@55.0.17": "examples/app/patches/@expo+ui@55.0.17.patch",
-    "@tamagui/toast@2.4.0": "examples/app/patches/@tamagui+toast@2.4.0.patch",
-    "react-native-reanimated@4.3.0": "examples/app/patches/react-native-reanimated@4.3.0.patch",
-    "@tamagui/dialog@2.4.0": "examples/app/patches/@tamagui+dialog@2.4.0.patch",
+    "zeego@3.0.6": "examples/app/node_modules/rn_ui_kit/patches/zeego@3.0.6.patch",
+    "@react-native-picker/picker@2.11.4": "examples/app/node_modules/rn_ui_kit/patches/@react-native-picker+picker@2.11.4.patch",
+    "expo-haptics@55.0.14": "examples/app/node_modules/rn_ui_kit/patches/expo-haptics@55.0.14.patch",
+    "@gorhom/bottom-sheet@5.2.14": "examples/app/node_modules/rn_ui_kit/patches/@gorhom+bottom-sheet@5.2.14.patch",
+    "@tamagui/create-menu@2.4.0": "examples/app/node_modules/rn_ui_kit/patches/@tamagui+create-menu@2.4.0.patch",
+    "@tamagui/portal@2.4.0": "examples/app/node_modules/rn_ui_kit/patches/@tamagui+portal@2.4.0.patch",
+    "@lodev09/react-native-true-sheet@3.11.1": "examples/app/node_modules/rn_ui_kit/patches/@lodev09+react-native-true-sheet@3.11.1.patch",
+    "@tamagui/native@2.4.0": "examples/app/node_modules/rn_ui_kit/patches/@tamagui+native@2.4.0.patch",
+    "@tamagui/web@2.4.0": "examples/app/node_modules/rn_ui_kit/patches/@tamagui+web@2.4.0.patch",
+    "@expo/ui@55.0.17": "examples/app/node_modules/rn_ui_kit/patches/@expo+ui@55.0.17.patch",
+    "@tamagui/toast@2.4.0": "examples/app/node_modules/rn_ui_kit/patches/@tamagui+toast@2.4.0.patch",
+    "react-native-reanimated@4.3.0": "examples/app/node_modules/rn_ui_kit/patches/react-native-reanimated@4.3.0.patch",
+    "@tamagui/dialog@2.4.0": "examples/app/node_modules/rn_ui_kit/patches/@tamagui+dialog@2.4.0.patch",
   },
   "packages": {
     "@babel/code-frame": ["@babel/code-frame@7.29.7", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.29.7", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="],
