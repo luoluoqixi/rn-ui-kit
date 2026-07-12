@@ -198,6 +198,7 @@
     "@expo/ui@55.0.17": "examples/app/patches/@expo+ui@55.0.17.patch",
     "@tamagui/toast@2.4.0": "examples/app/patches/@tamagui+toast@2.4.0.patch",
     "react-native-reanimated@4.3.0": "examples/app/patches/react-native-reanimated@4.3.0.patch",
+    "@expo/cli@55.0.32": "examples/app/patches/@expo+cli@55.0.32.patch",
     "@tamagui/dialog@2.4.0": "examples/app/patches/@tamagui+dialog@2.4.0.patch",
   },
   "overrides": {

@@ -97,10 +97,11 @@ function toPackageJsonPath(fromCwd, filePath) {
   return relative(fromCwd, filePath).replace(/\\/g, "/");
 }
 
-function getPatchDependencies() {
+function getPatchDependencies(excludedPatches) {
   return readdirSync(patchDir)
     .filter((fileName) => fileName.endsWith(".patch"))
     .map((patchFile) => [toPatchedDependencyName(patchFile), patchFile])
+    .filter(([dependency]) => !excludedPatches.has(dependency))
     .sort(([left], [right]) => left.localeCompare(right));
 }
 
@@ -118,6 +119,24 @@ function sortObject(value) {
   return Object.fromEntries(Object.entries(value).sort(([left], [right]) => left.localeCompare(right)));
 }
 
+function getExcludedPatches(targetPackage) {
+  const config = targetPackage.rnUiKitSyncPatches;
+  if (config == null) {
+    return new Set();
+  }
+
+  if (typeof config !== "object" || Array.isArray(config)) {
+    throw new Error("rnUiKitSyncPatches must be an object when provided");
+  }
+
+  const excludedPatches = config.exclude ?? [];
+  if (!Array.isArray(excludedPatches) || !excludedPatches.every((value) => typeof value === "string")) {
+    throw new Error("rnUiKitSyncPatches.exclude must be an array of patched dependency names");
+  }
+
+  return new Set(excludedPatches);
+}
+
 const options = parseArgs(process.argv.slice(2));
 const packageJsonPath = resolve(options.cwd, "package.json");
 
@@ -128,6 +147,7 @@ if (!existsSync(packageJsonPath)) {
 const targetPackage = JSON.parse(readFileSync(packageJsonPath, "utf8"));
 const targetPatchDir = resolve(options.cwd, "patches");
 const installedPatchDir = resolve(options.cwd, "node_modules", "rn_ui_kit", "patches");
+const excludedPatches = getExcludedPatches(targetPackage);
 
 if (options.copy) {
   mkdirSync(targetPatchDir, { recursive: true });
@@ -137,7 +157,7 @@ const patchedDependencies = {
   ...(targetPackage.patchedDependencies ?? {}),
 };
 
-const patchDependencies = getPatchDependencies();
+const patchDependencies = getPatchDependencies(excludedPatches);
 
 for (const [dependency, patchFile] of patchDependencies) {
   const sourcePath = resolve(patchDir, patchFile);
@@ -160,7 +180,9 @@ targetPackage.patchedDependencies = sortObject(patchedDependencies);
 writeFileSync(packageJsonPath, `${JSON.stringify(targetPackage, null, 2)}\n`);
 
 console.log(
-  `Synced ${patchDependencies.length} rn_ui_kit patches into ${toPackageJsonPath(
+  `Synced ${patchDependencies.length} rn_ui_kit patches${
+    excludedPatches.size ? ` (${excludedPatches.size} excluded)` : ""
+  } into ${toPackageJsonPath(
     process.cwd(),
     packageJsonPath,
   )}`,

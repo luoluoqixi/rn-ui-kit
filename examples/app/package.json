@@ -83,6 +83,7 @@
     "metro-transform-worker": "=0.83.6"
   },
   "patchedDependencies": {
+    "@expo/cli@55.0.32": "examples/app/patches/@expo+cli@55.0.32.patch",
     "@expo/ui@55.0.17": "examples/app/patches/@expo+ui@55.0.17.patch",
     "@gorhom/bottom-sheet@5.2.14": "examples/app/patches/@gorhom+bottom-sheet@5.2.14.patch",
     "@lodev09/react-native-true-sheet@3.11.1": "examples/app/patches/@lodev09+react-native-true-sheet@3.11.1.patch",
