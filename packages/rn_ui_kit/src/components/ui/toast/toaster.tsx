@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import type { ComponentProps, ReactNode } from "react";
 import { Spinner, XStack, YStack } from "tamagui";
 
-import { isWeb, os } from "../utils";
+import { isWeb, os } from "../utils/platform";
 import { useTrueSheetOverlayLayout } from "../sheet/native_sheet/true_sheet/overlay_layout_context";
 import {
   type AccentThemeName,

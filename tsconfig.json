@@ -1,10 +1,13 @@
-﻿{
+{
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
     "declaration": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",
-    "lib": ["ES2022", "DOM"],
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "noEmit": true,
@@ -13,16 +16,5 @@
     "strict": true,
     "target": "ES2022",
     "types": []
-  },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "tamagui.config.ts",
-    "tamagui.build.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "examples"
-  ]
+  }
 }

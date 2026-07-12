@@ -36,6 +36,7 @@ function parseArgs(argv) {
   const options = {
     copy: true,
     cwd: process.cwd(),
+    pathRoot: process.cwd(),
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -56,8 +57,23 @@ function parseArgs(argv) {
       continue;
     }
 
+    if (arg === "--path-root") {
+      const next = argv[index + 1];
+      if (next == null) {
+        throw new Error("--path-root requires a path");
+      }
+      options.pathRoot = next;
+      index += 1;
+      continue;
+    }
+
     if (arg.startsWith("--cwd=")) {
       options.cwd = arg.slice("--cwd=".length);
+      continue;
+    }
+
+    if (arg.startsWith("--path-root=")) {
+      options.pathRoot = arg.slice("--path-root=".length);
       continue;
     }
 
@@ -67,6 +83,7 @@ function parseArgs(argv) {
   return {
     ...options,
     cwd: resolve(options.cwd),
+    pathRoot: resolve(options.pathRoot),
   };
 }
 
@@ -112,7 +129,7 @@ for (const [dependency, patchFile] of uiPatches) {
     }
   }
 
-  patchedDependencies[dependency] = toPackageJsonPath(options.cwd, targetPath);
+  patchedDependencies[dependency] = toPackageJsonPath(options.pathRoot, targetPath);
 }
 
 targetPackage.patchedDependencies = sortObject(patchedDependencies);

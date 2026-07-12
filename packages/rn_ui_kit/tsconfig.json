@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "tamagui.config.ts",
+    "tamagui.build.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}
