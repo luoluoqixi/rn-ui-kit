@@ -33,8 +33,7 @@ export function RnUiKitDebugSectionPage({
 
   return (
     <YStack gap="$3">
-      {header}
-      <SectionPage instanceId={instanceId} />
+      <SectionPage header={header} instanceId={instanceId} />
     </YStack>
   );
 }

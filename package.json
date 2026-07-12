@@ -6,6 +6,9 @@
     "packages/*",
     "examples/*"
   ],
+  "overrides": {
+    "@babel/runtime": "7.29.7"
+  },
   "scripts": {
     "typecheck": "bun run --cwd packages/rn_ui_kit typecheck && bun run --cwd packages/rn_ui_kit_debug typecheck && bun run --cwd examples/app typecheck"
   }

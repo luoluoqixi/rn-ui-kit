@@ -41,6 +41,12 @@ export function NativePickerDialog({
   const pickerRef = useRef<any>(null);
   const theme = useTheme();
   const [anchorContainerWidth, setAnchorContainerWidth] = React.useState(0);
+  const handleAnchorContainerLayout = React.useCallback((event: LayoutChangeEvent) => {
+    const nextWidth = event.nativeEvent.layout.width;
+    setAnchorContainerWidth((prevWidth) =>
+      Math.abs(prevWidth - nextWidth) < 0.5 ? prevWidth : nextWidth,
+    );
+  }, []);
 
   useEffect(() => {
     if (visible) {
@@ -73,12 +79,6 @@ export function NativePickerDialog({
       : anchorAlign === "end"
         ? { right: anchorEdgeOffset, width: resolvedAnchorWidth }
         : { left: anchorEdgeOffset, width: resolvedAnchorWidth };
-  const handleAnchorContainerLayout = React.useCallback((event: LayoutChangeEvent) => {
-    const nextWidth = event.nativeEvent.layout.width;
-    setAnchorContainerWidth((prevWidth) =>
-      Math.abs(prevWidth - nextWidth) < 0.5 ? prevWidth : nextWidth,
-    );
-  }, []);
 
   return (
     <View style={styles.dialogContainer} onLayout={handleAnchorContainerLayout}>
