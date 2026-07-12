@@ -24,6 +24,11 @@
     "./tamagui.config": {
       "types": "./tamagui.config.ts",
       "default": "./tamagui.config.ts"
+    },
+    "./initialize": {
+      "react-native": "./src/initialize/index.ts",
+      "types": "./src/initialize/index.ts",
+      "default": "./src/initialize/index.ts"
     }
   },
   "files": [

@@ -7,23 +7,23 @@ import type { RnUiKitDebugRouteDefinition, RnUiKitDebugRouteKey } from "./types"
 export const rnUiKitDebugRouteDefinitions = [
   {
     Page: RnUiKitUiComponentsDebugPage,
-    description: "A full overview of rn_ui_kit components and interactions.",
+    description: "完整展示 rn_ui_kit 组件与交互行为。",
     key: "components",
-    label: "Components",
+    label: "组件总览",
     presentation: "static",
   },
   {
     Page: RnUiKitExampleControlsPage,
-    description: "A small page for switching state, values, and visual modes.",
+    description: "用于切换状态、数值和视觉模式的小示例页。",
     key: "controls",
-    label: "Controls example",
+    label: "控件示例",
     presentation: "scroll",
   },
   {
     Page: RnUiKitExampleLayoutPage,
-    description: "A small page for layout, list, and card navigation examples.",
+    description: "用于展示布局、列表和卡片导航的小示例页。",
     key: "layout",
-    label: "Layout example",
+    label: "布局示例",
     presentation: "scroll",
   },
 ] satisfies RnUiKitDebugRouteDefinition[];

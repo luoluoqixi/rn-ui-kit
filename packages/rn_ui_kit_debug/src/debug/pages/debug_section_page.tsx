@@ -7,9 +7,11 @@ import type { RnUiKitDebugRouteKey } from "../types";
 
 export function RnUiKitDebugSectionPage({
   contentTitle,
+  instanceId,
   sectionKey,
 }: {
   contentTitle?: string;
+  instanceId?: string;
   sectionKey: RnUiKitDebugRouteKey;
 }) {
   const definition = getRnUiKitDebugRouteDefinition(sectionKey);
@@ -24,7 +26,7 @@ export function RnUiKitDebugSectionPage({
   if (definition.presentation === "static") {
     return (
       <ScrollView nestedScrollEnabled showsVerticalScrollIndicator>
-        <SectionPage header={header} />
+        <SectionPage header={header} instanceId={instanceId} />
       </ScrollView>
     );
   }
@@ -32,7 +34,7 @@ export function RnUiKitDebugSectionPage({
   return (
     <YStack gap="$3">
       {header}
-      <SectionPage />
+      <SectionPage instanceId={instanceId} />
     </YStack>
   );
 }

@@ -15,43 +15,42 @@ import {
 import type { RnUiKitDebugSectionContentProps } from "../../types";
 
 export function RnUiKitExampleLayoutPage({ header }: RnUiKitDebugSectionContentProps) {
-  const [selected, setSelected] = useState("None");
+  const [selected, setSelected] = useState("无");
 
   return (
-    <YStack gap="$3">
+    <YStack gap="$3" px="$4">
       {header}
-      <Card description="A generic list and layout page." title="Layout">
+      <Card description="通用列表与布局示例页。" title="布局">
         <YStack gap="$4" p="$3" pt={0}>
           <Paragraph color="$color10">
-            This page gives the debug panel a second simple section without LonaNote-specific
-            workspace data.
+            这里展示 NativeList、ListGroup、分割线和卡片之间的基础排版。
           </Paragraph>
           <NativeList>
-            <NativeListSection title="Navigation examples">
+            <NativeListSection title="导航示例">
               <NativeListNavigationItem
-                onPress={() => setSelected("Account")}
-                title="Account"
-                value="Open"
+                onPress={() => setSelected("账户")}
+                title="账户"
+                value="打开"
               />
               <NativeListNavigationItem
-                onPress={() => setSelected("Appearance")}
-                title="Appearance"
-                value="Open"
+                onPress={() => setSelected("外观")}
+                title="外观"
+                value="打开"
               />
             </NativeListSection>
           </NativeList>
           <Separator />
           <ListGroup
             items={[
-              { subTitle: "A repeated item example", title: "First item" },
-              { subTitle: "Another repeated item example", title: "Second item" },
+              { subTitle: "重复列表项示例", title: "第一项" },
+              { subTitle: "另一个重复列表项示例", title: "第二项" },
             ]}
             rounded="$4"
             separator
           />
-          <Text color="$color10">Last selected: {selected}</Text>
-          <Button onPress={() => setSelected("Reset")} variant="outlined">
-            Reset selection
+          <Text color="$color10">最近选择：{selected}</Text>
+          <Button onPress={() => setSelected("已重置")} variant="outlined">
+            重置选择
           </Button>
         </YStack>
       </Card>

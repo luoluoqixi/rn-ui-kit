@@ -1,70 +1,164 @@
+import { NavigationContainer, type NavigationProp, useNavigation } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useMemo, useState } from "react";
 import { View } from "react-native";
-import { ScrollView, YStack } from "tamagui";
-import { Button, Sheet, Text } from "rn_ui_kit";
+import { YStack } from "tamagui";
+import { NativeSheet } from "rn_ui_kit";
 
 import { RnUiKitDebugHomePage } from "./pages/debug_home_page";
 import { RnUiKitDebugSectionPage } from "./pages/debug_section_page";
-import { getRnUiKitDebugRouteDefinition } from "./routes";
+import { getRnUiKitDebugRouteDefinition, rnUiKitDebugRouteDefinitions } from "./routes";
 
 import type { RnUiKitDebugPanelProps, RnUiKitDebugRouteKey } from "./types";
 
+type RnUiKitDebugStackParamList = {
+  index: undefined;
+} & Record<RnUiKitDebugRouteKey, undefined>;
+
+const Stack = createNativeStackNavigator<RnUiKitDebugStackParamList>();
+
 export function RnUiKitDebugPanel({
-  contentProps,
+  defaultOpen = true,
   initialRouteKey = "components",
+  onOpenChange,
+  open: openProp,
+  sheetMode = false,
   ...props
 }: RnUiKitDebugPanelProps) {
-  const [routeKey, setRouteKey] = useState<RnUiKitDebugRouteKey>(initialRouteKey);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
+  const open = openProp ?? uncontrolledOpen;
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (openProp == null) {
+      setUncontrolledOpen(nextOpen);
+    }
+
+    onOpenChange?.(nextOpen);
+  };
+
+  if (sheetMode) {
+    return (
+      <NativeSheet
+        handle
+        name="rn-ui-kit-debug-panel-sheet"
+        onOpenChange={handleOpenChange}
+        open={open}
+        snapPoints={["88%"]}
+        snapPointsMode="percent"
+      >
+        <View style={{ flex: 1 }}>
+          <RnUiKitDebugPanelContent initialRouteKey={initialRouteKey} sheetMode {...props} />
+        </View>
+      </NativeSheet>
+    );
+  }
+
+  return <RnUiKitDebugPanelContent initialRouteKey={initialRouteKey} {...props} />;
+}
+
+function RnUiKitDebugPanelContent({
+  initialRouteKey = "components",
+  sheetMode = false,
+  ...props
+}: RnUiKitDebugPanelProps) {
+  const [openSectionsInSheet, setOpenSectionsInSheet] = useState(false);
+  const [panelSheetOpen, setPanelSheetOpen] = useState(false);
+  const [sheetRouteKey, setSheetRouteKey] = useState<RnUiKitDebugRouteKey>(initialRouteKey);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [sheetPosition, setSheetPosition] = useState(0);
-  const routeDefinition = useMemo(() => getRnUiKitDebugRouteDefinition(routeKey), [routeKey]);
+  const sheetRouteDefinition = useMemo(
+    () => getRnUiKitDebugRouteDefinition(sheetRouteKey),
+    [sheetRouteKey],
+  );
 
   return (
     <YStack background="$background" flex={1} {...props}>
-      <ScrollView flex={1} {...contentProps}>
-        <YStack gap="$4" p="$4">
-          <RnUiKitDebugHomePage
-            activeRouteKey={routeKey}
-            onOpenInSheet={(key) => {
-              setRouteKey(key);
-              setSheetPosition(0);
-              setSheetOpen(true);
-            }}
-            onRouteChange={setRouteKey}
-          />
-          <RnUiKitDebugSectionPage sectionKey={routeKey} />
-        </YStack>
-      </ScrollView>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="index">
+          <Stack.Screen name="index" options={{ title: "rn_ui_kit 调试" }}>
+            {() => (
+              <RnUiKitDebugHomeRoute
+                onOpenInSheet={(key) => {
+                  setSheetRouteKey(key);
+                  setSheetOpen(true);
+                }}
+                onOpenPanelSheet={sheetMode ? undefined : () => setPanelSheetOpen(true)}
+                onOpenSectionsInSheetChange={setOpenSectionsInSheet}
+                openSectionsInSheet={openSectionsInSheet}
+              />
+            )}
+          </Stack.Screen>
+          {rnUiKitDebugRouteDefinitions.map((definition) => (
+            <Stack.Screen
+              key={definition.key}
+              name={definition.key}
+              options={{ title: definition.label }}
+            >
+              {() => (
+                <RnUiKitDebugSectionPage
+                  contentTitle={definition.label}
+                  instanceId={`stack-${definition.key}`}
+                  sectionKey={definition.key}
+                />
+              )}
+            </Stack.Screen>
+          ))}
+        </Stack.Navigator>
+      </NavigationContainer>
 
-      <Sheet.Controller hidden={false} onOpenChange={setSheetOpen} open={sheetOpen}>
-        <Sheet
-          content={
-            <View style={{ gap: 12, padding: 20 }}>
-              <Text fontSize="$6" fontWeight="700">
-                {routeDefinition.label}
-              </Text>
-              <Text color="$color10">
-                This is the same debug section opened from a Sheet example.
-              </Text>
-              <RnUiKitDebugSectionPage sectionKey={routeKey} />
-              <Button onPress={() => setSheetOpen(false)} theme="accent">
-                Close Sheet
-              </Button>
-            </View>
-          }
-          dismissOnSnapToBottom
-          handle
-          modal
-          onOpenChange={setSheetOpen}
-          onPositionChange={setSheetPosition}
-          open={sheetOpen}
-          overlay
-          position={sheetPosition}
-          snapPoints={["82%"]}
-          snapPointsMode="percent"
-          transition="200ms"
+      <NativeSheet
+        handle
+        name="rn-ui-kit-debug-section-sheet"
+        onOpenChange={setSheetOpen}
+        open={sheetOpen}
+        snapPoints={["82%"]}
+        snapPointsMode="percent"
+      >
+        <View style={{ flex: 1 }}>
+          <RnUiKitDebugSectionPage
+            contentTitle={sheetRouteDefinition.label}
+            instanceId={`sheet-${sheetRouteKey}`}
+            sectionKey={sheetRouteKey}
+          />
+        </View>
+      </NativeSheet>
+
+      {!sheetMode ? (
+        <RnUiKitDebugPanel
+          onOpenChange={setPanelSheetOpen}
+          open={panelSheetOpen}
+          sheetMode
         />
-      </Sheet.Controller>
+      ) : null}
     </YStack>
+  );
+}
+
+function RnUiKitDebugHomeRoute({
+  onOpenInSheet,
+  onOpenPanelSheet,
+  onOpenSectionsInSheetChange,
+  openSectionsInSheet,
+}: {
+  onOpenInSheet: (key: RnUiKitDebugRouteKey) => void;
+  onOpenPanelSheet?: () => void;
+  onOpenSectionsInSheetChange: (openInSheet: boolean) => void;
+  openSectionsInSheet: boolean;
+}) {
+  const navigation = useNavigation<NavigationProp<RnUiKitDebugStackParamList>>();
+
+  return (
+    <RnUiKitDebugHomePage
+      onOpenSection={(key) => {
+        if (openSectionsInSheet) {
+          onOpenInSheet(key);
+          return;
+        }
+
+        navigation.navigate(key);
+      }}
+      onOpenPanelSheet={onOpenPanelSheet}
+      onOpenSectionsInSheetChange={onOpenSectionsInSheetChange}
+      openSectionsInSheet={openSectionsInSheet}
+    />
   );
 }

@@ -2,6 +2,8 @@ import { type ConfigContext, type ExpoConfig } from "expo/config";
 
 import pkg from "./package.json";
 
+const bundleIdentifier = "com.luoluoqixi.rnuikitexample";
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: "rn_ui_kit example",
@@ -12,9 +14,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   userInterfaceStyle: "automatic",
   ios: {
     supportsTablet: true,
+    bundleIdentifier,
+    infoPlist: {
+      UIViewControllerBasedStatusBarAppearance: true,
+    },
   },
   android: {
     predictiveBackGestureEnabled: false,
+    package: bundleIdentifier,
   },
   web: {
     bundler: "metro",
