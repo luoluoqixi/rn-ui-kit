@@ -46,8 +46,8 @@ function useDebugStackScreenOptions() {
     contentStyle: { backgroundColor: appBackgroundColors.screen },
     headerShadowVisible: false,
     headerStyle: { backgroundColor: appBackgroundColors.header },
-    headerTintColor: theme.color.val,
-    headerTitleStyle: { color: theme.color.val },
+    headerTintColor: theme.color10.val,
+    headerTitleStyle: { color: theme.gray12.val },
   };
 }
 
@@ -59,8 +59,8 @@ function useDebugSheetStackScreenOptions() {
     headerRight: undefined,
     headerStatusBarHeight: 0,
     headerStyle: { backgroundColor: appBackgroundColors.header, height: 56 },
-    headerTintColor: theme.color.val,
-    headerTitleStyle: { color: theme.color.val },
+    headerTintColor: theme.color10.val,
+    headerTitleStyle: { color: theme.gray12.val },
   };
 }
 

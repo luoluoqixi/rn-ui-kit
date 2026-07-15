@@ -30,7 +30,7 @@ export function TrueSheetToolbarHeader({
   const appBackgroundColors = useAppBackgroundColors();
   const background = appBackgroundColors.sheet;
   const borderColor = theme.borderColor.val;
-  const titleColor = theme.color.val;
+  const titleColor = theme.gray12.val;
 
   return (
     <View
@@ -50,7 +50,7 @@ export function TrueSheetToolbarHeader({
           onPress={onBack}
           style={styles.backButton}
         >
-          <ChevronLeft color="$color" size={28} strokeWidth={2} />
+          <ChevronLeft color="$color10" size={28} strokeWidth={2} />
         </Pressable>
       ) : (
         <View style={styles.backPlaceholder} />

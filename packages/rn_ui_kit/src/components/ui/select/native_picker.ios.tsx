@@ -78,7 +78,7 @@ function WheelTrueSheet({
           (colorScheme ?? "light") as ResolvedColorScheme,
           undefined,
           theme.color10.val,
-          theme.color.val,
+          theme.gray12.val,
         ),
         title,
         headerLeft: () => <Button native onPress={onCancel} title="关闭" />,
