@@ -8,6 +8,8 @@ import {
 import type { ReactNode, Ref } from "react";
 import { Platform, StyleSheet, View } from "react-native";
 
+import { withNativeStackGestureOptions } from "../../../utils/navigation";
+
 import { type StackNavigationOptions, createStackNavigator } from "./stack_js_stack";
 import {
   type NativeStackNavigationOptions,
@@ -46,13 +48,17 @@ function TrueSheetStackNavigationInner({
   const ref = navigationRef as unknown as Ref<NavigationContainerRef<ParamListBase>>;
 
   if (trueSheetUsesNativeStackNavigator) {
+    const nativeScreenOptions = withNativeStackGestureOptions(
+      (screenOptions ?? {}) as NativeStackNavigationOptions,
+    );
+
     return (
       <NavigationIndependentTree>
         <NavigationContainer ref={ref}>
           <View style={styles.nativeStackRoot}>
             <NativeStack.Navigator
               initialRouteName={initialRouteName}
-              screenOptions={screenOptions as NativeStackNavigationOptions}
+              screenOptions={nativeScreenOptions}
             >
               {children}
             </NativeStack.Navigator>

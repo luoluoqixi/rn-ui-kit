@@ -6,7 +6,9 @@ export type RnUiKitDebugSectionPresentation = "scroll" | "static";
 
 export type RnUiKitDebugSectionContentProps = {
   header?: ReactNode;
+  headerTransparent?: boolean;
   instanceId?: string;
+  layoutHost?: "default" | "nativeSheet";
 };
 
 export type RnUiKitDebugRouteDefinition = {

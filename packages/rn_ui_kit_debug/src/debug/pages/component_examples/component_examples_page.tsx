@@ -27,14 +27,23 @@ export function getComponentExampleRouteName(key: string) {
 }
 
 /** The examples list lives on the debug panel stack; only its detail routes are separate screens. */
-export function RnUiKitComponentExamplesDebugPage({ header }: RnUiKitDebugSectionContentProps) {
+export function RnUiKitComponentExamplesDebugPage({
+  header,
+  headerTransparent = false,
+  layoutHost = "default",
+}: RnUiKitDebugSectionContentProps) {
   const appBackgroundColors = useAppBackgroundColors();
   const navigation = useNavigation<NavigationProp<DebugPanelNavigationParamList>>();
+  const adjustsForTransparentHeader = layoutHost === "default" && headerTransparent;
 
   return (
     <View style={[styles.root, { backgroundColor: appBackgroundColors.screen }]}>
       {header != null ? <View style={styles.routeHeader}>{header}</View> : null}
-      <NativeList>
+      <NativeList
+        automaticallyAdjustsScrollIndicatorInsets={
+          adjustsForTransparentHeader ? true : undefined
+        }
+      >
         <NativeListSection>
           {sortedComponentExampleDefinitions.map((definition) => (
             <NativeListNavigationItem
@@ -52,9 +61,11 @@ export function RnUiKitComponentExamplesDebugPage({ header }: RnUiKitDebugSectio
 
 export function RnUiKitComponentExampleDetailPage({
   definition,
+  headerTransparent = false,
   layoutHost = "default",
 }: {
   definition: ComponentExampleDefinition;
+  headerTransparent?: boolean;
   layoutHost?: "default" | "nativeSheet";
 }) {
   const appBackgroundColors = useAppBackgroundColors();
@@ -91,7 +102,13 @@ export function RnUiKitComponentExampleDetailPage({
   }
 
   return (
-    <ScrollView nestedScrollEnabled showsVerticalScrollIndicator style={scrollStyle}>
+    <ScrollView
+      automaticallyAdjustsScrollIndicatorInsets={headerTransparent ? true : undefined}
+      contentInsetAdjustmentBehavior={headerTransparent ? "automatic" : undefined}
+      nestedScrollEnabled
+      showsVerticalScrollIndicator
+      style={scrollStyle}
+    >
       {contents}
     </ScrollView>
   );

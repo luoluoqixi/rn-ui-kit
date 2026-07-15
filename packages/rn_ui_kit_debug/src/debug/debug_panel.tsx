@@ -1,14 +1,19 @@
 import { NavigationContainer, type NavigationProp, useNavigation } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import {
+  createNativeStackNavigator,
+  type NativeStackNavigationOptions,
+} from "@react-navigation/native-stack";
 import { useState } from "react";
 import { Platform, View } from "react-native";
 import { YStack, useTheme } from "tamagui";
 import {
   NativeSheet,
   NativeSheetStack,
+  isIos26Plus,
   nativeStackStatusBarOptions,
   useAppBackgroundColors,
   useColorSchemeSettings,
+  withNativeStackGestureOptions,
 } from "rn_ui_kit";
 
 import { RnUiKitDebugHomePage } from "./pages/debug_home_page";
@@ -36,29 +41,38 @@ const DEBUG_PANEL_SHEET_OVERLAY_HOST = "rn-ui-kit-debug-panel-sheet-overlay";
 const DEBUG_SECTION_SHEET_OVERLAY_HOST = "rn-ui-kit-debug-section-sheet-overlay";
 const DEBUG_SECTION_SHEET_SNAP_POINTS = [50, 75, 100];
 
-function useDebugStackScreenOptions() {
+function useDebugStackScreenOptions(): NativeStackNavigationOptions {
   const appBackgroundColors = useAppBackgroundColors();
   const { resolvedColorScheme } = useColorSchemeSettings();
   const theme = useTheme();
+  const transparentHeader = isIos26Plus();
 
-  return {
+  return withNativeStackGestureOptions({
     ...nativeStackStatusBarOptions(resolvedColorScheme),
     contentStyle: { backgroundColor: appBackgroundColors.screen },
     headerShadowVisible: false,
-    headerStyle: { backgroundColor: appBackgroundColors.header },
+    headerStyle: {
+      backgroundColor: transparentHeader ? "transparent" : appBackgroundColors.header,
+    },
+    headerTransparent: transparentHeader,
     headerTintColor: theme.color10.val,
     headerTitleStyle: { color: theme.gray12.val },
-  };
+  });
 }
 
 function useDebugSheetStackScreenOptions() {
   const appBackgroundColors = useAppBackgroundColors();
   const theme = useTheme();
+  const transparentHeader = isIos26Plus();
 
   return {
     headerRight: undefined,
     headerStatusBarHeight: 0,
-    headerStyle: { backgroundColor: appBackgroundColors.header, height: 56 },
+    headerStyle: {
+      backgroundColor: transparentHeader ? "transparent" : appBackgroundColors.header,
+      height: 56,
+    },
+    headerTransparent: transparentHeader,
     headerTintColor: theme.color10.val,
     headerTitleStyle: { color: theme.gray12.val },
   };
@@ -124,6 +138,7 @@ function RnUiKitDebugPanelSheet({
   function HomeRoute() {
     return (
       <RnUiKitDebugHomeRoute
+        layoutHost="nativeSheet"
         onOpenInSheet={(key) => setOpenSectionSheets((current) => new Set(current).add(key))}
         pages={pages}
         onOpenSectionsInSheetChange={(enabled) => {
@@ -198,6 +213,7 @@ function RnUiKitDebugPanelContent({
   ...props
 }: RnUiKitDebugPanelProps & { pages: RnUiKitDebugRouteDefinition[] }) {
   const debugStackScreenOptions = useDebugStackScreenOptions();
+  const headerTransparent = debugStackScreenOptions.headerTransparent === true;
   const [openSectionsInSheet, setOpenSectionsInSheet] = useState(false);
   const [panelSheetOpen, setPanelSheetOpen] = useState(false);
   const [sectionSheetPosition, setSectionSheetPosition] = useState(0);
@@ -214,6 +230,7 @@ function RnUiKitDebugPanelContent({
           <Stack.Screen name="index" options={{ title: "rn_ui_kit" }}>
             {() => (
               <RnUiKitDebugHomeRoute
+                headerTransparent={headerTransparent}
                 onOpenInSheet={(key) =>
                   setOpenSectionSheets((current) => new Set(current).add(key))
                 }
@@ -238,6 +255,7 @@ function RnUiKitDebugPanelContent({
               {() => (
                 <RnUiKitDebugSectionPage
                   contentTitle={definition.contentTitle}
+                  headerTransparent={headerTransparent}
                   instanceId={`stack-${definition.key}`}
                   pages={pages}
                   sectionKey={definition.key}
@@ -251,7 +269,12 @@ function RnUiKitDebugPanelContent({
               name={getComponentExampleRouteName(definition.key)}
               options={{ title: definition.label }}
             >
-              {() => <RnUiKitComponentExampleDetailPage definition={definition} />}
+              {() => (
+                <RnUiKitComponentExampleDetailPage
+                  definition={definition}
+                  headerTransparent={headerTransparent}
+                />
+              )}
             </Stack.Screen>
           ))}
         </Stack.Navigator>
@@ -276,6 +299,8 @@ function RnUiKitDebugPanelContent({
 }
 
 function RnUiKitDebugHomeRoute({
+  headerTransparent = false,
+  layoutHost = "default",
   onOpenInSheet,
   pages,
   onOpenPanelSheet,
@@ -284,6 +309,8 @@ function RnUiKitDebugHomeRoute({
   openSectionsInSheet,
   sectionSheetPosition,
 }: {
+  headerTransparent?: boolean;
+  layoutHost?: "default" | "nativeSheet";
   onOpenInSheet: (key: RnUiKitDebugRouteKey) => void;
   pages: RnUiKitDebugRouteDefinition[];
   onOpenPanelSheet?: () => void;
@@ -296,6 +323,8 @@ function RnUiKitDebugHomeRoute({
 
   return (
     <RnUiKitDebugHomePage
+      headerTransparent={headerTransparent}
+      layoutHost={layoutHost}
       onOpenSection={(key) => {
         if (openSectionsInSheet) return onOpenInSheet(key);
         navigation.navigate(key);
@@ -354,7 +383,7 @@ function RnUiKitDebugSectionSheets({
           }}
         >
           <NativeSheetStack.Screen name="index" options={{ title: definition.label }}>
-            {() => <RnUiKitComponentExamplesDebugPage />}
+            {() => <RnUiKitComponentExamplesDebugPage layoutHost="nativeSheet" />}
           </NativeSheetStack.Screen>
           {componentExampleDefinitions.map((example) => (
             <NativeSheetStack.Screen

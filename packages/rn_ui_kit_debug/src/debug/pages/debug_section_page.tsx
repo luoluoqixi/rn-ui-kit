@@ -8,12 +8,14 @@ import type { RnUiKitDebugRouteDefinition, RnUiKitDebugRouteKey } from "../types
 
 export function RnUiKitDebugSectionPage({
   contentTitle,
+  headerTransparent = false,
   instanceId,
   layoutHost = "default",
   pages,
   sectionKey,
 }: {
   contentTitle?: string;
+  headerTransparent?: boolean;
   instanceId?: string;
   layoutHost?: "default" | "nativeSheet";
   pages: RnUiKitDebugRouteDefinition[];
@@ -35,22 +37,41 @@ export function RnUiKitDebugSectionPage({
         style={styles.staticScrollView}
       >
         {header != null ? <View style={styles.staticContentHeader}>{header}</View> : null}
-        <SectionPage instanceId={instanceId} />
+        <SectionPage
+          headerTransparent={headerTransparent}
+          instanceId={instanceId}
+          layoutHost={layoutHost}
+        />
       </NativeSheetScrollContent>
     );
   }
 
   if (definition.presentation === "static") {
     return (
-      <ScrollView nestedScrollEnabled showsVerticalScrollIndicator>
-        <SectionPage header={header} instanceId={instanceId} />
+      <ScrollView
+        automaticallyAdjustsScrollIndicatorInsets={headerTransparent ? true : undefined}
+        contentInsetAdjustmentBehavior={headerTransparent ? "automatic" : undefined}
+        nestedScrollEnabled
+        showsVerticalScrollIndicator
+      >
+        <SectionPage
+          header={header}
+          headerTransparent={headerTransparent}
+          instanceId={instanceId}
+          layoutHost={layoutHost}
+        />
       </ScrollView>
     );
   }
 
   return (
     <YStack flex={1} gap="$3" style={styles.scrollPage}>
-      <SectionPage header={header} instanceId={instanceId} />
+      <SectionPage
+        header={header}
+        headerTransparent={headerTransparent}
+        instanceId={instanceId}
+        layoutHost={layoutHost}
+      />
     </YStack>
   );
 }

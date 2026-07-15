@@ -13,6 +13,8 @@ import {
 import type { RnUiKitDebugRouteDefinition, RnUiKitDebugRouteKey } from "../types";
 
 export function RnUiKitDebugHomePage({
+  headerTransparent = false,
+  layoutHost = "default",
   openSectionsInSheet,
   pages,
   onOpenPanelSheet,
@@ -21,6 +23,8 @@ export function RnUiKitDebugHomePage({
   onSectionSheetPositionChange,
   onOpenSectionsInSheetChange,
 }: {
+  headerTransparent?: boolean;
+  layoutHost?: "default" | "nativeSheet";
   openSectionsInSheet: boolean;
   pages: RnUiKitDebugRouteDefinition[];
   onOpenPanelSheet?: () => void;
@@ -29,6 +33,7 @@ export function RnUiKitDebugHomePage({
   onSectionSheetPositionChange?: (position: number) => void;
   onOpenSectionsInSheetChange?: (openInSheet: boolean) => void;
 }) {
+  const adjustsForTransparentHeader = layoutHost === "default" && headerTransparent;
   const sections = Array.from(
     pages.reduce((groups, page) => {
       const section = page.section ?? "调试分区";
@@ -40,7 +45,9 @@ export function RnUiKitDebugHomePage({
   );
 
   return (
-    <NativeList>
+    <NativeList
+      automaticallyAdjustsScrollIndicatorInsets={adjustsForTransparentHeader ? true : undefined}
+    >
       {sections.map(([section, sectionPages]) => (
         <NativeListSection key={section} title={section}>
           {[...sectionPages]
