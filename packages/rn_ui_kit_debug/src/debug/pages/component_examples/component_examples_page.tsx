@@ -1,5 +1,4 @@
 import { type NavigationProp, useIsFocused, useNavigation } from "@react-navigation/native";
-import { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
 import {
   NativeList,
@@ -17,6 +16,12 @@ import type { ComponentExampleDefinition } from "./types";
 
 type DebugPanelNavigationParamList = Record<string, undefined>;
 
+const sortedComponentExampleDefinitions = [...componentExampleDefinitions].sort(
+  (left, right) =>
+    left.label.localeCompare(right.label, "en", { numeric: true, sensitivity: "base" }) ||
+    left.key.localeCompare(right.key),
+);
+
 export function getComponentExampleRouteName(key: string) {
   return `component-example:${key}`;
 }
@@ -25,33 +30,21 @@ export function getComponentExampleRouteName(key: string) {
 export function RnUiKitComponentExamplesDebugPage({ header }: RnUiKitDebugSectionContentProps) {
   const appBackgroundColors = useAppBackgroundColors();
   const navigation = useNavigation<NavigationProp<DebugPanelNavigationParamList>>();
-  const groupedDefinitions = useMemo(() => {
-    return Array.from(
-      componentExampleDefinitions.reduce((groups, definition) => {
-        const entries = groups.get(definition.group) ?? [];
-        entries.push(definition);
-        groups.set(definition.group, entries);
-        return groups;
-      }, new Map<string, ComponentExampleDefinition[]>()),
-    );
-  }, []);
 
   return (
     <View style={[styles.root, { backgroundColor: appBackgroundColors.screen }]}>
       {header != null ? <View style={styles.routeHeader}>{header}</View> : null}
       <NativeList>
-        {groupedDefinitions.map(([group, definitions]) => (
-          <NativeListSection key={group} title={group}>
-            {definitions.map((definition) => (
-              <NativeListNavigationItem
-                key={definition.key}
-                onPress={() => navigation.navigate(getComponentExampleRouteName(definition.key))}
-                subtitle={definition.description}
-                title={definition.label}
-              />
-            ))}
-          </NativeListSection>
-        ))}
+        <NativeListSection>
+          {sortedComponentExampleDefinitions.map((definition) => (
+            <NativeListNavigationItem
+              key={definition.key}
+              onPress={() => navigation.navigate(getComponentExampleRouteName(definition.key))}
+              subtitle={definition.description}
+              title={definition.label}
+            />
+          ))}
+        </NativeListSection>
       </NativeList>
     </View>
   );
