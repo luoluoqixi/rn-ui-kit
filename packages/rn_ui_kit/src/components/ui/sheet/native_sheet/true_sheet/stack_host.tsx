@@ -27,6 +27,7 @@ import {
   type TrueSheetInnerStackScreenOptions,
   trueSheetUsesNativeStackNavigator,
 } from "./stack_navigator";
+import { createTrueSheetOverlayPortalHostName } from "./overlay_host_name";
 import { TrueSheetScrollLayoutProvider } from "./true_sheet_scroll_context";
 import { useTrueSheetOverlayLayoutSync } from "./use_true_sheet_overlay_layout_sync";
 
@@ -34,7 +35,7 @@ const platform = os();
 
 export type TrueSheetStackHostProps<ParamList extends ParamListBase = ParamListBase> = {
   children: ReactNode;
-  /** 当前 True Sheet Stack 宿主专属 overlay host；若内部会开 Dialog / Popover / Toast，务必传唯一值，勿复用外层 host。 */
+  /** 当前 True Sheet Stack 宿主专属 overlay host；省略时按 `name` 自动生成。 */
   overlayPortalHostName?: string;
   /** 关闭 Sheet 时重置栈到该路由名 */
   initialRouteName?: keyof ParamList & string;
@@ -63,8 +64,7 @@ const defaultSheetProps: Pick<
 
 /**
  * 具名 True Sheet + 内嵌原生 Stack（替代自绘 header + useState 切屏）。
- * 若 stack 内页面会再打开 Dialog / AlertDialog / Popover / Toast，需为当前宿主注册独立 `overlayPortalHostName`，
- * 避免 portal / floating 继续落到外层 sheet 或 app root 坐标系。
+ * 默认以 `name` 注册独立 overlay host，避免 portal / floating 继续落到外层 sheet 或 app root 坐标系。
  */
 function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase>({
   children,
@@ -166,6 +166,9 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
     sheetProps?.backgroundColor ?? (isIos26Plus() ? undefined : appBackgroundColors.sheet);
   const backgroundStyle =
     resolvedBackgroundColor != null ? { backgroundColor: resolvedBackgroundColor } : null;
+  const resolvedOverlayPortalHostName = createTrueSheetOverlayPortalHostName(
+    overlayPortalHostName ?? `${name}-overlay`,
+  );
   const resolvedSheetProps = {
     ...sheetProps,
     backgroundColor: resolvedBackgroundColor,
@@ -191,13 +194,9 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
       nativeScrollInsetsApplied={false}
     >
       <GestureHandlerRootView style={[styles.gestureRoot, backgroundStyle]}>
-        {overlayPortalHostName != null ? (
-          <ScreenOverlayPortalProvider hostName={overlayPortalHostName}>
-            {stackNavigation}
-          </ScreenOverlayPortalProvider>
-        ) : (
-          stackNavigation
-        )}
+        <ScreenOverlayPortalProvider hostName={resolvedOverlayPortalHostName}>
+          {stackNavigation}
+        </ScreenOverlayPortalProvider>
       </GestureHandlerRootView>
     </TrueSheetScrollLayoutProvider>
   );
@@ -224,10 +223,6 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
 export function TrueSheetStackHost<ParamList extends ParamListBase = ParamListBase>(
   props: TrueSheetStackHostProps<ParamList>,
 ) {
-  if (props.overlayPortalHostName == null) {
-    return <TrueSheetStackHostInner {...props} />;
-  }
-
   return (
     <TrueSheetOverlayLayoutProvider>
       <TrueSheetStackHostInner {...props} />

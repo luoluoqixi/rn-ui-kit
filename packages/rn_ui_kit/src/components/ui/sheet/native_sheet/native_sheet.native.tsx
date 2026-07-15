@@ -6,6 +6,7 @@ import { iosMajorVersion, isIos26Plus, os } from "../../utils/platform";
 import { useAppBackgroundColors } from "../../utils/theme";
 
 import { dismissTrueSheet, resizeTrueSheet } from "./true_sheet";
+import { createTrueSheetOverlayPortalHostName } from "./true_sheet/overlay_host_name";
 import { TrueSheetPanel } from "./true_sheet/panel";
 import type { NativeSheetProps } from "./types";
 
@@ -238,8 +239,12 @@ export function NativeSheet({
   const appBackgroundColors = useAppBackgroundColors();
   const [generatedSheetName] = useState(() => `ui-sheet-native-${++nativeSheetCounter}`);
   const sheetName = name ?? generatedSheetName;
-  const [generatedOverlayPortalHostName] = useState(() => `${sheetName}-overlay`);
-  const overlayPortalHostName = overlayPortalHostNameProp ?? generatedOverlayPortalHostName;
+  const [generatedOverlayPortalHostName] = useState(() =>
+    createTrueSheetOverlayPortalHostName(`${sheetName}-overlay`),
+  );
+  const overlayPortalHostName = createTrueSheetOverlayPortalHostName(
+    overlayPortalHostNameProp ?? generatedOverlayPortalHostName,
+  );
   const sheetState = useControllableNativeSheetState({
     defaultOpen,
     defaultPosition,

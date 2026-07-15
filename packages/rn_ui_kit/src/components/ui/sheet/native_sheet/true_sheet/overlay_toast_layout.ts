@@ -1,6 +1,6 @@
 import { os } from "../../../utils/platform";
-import { DEBUG_OVERLAY_PORTAL_HOST } from "../debug_overlay_portal";
 import { getTrueSheetPartialDetentCompensationScale } from "./overlay_layout_metrics";
+import { isTrueSheetOverlayPortalHostName } from "./overlay_host_name";
 
 const platform = os();
 
@@ -30,14 +30,9 @@ export const IOS_PAGE_SHEET_TOAST_VIEWPORT_INSET = 36;
  */
 export const IOS_TRUE_SHEET_TOAST_VIEWPORT_INSET = 56;
 
-const DEBUG_SECTION_OVERLAY_PORTAL_PREFIX = `${DEBUG_OVERLAY_PORTAL_HOST}:section:`;
-
 /** True Sheet overlay host（`insetAdjustment="automatic"` 会垫高布局底，与 pageSheet 不同） */
 export function isTrueSheetOverlayPortalHost(hostName: string): boolean {
-  return (
-    hostName === DEBUG_OVERLAY_PORTAL_HOST ||
-    hostName.startsWith(DEBUG_SECTION_OVERLAY_PORTAL_PREFIX)
-  );
+  return isTrueSheetOverlayPortalHostName(hostName);
 }
 
 /**

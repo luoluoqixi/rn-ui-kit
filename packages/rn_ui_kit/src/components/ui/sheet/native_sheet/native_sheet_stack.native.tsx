@@ -3,6 +3,7 @@ import { useWindowDimensions } from "react-native";
 
 import { clampDetentIndex, resolveNativeDetents } from "./native_sheet.native";
 import { dismissTrueSheet } from "./true_sheet";
+import { createTrueSheetOverlayPortalHostName } from "./true_sheet/overlay_host_name";
 import { TrueSheetStackHost } from "./true_sheet/stack_host";
 import {
   TrueSheetInnerStack,
@@ -22,6 +23,12 @@ function TrueSheetNativeSheetStackRoot({
 }: NativeSheetStackProps) {
   const { height: windowHeight } = useWindowDimensions();
   const [sheetName] = useState(() => name ?? "native-sheet-stack");
+  const [generatedOverlayPortalHostName] = useState(() =>
+    createTrueSheetOverlayPortalHostName(`${sheetName}-overlay`),
+  );
+  const resolvedOverlayPortalHostName = createTrueSheetOverlayPortalHostName(
+    overlayPortalHostName ?? generatedOverlayPortalHostName,
+  );
   const [navigationRef] = useState(() => createTrueSheetStackNavigationRef());
   const [mounted, setMounted] = useState(open);
   const presentedRef = useRef(false);
@@ -94,7 +101,7 @@ function TrueSheetNativeSheetStackRoot({
       onRequestClose={() => {
         onOpenChange?.(false);
       }}
-      overlayPortalHostName={overlayPortalHostName}
+      overlayPortalHostName={resolvedOverlayPortalHostName}
       screenOptions={screenOptions}
       sheetProps={resolvedSheetProps as any}
     >
