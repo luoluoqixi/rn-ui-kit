@@ -9,13 +9,14 @@
 } from "react";
 import {
   type LayoutChangeEvent,
-  PanResponder,
   PixelRatio,
   type StyleProp,
   StyleSheet,
   View,
   type ViewStyle,
 } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { runOnJS } from "react-native-reanimated";
 
 import { isMobile, isWeb } from "../utils/platform";
 import { getVariableValue, useTheme } from "../theme";
@@ -593,61 +594,95 @@ const SplitLayoutInner = forwardRef<SplitLayoutHandle, SplitLayoutProps>(
       [bindWebPointerTracking, resetSash, startDrag, vertical],
     );
 
-    const sashPanResponders = useMemo(() => {
+    const startNativeSashDrag = useCallback(
+      (index: number) => {
+        const now = Date.now();
+        const lastTap = nativeLastTapRef.current;
+
+        if (lastTap && lastTap.index === index && now - lastTap.time <= SASH_DOUBLE_TAP_DELAY) {
+          nativePendingDoubleTapRef.current = index;
+          nativeLastTapRef.current = null;
+        } else {
+          nativePendingDoubleTapRef.current = null;
+        }
+
+        startDrag(index);
+      },
+      [startDrag],
+    );
+
+    const moveNativeSashDrag = useCallback(
+      (index: number, movement: number) => {
+        if (
+          nativePendingDoubleTapRef.current === index &&
+          Math.abs(movement) > SASH_TAP_MOVE_TOLERANCE
+        ) {
+          nativePendingDoubleTapRef.current = null;
+        }
+        moveDrag(movement);
+      },
+      [moveDrag],
+    );
+
+    const finalizeNativeSashDrag = useCallback(
+      (index: number, movement: number, succeeded: boolean) => {
+        const absoluteMovement = Math.abs(movement);
+        if (
+          nativePendingDoubleTapRef.current === index &&
+          absoluteMovement <= SASH_TAP_MOVE_TOLERANCE
+        ) {
+          nativePendingDoubleTapRef.current = null;
+          nativeLastTapRef.current = null;
+          resetSash(index);
+          return;
+        }
+
+        // A stationary Pan can finalize as FAILED because it never entered ACTIVE.
+        // It is still a valid tap for the sash double-tap gesture.
+        if (!succeeded) {
+          nativePendingDoubleTapRef.current = null;
+          nativeLastTapRef.current =
+            absoluteMovement <= SASH_TAP_MOVE_TOLERANCE ? { index, time: Date.now() } : null;
+          finishDrag();
+          return;
+        }
+
+        nativeLastTapRef.current =
+          absoluteMovement <= SASH_TAP_MOVE_TOLERANCE ? { index, time: Date.now() } : null;
+        finishDrag();
+      },
+      [finishDrag, resetSash],
+    );
+
+    const sashNativeGestures = useMemo(() => {
       if (IS_WEB) return [];
 
       return Array.from({ length: Math.max(panes.length - 1, 0) }, (_, index) =>
-        PanResponder.create({
-          onMoveShouldSetPanResponder: () => true,
-          onPanResponderGrant: () => {
-            const now = Date.now();
-            const lastTap = nativeLastTapRef.current;
-
-            if (lastTap && lastTap.index === index && now - lastTap.time <= SASH_DOUBLE_TAP_DELAY) {
-              nativePendingDoubleTapRef.current = index;
-              nativeLastTapRef.current = null;
-            } else {
-              nativePendingDoubleTapRef.current = null;
-            }
-
-            startDrag(index);
-          },
-          onPanResponderMove: (_event, gestureState) => {
-            const movement = vertical ? gestureState.dy : gestureState.dx;
-            if (
-              nativePendingDoubleTapRef.current === index &&
-              Math.abs(movement) > SASH_TAP_MOVE_TOLERANCE
-            ) {
-              nativePendingDoubleTapRef.current = null;
-            }
-            moveDrag(movement);
-          },
-          onPanResponderRelease: (_event, gestureState) => {
-            const movement = vertical ? Math.abs(gestureState.dy) : Math.abs(gestureState.dx);
-
-            if (
-              nativePendingDoubleTapRef.current === index &&
-              movement <= SASH_TAP_MOVE_TOLERANCE
-            ) {
-              nativePendingDoubleTapRef.current = null;
-              nativeLastTapRef.current = null;
-              resetSash(index);
-              return;
-            }
-
-            nativeLastTapRef.current =
-              movement <= SASH_TAP_MOVE_TOLERANCE ? { index, time: Date.now() } : null;
-            finishDrag();
-          },
-          onPanResponderTerminate: () => {
-            nativePendingDoubleTapRef.current = null;
-            nativeLastTapRef.current = null;
-            finishDrag();
-          },
-          onStartShouldSetPanResponder: () => true,
-        }),
+        Gesture.Pan()
+          .minDistance(0)
+          .shouldCancelWhenOutside(false)
+          .onBegin(() => {
+            "worklet";
+            runOnJS(startNativeSashDrag)(index);
+          })
+          .onUpdate((event) => {
+            "worklet";
+            const movement = vertical ? event.translationY : event.translationX;
+            runOnJS(moveNativeSashDrag)(index, movement);
+          })
+          .onFinalize((event, succeeded) => {
+            "worklet";
+            const movement = vertical ? event.translationY : event.translationX;
+            runOnJS(finalizeNativeSashDrag)(index, movement, succeeded);
+          }),
       );
-    }, [finishDrag, moveDrag, panes.length, resetSash, startDrag, vertical]);
+    }, [
+      finalizeNativeSashDrag,
+      moveNativeSashDrag,
+      panes.length,
+      startNativeSashDrag,
+      vertical,
+    ]);
 
     return (
       <View
@@ -707,9 +742,10 @@ const SplitLayoutInner = forwardRef<SplitLayoutHandle, SplitLayoutProps>(
             const sashHovered = hoveredSashIndex === index;
             const sashLineActive = canDragSash && (sashActive || sashHovered);
 
-            return (
+            const sashKey = `${pane.key}-sash`;
+            const sashView = (
               <View
-                key={`${pane.key}-sash`}
+                key={sashKey}
                 pointerEvents={canDragSash ? undefined : "none"}
                 style={[
                   styles.sash,
@@ -724,9 +760,7 @@ const SplitLayoutInner = forwardRef<SplitLayoutHandle, SplitLayoutProps>(
                         setHoveredSashIndex((current) => (current === index ? null : current));
                       },
                     } as any)
-                  : canDragSash
-                    ? sashPanResponders[index]?.panHandlers
-                    : undefined)}
+                  : undefined)}
               >
                 <View
                   pointerEvents="none"
@@ -766,6 +800,15 @@ const SplitLayoutInner = forwardRef<SplitLayoutHandle, SplitLayoutProps>(
                   />
                 ) : null}
               </View>
+            );
+
+            const nativeGesture = canDragSash ? sashNativeGestures[index] : undefined;
+            return nativeGesture ? (
+              <GestureDetector gesture={nativeGesture} key={sashKey}>
+                {sashView}
+              </GestureDetector>
+            ) : (
+              sashView
             );
           })}
         </View>
