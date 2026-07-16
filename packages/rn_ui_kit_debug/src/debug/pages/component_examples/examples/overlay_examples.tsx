@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, useWindowDimensions, View } from "react-native";
 import {
   AlertDialog,
   Button,
@@ -187,7 +187,6 @@ type ExampleModalSheetProps = {
 };
 
 function ExampleModalSheet({
-  children,
   content,
   native,
   onOpenChange,
@@ -197,22 +196,27 @@ function ExampleModalSheet({
   snapPoints,
   snapPointsMode,
 }: ExampleModalSheetProps) {
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
+
   if (native) {
     return (
-      <NativeSheet
-        content={content}
-        handle
-        modal
-        onOpenChange={onOpenChange}
-        onPositionChange={onPositionChange}
-        open={open}
-        overlay
-        position={position}
-        snapPoints={snapPoints}
-        snapPointsMode={snapPointsMode}
+      <View
+        pointerEvents="box-none"
+        style={[styles.nativeSheetHost, { height: windowHeight, width: windowWidth }]}
       >
-        {children}
-      </NativeSheet>
+        <NativeSheet
+          content={content}
+          handle
+          modal
+          onOpenChange={onOpenChange}
+          onPositionChange={onPositionChange}
+          open={open}
+          overlay
+          position={position}
+          snapPoints={snapPoints}
+          snapPointsMode={snapPointsMode}
+        />
+      </View>
     );
   }
 
@@ -230,9 +234,7 @@ function ExampleModalSheet({
       snapPoints={snapPoints}
       snapPointsMode={snapPointsMode}
       transition="200ms"
-    >
-      {children}
-    </Sheet>
+    />
   );
 }
 
@@ -308,7 +310,10 @@ function SheetExample() {
           <Button onPress={() => openSheet(setPercentOpen, setPercentPosition)} variant="outlined">
             全局 percent
           </Button>
-          <Button onPress={() => openSheet(setConstantOpen, setConstantPosition)} variant="outlined">
+          <Button
+            onPress={() => openSheet(setConstantOpen, setConstantPosition)}
+            variant="outlined"
+          >
             constant
           </Button>
           <Button onPress={() => openSheet(setFitOpen, setFitPosition)} variant="outlined">
@@ -536,6 +541,7 @@ export const overlayExamples = [
 
 const styles = StyleSheet.create({
   dialogContent: { gap: 8 },
+  nativeSheetHost: { left: 0, position: "absolute", top: 0 },
   popoverContent: { gap: 12, minWidth: 240, padding: 12 },
   sheetContent: { gap: 16, padding: 24 },
   sheetItem: {
