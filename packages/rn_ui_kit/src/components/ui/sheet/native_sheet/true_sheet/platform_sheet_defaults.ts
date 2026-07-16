@@ -1,6 +1,8 @@
 import type { TrueSheetProps } from "@lodev09/react-native-true-sheet";
 import { Platform, type StyleProp, type ViewStyle } from "react-native";
 
+import { isIos26Plus } from "../../../utils/platform";
+
 const scrollableWithPinnedScroll = {
   scrollable: true,
   scrollableOptions: {
@@ -26,7 +28,19 @@ export function getTrueSheetStackHostScrollableProps(): Pick<
   TrueSheetProps,
   "scrollable" | "scrollableOptions"
 > {
-  return scrollableWithPinnedScroll;
+  return {
+    scrollable: true,
+    scrollableOptions: {
+      ...scrollableWithPinnedScroll.scrollableOptions,
+      // TrueSheet 会在钉住/刷新显式注册的 ScrollView 时重新写入 edge effect。
+      // 默认值是 hidden，会覆盖 Native Stack 在 iOS 26+ 透明标题栏上配置的
+      // automatic top edge effect，导致详情页标题栏失去系统模糊效果。
+      // Stack 宿主需要保留系统的 automatic；普通 Panel 仍沿用 hidden 默认值。
+      ...(Platform.OS === "ios" && isIos26Plus()
+        ? { topScrollEdgeEffect: "automatic" as const }
+        : {}),
+    },
+  };
 }
 
 /** `scrollable={false}` 时 iOS 内容区不会自动 flex:1，需显式补上否则白屏。 */
