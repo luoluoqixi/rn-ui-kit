@@ -427,6 +427,8 @@ function NativeListRoot({
   const manuallyAdjustNormalPageIndicator =
     !insideTrueSheet && automaticallyAdjustsScrollIndicatorInsets == null;
   const normalPageIndicatorBottomInset = scrollIndicatorInsets?.bottom ?? insets.bottom;
+  const compensatesForTrueSheetViewportClipping =
+    insideTrueSheet && scrollable && automaticallyAdjustsScrollIndicatorInsets !== false;
   return (
     <NativeListContext.Provider value={{ native: true }}>
       <Host style={[styles.nativeRoot, style]}>
@@ -436,7 +438,9 @@ function NativeListRoot({
           automaticallyAdjustsScrollIndicatorInsets={
             manuallyAdjustNormalPageIndicator ? false : automaticallyAdjustsScrollIndicatorInsets
           }
-          compensatesForViewportClipping={insideTrueSheet}
+          // 固定高度的内嵌列表可以显式关闭 indicator 自动调整；这时也必须关闭
+          // TrueSheet viewport clipping 补偿，否则初次布局在屏幕外时会留下过期的底部 inset。
+          compensatesForViewportClipping={compensatesForTrueSheetViewportClipping}
           initialScrollAnchor="center"
           initialScrollTarget={initialScrollTarget}
           modifiers={[

@@ -775,7 +775,8 @@ export function NativeListRoot({
         safeAreaBottom: insets.bottom,
       })
     : undefined;
-  const indicatorBottomInset = insideTrueSheet
+  const indicatorBottomInset =
+    insideTrueSheet && automaticallyAdjustsScrollIndicatorInsets !== false
     ? getTrueSheetScrollIndicatorBottomInset({
         automaticContentInsetAdjustment,
         nativeScrollInsetsApplied,

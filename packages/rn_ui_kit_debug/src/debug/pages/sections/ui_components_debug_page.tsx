@@ -1797,7 +1797,7 @@ export function RnUiKitUiComponentsDebugPage({ header }: RnUiKitUiComponentsDebu
             },
           ]}
         >
-          <NativeList>
+          <NativeList automaticallyAdjustsScrollIndicatorInsets={false}>
             <NativeListSection title="NativeList 示例">
               <NativeListNavigationItem
                 nativeHaptics={debugNativeHaptics}
