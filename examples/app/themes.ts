@@ -65,9 +65,6 @@ const accentChildThemeNames = [
   "ruby",
   "golden",
   "aqua",
-  "success",
-  "warning",
-  "error",
 ] as const;
 
 export const accentThemeNames = accentChildThemeNames;
