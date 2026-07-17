@@ -1,9 +1,14 @@
-import { NavigationContainer, type NavigationProp, useNavigation } from "@react-navigation/native";
+import {
+  NavigationContainer,
+  type NavigationProp,
+  useIsFocused,
+  useNavigation,
+} from "@react-navigation/native";
 import {
   createNativeStackNavigator,
   type NativeStackNavigationOptions,
 } from "@react-navigation/native-stack";
-import { useState } from "react";
+import { type ComponentProps, useState } from "react";
 import { Platform, View } from "react-native";
 import { YStack, useTheme } from "tamagui";
 import {
@@ -80,6 +85,13 @@ function useDebugSheetStackScreenOptions() {
     headerTintColor: theme.color10.val,
     headerTitleStyle: { color: theme.gray12.val },
   };
+}
+
+function FocusedNativeSheetDebugSectionPage(
+  props: ComponentProps<typeof RnUiKitDebugSectionPage>,
+) {
+  const isFocused = useIsFocused();
+  return <RnUiKitDebugSectionPage {...props} bindToNativeSheet={isFocused} />;
 }
 
 export function RnUiKitDebugPanel({
@@ -178,7 +190,7 @@ function RnUiKitDebugPanelSheet({
             options={{ title: definition.label }}
           >
             {() => (
-              <RnUiKitDebugSectionPage
+              <FocusedNativeSheetDebugSectionPage
                 contentTitle={definition.contentTitle}
                 instanceId={`panel-sheet-stack-${definition.key}`}
                 layoutHost="nativeSheet"
@@ -448,6 +460,7 @@ function RnUiKitDebugSectionSheets({
       >
         <View style={{ flex: 1 }}>
           <RnUiKitDebugSectionPage
+            bindToNativeSheet={openKeys.has(definition.key)}
             contentTitle={definition.contentTitle}
             instanceId={`${instancePrefix}-${definition.key}`}
             layoutHost={

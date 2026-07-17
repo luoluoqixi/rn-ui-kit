@@ -7,6 +7,7 @@ import { getRnUiKitDebugRouteDefinition } from "../routes";
 import type { RnUiKitDebugRouteDefinition, RnUiKitDebugRouteKey } from "../types";
 
 export function RnUiKitDebugSectionPage({
+  bindToNativeSheet = false,
   contentTitle,
   headerTransparent = false,
   instanceId,
@@ -14,6 +15,7 @@ export function RnUiKitDebugSectionPage({
   pages,
   sectionKey,
 }: {
+  bindToNativeSheet?: boolean;
   contentTitle?: string;
   headerTransparent?: boolean;
   instanceId?: string;
@@ -33,6 +35,7 @@ export function RnUiKitDebugSectionPage({
   if (layoutHost === "nativeSheet" && definition.presentation === "static") {
     return (
       <NativeSheetScrollContent
+        bindToNativeSheet={bindToNativeSheet}
         contentContainerStyle={styles.staticScrollContent}
         style={styles.staticScrollView}
       >
