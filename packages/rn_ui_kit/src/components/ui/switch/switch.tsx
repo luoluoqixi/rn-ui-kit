@@ -11,7 +11,7 @@ import {
   useThemeName,
 } from "tamagui";
 
-import { isWeb, os, supportsImpactHaptics } from "../utils/platform";
+import { iosMajorVersion, isIos15, isWeb, os, supportsImpactHaptics } from "../utils/platform";
 import { triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
 
 import type { SwitchProps, SwitchThumbProps } from "./types";
@@ -97,8 +97,8 @@ function SwitchRoot(props: SwitchProps) {
     onCheckedChange?.(nextChecked);
 
     const iosDefaultHaptics = native && ios && supportsImpactHaptics();
-    if (!iosDefaultHaptics || isLabel) {
-      // ios 中, 原生 Switch 交互默认是有震动的 (除了iPhone6s或以下, 可能是封装原生Switch 的库用的不支持 iPhone6s 的震动api)
+    if (!iosDefaultHaptics || isLabel || isIos15()) {
+      // ios 中, 原生 Switch 交互默认是有震动的 (除了iPhone6s或以下)
       // 所以 ios 原生 Switch 不需要自己调用震动 api.
       triggerNativeHaptics(resolvedNativeHaptics);
     }

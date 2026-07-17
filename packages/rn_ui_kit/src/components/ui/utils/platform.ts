@@ -74,6 +74,11 @@ export function isIos26Plus(): boolean {
   return major != null && major >= 26;
 }
 
+export function isIos15(): boolean {
+  const major = iosMajorVersion();
+  return major != null && major <= 15;
+}
+
 export function isLegacyCompactIphone(): boolean {
   if (Platform.OS !== "ios") {
     return false;
