@@ -874,29 +874,44 @@ index a7ca51d..7aec0f4 100644
      }
    }
  
-@@ -55,3 +141,178 @@ struct ListView: ExpoSwiftUI.View {
+@@ -55,3 +141,256 @@ struct ListView: ExpoSwiftUI.View {
      return result
    }
  }
 +
-+private struct ScrollInsetAdjustmentView: UIViewRepresentable {
++private struct ScrollInsetAdjustmentView: UIViewControllerRepresentable {
 +  let automaticallyAdjustsScrollIndicatorInsets: Bool
 +  let contentInsetAdjustmentBehavior: ListContentInsetAdjustmentBehavior?
 +  let tracksNavigationBarScrollEdge: Bool
 +
-+  func makeUIView(context: Context) -> ScrollInsetAdjustmentUIView {
-+    let view = ScrollInsetAdjustmentUIView()
-+    view.isUserInteractionEnabled = false
++  func makeUIViewController(context: Context) -> ScrollInsetAdjustmentViewController {
++    let viewController = ScrollInsetAdjustmentViewController()
++    let view = viewController.adjustmentView
 +    view.automaticallyAdjustsScrollIndicatorInsets = automaticallyAdjustsScrollIndicatorInsets
 +    view.contentInsetAdjustmentBehavior = contentInsetAdjustmentBehavior
 +    view.tracksNavigationBarScrollEdge = tracksNavigationBarScrollEdge
-+    return view
++    return viewController
 +  }
 +
-+  func updateUIView(_ uiView: ScrollInsetAdjustmentUIView, context: Context) {
-+    uiView.automaticallyAdjustsScrollIndicatorInsets = automaticallyAdjustsScrollIndicatorInsets
-+    uiView.contentInsetAdjustmentBehavior = contentInsetAdjustmentBehavior
-+    uiView.tracksNavigationBarScrollEdge = tracksNavigationBarScrollEdge
++  func updateUIViewController(_ uiViewController: ScrollInsetAdjustmentViewController, context: Context) {
++    let view = uiViewController.adjustmentView
++    view.automaticallyAdjustsScrollIndicatorInsets = automaticallyAdjustsScrollIndicatorInsets
++    view.contentInsetAdjustmentBehavior = contentInsetAdjustmentBehavior
++    view.tracksNavigationBarScrollEdge = tracksNavigationBarScrollEdge
++  }
++}
++
++private final class ScrollInsetAdjustmentViewController: UIViewController {
++  let adjustmentView = ScrollInsetAdjustmentUIView()
++
++  override func loadView() {
++    adjustmentView.isUserInteractionEnabled = false
++    view = adjustmentView
++  }
++
++  override func viewDidAppear(_ animated: Bool) {
++    super.viewDidAppear(animated)
++    adjustmentView.refreshNavigationBarScrollEdgeRegistration()
 +  }
 +}
 +
@@ -915,7 +930,12 @@ index a7ca51d..7aec0f4 100644
 +
 +  var tracksNavigationBarScrollEdge = false {
 +    didSet {
-+      scheduleUpdate()
++      guard oldValue != tracksNavigationBarScrollEdge else { return }
++      if tracksNavigationBarScrollEdge {
++        refreshNavigationBarScrollEdgeRegistration()
++      } else {
++        scheduleUpdate()
++      }
 +    }
 +  }
 +
@@ -923,6 +943,16 @@ index a7ca51d..7aec0f4 100644
 +  private weak var configuredViewController: UIViewController?
 +  private weak var registeredContentScrollView: UIScrollView?
 +  private var updateScheduled = false
++  private var forceContentScrollViewRegistration = false
++  private var registrationRetryAttemptsRemaining = 0
++  private var registrationRetryScheduled = false
++
++  private static let maximumRegistrationRetryAttempts = 30
++
++  func refreshNavigationBarScrollEdgeRegistration() {
++    registrationRetryAttemptsRemaining = Self.maximumRegistrationRetryAttempts
++    scheduleUpdate(forceContentScrollViewRegistration: true)
++  }
 +
 +  override func didMoveToWindow() {
 +    super.didMoveToWindow()
@@ -930,7 +960,7 @@ index a7ca51d..7aec0f4 100644
 +    if window == nil {
 +      unregisterContentScrollView()
 +    } else {
-+      scheduleUpdate()
++      refreshNavigationBarScrollEdgeRegistration()
 +    }
 +  }
 +
@@ -944,7 +974,9 @@ index a7ca51d..7aec0f4 100644
 +    }
 +  }
 +
-+  private func scheduleUpdate() {
++  private func scheduleUpdate(forceContentScrollViewRegistration: Bool = false) {
++    self.forceContentScrollViewRegistration =
++      self.forceContentScrollViewRegistration || forceContentScrollViewRegistration
 +    guard !updateScheduled else { return }
 +    updateScheduled = true
 +
@@ -959,6 +991,8 @@ index a7ca51d..7aec0f4 100644
 +    guard let scrollView = configuredScrollView ?? findListScrollView() else { return }
 +
 +    configuredScrollView = scrollView
++    let forceRegistration = forceContentScrollViewRegistration
++    forceContentScrollViewRegistration = false
 +    var needsLayout = false
 +
 +    if scrollView.automaticallyAdjustsScrollIndicatorInsets != automaticallyAdjustsScrollIndicatorInsets {
@@ -976,24 +1010,56 @@ index a7ca51d..7aec0f4 100644
 +      scrollView.setNeedsLayout()
 +    }
 +
-+    updateContentScrollViewRegistration(scrollView)
++    updateContentScrollViewRegistration(scrollView, force: forceRegistration)
 +  }
 +
-+  private func updateContentScrollViewRegistration(_ scrollView: UIScrollView) {
-+    guard tracksNavigationBarScrollEdge, let viewController = findContentViewController() else {
++  private func updateContentScrollViewRegistration(_ scrollView: UIScrollView, force: Bool) {
++    guard tracksNavigationBarScrollEdge else {
 +      unregisterContentScrollView()
 +      return
 +    }
++
++    guard let viewController = findContentViewController() else {
++      if configuredViewController != nil {
++        unregisterContentScrollView()
++      }
++      scheduleContentViewControllerRegistrationRetry()
++      return
++    }
++
++    registrationRetryAttemptsRemaining = 0
 +
 +    if configuredViewController !== viewController {
 +      unregisterContentScrollView()
 +    }
 +
 +    configuredViewController = viewController
-+    if viewController.contentScrollView(for: .top) !== scrollView {
++    if force, viewController.contentScrollView(for: .top) === scrollView {
++      viewController.setContentScrollView(nil, for: .top)
++    }
++    if force || viewController.contentScrollView(for: .top) !== scrollView {
 +      viewController.setContentScrollView(scrollView, for: .top)
++      viewController.navigationController?.navigationBar.setNeedsLayout()
 +    }
 +    registeredContentScrollView = scrollView
++  }
++
++  private func scheduleContentViewControllerRegistrationRetry() {
++    guard window != nil,
++      tracksNavigationBarScrollEdge,
++      registrationRetryAttemptsRemaining > 0,
++      !registrationRetryScheduled else {
++      return
++    }
++
++    registrationRetryAttemptsRemaining -= 1
++    registrationRetryScheduled = true
++
++    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
++      guard let self else { return }
++      self.registrationRetryScheduled = false
++      self.scheduleUpdate(forceContentScrollViewRegistration: true)
++    }
 +  }
 +
 +  private func unregisterContentScrollView() {
@@ -1018,6 +1084,11 @@ index a7ca51d..7aec0f4 100644
 +          !(parent is UITabBarController) {
 +          contentViewController = parent
 +        }
++
++        guard contentViewController.navigationController != nil ||
++          contentViewController.parent is UINavigationController else {
++          return nil
++        }
 +        return contentViewController
 +      }
 +      responder = current.next
@@ -1030,8 +1101,8 @@ index a7ca51d..7aec0f4 100644
 +    var ancestor: UIView? = superview
 +
 +    while let current = ancestor {
-+      if let collectionView = findCollectionView(in: current) {
-+        return collectionView
++      if let listScrollView = findListScrollView(in: current) {
++        return listScrollView
 +      }
 +      ancestor = current.superview
 +    }
@@ -1039,14 +1110,21 @@ index a7ca51d..7aec0f4 100644
 +    return nil
 +  }
 +
-+  private func findCollectionView(in view: UIView) -> UICollectionView? {
++  private func findListScrollView(in view: UIView) -> UIScrollView? {
++    // SwiftUI List is backed by UITableView on iOS 15 and UICollectionView on
++    // newer systems. Both are UIScrollView subclasses and can drive UIKit's
++    // navigation-bar scroll-edge appearance.
++    if let tableView = view as? UITableView {
++      return tableView
++    }
++
 +    if let collectionView = view as? UICollectionView {
 +      return collectionView
 +    }
 +
 +    for child in view.subviews {
-+      if let collectionView = findCollectionView(in: child) {
-+        return collectionView
++      if let listScrollView = findListScrollView(in: child) {
++        return listScrollView
 +      }
 +    }
 +
