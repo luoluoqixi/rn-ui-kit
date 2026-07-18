@@ -33,6 +33,7 @@ import {
 } from "./pages/component_examples/component_examples_page";
 import { componentExampleDefinitions } from "./pages/component_examples/catalog";
 import { rnUiKitDebugRouteDefinitions } from "./routes";
+import { blurActiveElementOnWeb } from "./web_focus";
 
 import type {
   RnUiKitDebugPanelProps,
@@ -284,7 +285,10 @@ function RnUiKitDebugPanelContent({
           screenOptions={({ navigation }) =>
             withNativeBackButton(debugStackScreenOptions, {
               label: "返回",
-              onPress: () => navigation.goBack(),
+              onPress: () => {
+                blurActiveElementOnWeb();
+                navigation.goBack();
+              },
             })
           }
         >
@@ -389,6 +393,7 @@ function RnUiKitDebugHomeRoute({
       layoutHost={layoutHost}
       onOpenSection={(key) => {
         if (openSectionsInSheet) return onOpenInSheet(key);
+        blurActiveElementOnWeb();
         navigation.navigate(key);
       }}
       onOpenPanelSheet={onOpenPanelSheet}

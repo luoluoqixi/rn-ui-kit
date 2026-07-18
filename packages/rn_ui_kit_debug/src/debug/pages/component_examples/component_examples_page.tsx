@@ -15,6 +15,7 @@ import {
 } from "rn_ui_kit";
 
 import type { RnUiKitDebugSectionContentProps } from "../../types";
+import { blurActiveElementOnWeb } from "../../web_focus";
 import { componentExampleDefinitions } from "./catalog";
 import type { ComponentExampleDefinition } from "./types";
 
@@ -60,7 +61,10 @@ export function RnUiKitComponentExamplesDebugPage({
           {sortedComponentExampleDefinitions.map((definition) => (
             <NativeListNavigationItem
               key={definition.key}
-              onPress={() => navigation.navigate(getComponentExampleRouteName(definition.key))}
+              onPress={() => {
+                blurActiveElementOnWeb();
+                navigation.navigate(getComponentExampleRouteName(definition.key));
+              }}
               subtitle={definition.description}
               title={definition.label}
             />
