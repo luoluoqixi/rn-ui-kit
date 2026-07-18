@@ -1,0 +1,1242 @@
+# Expo UI 补丁说明:
+# - iOS 26+ SwiftUI Slider: 始终接受 JS `value` 更新，避免拖拽后 editing 状态阻断受控值同步。
+# - iOS 26: 当没有 label slot 时，改用不带标签的 Slider 初始化方式。
+# - RNHostView: 允许横向和纵向内容分别独立匹配。
+# - SwiftUI List: 补充 viewport clipping、content margins、初始滚动目标、原生 inset 调整，以及 UIKit 顶部 content scroll view 注册。
+diff --git a/ios/SliderView.swift b/ios/SliderView.swift
+index 1ffa70e..488c98b 100644
+--- a/ios/SliderView.swift
++++ b/ios/SliderView.swift
+@@ -1,102 +1,146 @@
+ // Copyright 2025-present 650 Industries. All rights reserved.
+ 
+ import SwiftUI
+ import ExpoModulesCore
+ 
+ struct SliderView: ExpoSwiftUI.View {
+   @ObservedObject var props: SliderProps
+   @State var value: Float = 0.0
+   @State var isEditing: Bool = false
+   
+   init(props: SliderProps) {
+     self.props = props
+   }
+ 
+   var body: some View {
+ #if !os(tvOS)
+     sliderContent
+       .onAppear {
+         value = props.value ?? 0.0
+       }
+       .onChange(of: props.value) { newValue in
+-        guard !isEditing else { return }
+-        value = newValue ?? 0.0
++        if #available(iOS 26.0, *) {
++          value = newValue ?? 0.0
++        } else {
++          guard !isEditing else { return }
++          value = newValue ?? 0.0
++        }
+       }
+       .onChange(of: value) { newValue in
+         if props.value != newValue {
+           props.onValueChanged([
+             "value": newValue
+           ])
+         }
+       }
+ #else
+     Text("Slider is not supported on tvOS")
+ #endif
+   }
+ 
+ #if !os(tvOS)
+   @ViewBuilder
+   private var sliderContent: some View {
+     let label = props.children?.slot("label")
+     let minimumValueLabel = props.children?.slot("minimum")
+     let maximumValueLabel = props.children?.slot("maximum")
++    let hasAnyLabel = label != nil || minimumValueLabel != nil || maximumValueLabel != nil
+ 
+     if let min = props.min, let max = props.max, let step = props.step {
+-      Slider(
+-        value: $value,
+-        in: min...max,
+-        step: step,
+-        label: { label },
+-        minimumValueLabel: { minimumValueLabel },
+-        maximumValueLabel: { maximumValueLabel }
+-      ) { isEditing in
+-        self.isEditing = isEditing
+-        props.onEditingChanged(["isEditing": isEditing])
++      if hasAnyLabel {
++        Slider(
++          value: $value,
++          in: min...max,
++          step: step,
++          label: { label },
++          minimumValueLabel: { minimumValueLabel },
++          maximumValueLabel: { maximumValueLabel }
++        ) { isEditing in
++          self.isEditing = isEditing
++          props.onEditingChanged(["isEditing": isEditing])
++        }
++      } else {
++        Slider(
++          value: $value,
++          in: min...max,
++          step: step
++        ) { isEditing in
++          self.isEditing = isEditing
++          props.onEditingChanged(["isEditing": isEditing])
++        }
+       }
+     } else if let min = props.min, let max = props.max {
+-      Slider(
+-        value: $value,
+-        in: min...max,
+-        label: { label },
+-        minimumValueLabel: { minimumValueLabel },
+-        maximumValueLabel: { maximumValueLabel }
+-      ) { isEditing in
+-        self.isEditing = isEditing
+-        props.onEditingChanged(["isEditing": isEditing])
++      if hasAnyLabel {
++        Slider(
++          value: $value,
++          in: min...max,
++          label: { label },
++          minimumValueLabel: { minimumValueLabel },
++          maximumValueLabel: { maximumValueLabel }
++        ) { isEditing in
++          self.isEditing = isEditing
++          props.onEditingChanged(["isEditing": isEditing])
++        }
++      } else {
++        Slider(
++          value: $value,
++          in: min...max
++        ) { isEditing in
++          self.isEditing = isEditing
++          props.onEditingChanged(["isEditing": isEditing])
++        }
+       }
+     } else if let step = props.step {
+-      Slider(
+-        value: $value,
+-        in: 0...1,
+-        step: step,
+-        label: { label },
+-        minimumValueLabel: { minimumValueLabel },
+-        maximumValueLabel: { maximumValueLabel }
+-      ) { isEditing in
+-        self.isEditing = isEditing
+-        props.onEditingChanged(["isEditing": isEditing])
++      if hasAnyLabel {
++        Slider(
++          value: $value,
++          in: 0...1,
++          step: step,
++          label: { label },
++          minimumValueLabel: { minimumValueLabel },
++          maximumValueLabel: { maximumValueLabel }
++        ) { isEditing in
++          self.isEditing = isEditing
++          props.onEditingChanged(["isEditing": isEditing])
++        }
++      } else {
++        Slider(
++          value: $value,
++          in: 0...1,
++          step: step
++        ) { isEditing in
++          self.isEditing = isEditing
++          props.onEditingChanged(["isEditing": isEditing])
++        }
+       }
+     } else {
+-      Slider(
+-        value: $value,
+-        label: { label },
+-        minimumValueLabel: { minimumValueLabel },
+-        maximumValueLabel: { maximumValueLabel }
+-      ) { isEditing in
+-        self.isEditing = isEditing
+-        props.onEditingChanged(["isEditing": isEditing])
++      if hasAnyLabel {
++        Slider(
++          value: $value,
++          label: { label },
++          minimumValueLabel: { minimumValueLabel },
++          maximumValueLabel: { maximumValueLabel }
++        ) { isEditing in
++          self.isEditing = isEditing
++          props.onEditingChanged(["isEditing": isEditing])
++        }
++      } else {
++        Slider(value: $value) { isEditing in
++          self.isEditing = isEditing
++          props.onEditingChanged(["isEditing": isEditing])
++        }
+       }
+     }
+   }
+ #endif
+ }
+ 
+ final class SliderProps: UIBaseViewProps {
+   @Field var value: Float?
+   @Field var step: Float?
+   @Field var min: Float?
+   @Field var max: Float?
+   var onValueChanged = EventDispatcher()
+   var onEditingChanged = EventDispatcher()
+ }
+ 
+diff --git a/src/swift-ui/RNHostView.tsx b/src/swift-ui/RNHostView.tsx
+index 4e634d0..6a60b0e 100644
+--- a/src/swift-ui/RNHostView.tsx
++++ b/src/swift-ui/RNHostView.tsx
+@@ -9,7 +9,7 @@ export type RNHostViewProps = {
+    * Can be only set once on mount.
+    * @default false
+    */
+-  matchContents?: boolean;
++  matchContents?: boolean | { vertical?: boolean; horizontal?: boolean };
+   /**
+    * The RN View to be hosted.
+    */
+@@ -17,12 +17,20 @@ export type RNHostViewProps = {
+ };
+ 
+ export function RNHostView(props: RNHostViewProps) {
++  const { matchContents, ...restProps } = props;
++  const matchContentsVertical =
++    typeof matchContents === 'object' ? matchContents.vertical : matchContents;
++  const matchContentsHorizontal =
++    typeof matchContents === 'object' ? matchContents.horizontal : matchContents;
++
+   return (
+     <RNHostNativeView
+-      {...props}
++      {...restProps}
++      matchContentsHorizontal={matchContentsHorizontal}
++      matchContentsVertical={matchContentsVertical}
+       // `matchContents` can only be used once on mount
+       // So we force unmount when it changes to prevent unexpected layout
+-      key={props.matchContents ? 'matchContents' : 'noMatchContents'}
++      key={`matchContents:${matchContentsHorizontal ? '1' : '0'}:${matchContentsVertical ? '1' : '0'}`}
+     />
+   );
+ }
+diff --git a/build/swift-ui/RNHostView.d.ts b/build/swift-ui/RNHostView.d.ts
+index e1c5cde..c488bbc 100644
+--- a/build/swift-ui/RNHostView.d.ts
++++ b/build/swift-ui/RNHostView.d.ts
+@@ -5,7 +5,10 @@ export type RNHostViewProps = {
+      * Can be only set once on mount.
+      * @default false
+      */
+-    matchContents?: boolean;
++    matchContents?: boolean | {
++        vertical?: boolean;
++        horizontal?: boolean;
++    };
+     /**
+      * The RN View to be hosted.
+      */
+diff --git a/src/jetpack-compose/RNHostView/index.tsx b/src/jetpack-compose/RNHostView/index.tsx
+index 290f9d4..1340fb1 100644
+--- a/src/jetpack-compose/RNHostView/index.tsx
++++ b/src/jetpack-compose/RNHostView/index.tsx
+@@ -12,7 +12,7 @@ export interface RNHostProps extends PrimitiveBaseProps {
+    * Can be only set once on mount.
+    * @default false
+    */
+-  matchContents?: boolean;
++  matchContents?: boolean | { vertical?: boolean; horizontal?: boolean };
+   /**
+    * The RN View to be hosted.
+    */
+@@ -23,28 +23,45 @@ export interface RNHostProps extends PrimitiveBaseProps {
+   modifiers?: ModifierConfig[];
+ }
+ 
+-type NativeRNHostProps = RNHostProps;
++type NativeRNHostProps = Omit<RNHostProps, 'matchContents'> & {
++  matchContentsHorizontal?: boolean;
++  matchContentsVertical?: boolean;
++};
+ const NativeRNHostView: React.ComponentType<NativeRNHostProps> = requireNativeView(
+   'ExpoUI',
+   'RNHostView'
+ );
+ 
+ function transformProps(props: RNHostProps): NativeRNHostProps {
+-  const { modifiers, ...restProps } = props;
++  const { matchContents, modifiers, ...restProps } = props;
++  const matchContentsVertical =
++    typeof matchContents === 'object' ? matchContents.vertical : matchContents;
++  const matchContentsHorizontal =
++    typeof matchContents === 'object' ? matchContents.horizontal : matchContents;
++
+   return {
+     modifiers,
+     ...(modifiers ? createViewModifierEventListener(modifiers) : undefined),
++    matchContentsHorizontal,
++    matchContentsVertical,
+     ...restProps,
+   };
+ }
+ 
+ export function RNHostView(props: RNHostProps) {
++  const matchContentsVertical =
++    typeof props.matchContents === 'object' ? props.matchContents.vertical : props.matchContents;
++  const matchContentsHorizontal =
++    typeof props.matchContents === 'object'
++      ? props.matchContents.horizontal
++      : props.matchContents;
++
+   return (
+     <NativeRNHostView
+       {...transformProps(props)}
+       // `matchContents` can only be used once on mount
+       // So we force unmount when it changes to prevent unexpected layout
+-      key={props.matchContents ? 'matchContents' : 'noMatchContents'}
++      key={`matchContents:${matchContentsHorizontal ? '1' : '0'}:${matchContentsVertical ? '1' : '0'}`}
+     />
+   );
+ }
+diff --git a/build/jetpack-compose/RNHostView/index.d.ts b/build/jetpack-compose/RNHostView/index.d.ts
+index f8ad9a4..3a14727 100644
+--- a/build/jetpack-compose/RNHostView/index.d.ts
++++ b/build/jetpack-compose/RNHostView/index.d.ts
+@@ -8,7 +8,10 @@ export interface RNHostProps extends PrimitiveBaseProps {
+      * Can be only set once on mount.
+      * @default false
+      */
+-    matchContents?: boolean;
++    matchContents?: boolean | {
++        vertical?: boolean;
++        horizontal?: boolean;
++    };
+     /**
+      * The RN View to be hosted.
+      */
+diff --git a/ios/RNHostView.swift b/ios/RNHostView.swift
+index f8cba36..ced9b62 100644
+--- a/ios/RNHostView.swift
++++ b/ios/RNHostView.swift
+@@ -4,7 +4,9 @@ import SwiftUI
+ import ExpoModulesCore
+ 
+ internal final class RNHostViewProps: ExpoSwiftUI.ViewProps {
+-  @Field var matchContents: Bool = false
++  @Field var matchContents: Bool?
++  @Field var matchContentsHorizontal: Bool?
++  @Field var matchContentsVertical: Bool?
+ }
+ 
+ struct RNHostView: ExpoSwiftUI.View {
+@@ -12,8 +14,16 @@ struct RNHostView: ExpoSwiftUI.View {
+   @ObservedObject var props: RNHostViewProps
+ 
+   var body: some View {
+-    if props.matchContents, let childUIView = firstChildUIView {
+-      ApplySizeFromYogaNode(childUIView: childUIView) {
++    let matchContentsHorizontal = props.matchContentsHorizontal ?? props.matchContents ?? false
++    let matchContentsVertical = props.matchContentsVertical ?? props.matchContents ?? false
++
++    if (matchContentsHorizontal || matchContentsVertical), let childUIView = firstChildUIView {
++      ApplySizeFromYogaNode(
++        childUIView: childUIView,
++        shadowNodeProxy: props.shadowNodeProxy,
++        matchContentsHorizontal: matchContentsHorizontal,
++        matchContentsVertical: matchContentsVertical
++      ) {
+         Children()
+       }
+       .onAppear {
+@@ -22,7 +32,11 @@ struct RNHostView: ExpoSwiftUI.View {
+     } else {
+       Children()
+         .frame(maxWidth: .infinity, maxHeight: .infinity)
+-        .modifier(ReportSizeToYogaNodeModifier(shadowNodeProxy: props.shadowNodeProxy))
++        .modifier(
++          ReportSizeToYogaNodeModifier(
++            shadowNodeProxy: props.shadowNodeProxy
++          )
++        )
+         .onAppear {
+           if let view = firstChildUIView {
+             ExpoUITouchHandlerHelper.createAndAttachTouchHandler(for: view)
+@@ -40,16 +54,44 @@ struct RNHostView: ExpoSwiftUI.View {
+ // Listens to Yoga node size changes and updates the SwiftUI view size
+ private struct ApplySizeFromYogaNode<Content: SwiftUI.View>: SwiftUI.View {
+   @StateObject private var observer: Observer
++  let shadowNodeProxy: ExpoSwiftUI.ShadowNodeProxy
++  let matchContentsHorizontal: Bool
++  let matchContentsVertical: Bool
+   let content: Content
+ 
+-  init(childUIView: UIView, @ViewBuilder content: () -> Content) {
++  init(
++    childUIView: UIView,
++    shadowNodeProxy: ExpoSwiftUI.ShadowNodeProxy,
++    matchContentsHorizontal: Bool,
++    matchContentsVertical: Bool,
++    @ViewBuilder content: () -> Content
++  ) {
+     _observer = StateObject(wrappedValue: Observer(view: childUIView))
++    self.shadowNodeProxy = shadowNodeProxy
++    self.matchContentsHorizontal = matchContentsHorizontal
++    self.matchContentsVertical = matchContentsVertical
+     self.content = content()
+   }
+ 
+   var body: some SwiftUI.View {
+     content
+-      .frame(width: observer.size.width, height: observer.size.height)
++      .frame(
++        maxWidth: matchContentsHorizontal ? nil : .infinity,
++        maxHeight: matchContentsVertical ? nil : .infinity,
++        alignment: .topLeading
++      )
++      .frame(
++        width: matchContentsHorizontal ? observer.size.width : nil,
++        height: matchContentsVertical ? observer.size.height : nil,
++        alignment: .topLeading
++      )
++      .modifier(
++        ReportSizeToYogaNodeModifier(
++          shadowNodeProxy: shadowNodeProxy,
++          reportHorizontal: !matchContentsHorizontal,
++          reportVertical: !matchContentsVertical
++        )
++      )
+   }
+ 
+   @MainActor
+@@ -76,9 +118,26 @@ private struct ApplySizeFromYogaNode<Content: SwiftUI.View>: SwiftUI.View {
+ // Listens to SwiftUI view size changes and updates the Yoga node size
+ private struct ReportSizeToYogaNodeModifier: ViewModifier {
+   let shadowNodeProxy: ExpoSwiftUI.ShadowNodeProxy
++  let reportHorizontal: Bool
++  let reportVertical: Bool
++
++  init(
++    shadowNodeProxy: ExpoSwiftUI.ShadowNodeProxy,
++    reportHorizontal: Bool = true,
++    reportVertical: Bool = true
++  ) {
++    self.shadowNodeProxy = shadowNodeProxy
++    self.reportHorizontal = reportHorizontal
++    self.reportVertical = reportVertical
++  }
+ 
+   private func handleSizeChange(_ size: CGSize) {
+-    shadowNodeProxy.setViewSize?(size)
++    shadowNodeProxy.setViewSize?(
++      CGSize(
++        width: reportHorizontal ? size.width : CGFloat.nan,
++        height: reportVertical ? size.height : CGFloat.nan
++      )
++    )
+   }
+ 
+   func body(content: Content) -> some View {
+diff --git a/android/src/main/java/expo/modules/ui/RNHostView.kt b/android/src/main/java/expo/modules/ui/RNHostView.kt
+index 7907672..b7d071e 100644
+--- a/android/src/main/java/expo/modules/ui/RNHostView.kt
++++ b/android/src/main/java/expo/modules/ui/RNHostView.kt
+@@ -7,8 +7,11 @@ import android.view.MotionEvent
+ import android.view.View
+ import android.view.ViewGroup
+ import android.widget.FrameLayout
++import androidx.compose.foundation.layout.fillMaxHeight
++import androidx.compose.foundation.layout.fillMaxWidth
+ import androidx.compose.foundation.layout.fillMaxSize
+-import androidx.compose.foundation.layout.requiredSize
++import androidx.compose.foundation.layout.requiredHeight
++import androidx.compose.foundation.layout.requiredWidth
+ import androidx.compose.runtime.Composable
+ import androidx.compose.runtime.DisposableEffect
+ import androidx.compose.runtime.MutableState
+@@ -35,7 +38,9 @@ import expo.modules.kotlin.views.ExpoComposeView
+ import expo.modules.kotlin.views.RNHostViewInterface
+ 
+ internal data class RNHostViewProps(
+-  val matchContents: MutableState<Boolean?> = mutableStateOf(null)
++  val matchContents: MutableState<Boolean?> = mutableStateOf(null),
++  val matchContentsHorizontal: MutableState<Boolean?> = mutableStateOf(null),
++  val matchContentsVertical: MutableState<Boolean?> = mutableStateOf(null)
+ ) : ComposeProps
+ 
+ @SuppressLint("ViewConstructor")
+@@ -84,14 +89,25 @@ internal class RNHostView(context: Context, appContext: AppContext) :
+ 
+   @Composable
+   override fun ComposableScope.Content() {
+-    val matchContents = props.matchContents.value ?: false
++    val legacyMatchContents = props.matchContents.value
++    val matchContentsHorizontal = props.matchContentsHorizontal.value ?: legacyMatchContents ?: false
++    val matchContentsVertical = props.matchContentsVertical.value ?: legacyMatchContents ?: false
+ 
+     wrapperState.value?.let { wrapper ->
+       val childView = childViewState.value ?: return@let
+-      if (matchContents) {
++      if (matchContentsHorizontal || matchContentsVertical) {
+         AndroidView(
+           factory = { wrapper },
+-          modifier = applySizeFromYogaNodeModifier(childView)
++          modifier = applySizeFromYogaNodeModifier(
++            childView = childView,
++            matchContentsHorizontal = matchContentsHorizontal,
++            matchContentsVertical = matchContentsVertical
++          ).then(
++            reportSizeToYogaNodeModifier(
++              reportHorizontal = !matchContentsHorizontal,
++              reportVertical = !matchContentsVertical
++            )
++          )
+         )
+       } else {
+         AndroidView(
+@@ -107,7 +123,11 @@ internal class RNHostView(context: Context, appContext: AppContext) :
+   // Sets Compose view size from Yoga node size
+   // Listens yoga node size changes and updates the Compose view size
+   @Composable
+-  private fun applySizeFromYogaNodeModifier(childView: View): Modifier {
++  private fun applySizeFromYogaNodeModifier(
++    childView: View,
++    matchContentsHorizontal: Boolean,
++    matchContentsVertical: Boolean
++  ): Modifier {
+     val density = LocalDensity.current
+ 
+     val childSize = remember {
+@@ -126,27 +146,39 @@ internal class RNHostView(context: Context, appContext: AppContext) :
+     }
+ 
+     return with(density) {
+-      if (childSize.value.width > 0 && childSize.value.height > 0) {
+-        Modifier.requiredSize(
+-          childSize.value.width.toDp(),
+-          childSize.value.height.toDp()
++      Modifier
++        .then(if (!matchContentsHorizontal) Modifier.fillMaxWidth() else Modifier)
++        .then(if (!matchContentsVertical) Modifier.fillMaxHeight() else Modifier)
++        .then(
++          if (matchContentsHorizontal && childSize.value.width > 0) {
++            Modifier.requiredWidth(childSize.value.width.toDp())
++          } else {
++            Modifier
++          }
++        )
++        .then(
++          if (matchContentsVertical && childSize.value.height > 0) {
++            Modifier.requiredHeight(childSize.value.height.toDp())
++          } else {
++            Modifier
++          }
+         )
+-      } else {
+-        Modifier
+-      }
+     }
+   }
+ 
+   // Sets Yoga node size from Compose view size
+   // Listens Compose view size changes and updates the Yoga node size
+   @Composable
+-  private fun reportSizeToYogaNodeModifier(): Modifier {
++  private fun reportSizeToYogaNodeModifier(
++    reportHorizontal: Boolean = true,
++    reportVertical: Boolean = true
++  ): Modifier {
+     val density = LocalDensity.current
+     return Modifier.onSizeChanged { size ->
+       with(density) {
+         shadowNodeProxy.setViewSize(
+-          size.width.toDp().value.toDouble(),
+-          size.height.toDp().value.toDouble()
++          if (reportHorizontal) size.width.toDp().value.toDouble() else Double.NaN,
++          if (reportVertical) size.height.toDp().value.toDouble() else Double.NaN
+         )
+       }
+     }
+diff --git a/src/swift-ui/modifiers/index.ts b/src/swift-ui/modifiers/index.ts
+index d64100e..6a3440a 100644
+--- a/src/swift-ui/modifiers/index.ts
++++ b/src/swift-ui/modifiers/index.ts
+@@ -569,6 +569,28 @@ export const scrollDismissesKeyboard = (
+ export const scrollDisabled = (disabled: boolean = true) =>
+   createModifier('scrollDisabled', { disabled });
+ 
++/**
++ * Sets content margins for scrollable content or scroll indicators.
++ * @param params - The target edges, inset length and placement.
++ * @platform ios 17.0+
++ * @platform tvos 17.0+
++ * @platform macos 14.0+
++ * @platform watchos 10.0+
++ * @see Official [SwiftUI documentation](https://developer.apple.com/documentation/swiftui/view/contentmargins(_:_:for:)).
++ */
++export const contentMargins = (params: {
++  edges?: 'all' | 'top' | 'bottom' | 'leading' | 'trailing' | 'horizontal' | 'vertical';
++  length?: number | null;
++  placement?: 'automatic' | 'scrollContent' | 'scrollIndicators';
++}) => createModifier('contentMargins', params);
++
++/**
++ * Sets a stable SwiftUI identity for scroll targeting.
++ * @param value - The identity to set on the view.
++ * @see Official [SwiftUI documentation](https://developer.apple.com/documentation/swiftui/view/id(_:)).
++ */
++export const viewID = (value: string | number) => createModifier('viewID', { value });
++
+ type UnitPointValue =
+   | 'zero'
+   | 'topLeading'
+@@ -1267,6 +1289,8 @@ export type BuiltInModifier =
+   | ReturnType<typeof containerShape>
+   | ReturnType<typeof contentShape>
+   | ReturnType<typeof containerRelativeFrame>
++  | ReturnType<typeof contentMargins>
++  | ReturnType<typeof viewID>
+   | ReturnType<typeof scrollContentBackground>
+   | ReturnType<typeof scrollDisabled>
+   | ReturnType<typeof defaultScrollAnchor>
+diff --git a/build/swift-ui/modifiers/index.d.ts b/build/swift-ui/modifiers/index.d.ts
+index 1e0d2ba..d0d1a5d 100644
+--- a/build/swift-ui/modifiers/index.d.ts
++++ b/build/swift-ui/modifiers/index.d.ts
+@@ -455,6 +455,26 @@ export declare const scrollDismissesKeyboard: (mode: "automatic" | "never" | "in
+  * @see Official [SwiftUI documentation](https://developer.apple.com/documentation/swiftui/view/scrolldisabled(_:)).
+  */
+ export declare const scrollDisabled: (disabled?: boolean) => ModifierConfig;
++/**
++ * Sets content margins for scrollable content or scroll indicators.
++ * @param params - The target edges, inset length and placement.
++ * @platform ios 17.0+
++ * @platform tvos 17.0+
++ * @platform macos 14.0+
++ * @platform watchos 10.0+
++ * @see Official [SwiftUI documentation](https://developer.apple.com/documentation/swiftui/view/contentmargins(_:_:for:)).
++ */
++export declare const contentMargins: (params: {
++    edges?: 'all' | 'top' | 'bottom' | 'leading' | 'trailing' | 'horizontal' | 'vertical';
++    length?: number | null;
++    placement?: 'automatic' | 'scrollContent' | 'scrollIndicators';
++}) => ModifierConfig;
++/**
++ * Sets a stable SwiftUI identity for scroll targeting.
++ * @param value - The identity to set on the view.
++ * @see Official [SwiftUI documentation](https://developer.apple.com/documentation/swiftui/view/id(_:)).
++ */
++export declare const viewID: (value: string | number) => ModifierConfig;
+ type UnitPointValue = 'zero' | 'topLeading' | 'top' | 'topTrailing' | 'leading' | 'center' | 'trailing' | 'bottomLeading' | 'bottom' | 'bottomTrailing';
+ /**
+  * Sets the default anchor point for a scroll view's content.
+@@ -925,7 +945,7 @@ export declare const resizable: (capInsets?: {
+  * This provides type safety for the modifiers array.
+  * @hidden
+  */
+-export type BuiltInModifier = ReturnType<typeof listSectionSpacing> | ReturnType<typeof background> | ReturnType<typeof cornerRadius> | ReturnType<typeof shadow> | ReturnType<typeof frame> | ReturnType<typeof padding> | ReturnType<typeof fixedSize> | ReturnType<typeof ignoreSafeArea> | ReturnType<typeof onTapGesture> | ReturnType<typeof onLongPressGesture> | ReturnType<typeof onAppear> | ReturnType<typeof luminanceToAlpha> | ReturnType<typeof onDisappear> | ReturnType<typeof opacity> | ReturnType<typeof clipShape> | ReturnType<typeof border> | ReturnType<typeof scaleEffect> | ReturnType<typeof rotationEffect> | ReturnType<typeof rotation3DEffect> | ReturnType<typeof offset> | ReturnType<typeof foregroundColor> | ReturnType<typeof foregroundStyle> | ReturnType<typeof bold> | ReturnType<typeof italic> | ReturnType<typeof monospacedDigit> | ReturnType<typeof tint> | ReturnType<typeof hidden> | ReturnType<typeof disabled> | ReturnType<typeof zIndex> | ReturnType<typeof blur> | ReturnType<typeof brightness> | ReturnType<typeof contrast> | ReturnType<typeof saturation> | ReturnType<typeof hueRotation> | ReturnType<typeof colorInvert> | ReturnType<typeof grayscale> | ReturnType<typeof buttonStyle> | ReturnType<typeof toggleStyle> | ReturnType<typeof controlSize> | ReturnType<typeof labelStyle> | ReturnType<typeof labelsHidden> | ReturnType<typeof textFieldStyle> | ReturnType<typeof menuActionDismissBehavior> | ReturnType<typeof accessibilityLabel> | ReturnType<typeof accessibilityHint> | ReturnType<typeof accessibilityValue> | ReturnType<typeof layoutPriority> | ReturnType<typeof mask> | ReturnType<typeof overlay> | ReturnType<typeof backgroundOverlay> | ReturnType<typeof aspectRatio> | ReturnType<typeof clipped> | ReturnType<typeof glassEffect> | ReturnType<typeof glassEffectId> | ReturnType<typeof animation> | ReturnType<typeof containerShape> | ReturnType<typeof contentShape> | ReturnType<typeof containerRelativeFrame> | ReturnType<typeof scrollContentBackground> | ReturnType<typeof scrollDisabled> | ReturnType<typeof defaultScrollAnchor> | ReturnType<typeof defaultScrollAnchorForRole> | ReturnType<typeof scrollTargetBehavior> | ReturnType<typeof scrollTargetLayout> | ReturnType<typeof moveDisabled> | ReturnType<typeof deleteDisabled> | ReturnType<typeof environment> | ReturnType<typeof listRowBackground> | ReturnType<typeof listRowSeparator> | ReturnType<typeof truncationMode> | ReturnType<typeof allowsTightening> | ReturnType<typeof kerning> | ReturnType<typeof textCase> | ReturnType<typeof underline> | ReturnType<typeof strikethrough> | ReturnType<typeof multilineTextAlignment> | ReturnType<typeof textSelection> | ReturnType<typeof lineSpacing> | ReturnType<typeof lineLimit> | ReturnType<typeof headerProminence> | ReturnType<typeof listRowInsets> | ReturnType<typeof badgeProminence> | ReturnType<typeof badge> | ReturnType<typeof listSectionMargins> | ReturnType<typeof font> | ReturnType<typeof gridCellUnsizedAxes> | ReturnType<typeof gridCellColumns> | ReturnType<typeof gridColumnAlignment> | ReturnType<typeof gridCellAnchor> | ReturnType<typeof submitLabel> | ReturnType<typeof keyboardType> | ReturnType<typeof autocorrectionDisabled> | ReturnType<typeof onSubmit> | ReturnType<typeof textInputAutocapitalization> | ReturnType<typeof textContentType> | ReturnType<typeof datePickerStyle> | ReturnType<typeof progressViewStyle> | ReturnType<typeof gaugeStyle> | ReturnType<typeof listStyle> | ReturnType<typeof contentTransition> | ReturnType<typeof resizable> | ReturnType<typeof widgetAccentedRenderingMode> | ReturnType<typeof widgetURL>;
++export type BuiltInModifier = ReturnType<typeof listSectionSpacing> | ReturnType<typeof background> | ReturnType<typeof cornerRadius> | ReturnType<typeof shadow> | ReturnType<typeof frame> | ReturnType<typeof padding> | ReturnType<typeof fixedSize> | ReturnType<typeof ignoreSafeArea> | ReturnType<typeof onTapGesture> | ReturnType<typeof onLongPressGesture> | ReturnType<typeof onAppear> | ReturnType<typeof luminanceToAlpha> | ReturnType<typeof onDisappear> | ReturnType<typeof opacity> | ReturnType<typeof clipShape> | ReturnType<typeof border> | ReturnType<typeof scaleEffect> | ReturnType<typeof rotationEffect> | ReturnType<typeof rotation3DEffect> | ReturnType<typeof offset> | ReturnType<typeof foregroundColor> | ReturnType<typeof foregroundStyle> | ReturnType<typeof bold> | ReturnType<typeof italic> | ReturnType<typeof monospacedDigit> | ReturnType<typeof tint> | ReturnType<typeof hidden> | ReturnType<typeof disabled> | ReturnType<typeof zIndex> | ReturnType<typeof blur> | ReturnType<typeof brightness> | ReturnType<typeof contrast> | ReturnType<typeof saturation> | ReturnType<typeof hueRotation> | ReturnType<typeof colorInvert> | ReturnType<typeof grayscale> | ReturnType<typeof buttonStyle> | ReturnType<typeof toggleStyle> | ReturnType<typeof controlSize> | ReturnType<typeof labelStyle> | ReturnType<typeof labelsHidden> | ReturnType<typeof textFieldStyle> | ReturnType<typeof menuActionDismissBehavior> | ReturnType<typeof accessibilityLabel> | ReturnType<typeof accessibilityHint> | ReturnType<typeof accessibilityValue> | ReturnType<typeof layoutPriority> | ReturnType<typeof mask> | ReturnType<typeof overlay> | ReturnType<typeof backgroundOverlay> | ReturnType<typeof aspectRatio> | ReturnType<typeof clipped> | ReturnType<typeof glassEffect> | ReturnType<typeof glassEffectId> | ReturnType<typeof animation> | ReturnType<typeof containerShape> | ReturnType<typeof contentShape> | ReturnType<typeof containerRelativeFrame> | ReturnType<typeof contentMargins> | ReturnType<typeof viewID> | ReturnType<typeof scrollContentBackground> | ReturnType<typeof scrollDisabled> | ReturnType<typeof defaultScrollAnchor> | ReturnType<typeof defaultScrollAnchorForRole> | ReturnType<typeof scrollTargetBehavior> | ReturnType<typeof scrollTargetLayout> | ReturnType<typeof moveDisabled> | ReturnType<typeof deleteDisabled> | ReturnType<typeof environment> | ReturnType<typeof listRowBackground> | ReturnType<typeof listRowSeparator> | ReturnType<typeof truncationMode> | ReturnType<typeof allowsTightening> | ReturnType<typeof kerning> | ReturnType<typeof textCase> | ReturnType<typeof underline> | ReturnType<typeof strikethrough> | ReturnType<typeof multilineTextAlignment> | ReturnType<typeof textSelection> | ReturnType<typeof lineSpacing> | ReturnType<typeof lineLimit> | ReturnType<typeof headerProminence> | ReturnType<typeof listRowInsets> | ReturnType<typeof badgeProminence> | ReturnType<typeof badge> | ReturnType<typeof listSectionMargins> | ReturnType<typeof font> | ReturnType<typeof gridCellUnsizedAxes> | ReturnType<typeof gridCellColumns> | ReturnType<typeof gridColumnAlignment> | ReturnType<typeof gridCellAnchor> | ReturnType<typeof submitLabel> | ReturnType<typeof keyboardType> | ReturnType<typeof autocorrectionDisabled> | ReturnType<typeof onSubmit> | ReturnType<typeof textInputAutocapitalization> | ReturnType<typeof textContentType> | ReturnType<typeof datePickerStyle> | ReturnType<typeof progressViewStyle> | ReturnType<typeof gaugeStyle> | ReturnType<typeof listStyle> | ReturnType<typeof contentTransition> | ReturnType<typeof resizable> | ReturnType<typeof widgetAccentedRenderingMode> | ReturnType<typeof widgetURL>;
+ /**
+  * Main ViewModifier type that supports both built-in and 3rd party modifiers.
+  * 3rd party modifiers should return ModifierConfig objects with their own type strings.
+@@ -959,4 +979,4 @@ export * from './presentationModifiers';
+ export * from './environment';
+ export * from './widgets';
+ export type { TimingAnimationParams, SpringAnimationParams, InterpolatingSpringAnimationParams, ChainableAnimationType, } from './animation/types';
+-//# sourceMappingURL=index.d.ts.map
+\ No newline at end of file
++//# sourceMappingURL=index.d.ts.map
+diff --git a/ios/Modifiers/ViewModifierRegistry.swift b/ios/Modifiers/ViewModifierRegistry.swift
+index 552adc5..3a44a62 100644
+--- a/ios/Modifiers/ViewModifierRegistry.swift
++++ b/ios/Modifiers/ViewModifierRegistry.swift
+@@ -120,6 +120,25 @@ internal struct OpacityModifier: ViewModifier, Record {
+   }
+ }
+ 
++internal struct ViewIDModifier: ViewModifier, Record {
++  @Field var value: Either<String, Double>?
++
++  @ViewBuilder
++  func body(content: Content) -> some View {
++    if let value {
++      if let stringValue: String = value.get() {
++        content.id(AnyHashable(stringValue))
++      } else if let doubleValue: Double = value.get() {
++        content.id(AnyHashable(doubleValue))
++      } else {
++        content
++      }
++    } else {
++      content
++    }
++  }
++}
++
+ internal struct ScaleEffectModifier: ViewModifier, Record {
+   @Field var x: CGFloat = 1.0
+   @Field var y: CGFloat = 1.0
+@@ -1699,6 +1718,10 @@ extension ViewModifierRegistry {
+       return try ContainerRelativeFrameModifier(from: params, appContext: appContext)
+     }
+ 
++    register("contentMargins") { params, appContext, _ in
++      return try ContentMarginsModifier(from: params, appContext: appContext)
++    }
++
+     register("buttonStyle") { params, appContext, _ in
+       return try ButtonStyleModifier(from: params, appContext: appContext)
+     }
+@@ -1823,6 +1846,10 @@ extension ViewModifierRegistry {
+       return try TagModifier(from: params, appContext: appContext)
+     }
+ 
++    register("viewID") { params, appContext, _ in
++      return try ViewIDModifier(from: params, appContext: appContext)
++    }
++
+     register("scrollTargetBehavior") { params, appContext, _ in
+       return try ScrollTargetBehaviorModifier(from: params, appContext: appContext)
+     }
+diff --git a/ios/Modifiers/ContainerRelativeFrameModifier.swift b/ios/Modifiers/ContainerRelativeFrameModifier.swift
+index ee64956..be7d2ab 100644
+--- a/ios/Modifiers/ContainerRelativeFrameModifier.swift
++++ b/ios/Modifiers/ContainerRelativeFrameModifier.swift
+@@ -40,3 +40,36 @@ internal struct ContainerRelativeFrameModifier: ViewModifier, Record {
+     }
+   }
+ }
++
++internal enum ContentMarginPlacementType: String, Enumerable {
++  case automatic
++  case scrollContent
++  case scrollIndicators
++
++  @available(iOS 17.0, tvOS 17.0, macOS 14.0, watchOS 10.0, *)
++  func toSwiftUI() -> SwiftUI.ContentMarginPlacement {
++    switch self {
++    case .scrollContent:
++      return .scrollContent
++    case .scrollIndicators:
++      return .scrollIndicators
++    case .automatic:
++      return .automatic
++    }
++  }
++}
++
++internal struct ContentMarginsModifier: ViewModifier, Record {
++  @Field var edges: EdgeOptions = .all
++  @Field var length: CGFloat?
++  @Field var placement: ContentMarginPlacementType = .automatic
++
++  @ViewBuilder
++  func body(content: Content) -> some View {
++    if #available(iOS 17.0, tvOS 17.0, macOS 14.0, watchOS 10.0, *) {
++      content.contentMargins(edges.toEdge(), length, for: placement.toSwiftUI())
++    } else {
++      content
++    }
++  }
++}
+diff --git a/ios/ListView.swift b/ios/ListView.swift
+index a7ca51d..7aec0f4 100644
+--- a/ios/ListView.swift
++++ b/ios/ListView.swift
+@@ -3,27 +3,113 @@
+ import ExpoModulesCore
+ import SwiftUI
+ 
++internal enum ListContentInsetAdjustmentBehavior: String, Enumerable {
++  case automatic
++  case scrollableAxes
++  case never
++  case always
++
++  var uiKitValue: UIScrollView.ContentInsetAdjustmentBehavior {
++    switch self {
++    case .automatic:
++      return .automatic
++    case .scrollableAxes:
++      return .scrollableAxes
++    case .never:
++      return .never
++    case .always:
++      return .always
++    }
++  }
++}
++
+ final class ListProps: UIBaseViewProps {
++  @Field var automaticallyAdjustsScrollIndicatorInsets: Bool?
++  @Field var compensatesForViewportClipping = false
++  @Field var contentInsetAdjustmentBehavior: ListContentInsetAdjustmentBehavior?
++  @Field var initialScrollAnchor: UnitPointOptions = .center
++  @Field var initialScrollTarget: Either<String, Double>?
+   @Field var selection: [Either<String, Double>]?
++  @Field var tracksNavigationBarScrollEdge = false
+   var onSelectionChange = EventDispatcher()
+ }
+-
++
+ struct ListView: ExpoSwiftUI.View {
+   @ObservedObject var props: ListProps
+   @State private var selection = Set<AnyHashable>()
++  @State private var hasScrolledToInitialTarget = false
+ 
++  @ViewBuilder
+   var body: some View {
+-    List(selection: $selection) {
+-      Children()
++    if props.compensatesForViewportClipping {
++      GeometryReader { geometry in
++        let globalFrame = geometry.frame(in: .global)
++        let keyWindow = UIApplication.shared.connectedScenes
++          .compactMap { $0 as? UIWindowScene }
++          .flatMap { $0.windows }
++          .first { $0.isKeyWindow }
++        let viewportBottom = keyWindow?.bounds.maxY ?? UIScreen.main.bounds.maxY
++        let visibleHeight = max(0, min(globalFrame.height, viewportBottom - globalFrame.minY))
++        let indicatorBottomInset = globalFrame.maxY > viewportBottom
++          ? (keyWindow?.safeAreaInsets.bottom ?? 0)
++          : 0
++
++        if #available(iOS 17.0, tvOS 17.0, *) {
++          list
++            .contentMargins(.bottom, indicatorBottomInset, for: .scrollIndicators)
++            .frame(width: geometry.size.width, height: visibleHeight, alignment: .top)
++        } else {
++          list
++            .frame(width: geometry.size.width, height: visibleHeight, alignment: .top)
++        }
++      }
++    } else {
++      list
+     }
+-    .onAppear {
+-      selection = Self.getHashableSetFromEither(props.selection)
++  }
++
++  private var list: some View {
++    ScrollViewReader { proxy in
++      List(selection: $selection) {
++        Children()
++      }
++      .background {
++        ScrollInsetAdjustmentView(
++          automaticallyAdjustsScrollIndicatorInsets: props.automaticallyAdjustsScrollIndicatorInsets ?? true,
++          contentInsetAdjustmentBehavior: props.contentInsetAdjustmentBehavior,
++          tracksNavigationBarScrollEdge: props.tracksNavigationBarScrollEdge
++        )
++      }
++      .onAppear {
++        selection = Self.getHashableSetFromEither(props.selection)
++        scrollToInitialTarget(proxy)
++      }
++      .onChange(of: props.selection) { newValue in
++        selection = Self.getHashableSetFromEither(newValue)
++      }
++      .onChange(of: props.initialScrollTarget) { _ in
++        hasScrolledToInitialTarget = false
++        scrollToInitialTarget(proxy)
++      }
++      .onChange(of: selection) { newSelection in
++        handleSelectionChange(selection: newSelection)
++      }
+     }
+-    .onChange(of: props.selection) { newValue in
+-      selection = Self.getHashableSetFromEither(newValue)
++  }
++
++  private func scrollToInitialTarget(_ proxy: ScrollViewProxy) {
++    let target = Self.getHashableSetFromEither(
++      props.initialScrollTarget.map { [$0] }
++    ).first
++
++    guard !hasScrolledToInitialTarget, let target else {
++      return
+     }
+-    .onChange(of: selection) { newSelection in
+-      handleSelectionChange(selection: newSelection)
++
++    hasScrolledToInitialTarget = true
++
++    DispatchQueue.main.async {
++      proxy.scrollTo(target, anchor: props.initialScrollAnchor.toUnitPoint)
+     }
+   }
+ 
+@@ -55,3 +141,256 @@ struct ListView: ExpoSwiftUI.View {
+     return result
+   }
+ }
++
++private struct ScrollInsetAdjustmentView: UIViewControllerRepresentable {
++  let automaticallyAdjustsScrollIndicatorInsets: Bool
++  let contentInsetAdjustmentBehavior: ListContentInsetAdjustmentBehavior?
++  let tracksNavigationBarScrollEdge: Bool
++
++  func makeUIViewController(context: Context) -> ScrollInsetAdjustmentViewController {
++    let viewController = ScrollInsetAdjustmentViewController()
++    let view = viewController.adjustmentView
++    view.automaticallyAdjustsScrollIndicatorInsets = automaticallyAdjustsScrollIndicatorInsets
++    view.contentInsetAdjustmentBehavior = contentInsetAdjustmentBehavior
++    view.tracksNavigationBarScrollEdge = tracksNavigationBarScrollEdge
++    return viewController
++  }
++
++  func updateUIViewController(_ uiViewController: ScrollInsetAdjustmentViewController, context: Context) {
++    let view = uiViewController.adjustmentView
++    view.automaticallyAdjustsScrollIndicatorInsets = automaticallyAdjustsScrollIndicatorInsets
++    view.contentInsetAdjustmentBehavior = contentInsetAdjustmentBehavior
++    view.tracksNavigationBarScrollEdge = tracksNavigationBarScrollEdge
++  }
++}
++
++private final class ScrollInsetAdjustmentViewController: UIViewController {
++  let adjustmentView = ScrollInsetAdjustmentUIView()
++
++  override func loadView() {
++    adjustmentView.isUserInteractionEnabled = false
++    view = adjustmentView
++  }
++
++  override func viewDidAppear(_ animated: Bool) {
++    super.viewDidAppear(animated)
++    adjustmentView.refreshNavigationBarScrollEdgeRegistration()
++  }
++}
++
++private final class ScrollInsetAdjustmentUIView: UIView {
++  var automaticallyAdjustsScrollIndicatorInsets = true {
++    didSet {
++      scheduleUpdate()
++    }
++  }
++
++  var contentInsetAdjustmentBehavior: ListContentInsetAdjustmentBehavior? {
++    didSet {
++      scheduleUpdate()
++    }
++  }
++
++  var tracksNavigationBarScrollEdge = false {
++    didSet {
++      guard oldValue != tracksNavigationBarScrollEdge else { return }
++      if tracksNavigationBarScrollEdge {
++        refreshNavigationBarScrollEdgeRegistration()
++      } else {
++        scheduleUpdate()
++      }
++    }
++  }
++
++  private weak var configuredScrollView: UIScrollView?
++  private weak var configuredViewController: UIViewController?
++  private weak var registeredContentScrollView: UIScrollView?
++  private var updateScheduled = false
++  private var forceContentScrollViewRegistration = false
++  private var registrationRetryAttemptsRemaining = 0
++  private var registrationRetryScheduled = false
++
++  private static let maximumRegistrationRetryAttempts = 30
++
++  func refreshNavigationBarScrollEdgeRegistration() {
++    registrationRetryAttemptsRemaining = Self.maximumRegistrationRetryAttempts
++    scheduleUpdate(forceContentScrollViewRegistration: true)
++  }
++
++  override func didMoveToWindow() {
++    super.didMoveToWindow()
++
++    if window == nil {
++      unregisterContentScrollView()
++    } else {
++      refreshNavigationBarScrollEdgeRegistration()
++    }
++  }
++
++  override func layoutSubviews() {
++    super.layoutSubviews()
++
++    if configuredScrollView?.window == nil {
++      unregisterContentScrollView()
++      configuredScrollView = nil
++      scheduleUpdate()
++    }
++  }
++
++  private func scheduleUpdate(forceContentScrollViewRegistration: Bool = false) {
++    self.forceContentScrollViewRegistration =
++      self.forceContentScrollViewRegistration || forceContentScrollViewRegistration
++    guard !updateScheduled else { return }
++    updateScheduled = true
++
++    DispatchQueue.main.async { [weak self] in
++      guard let self else { return }
++      self.updateScheduled = false
++      self.applyAdjustment()
++    }
++  }
++
++  private func applyAdjustment() {
++    guard let scrollView = configuredScrollView ?? findListScrollView() else { return }
++
++    configuredScrollView = scrollView
++    let forceRegistration = forceContentScrollViewRegistration
++    forceContentScrollViewRegistration = false
++    var needsLayout = false
++
++    if scrollView.automaticallyAdjustsScrollIndicatorInsets != automaticallyAdjustsScrollIndicatorInsets {
++      scrollView.automaticallyAdjustsScrollIndicatorInsets = automaticallyAdjustsScrollIndicatorInsets
++      needsLayout = true
++    }
++
++    if let contentInsetAdjustmentBehavior,
++      scrollView.contentInsetAdjustmentBehavior != contentInsetAdjustmentBehavior.uiKitValue {
++      scrollView.contentInsetAdjustmentBehavior = contentInsetAdjustmentBehavior.uiKitValue
++      needsLayout = true
++    }
++
++    if needsLayout {
++      scrollView.setNeedsLayout()
++    }
++
++    updateContentScrollViewRegistration(scrollView, force: forceRegistration)
++  }
++
++  private func updateContentScrollViewRegistration(_ scrollView: UIScrollView, force: Bool) {
++    guard tracksNavigationBarScrollEdge else {
++      unregisterContentScrollView()
++      return
++    }
++
++    guard let viewController = findContentViewController() else {
++      if configuredViewController != nil {
++        unregisterContentScrollView()
++      }
++      scheduleContentViewControllerRegistrationRetry()
++      return
++    }
++
++    registrationRetryAttemptsRemaining = 0
++
++    if configuredViewController !== viewController {
++      unregisterContentScrollView()
++    }
++
++    configuredViewController = viewController
++    if force, viewController.contentScrollView(for: .top) === scrollView {
++      viewController.setContentScrollView(nil, for: .top)
++    }
++    if force || viewController.contentScrollView(for: .top) !== scrollView {
++      viewController.setContentScrollView(scrollView, for: .top)
++      viewController.navigationController?.navigationBar.setNeedsLayout()
++    }
++    registeredContentScrollView = scrollView
++  }
++
++  private func scheduleContentViewControllerRegistrationRetry() {
++    guard window != nil,
++      tracksNavigationBarScrollEdge,
++      registrationRetryAttemptsRemaining > 0,
++      !registrationRetryScheduled else {
++      return
++    }
++
++    registrationRetryAttemptsRemaining -= 1
++    registrationRetryScheduled = true
++
++    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
++      guard let self else { return }
++      self.registrationRetryScheduled = false
++      self.scheduleUpdate(forceContentScrollViewRegistration: true)
++    }
++  }
++
++  private func unregisterContentScrollView() {
++    guard let viewController = configuredViewController else { return }
++
++    if viewController.contentScrollView(for: .top) === registeredContentScrollView {
++      viewController.setContentScrollView(nil, for: .top)
++    }
++    configuredViewController = nil
++    registeredContentScrollView = nil
++  }
++
++  private func findContentViewController() -> UIViewController? {
++    var responder: UIResponder? = self
++
++    while let current = responder {
++      if let hostingViewController = current as? UIViewController {
++        var contentViewController = hostingViewController
++
++        while let parent = contentViewController.parent,
++          !(parent is UINavigationController),
++          !(parent is UITabBarController) {
++          contentViewController = parent
++        }
++
++        guard contentViewController.navigationController != nil ||
++          contentViewController.parent is UINavigationController else {
++          return nil
++        }
++        return contentViewController
++      }
++      responder = current.next
++    }
++
++    return nil
++  }
++
++  private func findListScrollView() -> UIScrollView? {
++    var ancestor: UIView? = superview
++
++    while let current = ancestor {
++      if let listScrollView = findListScrollView(in: current) {
++        return listScrollView
++      }
++      ancestor = current.superview
++    }
++
++    return nil
++  }
++
++  private func findListScrollView(in view: UIView) -> UIScrollView? {
++    // SwiftUI List is backed by UITableView on iOS 15 and UICollectionView on
++    // newer systems. Both are UIScrollView subclasses and can drive UIKit's
++    // navigation-bar scroll-edge appearance.
++    if let tableView = view as? UITableView {
++      return tableView
++    }
++
++    if let collectionView = view as? UICollectionView {
++      return collectionView
++    }
++
++    for child in view.subviews {
++      if let listScrollView = findListScrollView(in: child) {
++        return listScrollView
++      }
++    }
++
++    return nil
++  }
++}
+diff --git a/src/swift-ui/List/index.tsx b/src/swift-ui/List/index.tsx
+index 73c2193..70d0ca0 100644
+--- a/src/swift-ui/List/index.tsx
++++ b/src/swift-ui/List/index.tsx
+@@ -21,6 +21,54 @@ function transformListProps(props: Omit<ListProps, 'children'>): Omit<NativeList
+ }
+ 
+ export interface ListProps extends CommonViewModifierProps {
++  /**
++   * Whether UIKit automatically adjusts the native scroll indicator insets.
++   * @default true
++   */
++  automaticallyAdjustsScrollIndicatorInsets?: boolean;
++
++  /**
++   * How UIKit adjusts the native list's content insets for navigation bars and safe areas.
++   * @default 'automatic'
++   */
++  contentInsetAdjustmentBehavior?: 'automatic' | 'scrollableAxes' | 'never' | 'always';
++
++  /**
++   * Shrinks the list viewport when its host extends below the physical screen boundary.
++   * Useful for native sheet containers that clip hosted SwiftUI content at smaller detents.
++   * @default false
++   */
++  compensatesForViewportClipping?: boolean;
++
++  /**
++   * The anchor used when scrolling to `initialScrollTarget`.
++   * @default 'center'
++   */
++  initialScrollAnchor?:
++    | 'zero'
++    | 'topLeading'
++    | 'top'
++    | 'topTrailing'
++    | 'leading'
++    | 'center'
++    | 'trailing'
++    | 'bottomLeading'
++    | 'bottom'
++    | 'bottomTrailing';
++
++  /**
++   * The child identity to scroll into view after the list mounts.
++   * Children should use the `viewID` modifier with the same value.
++   */
++  initialScrollTarget?: string | number;
++
++  /**
++   * Registers the backing native list as the current view controller's top content scroll view.
++   * This lets UIKit drive navigation-bar scroll-edge appearance changes without JS scroll events.
++   * @default false
++   */
++  tracksNavigationBarScrollEdge?: boolean;
++
+   /**
+    * The children elements to be rendered inside the list.
+    */
+diff --git a/build/swift-ui/List/index.d.ts b/build/swift-ui/List/index.d.ts
+index 02e9345..6b7b840 100644
+--- a/build/swift-ui/List/index.d.ts
++++ b/build/swift-ui/List/index.d.ts
+@@ -1,6 +1,38 @@
+ import { ListForEach, type ListForEachProps } from './ListForEach';
+ import { type CommonViewModifierProps } from '../types';
+ export interface ListProps extends CommonViewModifierProps {
++    /**
++     * Whether UIKit automatically adjusts the native scroll indicator insets.
++     * @default true
++     */
++    automaticallyAdjustsScrollIndicatorInsets?: boolean;
++    /**
++     * How UIKit adjusts the native list's content insets for navigation bars and safe areas.
++     * @default 'automatic'
++     */
++    contentInsetAdjustmentBehavior?: 'automatic' | 'scrollableAxes' | 'never' | 'always';
++    /**
++     * Shrinks the list viewport when its host extends below the physical screen boundary.
++     * Useful for native sheet containers that clip hosted SwiftUI content at smaller detents.
++     * @default false
++     */
++    compensatesForViewportClipping?: boolean;
++    /**
++     * The anchor used when scrolling to `initialScrollTarget`.
++     * @default 'center'
++     */
++    initialScrollAnchor?: 'zero' | 'topLeading' | 'top' | 'topTrailing' | 'leading' | 'center' | 'trailing' | 'bottomLeading' | 'bottom' | 'bottomTrailing';
++    /**
++     * The child identity to scroll into view after the list mounts.
++     * Children should use the `viewID` modifier with the same value.
++     */
++    initialScrollTarget?: string | number;
++    /**
++     * Registers the backing native list as the current view controller's top content scroll view.
++     * This lets UIKit drive navigation-bar scroll-edge appearance changes without JS scroll events.
++     * @default false
++     */
++    tracksNavigationBarScrollEdge?: boolean;
+     /**
+      * The children elements to be rendered inside the list.
+      */
+@@ -23,4 +55,4 @@ export declare namespace List {
+     var ForEach: typeof ListForEach;
+ }
+ export { ListForEach, ListForEachProps };
+-//# sourceMappingURL=index.d.ts.map
+\ No newline at end of file
++//# sourceMappingURL=index.d.ts.map
