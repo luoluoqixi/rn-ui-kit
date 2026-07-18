@@ -77,11 +77,9 @@ Android 与 iOS 命令需要本机已配置相应的原生开发环境；Web 示
 
 ## 屏幕截图
 
-<p align="center">
-  <a href="./docs/SCREENSHOTS.md">
-    <img src="./docs/screenshots/ios26/001.jpg" alt="rn_ui_kit 在 iOS 26 上的示例首页" width="360">
-  </a>
-</p>
+| Android | iOS 18 | iOS 26 |
+| :---: | :---: | :---: |
+| <a href="./docs/SCREENSHOTS.md"><img src="./docs/screenshots/android/001.jpg" alt="rn_ui_kit 在 Android 上的示例首页" width="280"></a> | <a href="./docs/SCREENSHOTS.md"><img src="./docs/screenshots/ios18/001.jpg" alt="rn_ui_kit 在 iOS 18 上的示例首页" width="280"></a> | <a href="./docs/SCREENSHOTS.md"><img src="./docs/screenshots/ios26/001.jpg" alt="rn_ui_kit 在 iOS 26 上的示例首页" width="280"></a> |
 
 <p align="center">
   <a href="./docs/SCREENSHOTS.md">查看 Android、iOS 18 与 iOS 26 完整截图对比</a>

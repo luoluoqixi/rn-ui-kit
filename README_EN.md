@@ -87,11 +87,9 @@ source and install the declared
 
 ## Screenshots
 
-<p align="center">
-  <a href="./docs/SCREENSHOTS.md">
-    <img src="./docs/screenshots/ios26/001.jpg" alt="rn_ui_kit example home screen on iOS 26" width="360">
-  </a>
-</p>
+| Android | iOS 18 | iOS 26 |
+| :---: | :---: | :---: |
+| <a href="./docs/SCREENSHOTS.md"><img src="./docs/screenshots/android/001.jpg" alt="rn_ui_kit example home screen on Android" width="280"></a> | <a href="./docs/SCREENSHOTS.md"><img src="./docs/screenshots/ios18/001.jpg" alt="rn_ui_kit example home screen on iOS 18" width="280"></a> | <a href="./docs/SCREENSHOTS.md"><img src="./docs/screenshots/ios26/001.jpg" alt="rn_ui_kit example home screen on iOS 26" width="280"></a> |
 
 <p align="center">
   <a href="./docs/SCREENSHOTS.md">View the complete Android, iOS 18, and iOS 26 screenshot comparison</a>
