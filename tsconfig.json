@@ -4,7 +4,10 @@
     "declaration": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",
-    "lib": ["ES2022", "DOM"],
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "noEmit": true,
@@ -13,5 +16,15 @@
     "strict": true,
     "target": "ES2022",
     "types": []
+  },
+  "exclude": [
+    "node_modules",
+    "**/dist/**"
+  ],
+  "watchOptions": {
+    "excludeDirectories": [
+      "**/dist",
+      "**/node_modules"
+    ]
   }
 }

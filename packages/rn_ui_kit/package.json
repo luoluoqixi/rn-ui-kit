@@ -1,6 +1,6 @@
 {
   "name": "rn_ui_kit",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": false,
   "type": "module",
   "description": "React Native UI kit with core components and debug tools.",
