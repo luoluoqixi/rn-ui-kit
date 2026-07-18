@@ -78,6 +78,19 @@ type FallbackListEntry =
       type: "sectionFooter";
     };
 
+function useFallbackRowThemeColors() {
+  const appBackgroundColors = useAppBackgroundColors();
+  const { preferences } = useUiPreferences();
+  const theme = useTheme();
+  // When the page background follows an accent theme, color2 may be visually indistinguishable
+  // from theme.background. Use the next surface step so fallback rows retain list hierarchy.
+  const defaultRowBackground = preferences.appearance.backgroundFollowsTheme
+    ? (theme.color3?.val ?? appBackgroundColors.card)
+    : appBackgroundColors.card;
+
+  return { defaultRowBackground, theme };
+}
+
 function FallbackRowContainer({
   backgroundColor,
   children,
@@ -86,15 +99,8 @@ function FallbackRowContainer({
   onPress,
 }: RowContainerProps) {
   const resolvedHaptics = useResolvedNativeHaptics(nativeHaptics);
-  const appBackgroundColors = useAppBackgroundColors();
-  const { preferences } = useUiPreferences();
-  const theme = useTheme();
+  const { defaultRowBackground, theme } = useFallbackRowThemeColors();
   const [hovered, setHovered] = useState(false);
-  // When the page background follows an accent theme, color2 may be visually indistinguishable
-  // from theme.background. Use the next surface step so fallback rows retain list hierarchy.
-  const defaultRowBackground = preferences.appearance.backgroundFollowsTheme
-    ? (theme.color3?.val ?? appBackgroundColors.card)
-    : appBackgroundColors.card;
   // Read interactive colors while this component renders so Tamagui can track these
   // theme tokens. Reading them only inside Pressable's render callback can retain the
   // previous token values when "system" resolves to a different color scheme.
@@ -658,6 +664,7 @@ export function NativeListItem({
 export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSelectItemProps) {
   const disabled = itemProps.disabled || selectProps.disabled || selectProps.isDisabled;
   const selectedLabel = getSelectedLabel(selectProps);
+  const { defaultRowBackground } = useFallbackRowThemeColors();
 
   return (
     <Select
@@ -697,6 +704,7 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
       }}
       placement={selectProps.placement ?? (isWeb() ? "bottom-end" : undefined)}
       triggerProps={{
+        backgroundColor: isWeb() ? (defaultRowBackground as any) : undefined,
         ...selectProps.triggerProps,
         hoverStyle: selectProps.triggerProps?.hoverStyle ?? {
           backgroundColor: "$color3",
