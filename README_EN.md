@@ -57,12 +57,12 @@ bun install
 bun run typecheck
 
 # Start the Expo development server
-bun run --cwd examples/app start
+bun --cwd examples/app start
 
 # Or launch a specific platform
-bun run --cwd examples/app web
-bun run --cwd examples/app android
-bun run --cwd examples/app ios
+bun --cwd examples/app web
+bun --cwd examples/app android
+bun --cwd examples/app ios
 ```
 
 The Android and iOS commands require their respective native development
@@ -199,7 +199,7 @@ import "./tamagui.generated.css";
 Generate it with:
 
 ```bash
-bun run --cwd examples/app generate:tamagui
+bun --cwd examples/app generate:tamagui
 ```
 
 ## Usage
@@ -392,13 +392,13 @@ rn_ui_kit/
 bun run typecheck
 
 # Type-check the core package
-bun run --cwd packages/rn_ui_kit_core typecheck
+bun --cwd packages/rn_ui_kit_core typecheck
 
 # Type-check the debug package
-bun run --cwd packages/rn_ui_kit_debug typecheck
+bun --cwd packages/rn_ui_kit_debug typecheck
 
 # Type-check the example app
-bun run --cwd examples/app typecheck
+bun --cwd examples/app typecheck
 ```
 
 When adding or changing a component, consider adding a matching entry to the

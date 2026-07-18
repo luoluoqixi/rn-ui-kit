@@ -5,6 +5,7 @@
     "declaration": false,
     "jsx": "react-jsx",
     "noEmit": true,
+    "strict": true,
     "paths": {
       "rn_ui_kit": ["../../packages/rn_ui_kit/src/index.ts"]
     }

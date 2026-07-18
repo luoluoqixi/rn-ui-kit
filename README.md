@@ -51,12 +51,12 @@ bun install
 bun run typecheck
 
 # 启动 Expo 开发服务器
-bun run --cwd examples/app start
+bun --cwd examples/app start
 
 # 或直接启动指定平台
-bun run --cwd examples/app web
-bun run --cwd examples/app android
-bun run --cwd examples/app ios
+bun --cwd examples/app web
+bun --cwd examples/app android
+bun --cwd examples/app ios
 ```
 
 Android 与 iOS 命令需要本机已配置相应的原生开发环境；Web 示例可以直接通过浏览器运行。
@@ -188,7 +188,7 @@ import "./tamagui.generated.css";
 生成命令：
 
 ```bash
-bun run --cwd examples/app generate:tamagui
+bun --cwd examples/app generate:tamagui
 ```
 
 ## 使用示例
@@ -372,13 +372,13 @@ rn_ui_kit/
 bun run typecheck
 
 # 仅检查核心包
-bun run --cwd packages/rn_ui_kit_core typecheck
+bun --cwd packages/rn_ui_kit_core typecheck
 
 # 仅检查调试包
-bun run --cwd packages/rn_ui_kit_debug typecheck
+bun --cwd packages/rn_ui_kit_debug typecheck
 
 # 仅检查示例应用
-bun run --cwd examples/app typecheck
+bun --cwd examples/app typecheck
 ```
 
 新增或修改组件时，建议同时在 `rn_ui_kit_debug` 的组件目录中添加示例，以便在 iOS、
