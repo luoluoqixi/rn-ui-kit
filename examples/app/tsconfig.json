@@ -6,8 +6,7 @@
     "jsx": "react-jsx",
     "noEmit": true,
     "paths": {
-      "rn_ui_kit": ["../../packages/rn_ui_kit/src/index.ts"],
-      "rn_ui_kit_debug": ["../../packages/rn_ui_kit_debug/src/index.ts"]
+      "rn_ui_kit": ["../../packages/rn_ui_kit/src/index.ts"]
     }
   },
   "include": [
@@ -20,8 +19,6 @@
     "*.js",
     "../../packages/rn_ui_kit/src/**/*.ts",
     "../../packages/rn_ui_kit/src/**/*.tsx",
-    "../../packages/rn_ui_kit_debug/src/**/*.ts",
-    "../../packages/rn_ui_kit_debug/src/**/*.tsx"
   ],
   "exclude": ["node_modules"]
 }

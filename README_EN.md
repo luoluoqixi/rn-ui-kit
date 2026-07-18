@@ -41,11 +41,12 @@ The repository currently targets these major versions:
 | TypeScript | 5.9.2 |
 | Package manager | Bun |
 
-`rn_ui_kit` declares its runtime frameworks and native modules as peer
-dependencies. When adding it to an existing app, use
-[`packages/rn_ui_kit/package.json`](./packages/rn_ui_kit/package.json) as the
-source of truth and keep Expo, React Native, Tamagui, and native module versions
-compatible.
+`rn_ui_kit` installs and re-exports both core and debug. Core declares its
+runtime frameworks and native modules as peer dependencies. When adding the kit
+to an existing app, use
+[`packages/rn_ui_kit_core/package.json`](./packages/rn_ui_kit_core/package.json)
+as the source of truth and keep Expo, React Native, Tamagui, and native module
+versions compatible.
 
 ## Quick start
 
@@ -69,14 +70,13 @@ toolchains. The Web example can run directly in a browser.
 
 ### Add the package to a workspace
 
-This repository uses Bun workspaces. The example app consumes both packages
-through `workspace:*`:
+This repository uses Bun workspaces. The example app only consumes the public
+aggregate package through `workspace:*`:
 
 ```json
 {
   "dependencies": {
-    "rn_ui_kit": "workspace:*",
-    "rn_ui_kit_debug": "workspace:*"
+    "rn_ui_kit": "workspace:*"
   }
 }
 ```
@@ -85,7 +85,7 @@ External projects can source `rn_ui_kit` from their npm registry, a Git source,
 or a local workspace. This repository does not currently include automated
 release configuration, so confirm that the package is available from your chosen
 source and install the declared
-[`peerDependencies`](./packages/rn_ui_kit/package.json).
+[`peerDependencies`](./packages/rn_ui_kit_core/package.json).
 
 ## Screenshots
 
@@ -335,7 +335,7 @@ for a complete interactive example.
 | Infrastructure | `RootProvider`, `UIProvider`, theme helpers, navigation helpers, portals, and platform utilities |
 
 All public exports are listed in
-[`packages/rn_ui_kit/src/components/ui/index.ts`](./packages/rn_ui_kit/src/components/ui/index.ts).
+[`packages/rn_ui_kit_core/src/components/ui/index.ts`](./packages/rn_ui_kit_core/src/components/ui/index.ts).
 Each component directory also exports its prop types.
 
 ## Patch synchronization
@@ -376,7 +376,8 @@ Excluded dependencies are neither copied nor registered.
 ```text
 rn_ui_kit/
 ├─ packages/
-│  ├─ rn_ui_kit/          # Components, providers, themes, and platform adapters
+│  ├─ rn_ui_kit/          # Public package that re-exports core and debug
+│  ├─ rn_ui_kit_core/     # Components, providers, themes, and platform adapters
 │  └─ rn_ui_kit_debug/    # Component catalog, debug pages, and examples
 ├─ examples/
 │  └─ app/                # Expo app for iOS, Android, and Web
@@ -391,7 +392,7 @@ rn_ui_kit/
 bun run typecheck
 
 # Type-check the core package
-bun run --cwd packages/rn_ui_kit typecheck
+bun run --cwd packages/rn_ui_kit_core typecheck
 
 # Type-check the debug package
 bun run --cwd packages/rn_ui_kit_debug typecheck

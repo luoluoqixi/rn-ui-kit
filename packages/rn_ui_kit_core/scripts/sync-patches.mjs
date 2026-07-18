@@ -146,7 +146,6 @@ if (!existsSync(packageJsonPath)) {
 
 const targetPackage = JSON.parse(readFileSync(packageJsonPath, "utf8"));
 const targetPatchDir = resolve(options.cwd, "patches");
-const installedPatchDir = resolve(options.cwd, "node_modules", "rn_ui_kit", "patches");
 const excludedPatches = getExcludedPatches(targetPackage);
 
 if (options.copy) {
@@ -166,7 +165,7 @@ for (const [dependency, patchFile] of patchDependencies) {
     throw new Error(`Missing source patch: ${sourcePath}`);
   }
 
-  const patchPath = options.copy ? join(targetPatchDir, patchFile) : join(installedPatchDir, patchFile);
+  const patchPath = options.copy ? join(targetPatchDir, patchFile) : sourcePath;
 
   if (options.copy && sourcePath !== patchPath) {
     copyFileSync(sourcePath, patchPath);

@@ -36,8 +36,9 @@
 | TypeScript | 5.9.2 |
 | 包管理器 | Bun |
 
-`rn_ui_kit` 将运行时框架和原生模块声明为 peer dependencies。接入已有应用时，
-请以 [`packages/rn_ui_kit/package.json`](./packages/rn_ui_kit/package.json) 为准，并确保
+`rn_ui_kit` 会安装并统一导出 core 与 debug；其中 core 将运行时框架和原生模块声明为
+peer dependencies。接入已有应用时，请以
+[`packages/rn_ui_kit_core/package.json`](./packages/rn_ui_kit_core/package.json) 为准，并确保
 Expo、React Native、Tamagui 及原生模块版本兼容。
 
 
@@ -62,20 +63,19 @@ Android 与 iOS 命令需要本机已配置相应的原生开发环境；Web 示
 
 ### 在工作区中接入
 
-当前仓库采用 Bun workspaces，示例应用通过 `workspace:*` 使用两个包：
+当前仓库采用 Bun workspaces，示例应用只需通过 `workspace:*` 使用公开聚合包：
 
 ```json
 {
   "dependencies": {
-    "rn_ui_kit": "workspace:*",
-    "rn_ui_kit_debug": "workspace:*"
+    "rn_ui_kit": "workspace:*"
   }
 }
 ```
 
 外部项目可以从实际使用的 npm registry、Git 源或本地 workspace 引入
 `rn_ui_kit`。本仓库未包含自动发布配置，因此请先确认包在你的依赖源中可用，再安装
-[`peerDependencies`](./packages/rn_ui_kit/package.json) 中列出的依赖。
+[`peerDependencies`](./packages/rn_ui_kit_core/package.json) 中列出的依赖。
 
 ## 屏幕截图
 
@@ -316,7 +316,7 @@ export function SettingsList() {
 | 基础设施 | `RootProvider`、`UIProvider`、主题工具、导航工具、Portal 与平台工具 |
 
 所有公开导出可在
-[`packages/rn_ui_kit/src/components/ui/index.ts`](./packages/rn_ui_kit/src/components/ui/index.ts)
+[`packages/rn_ui_kit_core/src/components/ui/index.ts`](./packages/rn_ui_kit_core/src/components/ui/index.ts)
 中查看。各组件目录同时导出 Props 类型。
 
 ## 补丁同步
@@ -356,7 +356,8 @@ bun run sync-patches
 ```text
 rn_ui_kit/
 ├─ packages/
-│  ├─ rn_ui_kit/          # 核心组件、Provider、主题与平台适配
+│  ├─ rn_ui_kit/          # 对外聚合包，统一导出 core 与 debug
+│  ├─ rn_ui_kit_core/     # 核心组件、Provider、主题与平台适配
 │  └─ rn_ui_kit_debug/    # 组件目录、调试页面与示例界面
 ├─ examples/
 │  └─ app/                # Expo iOS / Android / Web 示例应用
@@ -371,7 +372,7 @@ rn_ui_kit/
 bun run typecheck
 
 # 仅检查核心包
-bun run --cwd packages/rn_ui_kit typecheck
+bun run --cwd packages/rn_ui_kit_core typecheck
 
 # 仅检查调试包
 bun run --cwd packages/rn_ui_kit_debug typecheck

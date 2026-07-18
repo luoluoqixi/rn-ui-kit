@@ -13,7 +13,7 @@ import {
   Switch,
   Text,
   Tooltip,
-} from "rn_ui_kit";
+} from "rn_ui_kit_core";
 
 import { ExampleBlock, ExampleRow, ExampleStack } from "../shared";
 import type { ComponentExampleDefinition } from "../types";

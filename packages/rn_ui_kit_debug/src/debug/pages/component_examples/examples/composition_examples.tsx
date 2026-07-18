@@ -8,7 +8,7 @@ import {
   Text,
   type SplitLayoutHandle,
   useAppBackgroundColors,
-} from "rn_ui_kit";
+} from "rn_ui_kit_core";
 
 import { ExampleBlock, ExampleStack } from "../shared";
 import type { ComponentExampleDefinition } from "../types";

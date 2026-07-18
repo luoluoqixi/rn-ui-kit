@@ -24,7 +24,7 @@ import {
   withNativeStackGestureOptions,
   RN_UI_KIT_PACKAGE_NAME,
   RN_UI_KIT_PACKAGE_VERSION,
-} from "rn_ui_kit";
+} from "rn_ui_kit_core";
 
 import { RnUiKitDebugHomePage } from "./pages/debug_home_page";
 import { RnUiKitDebugSectionPage } from "./pages/debug_section_page";

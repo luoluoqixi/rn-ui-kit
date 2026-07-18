@@ -6,10 +6,11 @@ import {
   NativeListSection,
   NativeListSelectItem,
   NativeListSwitchItem,
+  RnUiKitUiComponentsDebugPage,
+  type RnUiKitDebugRouteDefinition,
   type UiPreferences,
   isIos26Plus,
 } from "rn_ui_kit";
-import { RnUiKitUiComponentsDebugPage, type RnUiKitDebugRouteDefinition } from "rn_ui_kit_debug";
 
 import appPackage from "./package.json";
 import { accentThemeNames } from "./themes";

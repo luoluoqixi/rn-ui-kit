@@ -12,7 +12,7 @@ import {
   Text,
   isIos26Plus,
   useAppBackgroundColors,
-} from "rn_ui_kit";
+} from "rn_ui_kit_core";
 
 import type { RnUiKitDebugSectionContentProps } from "../../types";
 import { blurActiveElementOnWeb } from "../../web_focus";

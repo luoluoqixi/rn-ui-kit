@@ -54,7 +54,6 @@
     "react-native-web": "=0.21.2",
     "react-native-worklets": "=0.8.1",
     "rn_ui_kit": "workspace:*",
-    "rn_ui_kit_debug": "workspace:*",
     "tamagui": "=2.4.0",
     "zeego": "=3.0.6"
   },

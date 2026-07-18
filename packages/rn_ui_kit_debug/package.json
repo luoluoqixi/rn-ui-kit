@@ -29,11 +29,10 @@
     "@tamagui/lucide-icons-2": "=2.4.0",
     "react": "=19.2.5",
     "react-native": "=0.83.9",
-    "tamagui": "=2.4.0",
-    "rn_ui_kit": "workspace:*"
+    "tamagui": "=2.4.0"
   },
   "dependencies": {
-    "rn_ui_kit": "workspace:*"
+    "rn_ui_kit_core": "workspace:*"
   },
   "devDependencies": {
     "@react-navigation/native": "^7.3.4",

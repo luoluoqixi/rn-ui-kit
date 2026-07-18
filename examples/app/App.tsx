@@ -5,10 +5,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   AppStatusBar,
   RootProvider,
+  RnUiKitDebugPanel,
   type UiPreferences,
   useColorSchemeSettings,
 } from "rn_ui_kit";
-import { RnUiKitDebugPanel } from "rn_ui_kit_debug";
 import { useEffect, useMemo, useState } from "react";
 
 import config from "./tamagui.config";

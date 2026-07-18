@@ -56,7 +56,7 @@ import {
   os,
   useAppBackgroundColors,
   useToast,
-} from "rn_ui_kit";
+} from "rn_ui_kit_core";
 
 import type { RnUiKitUiComponentsDebugPageProps } from "../../types";
 

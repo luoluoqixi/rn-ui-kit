@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
-import { Text } from "rn_ui_kit";
+import { Text } from "rn_ui_kit_core";
 
 export function ExampleStack({ children }: { children: ReactNode }) {
   return <View style={styles.stack}>{children}</View>;
