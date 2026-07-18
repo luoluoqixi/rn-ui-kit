@@ -1,7 +1,9 @@
 # rn_ui_kit
 
-The public package for `rn_ui_kit`. Its default entry exports core APIs; debug APIs
-are available from the `rn_ui_kit/debug` subpath.
+The single public package for `rn_ui_kit`. Core implementation lives under
+`src/core`, debug tools live under `src/debug`, and the default entry exports
+core APIs only. Debug APIs are available from the opt-in `rn_ui_kit/debug`
+subpath.
 
 ```ts
 import "rn_ui_kit/initialize";

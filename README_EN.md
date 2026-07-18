@@ -41,12 +41,12 @@ The repository currently targets these major versions:
 | TypeScript | 5.9.2 |
 | Package manager | Bun |
 
-`rn_ui_kit` exports core from its default entry; debug APIs are opt-in through `rn_ui_kit/debug`. Core declares its
-runtime frameworks and native modules as peer dependencies. When adding the kit
-to an existing app, use
-[`packages/rn_ui_kit_core/package.json`](./packages/rn_ui_kit_core/package.json)
-as the source of truth and keep Expo, React Native, Tamagui, and native module
-versions compatible.
+`rn_ui_kit` is now a single package. Its default entry exports only core APIs,
+while debug APIs are opt-in through `rn_ui_kit/debug`. Runtime frameworks and
+native modules are declared in
+[`packages/rn_ui_kit/package.json`](./packages/rn_ui_kit/package.json) under
+`peerDependencies`. Use that file as the source of truth and keep Expo, React
+Native, Tamagui, and native module versions compatible.
 
 ## Quick start
 
@@ -81,11 +81,25 @@ aggregate package through `workspace:*`:
 }
 ```
 
-External projects can source `rn_ui_kit` from their npm registry, a Git source,
-or a local workspace. This repository does not currently include automated
-release configuration, so confirm that the package is available from your chosen
-source and install the declared
-[`peerDependencies`](./packages/rn_ui_kit_core/package.json).
+### Add the package to an external app
+
+Compiled standalone packages are stored in `rn_ui_kit-<version>` release
+branches. These branches contain no workspace and do not require the consuming
+app to compile TypeScript:
+
+```bash
+bun add github:luoluoqixi/rn_ui_kit#rn_ui_kit-1.0.1
+```
+
+For a private repository, use SSH:
+
+```bash
+bun add "git+ssh://git@github.com/luoluoqixi/rn_ui_kit.git#rn_ui_kit-1.0.1"
+```
+
+The consuming app must still satisfy the
+[`peerDependencies`](./packages/rn_ui_kit/package.json) for Expo, React Native,
+Tamagui, and the required native modules.
 
 ## Screenshots
 
@@ -319,7 +333,7 @@ Notes:
   positioning in the native iOS list.
 
 See
-[`collection_examples.tsx`](./packages/rn_ui_kit_debug/src/debug/pages/component_examples/examples/collection_examples.tsx)
+[`collection_examples.tsx`](./packages/rn_ui_kit/src/debug/pages/component_examples/examples/collection_examples.tsx)
 for a complete interactive example.
 
 ## Components
@@ -335,7 +349,7 @@ for a complete interactive example.
 | Infrastructure | `RootProvider`, `UIProvider`, theme helpers, navigation helpers, portals, and platform utilities |
 
 All public exports are listed in
-[`packages/rn_ui_kit_core/src/components/ui/index.ts`](./packages/rn_ui_kit_core/src/components/ui/index.ts).
+[`packages/rn_ui_kit/src/core/components/ui/index.ts`](./packages/rn_ui_kit/src/core/components/ui/index.ts).
 Each component directory also exports its prop types.
 
 ## Patch synchronization
@@ -376,34 +390,66 @@ Excluded dependencies are neither copied nor registered.
 ```text
 rn_ui_kit/
 ├─ packages/
-│  ├─ rn_ui_kit/          # Public package that re-exports core and debug
-│  ├─ rn_ui_kit_core/     # Components, providers, themes, and platform adapters
-│  └─ rn_ui_kit_debug/    # Component catalog, debug pages, and examples
+│  └─ rn_ui_kit/          # The single public package
+│     ├─ src/
+│     │  ├─ core/         # Components, providers, themes, and platform adapters
+│     │  ├─ debug/        # Component catalog, debug pages, and examples
+│     │  ├─ index.ts      # Default entry; exports core only
+│     │  ├─ debug.ts      # rn_ui_kit/debug subpath
+│     │  └─ initialize.ts # rn_ui_kit/initialize subpath
+│     ├─ patches/         # Upstream patches synchronized into consuming apps
+│     └─ scripts/         # rn-ui-sync-patches
 ├─ examples/
 │  └─ app/                # Expo app for iOS, Android, and Web
-├─ package.json           # Bun workspace and shared scripts
+├─ scripts/
+│  ├─ set-version.js      # Synchronizes the project version
+│  ├─ package-release.js  # Creates compiled release branches
+│  └─ package-release.md  # Detailed release documentation
+├─ package.json           # Bun workspace, build, and release commands
 └─ bun.lock
 ```
 
 ## Development
 
 ```bash
-# Type-check the entire workspace
+# Compile rn_ui_kit into packages/rn_ui_kit/dist
+bun run build
+
+# Type-check the package and example app
 bun run typecheck
 
-# Type-check the core package
-bun --cwd packages/rn_ui_kit_core typecheck
-
-# Type-check the debug package
-bun --cwd packages/rn_ui_kit_debug typecheck
+# Type-check rn_ui_kit only
+bun --cwd packages/rn_ui_kit typecheck
 
 # Type-check the example app
 bun --cwd examples/app typecheck
 ```
 
 When adding or changing a component, consider adding a matching entry to the
-`rn_ui_kit_debug` component catalog so its behavior and visuals can be checked
-on iOS, Android, and Web.
+`packages/rn_ui_kit/src/debug` component catalog so its behavior and visuals
+can be checked on iOS, Android, and Web.
+
+## Build and release
+
+```bash
+# Update versions and synchronize bun.lock
+bun run set-version 1.0.1
+
+# Generate only the release directory and tarball
+bun run package-release --pack-only
+
+# Generate the release directory, tarball, and local rn_ui_kit-1.0.1 branch
+bun run package-release
+
+# Push the release branch after verifying it
+git push -u origin rn_ui_kit-1.0.1
+```
+
+The release build compiles the single `packages/rn_ui_kit` package directly; it
+does not merge packages dynamically. A release branch contains only compiled
+`dist` output, package.json, README, LICENSE, patches, and runtime scripts. See
+[`scripts/package-release.md`](./scripts/package-release.md) for the complete
+release process.
 
 ## License
 

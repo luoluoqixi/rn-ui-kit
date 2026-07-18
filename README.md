@@ -36,10 +36,11 @@
 | TypeScript | 5.9.2 |
 | 包管理器 | Bun |
 
-`rn_ui_kit` 默认入口仅导出 core；debug API 需从 `rn_ui_kit/debug` 显式导入。其中 core 将运行时框架和原生模块声明为
-peer dependencies。接入已有应用时，请以
-[`packages/rn_ui_kit_core/package.json`](./packages/rn_ui_kit_core/package.json) 为准，并确保
-Expo、React Native、Tamagui 及原生模块版本兼容。
+`rn_ui_kit` 现在是单一 package：默认入口仅导出 core，debug API 需从
+`rn_ui_kit/debug` 显式导入。运行时框架和原生模块统一声明在
+[`packages/rn_ui_kit/package.json`](./packages/rn_ui_kit/package.json) 的
+`peerDependencies` 中。接入已有应用时，请以该文件为准，并确保 Expo、React Native、
+Tamagui 及原生模块版本兼容。
 
 
 ## 快速开始
@@ -73,9 +74,24 @@ Android 与 iOS 命令需要本机已配置相应的原生开发环境；Web 示
 }
 ```
 
-外部项目可以从实际使用的 npm registry、Git 源或本地 workspace 引入
-`rn_ui_kit`。本仓库未包含自动发布配置，因此请先确认包在你的依赖源中可用，再安装
-[`peerDependencies`](./packages/rn_ui_kit_core/package.json) 中列出的依赖。
+### 在外部项目中接入
+
+本仓库使用 `rn_ui_kit-<version>` 分支保存编译后的独立发布包。发布分支不包含
+workspace，也不要求外部 App 编译 TypeScript。推送发布分支后可以直接安装：
+
+```bash
+bun add github:luoluoqixi/rn_ui_kit#rn_ui_kit-1.0.1
+```
+
+私有仓库可以使用 SSH：
+
+```bash
+bun add "git+ssh://git@github.com/luoluoqixi/rn_ui_kit.git#rn_ui_kit-1.0.1"
+```
+
+外部项目仍需满足
+[`peerDependencies`](./packages/rn_ui_kit/package.json) 中声明的 Expo、React Native、
+Tamagui 和原生模块版本。
 
 ## 屏幕截图
 
@@ -301,7 +317,7 @@ export function SettingsList() {
 - `initialScrollTarget` 与行上的 `nativeScrollId` 可用于 iOS 原生列表的初始滚动定位。
 
 完整交互示例见
-[`collection_examples.tsx`](./packages/rn_ui_kit_debug/src/debug/pages/component_examples/examples/collection_examples.tsx)。
+[`collection_examples.tsx`](./packages/rn_ui_kit/src/debug/pages/component_examples/examples/collection_examples.tsx)。
 
 ## 组件
 
@@ -316,7 +332,7 @@ export function SettingsList() {
 | 基础设施 | `RootProvider`、`UIProvider`、主题工具、导航工具、Portal 与平台工具 |
 
 所有公开导出可在
-[`packages/rn_ui_kit_core/src/components/ui/index.ts`](./packages/rn_ui_kit_core/src/components/ui/index.ts)
+[`packages/rn_ui_kit/src/core/components/ui/index.ts`](./packages/rn_ui_kit/src/core/components/ui/index.ts)
 中查看。各组件目录同时导出 Props 类型。
 
 ## 补丁同步
@@ -356,33 +372,63 @@ bun run sync-patches
 ```text
 rn_ui_kit/
 ├─ packages/
-│  ├─ rn_ui_kit/          # 对外聚合包，默认导出 core，并提供 debug 子路径
-│  ├─ rn_ui_kit_core/     # 核心组件、Provider、主题与平台适配
-│  └─ rn_ui_kit_debug/    # 组件目录、调试页面与示例界面
+│  └─ rn_ui_kit/          # 唯一的对外 package
+│     ├─ src/
+│     │  ├─ core/         # 核心组件、Provider、主题与平台适配
+│     │  ├─ debug/        # 组件目录、调试页面与示例界面
+│     │  ├─ index.ts      # 默认入口，仅导出 core
+│     │  ├─ debug.ts      # rn_ui_kit/debug 子路径
+│     │  └─ initialize.ts # rn_ui_kit/initialize 子路径
+│     ├─ patches/         # 需要同步到 App 的上游补丁
+│     └─ scripts/         # rn-ui-sync-patches
 ├─ examples/
 │  └─ app/                # Expo iOS / Android / Web 示例应用
-├─ package.json           # Bun workspace 与统一脚本
+├─ scripts/
+│  ├─ set-version.js      # 同步工程版本
+│  ├─ package-release.js  # 创建编译产物发布分支
+│  └─ package-release.md  # 完整发布流程说明
+├─ package.json           # Bun workspace、构建与发布命令
 └─ bun.lock
 ```
 
 ## 开发
 
 ```bash
-# 全工作区类型检查
+# 编译 rn_ui_kit 到 packages/rn_ui_kit/dist
+bun run build
+
+# 检查 package 和示例 App
 bun run typecheck
 
-# 仅检查核心包
-bun --cwd packages/rn_ui_kit_core typecheck
-
-# 仅检查调试包
-bun --cwd packages/rn_ui_kit_debug typecheck
+# 仅检查 rn_ui_kit
+bun --cwd packages/rn_ui_kit typecheck
 
 # 仅检查示例应用
 bun --cwd examples/app typecheck
 ```
 
-新增或修改组件时，建议同时在 `rn_ui_kit_debug` 的组件目录中添加示例，以便在 iOS、
-Android 和 Web 上核对交互与视觉表现。
+新增或修改组件时，建议同时在 `packages/rn_ui_kit/src/debug` 的组件目录中添加示例，
+以便在 iOS、Android 和 Web 上核对交互与视觉表现。
+
+## 构建与发布
+
+```bash
+# 修改版本并同步 bun.lock
+bun run set-version 1.0.1
+
+# 只生成发布目录和 tarball
+bun run package-release --pack-only
+
+# 生成发布目录、tarball 和本地 rn_ui_kit-1.0.1 分支
+bun run package-release
+
+# 确认后推送发布分支
+git push -u origin rn_ui_kit-1.0.1
+```
+
+发布阶段直接编译单一的 `packages/rn_ui_kit`，不会动态合并 package。发布分支根目录只包含
+编译后的 `dist`、package.json、README、LICENSE、patches 和运行时脚本。完整说明见
+[`scripts/package-release.md`](./scripts/package-release.md)。
 
 ## License
 
