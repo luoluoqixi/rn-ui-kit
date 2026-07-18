@@ -399,6 +399,7 @@ function NativeListRoot({
     automaticContentInsetAdjustment,
     insetAdjustment,
     nativeScrollInsetsApplied,
+    presentationActive: trueSheetPresentationActive,
   } = useTrueSheetScrollLayout();
   const resolvedBackgroundColor =
     backgroundColor != null ? (toSwiftUIHexColor(backgroundColor) ?? undefined) : undefined;
@@ -449,6 +450,7 @@ function NativeListRoot({
           contentInsetAdjustmentBehavior={resolvedContentInsetAdjustmentBehavior}
           tracksNavigationBarScrollEdge={
             !isIos26Plus() &&
+            (!insideTrueSheet || trueSheetPresentationActive) &&
             (tracksNavigationBarScrollEdge ??
               (!insideTrueSheet && resolvedContentInsetAdjustmentBehavior === "automatic"))
           }

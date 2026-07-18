@@ -200,6 +200,7 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
         automaticContentInsetAdjustment={Platform.OS === "ios"}
         insetAdjustment={insetAdjustment}
         nativeScrollInsetsApplied={false}
+        presentationActive={presented}
       >
         <GestureHandlerRootView style={[styles.gestureRoot, backgroundStyle]}>
           <ScreenOverlayPortalProvider hostName={resolvedOverlayPortalHostName}>

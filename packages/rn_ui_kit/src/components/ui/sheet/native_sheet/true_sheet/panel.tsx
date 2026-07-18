@@ -165,6 +165,7 @@ function TrueSheetPanelInner({
       <TrueSheetScrollLayoutProvider
         insetAdjustment={insetAdjustment}
         nativeScrollInsetsApplied={shouldUseTrueSheetNativeScrollInsets(sheetScrollable)}
+        presentationActive={presented}
       >
         <GestureHandlerRootView
           style={[
