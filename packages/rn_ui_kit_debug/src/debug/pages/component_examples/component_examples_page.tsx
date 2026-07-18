@@ -37,7 +37,7 @@ export function RnUiKitComponentExamplesDebugPage({
 }: RnUiKitDebugSectionContentProps) {
   const appBackgroundColors = useAppBackgroundColors();
   const navigation = useNavigation<NavigationProp<DebugPanelNavigationParamList>>();
-  const isNativeIosPage = layoutHost === "default" && Platform.OS === "ios";
+  const isNativeIosPage = Platform.OS === "ios";
   const usesPreIos26ScrollEdgeHeader = isNativeIosPage && !isIos26Plus();
   const pageBackgroundColor =
     layoutHost === "nativeSheet" && isIos26Plus()
@@ -54,6 +54,7 @@ export function RnUiKitComponentExamplesDebugPage({
         contentInsetAdjustmentBehavior={
           usesPreIos26ScrollEdgeHeader ? "automatic" : undefined
         }
+        tracksNavigationBarScrollEdge={usesPreIos26ScrollEdgeHeader}
       >
         <NativeListSection>
           {sortedComponentExampleDefinitions.map((definition) => (

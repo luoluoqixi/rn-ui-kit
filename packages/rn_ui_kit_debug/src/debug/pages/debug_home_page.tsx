@@ -34,7 +34,7 @@ export function RnUiKitDebugHomePage({
   onSectionSheetPositionChange?: (position: number) => void;
   onOpenSectionsInSheetChange?: (openInSheet: boolean) => void;
 }) {
-  const isNativeIosPage = layoutHost === "default" && Platform.OS === "ios";
+  const isNativeIosPage = Platform.OS === "ios";
   const usesPreIos26ScrollEdgeHeader = isNativeIosPage && !isIos26Plus();
   const sections = Array.from(
     pages.reduce((groups, page) => {
@@ -54,6 +54,7 @@ export function RnUiKitDebugHomePage({
       contentInsetAdjustmentBehavior={
         usesPreIos26ScrollEdgeHeader ? "automatic" : undefined
       }
+      tracksNavigationBarScrollEdge={usesPreIos26ScrollEdgeHeader}
     >
       {sections.map(([section, sectionPages]) => (
         <NativeListSection key={section} title={section}>

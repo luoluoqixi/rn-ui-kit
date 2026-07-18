@@ -81,18 +81,29 @@ function useDebugSheetStackScreenOptions() {
   const appBackgroundColors = useAppBackgroundColors();
   const theme = useTheme();
   const transparentHeader = isIos26Plus();
+  const nativeScrollEdgeHeader = Platform.OS === "ios" && !transparentHeader;
 
   return {
     contentStyle: {
       backgroundColor: transparentHeader ? "transparent" : appBackgroundColors.sheet,
     },
     headerRight: undefined,
+    ...(nativeScrollEdgeHeader
+      ? {
+          // TrueSheet 内同样使用 iOS Native Stack。scrollEdgeAppearance 保持透明，
+          // standardAppearance 使用实体颜色，并由当前页面的原生 ScrollView 驱动切换。
+          headerLargeStyle: { backgroundColor: "transparent" },
+          headerShadowVisible: true,
+        }
+      : { headerShadowVisible: false }),
     headerStatusBarHeight: 0,
     headerStyle: {
       backgroundColor: transparentHeader ? "transparent" : appBackgroundColors.header,
       height: 56,
     },
-    headerTransparent: transparentHeader,
+    // iOS 15–25 必须保持 translucent，内容才能延伸到导航栏下方并触发
+    // scrollEdgeAppearance / standardAppearance 原生切换。
+    headerTransparent: transparentHeader || nativeScrollEdgeHeader,
     headerTintColor: theme.color10.val,
     headerTitleStyle: { color: theme.gray12.val },
   };

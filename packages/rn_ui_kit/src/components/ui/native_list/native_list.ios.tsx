@@ -45,6 +45,7 @@ import { resolveSelectItemGroups } from "../select/select_grouping";
 import { getTrueSheetScrollBottomPadding } from "../sheet/native_sheet/true_sheet/sheet_scroll_layout";
 import { useTrueSheetScrollLayout } from "../sheet/native_sheet/true_sheet/true_sheet_scroll_context";
 import { Switch } from "../switch";
+import { isIos26Plus } from "../utils/platform";
 import { toSwiftUIHexColor, triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
 import {
   NativeListActionItem as FallbackActionItem,
@@ -389,11 +390,13 @@ function NativeListRoot({
   scrollIndicatorInsets,
   style,
   scrollable = true,
+  tracksNavigationBarScrollEdge,
   ...fallbackProps
 }: NativeListRootProps) {
   const insets = useSafeAreaInsets();
   const {
     active: insideTrueSheet,
+    automaticContentInsetAdjustment,
     insetAdjustment,
     nativeScrollInsetsApplied,
   } = useTrueSheetScrollLayout();
@@ -431,6 +434,9 @@ function NativeListRoot({
   const normalPageIndicatorBottomInset = scrollIndicatorInsets?.bottom ?? insets.bottom;
   const compensatesForTrueSheetViewportClipping =
     insideTrueSheet && scrollable && automaticallyAdjustsScrollIndicatorInsets !== false;
+  const resolvedContentInsetAdjustmentBehavior =
+    contentInsetAdjustmentBehavior ??
+    (insideTrueSheet && automaticContentInsetAdjustment ? "automatic" : undefined);
   return (
     <NativeListContext.Provider value={{ native: true }}>
       <Host style={[styles.nativeRoot, style]}>
@@ -440,9 +446,11 @@ function NativeListRoot({
           automaticallyAdjustsScrollIndicatorInsets={
             manuallyAdjustNormalPageIndicator ? false : automaticallyAdjustsScrollIndicatorInsets
           }
-          contentInsetAdjustmentBehavior={contentInsetAdjustmentBehavior}
+          contentInsetAdjustmentBehavior={resolvedContentInsetAdjustmentBehavior}
           tracksNavigationBarScrollEdge={
-            !insideTrueSheet && contentInsetAdjustmentBehavior === "automatic"
+            !isIos26Plus() &&
+            (tracksNavigationBarScrollEdge ??
+              (!insideTrueSheet && resolvedContentInsetAdjustmentBehavior === "automatic"))
           }
           // 固定高度的内嵌列表可以显式关闭 indicator 自动调整；这时也必须关闭
           // TrueSheet viewport clipping 补偿，否则初次布局在屏幕外时会留下过期的底部 inset。

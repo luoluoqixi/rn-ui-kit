@@ -71,4 +71,9 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> & {
   native?: boolean;
   /** 设为 false 时不创建内部 ScrollView，由外层宿主负责滚动。 */
   scrollable?: boolean;
+  /**
+   * 将 iOS 原生 List 注册为当前 native-stack 页面的顶部内容滚动视图。
+   * 只应由页面级列表启用；嵌套列表必须保持关闭，避免抢占外层 ScrollView。
+   */
+  tracksNavigationBarScrollEdge?: boolean;
 };

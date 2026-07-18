@@ -735,9 +735,11 @@ export function NativeListRoot({
   native: _native,
   scrollable = true,
   style,
+  tracksNavigationBarScrollEdge: _tracksNavigationBarScrollEdge,
   ...rest
 }: NativeListRootProps) {
   void _native;
+  void _tracksNavigationBarScrollEdge;
   const {
     alwaysBounceVertical,
     automaticallyAdjustsScrollIndicatorInsets,

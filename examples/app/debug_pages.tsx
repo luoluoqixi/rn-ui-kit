@@ -1,11 +1,12 @@
 import { useMemo } from "react";
-import { StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import {
   NativeList,
   NativeListSection,
   NativeListSelectItem,
   NativeListSwitchItem,
   type UiPreferences,
+  isIos26Plus,
 } from "rn_ui_kit";
 import { RnUiKitUiComponentsDebugPage, type RnUiKitDebugRouteDefinition } from "rn_ui_kit_debug";
 
@@ -15,6 +16,7 @@ type UpdatePreferences = (updater: (current: UiPreferences) => UiPreferences) =>
 
 function createThemeDebugPage(preferences: UiPreferences, updatePreferences: UpdatePreferences) {
   return function AppThemeDebugPage() {
+    const usesPreIos26ScrollEdgeHeader = Platform.OS === "ios" && !isIos26Plus();
     const accentOptions = useMemo(
       () => accentThemeNames.map((value) => ({ label: value, value })),
       [],
@@ -22,7 +24,15 @@ function createThemeDebugPage(preferences: UiPreferences, updatePreferences: Upd
 
     return (
       <View style={styles.nativeListHost}>
-        <NativeList>
+        <NativeList
+          automaticallyAdjustsScrollIndicatorInsets={
+            usesPreIos26ScrollEdgeHeader ? true : undefined
+          }
+          contentInsetAdjustmentBehavior={
+            usesPreIos26ScrollEdgeHeader ? "automatic" : undefined
+          }
+          tracksNavigationBarScrollEdge={usesPreIos26ScrollEdgeHeader}
+        >
           <NativeListSection title="主题">
             <NativeListSelectItem
               selectProps={{
