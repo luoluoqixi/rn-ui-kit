@@ -3,7 +3,7 @@ import { createElement } from "react";
 import { Platform } from "react-native";
 
 import { os } from "../../../utils/platform";
-import { getIosTransparentHeaderFallbackOptions } from "../../../utils/navigation";
+import { getIosNativeScrollEdgeHeaderOptions } from "../../../utils/navigation";
 import { nativeStackStatusBarOptions } from "../../../utils/navigation/status_bar";
 import type { ResolvedColorScheme } from "../../../utils/theme";
 
@@ -33,7 +33,7 @@ export function trueSheetInnerStackScreenOptions(
       headerTitleStyle: {
         color: titleColor,
       },
-      ...getIosTransparentHeaderFallbackOptions(),
+      ...getIosNativeScrollEdgeHeaderOptions(),
     };
   }
 

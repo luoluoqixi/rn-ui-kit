@@ -1,46 +1,38 @@
 import type { NativeStackNavigationOptions } from "@react-navigation/native-stack";
-import { StyleSheet } from "react-native";
 
 import { isIos26Plus, os } from "../platform";
-import { VariableBlurView } from "./variable_blur_view";
 
-type TransparentHeaderFallbackOptions = Pick<
+type IosNativeScrollEdgeHeaderOptions = Pick<
   NativeStackNavigationOptions,
-  "headerBackground" | "headerBlurEffect"
+  | "headerBlurEffect"
+  | "headerLargeStyle"
+  | "headerShadowVisible"
+  | "headerStyle"
+  | "headerTransparent"
 >;
 
-const IOS_FALLBACK_BLUR_RADIUS = 32;
-const IOS_FALLBACK_TRANSITION_HEIGHT = 104;
-
-function LegacyIosHeaderBackground() {
-  return (
-    <VariableBlurView
-      blurRadius={IOS_FALLBACK_BLUR_RADIUS}
-      direction="topToBottom"
-      pointerEvents="none"
-      style={styles.container}
-      transitionHeight={IOS_FALLBACK_TRANSITION_HEIGHT}
-    />
-  );
-}
-
 /**
- * iOS 26 以下无法拿到系统级 Liquid Glass 滚动边缘材质，
- * 这里改用自定义原生 variable blur，尽量贴近系统 header 的渐变雾化过渡。
+ * iOS 15–25 原生小标题导航栏的默认 scroll-edge 外观：
+ * 顶部完全透明，离开顶部后使用系统 Thin Material 与原生分隔线。
+ * iOS 26 保留系统 Liquid Glass / automatic scroll-edge effect，不叠加 blur。
  */
-export function getIosTransparentHeaderFallbackOptions(): TransparentHeaderFallbackOptions {
+export function getIosNativeScrollEdgeHeaderOptions(): IosNativeScrollEdgeHeaderOptions {
   if (os() !== "ios" || isIos26Plus()) {
     return {};
   }
 
   return {
-    headerBlurEffect: "none",
-    headerBackground: () => <LegacyIosHeaderBackground />,
+    headerBlurEffect: "systemThinMaterial",
+    headerLargeStyle: {
+      backgroundColor: "transparent",
+    },
+    headerShadowVisible: true,
+    headerStyle: {
+      backgroundColor: "transparent",
+    },
+    headerTransparent: true,
   };
 }
 
-const styles = StyleSheet.create({
-  container: {
-    ...StyleSheet.absoluteFill,
-  },
-});
+/** @deprecated 使用 `getIosNativeScrollEdgeHeaderOptions`。 */
+export const getIosTransparentHeaderFallbackOptions = getIosNativeScrollEdgeHeaderOptions;

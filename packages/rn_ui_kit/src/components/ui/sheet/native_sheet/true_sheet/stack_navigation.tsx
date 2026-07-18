@@ -1,5 +1,7 @@
 import { getDefaultHeaderHeight } from "@react-navigation/elements";
 import {
+  DarkTheme,
+  DefaultTheme,
   NavigationContainer,
   type NavigationContainerRef,
   NavigationIndependentTree,
@@ -10,6 +12,7 @@ import type { ReactNode, Ref } from "react";
 import { Platform, StyleSheet, View, useWindowDimensions } from "react-native";
 
 import { withNativeStackGestureOptions } from "../../../utils/navigation";
+import { useResolvedeColorScheme } from "../../../utils/theme";
 
 import { type StackNavigationOptions, createStackNavigator } from "./stack_js_stack";
 import {
@@ -48,6 +51,8 @@ function TrueSheetStackNavigationInner({
 }: TrueSheetStackNavigationProps) {
   const ref = navigationRef as unknown as Ref<NavigationContainerRef<ParamListBase>>;
   const layout = useWindowDimensions();
+  const resolvedColorScheme = useResolvedeColorScheme();
+  const navigationTheme = resolvedColorScheme === "dark" ? DarkTheme : DefaultTheme;
 
   if (trueSheetUsesNativeStackNavigator) {
     const configuredScreenOptions = (screenOptions ?? {}) as NativeStackNavigationOptions;
@@ -69,7 +74,7 @@ function TrueSheetStackNavigationInner({
 
     return (
       <NavigationIndependentTree>
-        <NavigationContainer ref={ref}>
+        <NavigationContainer ref={ref} theme={navigationTheme}>
           <View style={styles.nativeStackRoot}>
             <NativeStack.Navigator
               initialRouteName={initialRouteName}
@@ -85,7 +90,7 @@ function TrueSheetStackNavigationInner({
 
   return (
     <NavigationIndependentTree>
-      <NavigationContainer ref={ref}>
+      <NavigationContainer ref={ref} theme={navigationTheme}>
         <View style={styles.stackRoot}>
           <JsStack.Navigator
             detachInactiveScreens={false}

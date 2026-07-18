@@ -1,4 +1,6 @@
 import {
+  DarkTheme,
+  DefaultTheme,
   NavigationContainer,
   type NavigationProp,
   useIsFocused,
@@ -60,13 +62,15 @@ function useDebugStackScreenOptions(): NativeStackNavigationOptions {
     ...(nativeScrollEdgeHeader
       ? {
           // iOS 15–25 会在普通小标题导航栏上原生切换
-          // scrollEdgeAppearance 与 standardAppearance。
+          // scrollEdgeAppearance 与带系统材质的 standardAppearance。
+          headerBlurEffect: "systemThinMaterial",
           headerLargeStyle: { backgroundColor: "transparent" },
           headerShadowVisible: true,
         }
       : { headerShadowVisible: false }),
     headerStyle: {
-      backgroundColor: transparentHeader ? "transparent" : appBackgroundColors.header,
+      backgroundColor:
+        transparentHeader || nativeScrollEdgeHeader ? "transparent" : appBackgroundColors.header,
     },
     // iOS 15–25 需要让原生导航栏保持 translucent，UIKit 才会让滚动内容
     // 延伸到 bar 下方并在 scrollEdgeAppearance / standardAppearance 间切换。
@@ -91,14 +95,16 @@ function useDebugSheetStackScreenOptions() {
     ...(nativeScrollEdgeHeader
       ? {
           // TrueSheet 内同样使用 iOS Native Stack。scrollEdgeAppearance 保持透明，
-          // standardAppearance 使用实体颜色，并由当前页面的原生 ScrollView 驱动切换。
+          // standardAppearance 使用系统半透明材质，并由当前页面的原生 ScrollView 驱动切换。
+          headerBlurEffect: "systemThinMaterial" as const,
           headerLargeStyle: { backgroundColor: "transparent" },
           headerShadowVisible: true,
         }
       : { headerShadowVisible: false }),
     headerStatusBarHeight: 0,
     headerStyle: {
-      backgroundColor: transparentHeader ? "transparent" : appBackgroundColors.header,
+      backgroundColor:
+        transparentHeader || nativeScrollEdgeHeader ? "transparent" : appBackgroundColors.header,
       height: 56,
     },
     // iOS 15–25 必须保持 translucent，内容才能延伸到导航栏下方并触发
@@ -262,6 +268,8 @@ function RnUiKitDebugPanelContent({
 }: RnUiKitDebugPanelProps & { pages: RnUiKitDebugRouteDefinition[] }) {
   const debugStackScreenOptions = useDebugStackScreenOptions();
   const headerTransparent = debugStackScreenOptions.headerTransparent === true;
+  const { resolvedColorScheme } = useColorSchemeSettings();
+  const navigationTheme = resolvedColorScheme === "dark" ? DarkTheme : DefaultTheme;
   const [openSectionsInSheet, setOpenSectionsInSheet] = useState(false);
   const [panelSheetOpen, setPanelSheetOpen] = useState(false);
   const [sectionSheetPosition, setSectionSheetPosition] = useState(0);
@@ -269,7 +277,7 @@ function RnUiKitDebugPanelContent({
 
   return (
     <YStack background="$background" flex={1} {...props}>
-      <NavigationContainer>
+      <NavigationContainer theme={navigationTheme}>
         <Stack.Navigator
           id="rn-ui-kit-debug-stack"
           initialRouteName="index"

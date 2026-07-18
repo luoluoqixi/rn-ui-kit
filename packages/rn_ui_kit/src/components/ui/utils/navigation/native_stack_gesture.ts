@@ -1,6 +1,7 @@
 import type { NativeStackNavigationOptions } from "@react-navigation/native-stack";
 
 import { os } from "../platform";
+import { getIosNativeScrollEdgeHeaderOptions } from "./translucent_header_background";
 
 /**
  * iOS 原生导航统一开启全屏返回手势，允许从页面任意横向位置左滑返回。
@@ -15,6 +16,7 @@ export function withNativeStackGestureOptions<T extends NativeStackNavigationOpt
   }
 
   return {
+    ...getIosNativeScrollEdgeHeaderOptions(),
     ...screenOptions,
     fullScreenGestureEnabled: true,
     fullScreenGestureShadowEnabled: true,
