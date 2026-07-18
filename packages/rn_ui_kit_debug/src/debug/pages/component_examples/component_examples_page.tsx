@@ -1,7 +1,7 @@
 import { HeaderHeightContext } from "@react-navigation/elements";
 import { type NavigationProp, useIsFocused, useNavigation } from "@react-navigation/native";
 import { useContext } from "react";
-import { StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import {
   NativeList,
   NativeListNavigationItem,
@@ -33,12 +33,12 @@ export function getComponentExampleRouteName(key: string) {
 /** The examples list lives on the debug panel stack; only its detail routes are separate screens. */
 export function RnUiKitComponentExamplesDebugPage({
   header,
-  headerTransparent = false,
   layoutHost = "default",
 }: RnUiKitDebugSectionContentProps) {
   const appBackgroundColors = useAppBackgroundColors();
   const navigation = useNavigation<NavigationProp<DebugPanelNavigationParamList>>();
-  const adjustsForTransparentHeader = layoutHost === "default" && headerTransparent;
+  const isNativeIosPage = layoutHost === "default" && Platform.OS === "ios";
+  const usesPreIos26ScrollEdgeHeader = isNativeIosPage && !isIos26Plus();
   const pageBackgroundColor =
     layoutHost === "nativeSheet" && isIos26Plus()
       ? "transparent"
@@ -49,7 +49,10 @@ export function RnUiKitComponentExamplesDebugPage({
       {header != null ? <View style={styles.routeHeader}>{header}</View> : null}
       <NativeList
         automaticallyAdjustsScrollIndicatorInsets={
-          adjustsForTransparentHeader ? true : undefined
+          isNativeIosPage ? true : undefined
+        }
+        contentInsetAdjustmentBehavior={
+          usesPreIos26ScrollEdgeHeader ? "automatic" : undefined
         }
       >
         <NativeListSection>
@@ -80,6 +83,7 @@ export function RnUiKitComponentExampleDetailPage({
   const headerHeight = useContext(HeaderHeightContext) ?? 0;
   const isFocused = useIsFocused();
   const ActiveExample = definition.Component;
+  const adjustsForNativeIosHeader = layoutHost === "default" && Platform.OS === "ios";
   const pageBackgroundColor =
     layoutHost === "nativeSheet" && isIos26Plus()
       ? "transparent"
@@ -130,8 +134,12 @@ export function RnUiKitComponentExampleDetailPage({
 
   return (
     <ScrollView
-      automaticallyAdjustsScrollIndicatorInsets={headerTransparent ? true : undefined}
-      contentInsetAdjustmentBehavior={headerTransparent ? "automatic" : undefined}
+      automaticallyAdjustsScrollIndicatorInsets={
+        adjustsForNativeIosHeader ? true : undefined
+      }
+      contentInsetAdjustmentBehavior={
+        adjustsForNativeIosHeader ? "automatic" : undefined
+      }
       nestedScrollEnabled
       showsVerticalScrollIndicator
       style={scrollStyle}

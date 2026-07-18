@@ -52,15 +52,26 @@ function useDebugStackScreenOptions(): NativeStackNavigationOptions {
   const { resolvedColorScheme } = useColorSchemeSettings();
   const theme = useTheme();
   const transparentHeader = isIos26Plus();
+  const nativeScrollEdgeHeader = Platform.OS === "ios" && !transparentHeader;
 
   return withNativeStackGestureOptions({
     ...nativeStackStatusBarOptions(resolvedColorScheme),
     contentStyle: { backgroundColor: appBackgroundColors.screen },
-    headerShadowVisible: false,
+    ...(nativeScrollEdgeHeader
+      ? {
+          // iOS 15–25 会在普通小标题导航栏上原生切换
+          // scrollEdgeAppearance 与 standardAppearance。
+          headerLargeStyle: { backgroundColor: "transparent" },
+          headerShadowVisible: true,
+        }
+      : { headerShadowVisible: false }),
     headerStyle: {
       backgroundColor: transparentHeader ? "transparent" : appBackgroundColors.header,
     },
-    headerTransparent: transparentHeader,
+    // iOS 15–25 需要让原生导航栏保持 translucent，UIKit 才会让滚动内容
+    // 延伸到 bar 下方并在 scrollEdgeAppearance / standardAppearance 间切换。
+    // standardAppearance 仍使用上面的实体 header 色，并非始终透明。
+    headerTransparent: transparentHeader || nativeScrollEdgeHeader,
     headerTintColor: theme.color10.val,
     headerTitleStyle: { color: theme.gray12.val },
   });
@@ -261,7 +272,6 @@ function RnUiKitDebugPanelContent({
           <Stack.Screen name="index" options={{ title: "rn_ui_kit" }}>
             {() => (
               <RnUiKitDebugHomeRoute
-                headerTransparent={headerTransparent}
                 onOpenInSheet={(key) =>
                   setOpenSectionSheets((current) => new Set(current).add(key))
                 }
@@ -335,7 +345,6 @@ function RnUiKitDebugPanelContent({
 }
 
 function RnUiKitDebugHomeRoute({
-  headerTransparent = false,
   layoutHost = "default",
   onOpenInSheet,
   pages,
@@ -345,7 +354,6 @@ function RnUiKitDebugHomeRoute({
   openSectionsInSheet,
   sectionSheetPosition,
 }: {
-  headerTransparent?: boolean;
   layoutHost?: "default" | "nativeSheet";
   onOpenInSheet: (key: RnUiKitDebugRouteKey) => void;
   pages: RnUiKitDebugRouteDefinition[];
@@ -359,7 +367,6 @@ function RnUiKitDebugHomeRoute({
 
   return (
     <RnUiKitDebugHomePage
-      headerTransparent={headerTransparent}
       layoutHost={layoutHost}
       onOpenSection={(key) => {
         if (openSectionsInSheet) return onOpenInSheet(key);

@@ -1,4 +1,4 @@
-import { StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { YStack } from "tamagui";
 import { NativeSheetScrollContent, ScrollView, Text } from "rn_ui_kit";
 
@@ -25,6 +25,7 @@ export function RnUiKitDebugSectionPage({
 }) {
   const definition = getRnUiKitDebugRouteDefinition(sectionKey, pages);
   const SectionPage = definition.Page;
+  const adjustsForNativeIosHeader = layoutHost === "default" && Platform.OS === "ios";
   const header =
     contentTitle == null ? undefined : (
       <Text fontSize="$7" fontWeight="700" pb="$2">
@@ -52,8 +53,12 @@ export function RnUiKitDebugSectionPage({
   if (definition.presentation === "static") {
     return (
       <ScrollView
-        automaticallyAdjustsScrollIndicatorInsets={headerTransparent ? true : undefined}
-        contentInsetAdjustmentBehavior={headerTransparent ? "automatic" : undefined}
+        automaticallyAdjustsScrollIndicatorInsets={
+          adjustsForNativeIosHeader ? true : undefined
+        }
+        contentInsetAdjustmentBehavior={
+          adjustsForNativeIosHeader ? "automatic" : undefined
+        }
         nestedScrollEnabled
         showsVerticalScrollIndicator
       >

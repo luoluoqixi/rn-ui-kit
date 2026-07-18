@@ -1,5 +1,5 @@
 import { Maximize2, Minimize2 } from "@tamagui/lucide-icons-2";
-import { StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import {
   NativeList,
   NativeListButtonItem,
@@ -8,12 +8,12 @@ import {
   NativeListSection,
   NativeListSwitchItem,
   Slider,
+  isIos26Plus,
 } from "rn_ui_kit";
 
 import type { RnUiKitDebugRouteDefinition, RnUiKitDebugRouteKey } from "../types";
 
 export function RnUiKitDebugHomePage({
-  headerTransparent = false,
   layoutHost = "default",
   openSectionsInSheet,
   pages,
@@ -23,6 +23,7 @@ export function RnUiKitDebugHomePage({
   onSectionSheetPositionChange,
   onOpenSectionsInSheetChange,
 }: {
+  /** @deprecated iOS header 的内容 inset 现由页面的原生导航栏模式自动决定。 */
   headerTransparent?: boolean;
   layoutHost?: "default" | "nativeSheet";
   openSectionsInSheet: boolean;
@@ -33,7 +34,8 @@ export function RnUiKitDebugHomePage({
   onSectionSheetPositionChange?: (position: number) => void;
   onOpenSectionsInSheetChange?: (openInSheet: boolean) => void;
 }) {
-  const adjustsForTransparentHeader = layoutHost === "default" && headerTransparent;
+  const isNativeIosPage = layoutHost === "default" && Platform.OS === "ios";
+  const usesPreIos26ScrollEdgeHeader = isNativeIosPage && !isIos26Plus();
   const sections = Array.from(
     pages.reduce((groups, page) => {
       const section = page.section ?? "调试分区";
@@ -46,7 +48,12 @@ export function RnUiKitDebugHomePage({
 
   return (
     <NativeList
-      automaticallyAdjustsScrollIndicatorInsets={adjustsForTransparentHeader ? true : undefined}
+      automaticallyAdjustsScrollIndicatorInsets={
+        isNativeIosPage ? true : undefined
+      }
+      contentInsetAdjustmentBehavior={
+        usesPreIos26ScrollEdgeHeader ? "automatic" : undefined
+      }
     >
       {sections.map(([section, sectionPages]) => (
         <NativeListSection key={section} title={section}>

@@ -2,7 +2,7 @@
 # - iOS 26+ SwiftUI Slider: 始终接受 JS `value` 更新，避免拖拽后 editing 状态阻断受控值同步。
 # - iOS 26: 当没有 label slot 时，改用不带标签的 Slider 初始化方式。
 # - RNHostView: 允许横向和纵向内容分别独立匹配。
-# - SwiftUI List: 补充 viewport clipping 补偿、content margins、初始滚动目标，以及原生 scroll indicator 自动 inset 开关。
+# - SwiftUI List: 补充 viewport clipping、content margins、初始滚动目标、原生 inset 调整，以及 UIKit 顶部 content scroll view 注册。
 diff --git a/ios/SliderView.swift b/ios/SliderView.swift
 index 1ffa70e..488c98b 100644
 --- a/ios/SliderView.swift
@@ -748,21 +748,45 @@ index ee64956..be7d2ab 100644
 +  }
 +}
 diff --git a/ios/ListView.swift b/ios/ListView.swift
-index a7ca51d..61d7ad8 100644
+index a7ca51d..7aec0f4 100644
 --- a/ios/ListView.swift
 +++ b/ios/ListView.swift
-@@ -4,6 +4,10 @@ import ExpoModulesCore
+@@ -3,27 +3,113 @@
+ import ExpoModulesCore
  import SwiftUI
  
++internal enum ListContentInsetAdjustmentBehavior: String, Enumerable {
++  case automatic
++  case scrollableAxes
++  case never
++  case always
++
++  var uiKitValue: UIScrollView.ContentInsetAdjustmentBehavior {
++    switch self {
++    case .automatic:
++      return .automatic
++    case .scrollableAxes:
++      return .scrollableAxes
++    case .never:
++      return .never
++    case .always:
++      return .always
++    }
++  }
++}
++
  final class ListProps: UIBaseViewProps {
 +  @Field var automaticallyAdjustsScrollIndicatorInsets: Bool?
 +  @Field var compensatesForViewportClipping = false
++  @Field var contentInsetAdjustmentBehavior: ListContentInsetAdjustmentBehavior?
 +  @Field var initialScrollAnchor: UnitPointOptions = .center
 +  @Field var initialScrollTarget: Either<String, Double>?
    @Field var selection: [Either<String, Double>]?
++  @Field var tracksNavigationBarScrollEdge = false
    var onSelectionChange = EventDispatcher()
  }
-@@ -11,19 +15,77 @@ final class ListProps: UIBaseViewProps {
+-
++
  struct ListView: ExpoSwiftUI.View {
    @ObservedObject var props: ListProps
    @State private var selection = Set<AnyHashable>()
@@ -807,8 +831,10 @@ index a7ca51d..61d7ad8 100644
 +        Children()
 +      }
 +      .background {
-+        ScrollIndicatorInsetAdjustmentView(
-+          automaticallyAdjustsScrollIndicatorInsets: props.automaticallyAdjustsScrollIndicatorInsets ?? true
++        ScrollInsetAdjustmentView(
++          automaticallyAdjustsScrollIndicatorInsets: props.automaticallyAdjustsScrollIndicatorInsets ?? true,
++          contentInsetAdjustmentBehavior: props.contentInsetAdjustmentBehavior,
++          tracksNavigationBarScrollEdge: props.tracksNavigationBarScrollEdge
 +        )
 +      }
 +      .onAppear {
@@ -848,45 +874,71 @@ index a7ca51d..61d7ad8 100644
      }
    }
  
-@@ -55,3 +117,93 @@ struct ListView: ExpoSwiftUI.View {
+@@ -55,3 +141,178 @@ struct ListView: ExpoSwiftUI.View {
      return result
    }
  }
 +
-+private struct ScrollIndicatorInsetAdjustmentView: UIViewRepresentable {
++private struct ScrollInsetAdjustmentView: UIViewRepresentable {
 +  let automaticallyAdjustsScrollIndicatorInsets: Bool
++  let contentInsetAdjustmentBehavior: ListContentInsetAdjustmentBehavior?
++  let tracksNavigationBarScrollEdge: Bool
 +
-+  func makeUIView(context: Context) -> ScrollIndicatorInsetAdjustmentUIView {
-+    let view = ScrollIndicatorInsetAdjustmentUIView()
++  func makeUIView(context: Context) -> ScrollInsetAdjustmentUIView {
++    let view = ScrollInsetAdjustmentUIView()
 +    view.isUserInteractionEnabled = false
 +    view.automaticallyAdjustsScrollIndicatorInsets = automaticallyAdjustsScrollIndicatorInsets
++    view.contentInsetAdjustmentBehavior = contentInsetAdjustmentBehavior
++    view.tracksNavigationBarScrollEdge = tracksNavigationBarScrollEdge
 +    return view
 +  }
 +
-+  func updateUIView(_ uiView: ScrollIndicatorInsetAdjustmentUIView, context: Context) {
++  func updateUIView(_ uiView: ScrollInsetAdjustmentUIView, context: Context) {
 +    uiView.automaticallyAdjustsScrollIndicatorInsets = automaticallyAdjustsScrollIndicatorInsets
++    uiView.contentInsetAdjustmentBehavior = contentInsetAdjustmentBehavior
++    uiView.tracksNavigationBarScrollEdge = tracksNavigationBarScrollEdge
 +  }
 +}
 +
-+private final class ScrollIndicatorInsetAdjustmentUIView: UIView {
++private final class ScrollInsetAdjustmentUIView: UIView {
 +  var automaticallyAdjustsScrollIndicatorInsets = true {
 +    didSet {
 +      scheduleUpdate()
 +    }
 +  }
 +
++  var contentInsetAdjustmentBehavior: ListContentInsetAdjustmentBehavior? {
++    didSet {
++      scheduleUpdate()
++    }
++  }
++
++  var tracksNavigationBarScrollEdge = false {
++    didSet {
++      scheduleUpdate()
++    }
++  }
++
 +  private weak var configuredScrollView: UIScrollView?
++  private weak var configuredViewController: UIViewController?
++  private weak var registeredContentScrollView: UIScrollView?
 +  private var updateScheduled = false
 +
 +  override func didMoveToWindow() {
 +    super.didMoveToWindow()
-+    scheduleUpdate()
++
++    if window == nil {
++      unregisterContentScrollView()
++    } else {
++      scheduleUpdate()
++    }
 +  }
 +
 +  override func layoutSubviews() {
 +    super.layoutSubviews()
 +
 +    if configuredScrollView?.window == nil {
++      unregisterContentScrollView()
 +      configuredScrollView = nil
 +      scheduleUpdate()
 +    }
@@ -907,12 +959,71 @@ index a7ca51d..61d7ad8 100644
 +    guard let scrollView = configuredScrollView ?? findListScrollView() else { return }
 +
 +    configuredScrollView = scrollView
-+    guard scrollView.automaticallyAdjustsScrollIndicatorInsets != automaticallyAdjustsScrollIndicatorInsets else {
++    var needsLayout = false
++
++    if scrollView.automaticallyAdjustsScrollIndicatorInsets != automaticallyAdjustsScrollIndicatorInsets {
++      scrollView.automaticallyAdjustsScrollIndicatorInsets = automaticallyAdjustsScrollIndicatorInsets
++      needsLayout = true
++    }
++
++    if let contentInsetAdjustmentBehavior,
++      scrollView.contentInsetAdjustmentBehavior != contentInsetAdjustmentBehavior.uiKitValue {
++      scrollView.contentInsetAdjustmentBehavior = contentInsetAdjustmentBehavior.uiKitValue
++      needsLayout = true
++    }
++
++    if needsLayout {
++      scrollView.setNeedsLayout()
++    }
++
++    updateContentScrollViewRegistration(scrollView)
++  }
++
++  private func updateContentScrollViewRegistration(_ scrollView: UIScrollView) {
++    guard tracksNavigationBarScrollEdge, let viewController = findContentViewController() else {
++      unregisterContentScrollView()
 +      return
 +    }
 +
-+    scrollView.automaticallyAdjustsScrollIndicatorInsets = automaticallyAdjustsScrollIndicatorInsets
-+    scrollView.setNeedsLayout()
++    if configuredViewController !== viewController {
++      unregisterContentScrollView()
++    }
++
++    configuredViewController = viewController
++    if viewController.contentScrollView(for: .top) !== scrollView {
++      viewController.setContentScrollView(scrollView, for: .top)
++    }
++    registeredContentScrollView = scrollView
++  }
++
++  private func unregisterContentScrollView() {
++    guard let viewController = configuredViewController else { return }
++
++    if viewController.contentScrollView(for: .top) === registeredContentScrollView {
++      viewController.setContentScrollView(nil, for: .top)
++    }
++    configuredViewController = nil
++    registeredContentScrollView = nil
++  }
++
++  private func findContentViewController() -> UIViewController? {
++    var responder: UIResponder? = self
++
++    while let current = responder {
++      if let hostingViewController = current as? UIViewController {
++        var contentViewController = hostingViewController
++
++        while let parent = contentViewController.parent,
++          !(parent is UINavigationController),
++          !(parent is UITabBarController) {
++          contentViewController = parent
++        }
++        return contentViewController
++      }
++      responder = current.next
++    }
++
++    return nil
 +  }
 +
 +  private func findListScrollView() -> UIScrollView? {
@@ -943,10 +1054,10 @@ index a7ca51d..61d7ad8 100644
 +  }
 +}
 diff --git a/src/swift-ui/List/index.tsx b/src/swift-ui/List/index.tsx
-index 73c2193..f7f8fb9 100644
+index 73c2193..70d0ca0 100644
 --- a/src/swift-ui/List/index.tsx
 +++ b/src/swift-ui/List/index.tsx
-@@ -21,6 +21,41 @@ function transformListProps(props: Omit<ListProps, 'children'>): Omit<NativeList
+@@ -21,6 +21,54 @@ function transformListProps(props: Omit<ListProps, 'children'>): Omit<NativeList
  }
  
  export interface ListProps extends CommonViewModifierProps {
@@ -955,6 +1066,12 @@ index 73c2193..f7f8fb9 100644
 +   * @default true
 +   */
 +  automaticallyAdjustsScrollIndicatorInsets?: boolean;
++
++  /**
++   * How UIKit adjusts the native list's content insets for navigation bars and safe areas.
++   * @default 'automatic'
++   */
++  contentInsetAdjustmentBehavior?: 'automatic' | 'scrollableAxes' | 'never' | 'always';
 +
 +  /**
 +   * Shrinks the list viewport when its host extends below the physical screen boundary.
@@ -985,14 +1102,21 @@ index 73c2193..f7f8fb9 100644
 +   */
 +  initialScrollTarget?: string | number;
 +
++  /**
++   * Registers the backing native list as the current view controller's top content scroll view.
++   * This lets UIKit drive navigation-bar scroll-edge appearance changes without JS scroll events.
++   * @default false
++   */
++  tracksNavigationBarScrollEdge?: boolean;
++
    /**
     * The children elements to be rendered inside the list.
     */
 diff --git a/build/swift-ui/List/index.d.ts b/build/swift-ui/List/index.d.ts
-index 02e9345..3711b34 100644
+index 02e9345..6b7b840 100644
 --- a/build/swift-ui/List/index.d.ts
 +++ b/build/swift-ui/List/index.d.ts
-@@ -1,6 +1,27 @@
+@@ -1,6 +1,38 @@
  import { ListForEach, type ListForEachProps } from './ListForEach';
  import { type CommonViewModifierProps } from '../types';
  export interface ListProps extends CommonViewModifierProps {
@@ -1001,6 +1125,11 @@ index 02e9345..3711b34 100644
 +     * @default true
 +     */
 +    automaticallyAdjustsScrollIndicatorInsets?: boolean;
++    /**
++     * How UIKit adjusts the native list's content insets for navigation bars and safe areas.
++     * @default 'automatic'
++     */
++    contentInsetAdjustmentBehavior?: 'automatic' | 'scrollableAxes' | 'never' | 'always';
 +    /**
 +     * Shrinks the list viewport when its host extends below the physical screen boundary.
 +     * Useful for native sheet containers that clip hosted SwiftUI content at smaller detents.
@@ -1017,10 +1146,16 @@ index 02e9345..3711b34 100644
 +     * Children should use the `viewID` modifier with the same value.
 +     */
 +    initialScrollTarget?: string | number;
++    /**
++     * Registers the backing native list as the current view controller's top content scroll view.
++     * This lets UIKit drive navigation-bar scroll-edge appearance changes without JS scroll events.
++     * @default false
++     */
++    tracksNavigationBarScrollEdge?: boolean;
      /**
       * The children elements to be rendered inside the list.
       */
-@@ -23,4 +44,4 @@ export declare namespace List {
+@@ -23,4 +55,4 @@ export declare namespace List {
      var ForEach: typeof ListForEach;
  }
  export { ListForEach, ListForEachProps };

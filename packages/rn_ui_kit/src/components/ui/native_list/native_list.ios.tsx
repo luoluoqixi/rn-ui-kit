@@ -381,6 +381,7 @@ function NativeListRoot({
   automaticallyAdjustsScrollIndicatorInsets,
   backgroundColor,
   children,
+  contentInsetAdjustmentBehavior,
   contentMarginBottom,
   contentMarginTop,
   initialScrollTarget,
@@ -406,6 +407,7 @@ function NativeListRoot({
           {...fallbackProps}
           automaticallyAdjustsScrollIndicatorInsets={automaticallyAdjustsScrollIndicatorInsets}
           backgroundColor={backgroundColor}
+          contentInsetAdjustmentBehavior={contentInsetAdjustmentBehavior}
           scrollIndicatorInsets={scrollIndicatorInsets}
           style={style}
           scrollable={scrollable}
@@ -437,6 +439,10 @@ function NativeListRoot({
           // TrueSheet 仍需要系统根据 Sheet viewport 处理 indicator，因此保持开启。
           automaticallyAdjustsScrollIndicatorInsets={
             manuallyAdjustNormalPageIndicator ? false : automaticallyAdjustsScrollIndicatorInsets
+          }
+          contentInsetAdjustmentBehavior={contentInsetAdjustmentBehavior}
+          tracksNavigationBarScrollEdge={
+            !insideTrueSheet && contentInsetAdjustmentBehavior === "automatic"
           }
           // 固定高度的内嵌列表可以显式关闭 indicator 自动调整；这时也必须关闭
           // TrueSheet viewport clipping 补偿，否则初次布局在屏幕外时会留下过期的底部 inset。
