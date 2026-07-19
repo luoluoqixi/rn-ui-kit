@@ -25,6 +25,7 @@ import { useSeparatorColor } from "../utils/theme/use_separator_color";
 import { LayoutService } from "./layout_service";
 import { PaneView } from "./pane_view";
 import { SplitLayoutProvider, useSplitLayoutStorage } from "./split_layout_provider";
+import { stabilizeNumberArray } from "./split_layout_values";
 import { type SplitViewDescriptor, SplitViewModel } from "./split_view_model";
 import {
   type PaneDescriptor,
@@ -178,6 +179,7 @@ const SplitLayoutInner = forwardRef<SplitLayoutHandle, SplitLayoutProps>(
     const webLastTapRef = useRef<{ index: number; time: number } | null>(null);
     const webPendingDoubleTapRef = useRef<number | null>(null);
     const panesRef = useRef<PaneDescriptor[]>([]);
+    const stableDefaultSizesRef = useRef<number[] | undefined>(undefined);
     const callbacksRef = useRef({
       onChange,
       onDragEnd,
@@ -193,6 +195,13 @@ const SplitLayoutInner = forwardRef<SplitLayoutHandle, SplitLayoutProps>(
     const [layoutSize, setLayoutSize] = useState(0);
     const [sizes, setSizes] = useState<number[]>([]);
     const [visible, setVisible] = useState<boolean[]>([]);
+    // defaultSizes 是值语义配置。消费方使用内联数组时，每次 render 都会产生新引用；
+    // 保持相同内容的引用稳定，避免 active drag 期间重建 model 并丢失拖拽状态。
+    stableDefaultSizesRef.current = stabilizeNumberArray(
+      stableDefaultSizesRef.current,
+      defaultSizes,
+    );
+    const stableDefaultSizes = stableDefaultSizesRef.current;
     const theme = useTheme();
     const separatorColor = useSeparatorColor();
     const sashActiveColor = resolveThemeColor(
@@ -267,7 +276,7 @@ const SplitLayoutInner = forwardRef<SplitLayoutHandle, SplitLayoutProps>(
 
       const initialLayoutService = new LayoutService();
       initialLayoutService.setSize(layoutSize);
-      const canUseDefaultSizes = defaultSizes?.length === currentPanes.length;
+      const canUseDefaultSizes = stableDefaultSizes?.length === currentPanes.length;
 
       const descriptorViews: SplitViewDescriptor["views"] = currentPanes.map((pane, index) => {
         const view = new PaneView(initialLayoutService, {
@@ -278,7 +287,7 @@ const SplitLayoutInner = forwardRef<SplitLayoutHandle, SplitLayoutProps>(
           snap: pane.snap,
         });
         const preferredSize = resolvePreferredSize(pane.preferredSize, layoutSize) ?? pane.minSize;
-        const defaultSize = canUseDefaultSizes ? defaultSizes[index] : undefined;
+        const defaultSize = canUseDefaultSizes ? stableDefaultSizes[index] : undefined;
         const visibleSize = clamp(
           defaultSize ?? preferredSize,
           pane.minSize,
@@ -302,7 +311,7 @@ const SplitLayoutInner = forwardRef<SplitLayoutHandle, SplitLayoutProps>(
       const model = new SplitViewModel({ descriptor, proportionalLayout });
       model.layout(layoutSize);
       return model.getState();
-    }, [defaultSizes, layoutSize, proportionalLayout]);
+    }, [layoutSize, proportionalLayout, stableDefaultSizes]);
 
     const createModel = useCallback(() => {
       const currentPanes = panesRef.current;
@@ -314,7 +323,7 @@ const SplitLayoutInner = forwardRef<SplitLayoutHandle, SplitLayoutProps>(
       const canUseStoredState =
         sourceState?.sizes.length === currentPanes.length &&
         sourceState.visible.length === currentPanes.length;
-      const canUseDefaultSizes = defaultSizes?.length === currentPanes.length;
+      const canUseDefaultSizes = stableDefaultSizes?.length === currentPanes.length;
 
       const descriptorViews: SplitViewDescriptor["views"] = currentPanes.map((pane, index) => {
         const view = new PaneView(layoutServiceRef.current, {
@@ -326,7 +335,7 @@ const SplitLayoutInner = forwardRef<SplitLayoutHandle, SplitLayoutProps>(
         });
         const preferredSize = resolvePreferredSize(pane.preferredSize, layoutSize) ?? pane.minSize;
         const storedSize = canUseStoredState ? sourceState.sizes[index] : undefined;
-        const defaultSize = canUseDefaultSizes ? defaultSizes[index] : undefined;
+        const defaultSize = canUseDefaultSizes ? stableDefaultSizes[index] : undefined;
         const visibleSize = clamp(
           storedSize ?? defaultSize ?? preferredSize,
           pane.minSize,
@@ -365,11 +374,11 @@ const SplitLayoutInner = forwardRef<SplitLayoutHandle, SplitLayoutProps>(
       return model;
     }, [
       createInitialLayoutState,
-      defaultSizes,
       emitState,
       layoutSize,
       persistState,
       proportionalLayout,
+      stableDefaultSizes,
       storageReady,
     ]);
 
