@@ -7,7 +7,7 @@
     },
     "examples/app": {
       "name": "rn-ui-kit-example",
-      "version": "1.0.5",
+      "version": "1.0.6",
       "dependencies": {
         "@expo/metro-runtime": "=6.1.2",
         "@expo/ui": "=55.0.17",
@@ -59,7 +59,7 @@
     },
     "packages/rn-ui-kit": {
       "name": "rn-ui-kit",
-      "version": "1.0.5",
+      "version": "1.0.6",
       "bin": {
         "rn-ui-sync-patches": "./scripts/sync-patches.mjs",
       },
