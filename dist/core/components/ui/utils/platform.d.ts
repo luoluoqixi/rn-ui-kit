@@ -1,0 +1,11 @@
+export type RnUiKitOs = "ios" | "android" | "web" | "windows" | "macos" | "linux" | "unknown";
+export declare function os(): RnUiKitOs;
+export declare function isWeb(): boolean;
+export declare function isMobile(): boolean;
+export declare function isDesktop(): boolean;
+export declare function isTauri(): boolean;
+export declare function iosMajorVersion(): number | null;
+export declare function isIos26Plus(): boolean;
+export declare function isIos15(): boolean;
+export declare function isLegacyCompactIphone(): boolean;
+export declare function supportsImpactHaptics(): boolean;

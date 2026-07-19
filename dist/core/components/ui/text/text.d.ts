@@ -1,0 +1,10 @@
+import type { HeadingProps, ParagraphProps, SizableTextProps, TextProps } from "./types";
+export declare function Text(props: TextProps): import("react").JSX.Element;
+export declare function SizableText(props: SizableTextProps): import("react").JSX.Element;
+export declare function Paragraph(props: ParagraphProps): import("react").JSX.Element;
+export declare function H1(props: HeadingProps): import("react").JSX.Element;
+export declare function H2(props: HeadingProps): import("react").JSX.Element;
+export declare function H3(props: HeadingProps): import("react").JSX.Element;
+export declare function H4(props: HeadingProps): import("react").JSX.Element;
+export declare function H5(props: HeadingProps): import("react").JSX.Element;
+export declare function H6(props: HeadingProps): import("react").JSX.Element;

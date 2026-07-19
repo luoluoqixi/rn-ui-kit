@@ -1,0 +1,108 @@
+{
+  "name": "rn-ui-kit",
+  "version": "1.0.3",
+  "private": false,
+  "type": "module",
+  "description": "React Native UI kit with core components and debug tools.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/luoluoqixi/rn-ui-kit.git"
+  },
+  "main": "./dist/index.js",
+  "react-native": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "react-native": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/core.d.ts",
+      "react-native": "./dist/core.js",
+      "default": "./dist/core.js"
+    },
+    "./debug": {
+      "types": "./dist/debug.d.ts",
+      "react-native": "./dist/debug.js",
+      "default": "./dist/debug.js"
+    },
+    "./initialize": {
+      "types": "./dist/initialize.d.ts",
+      "react-native": "./dist/initialize.js",
+      "default": "./dist/initialize.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "patches",
+    "scripts",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "sync-patches": "bun scripts/sync-patches.mjs"
+  },
+  "bin": {
+    "rn-ui-sync-patches": "./scripts/sync-patches.mjs"
+  },
+  "peerDependencies": {
+    "@expo/ui": "=55.0.17",
+    "@lodev09/react-native-true-sheet": "=3.11.6",
+    "@react-native-picker/picker": "^2.11.4",
+    "@react-navigation/elements": "^2.9.26",
+    "@react-navigation/native": "^7.3.4",
+    "@react-navigation/native-stack": "^7.17.6",
+    "@react-navigation/stack": "^7.10.6",
+    "@shopify/flash-list": "^2.3.2",
+    "@tamagui/adapt": "=2.4.0",
+    "@tamagui/animate-presence": "=2.4.0",
+    "@tamagui/compose-refs": "=2.4.0",
+    "@tamagui/config": "=2.4.0",
+    "@tamagui/constants": "=2.4.0",
+    "@tamagui/core": "=2.4.0",
+    "@tamagui/create-context": "=2.4.0",
+    "@tamagui/dialog": "=2.4.0",
+    "@tamagui/dismissable": "=2.4.0",
+    "@tamagui/floating": "=2.4.0",
+    "@tamagui/focus-scope": "=2.4.0",
+    "@tamagui/get-token": "=2.4.0",
+    "@tamagui/helpers": "=2.4.0",
+    "@tamagui/lucide-icons-2": "=2.4.0",
+    "@tamagui/native": "=2.4.0",
+    "@tamagui/popover": "=2.4.0",
+    "@tamagui/portal": "=2.4.0",
+    "@tamagui/remove-scroll": "=2.4.0",
+    "@tamagui/scroll-view": "=2.4.0",
+    "@tamagui/select": "=2.4.0",
+    "@tamagui/sheet": "=2.4.0",
+    "@tamagui/slider": "=2.4.0",
+    "@tamagui/stacks": "=2.4.0",
+    "@tamagui/toast": "=2.4.0",
+    "@tamagui/use-constant": "=2.4.0",
+    "@tamagui/use-controllable-state": "=2.4.0",
+    "@tamagui/use-did-finish-ssr": "=2.4.0",
+    "@tamagui/use-direction": "=2.4.0",
+    "@tamagui/z-index-stack": "=2.4.0",
+    "burnt": "^0.13.0",
+    "expo": "=55.0.26",
+    "expo-haptics": "=55.0.14",
+    "expo-modules-core": "=55.0.25",
+    "expo-status-bar": "=55.0.6",
+    "react": "=19.2.5",
+    "react-dom": "=19.2.5",
+    "react-native": "=0.83.9",
+    "react-native-gesture-handler": "=2.31.1",
+    "react-native-reanimated": "=4.3.0",
+    "react-native-safe-area-context": "=5.7.0",
+    "react-native-screens": "=4.24.0",
+    "react-native-svg": "^15.15.5",
+    "react-native-teleport": "^1.1.7",
+    "react-native-web": "=0.21.2",
+    "react-native-worklets": "=0.8.1",
+    "tamagui": "=2.4.0",
+    "zeego": "=3.0.6"
+  }
+}

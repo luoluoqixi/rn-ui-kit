@@ -1,0 +1,38 @@
+import React from "react";
+import type { SelectAdaptContentsProps, SelectAdaptProps, SelectContentProps, SelectFocusScopeProps, SelectGroupProps, SelectIconProps, SelectIndicatorProps, SelectItemIndicatorProps, SelectItemProps, SelectItemTextProps, SelectLabelProps, SelectProps, SelectScrollDownButtonProps, SelectScrollUpButtonProps, SelectTriggerProps, SelectValueProps, SelectViewportProps } from "./types";
+declare function SelectAdaptContents(props: SelectAdaptContentsProps): React.JSX.Element;
+declare function SelectAdaptRoot(props: SelectAdaptProps): React.JSX.Element;
+declare function SelectContent(props: SelectContentProps): React.JSX.Element | null;
+declare function SelectGroup(props: SelectGroupProps): React.JSX.Element;
+declare function SelectIcon(props: SelectIconProps): React.JSX.Element;
+declare function SelectItem(props: SelectItemProps): React.JSX.Element;
+declare function SelectItemIndicator(props: SelectItemIndicatorProps): React.JSX.Element;
+declare function SelectItemText(props: SelectItemTextProps): React.JSX.Element;
+declare function SelectLabel(props: SelectLabelProps): React.JSX.Element;
+declare function SelectScrollDownButton(props: SelectScrollDownButtonProps): React.JSX.Element;
+declare function SelectScrollUpButton(props: SelectScrollUpButtonProps): React.JSX.Element;
+declare function SelectTrigger(props: SelectTriggerProps): React.JSX.Element;
+declare function SelectValue(props: SelectValueProps): React.JSX.Element;
+declare function SelectViewport(props: SelectViewportProps): React.JSX.Element | null;
+declare function SelectIndicator(props: SelectIndicatorProps): React.JSX.Element;
+declare function SelectFocusScope(props: SelectFocusScopeProps): React.JSX.Element;
+export declare const Select: React.ForwardRefExoticComponent<SelectProps & React.RefAttributes<any>> & {
+    Adapt: typeof SelectAdaptRoot & {
+        Contents: typeof SelectAdaptContents;
+    };
+    Content: typeof SelectContent;
+    Group: typeof SelectGroup;
+    Icon: typeof SelectIcon;
+    Item: typeof SelectItem;
+    ItemIndicator: typeof SelectItemIndicator;
+    ItemText: typeof SelectItemText;
+    Label: typeof SelectLabel;
+    ScrollDownButton: typeof SelectScrollDownButton;
+    ScrollUpButton: typeof SelectScrollUpButton;
+    Trigger: typeof SelectTrigger;
+    Value: typeof SelectValue;
+    Viewport: typeof SelectViewport;
+    Indicator: typeof SelectIndicator;
+    FocusScope: typeof SelectFocusScope;
+};
+export {};

@@ -1,0 +1,2 @@
+import type { NativeSheetProps } from "./types";
+export declare function NativeSheet({ backgroundColor, children, content, defaultOpen, defaultPosition, dismissOnOverlayPress, disableDrag, handle, modal, name, onAnimationComplete, onOpenChange, onPositionChange, open: openProp, overlay, overlayPortalHostName, position: positionProp, snapPoints, snapPointsMode, transition, }: NativeSheetProps): import("react").JSX.Element | null;
