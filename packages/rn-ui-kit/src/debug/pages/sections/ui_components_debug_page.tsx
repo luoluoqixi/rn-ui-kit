@@ -160,7 +160,7 @@ export function RnUiKitUiComponentsDebugPage({ header }: RnUiKitUiComponentsDebu
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [alertDialogOpen2, setAlertDialogOpen2] = useState(false);
   const [formSubmitCount, setFormSubmitCount] = useState(0);
-  const [inputValue, setInputValue] = useState("lonanote");
+  const [inputValue, setInputValue] = useState("rn-ui-kit");
   const [menuAction, setMenuAction] = useState("尚未选择");
   const [menuMarkAsRead, setMenuMarkAsRead] = useState(true);
   const [menuNativeEnabled, setMenuNativeEnabled] = useState(true);
@@ -197,7 +197,7 @@ export function RnUiKitUiComponentsDebugPage({ header }: RnUiKitUiComponentsDebu
   const [tabsValue, setTabsValue] = useState("preview");
   const [textAreaValue, setTextAreaValue] = useState("这是一段文本区域示例。");
   const [toggleValue, setToggleValue] = useState("bold");
-  const [popoverName, setPopoverName] = useState("LonaNote");
+  const [popoverName, setPopoverName] = useState("rn-ui-kit");
   const debugNativeHaptics = forceNativeHaptics ? true : undefined;
   const withToastNative = <Options extends object>(options: Options) => ({
     ...options,
@@ -1915,7 +1915,7 @@ export function RnUiKitUiComponentsDebugPage({ header }: RnUiKitUiComponentsDebu
         <View style={styles.mediaDemo}>
           <Text color="$color">Image</Text>
           <Image
-            alt="LonaNote 组件演示图片"
+            alt="rn-ui-kit 组件演示图片"
             borderRadius={16}
             height={160}
             objectFit="cover"
