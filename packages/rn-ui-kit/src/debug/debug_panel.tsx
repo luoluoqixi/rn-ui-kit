@@ -3,14 +3,17 @@ import {
   DefaultTheme,
   NavigationContainer,
   type NavigationProp,
+  type ParamListBase,
+  StackActions,
   useIsFocused,
   useNavigation,
+  useRoute,
 } from "@react-navigation/native";
 import {
   createNativeStackNavigator,
-  type NativeStackNavigationOptions,
+  type NativeStackNavigationProp,
 } from "@react-navigation/native-stack";
-import { type ComponentProps, useState } from "react";
+import { type ComponentProps, useLayoutEffect, useMemo, useState } from "react";
 import { Platform, View } from "react-native";
 import { YStack, useTheme } from "tamagui";
 import {
@@ -20,7 +23,6 @@ import {
   nativeStackStatusBarOptions,
   useAppBackgroundColors,
   useColorSchemeSettings,
-  withNativeBackButton,
   withNativeStackGestureOptions,
   RN_UI_KIT_PACKAGE_NAME,
   RN_UI_KIT_PACKAGE_VERSION,
@@ -30,11 +32,16 @@ import { RnUiKitDebugHomePage } from "./pages/debug_home_page";
 import { RnUiKitDebugSectionPage } from "./pages/debug_section_page";
 import {
   getComponentExampleRouteName,
+  getRnUiKitComponentExampleTitle,
+  RnUiKitComponentExampleDebugPage,
   RnUiKitComponentExampleDetailPage,
   RnUiKitComponentExamplesDebugPage,
 } from "./pages/component_examples/component_examples_page";
 import { componentExampleDefinitions } from "./pages/component_examples/catalog";
-import { rnUiKitDebugRouteDefinitions } from "./routes";
+import {
+  getRnUiKitDebugRouteDefinition,
+  rnUiKitDebugRouteDefinitions,
+} from "./routes";
 import { blurActiveElementOnWeb } from "./web_focus";
 
 import type {
@@ -51,37 +58,61 @@ const Stack = createNativeStackNavigator<RnUiKitDebugStackParamList>();
 const DEBUG_PANEL_SHEET_OVERLAY_HOST = "rn-ui-kit-debug-panel-sheet-overlay";
 const DEBUG_SECTION_SHEET_OVERLAY_HOST = "rn-ui-kit-debug-section-sheet-overlay";
 const DEBUG_SECTION_SHEET_SNAP_POINTS = [50, 75, 100];
+const DEBUG_HOST_SECTION_PARAM = "__rnUiKitDebugSection";
+const DEBUG_HOST_EXAMPLE_PARAM = "__rnUiKitDebugExample";
 
-function useDebugStackScreenOptions(): NativeStackNavigationOptions {
+function getDebugPages(pages?: RnUiKitDebugRouteDefinition[]) {
+  return Array.from(
+    new Map(
+      [...rnUiKitDebugRouteDefinitions, ...(pages ?? [])].map((page) => [page.key, page]),
+    ).values(),
+  );
+}
+
+function useDebugStackScreenOptions() {
   const appBackgroundColors = useAppBackgroundColors();
   const { resolvedColorScheme } = useColorSchemeSettings();
   const theme = useTheme();
   const transparentHeader = isIos26Plus();
   const nativeScrollEdgeHeader = Platform.OS === "ios" && !transparentHeader;
 
-  return withNativeStackGestureOptions({
-    ...nativeStackStatusBarOptions(resolvedColorScheme),
-    contentStyle: { backgroundColor: appBackgroundColors.screen },
-    ...(nativeScrollEdgeHeader
-      ? {
-          // iOS 15–25 会在普通小标题导航栏上原生切换
-          // scrollEdgeAppearance 与带系统材质的 standardAppearance。
-          headerBlurEffect: "systemThinMaterial",
-          headerLargeStyle: { backgroundColor: "transparent" },
-          headerShadowVisible: true,
-        }
-      : { headerShadowVisible: false }),
-    headerStyle: {
-      backgroundColor:
-        transparentHeader || nativeScrollEdgeHeader ? "transparent" : appBackgroundColors.header,
-    },
-    // iOS 15–25 需要让原生导航栏保持 translucent，UIKit 才会让滚动内容
-    // 延伸到 bar 下方并在 scrollEdgeAppearance / standardAppearance 间切换。
-    // standardAppearance 仍使用上面的实体 header 色，并非始终透明。
-    headerTransparent: transparentHeader || nativeScrollEdgeHeader,
-    headerTintColor: theme.color10.val,
-    headerTitleStyle: { color: theme.gray12.val },
-  });
+  return useMemo(
+    () =>
+      withNativeStackGestureOptions({
+        ...nativeStackStatusBarOptions(resolvedColorScheme),
+        contentStyle: { backgroundColor: appBackgroundColors.screen },
+        ...(nativeScrollEdgeHeader
+          ? {
+              // iOS 15–25 会在普通小标题导航栏上原生切换
+              // scrollEdgeAppearance 与带系统材质的 standardAppearance。
+              headerBlurEffect: "systemThinMaterial",
+              headerLargeStyle: { backgroundColor: "transparent" },
+              headerShadowVisible: true,
+            }
+          : { headerShadowVisible: false }),
+        headerStyle: {
+          backgroundColor:
+            transparentHeader || nativeScrollEdgeHeader
+              ? "transparent"
+              : appBackgroundColors.header,
+        },
+        // iOS 15–25 需要让原生导航栏保持 translucent，UIKit 才会让滚动内容
+        // 延伸到 bar 下方并在 scrollEdgeAppearance / standardAppearance 间切换。
+        // standardAppearance 仍使用上面的实体 header 色，并非始终透明。
+        headerTransparent: transparentHeader || nativeScrollEdgeHeader,
+        headerTintColor: theme.color10.val,
+        headerTitleStyle: { color: theme.gray12.val },
+      }),
+    [
+      appBackgroundColors.header,
+      appBackgroundColors.screen,
+      nativeScrollEdgeHeader,
+      resolvedColorScheme,
+      theme.color10.val,
+      theme.gray12.val,
+      transparentHeader,
+    ],
+  );
 }
 
 function useDebugSheetStackScreenOptions() {
@@ -124,19 +155,17 @@ function FocusedNativeSheetDebugSectionPage(props: ComponentProps<typeof RnUiKit
 }
 
 export function RnUiKitDebugPanel({
+  backButtonLabel,
   defaultOpen = true,
   initialRouteKey = "components",
+  navigationMode = "independent",
   onOpenChange,
   open: openProp,
   pages: pagesProp,
   sheetMode = false,
   ...props
 }: RnUiKitDebugPanelProps) {
-  const pages = Array.from(
-    new Map(
-      [...rnUiKitDebugRouteDefinitions, ...(pagesProp ?? [])].map((page) => [page.key, page]),
-    ).values(),
-  );
+  const pages = getDebugPages(pagesProp);
   const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
   const open = openProp ?? uncontrolledOpen;
 
@@ -157,7 +186,167 @@ export function RnUiKitDebugPanel({
     );
   }
 
-  return <RnUiKitDebugPanelContent initialRouteKey={initialRouteKey} pages={pages} {...props} />;
+  if (navigationMode === "host") {
+    return (
+      <RnUiKitDebugHostPanel
+        backButtonLabel={backButtonLabel}
+        pages={pages}
+        {...props}
+      />
+    );
+  }
+
+  return (
+    <RnUiKitDebugPanelContent
+      initialRouteKey={initialRouteKey}
+      pages={pages}
+      {...props}
+    />
+  );
+}
+
+function RnUiKitDebugHostPanel({
+  backButtonLabel,
+  pages,
+  ...props
+}: ComponentProps<typeof YStack> & {
+  backButtonLabel?: string;
+  pages: RnUiKitDebugRouteDefinition[];
+}) {
+  const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
+  const route = useRoute();
+  const debugStackScreenOptions = useDebugStackScreenOptions();
+  const headerTransparent = debugStackScreenOptions.headerTransparent === true;
+  const routeParams = (route.params ?? {}) as Record<string, unknown>;
+  const sectionKey =
+    typeof routeParams[DEBUG_HOST_SECTION_PARAM] === "string"
+      ? routeParams[DEBUG_HOST_SECTION_PARAM]
+      : undefined;
+  const exampleKey =
+    typeof routeParams[DEBUG_HOST_EXAMPLE_PARAM] === "string"
+      ? routeParams[DEBUG_HOST_EXAMPLE_PARAM]
+      : undefined;
+  const isRootRoute = sectionKey == null && exampleKey == null;
+  const title =
+    exampleKey != null
+      ? getRnUiKitComponentExampleTitle(exampleKey)
+      : sectionKey != null
+        ? getRnUiKitDebugRouteDefinition(sectionKey, pages).label
+        : `${RN_UI_KIT_PACKAGE_NAME} - ${RN_UI_KIT_PACKAGE_VERSION}`;
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      ...debugStackScreenOptions,
+      headerBackButtonDisplayMode: "default",
+      headerBackButtonMenuEnabled: true,
+      headerBackTitle: isRootRoute ? backButtonLabel : undefined,
+      headerShown: true,
+      title,
+    });
+  }, [backButtonLabel, debugStackScreenOptions, isRootRoute, navigation, title]);
+
+  const pushDebugRoute = ({
+    example,
+    section,
+  }: {
+    example?: string;
+    section?: RnUiKitDebugRouteKey;
+  }) => {
+    const nextParams = { ...routeParams };
+    delete nextParams[DEBUG_HOST_SECTION_PARAM];
+    delete nextParams[DEBUG_HOST_EXAMPLE_PARAM];
+    if (section != null) nextParams[DEBUG_HOST_SECTION_PARAM] = section;
+    if (example != null) nextParams[DEBUG_HOST_EXAMPLE_PARAM] = example;
+    blurActiveElementOnWeb();
+    navigation.dispatch(StackActions.push(route.name, nextParams));
+  };
+
+  let content;
+  if (exampleKey != null) {
+    content = (
+      <RnUiKitComponentExampleDebugPage
+        exampleKey={exampleKey}
+        headerTransparent={headerTransparent}
+      />
+    );
+  } else if (sectionKey != null) {
+    content = (
+      <RnUiKitDebugSectionPage
+        headerTransparent={headerTransparent}
+        instanceId={`host-${sectionKey}`}
+        onOpenComponentExample={(key) => pushDebugRoute({ example: key })}
+        pages={pages}
+        sectionKey={sectionKey}
+      />
+    );
+  } else {
+    content = (
+      <RnUiKitDebugHostHomePage
+        onOpenSection={(key) => pushDebugRoute({ section: key })}
+        pages={pages}
+      />
+    );
+  }
+
+  return (
+    <YStack background="$background" flex={1} {...props}>
+      {content}
+    </YStack>
+  );
+}
+
+function RnUiKitDebugHostHomePage({
+  onOpenSection,
+  pages: pagesProp,
+  ...props
+}: ComponentProps<typeof YStack> & {
+  onOpenSection: (key: RnUiKitDebugRouteKey) => void;
+  pages?: RnUiKitDebugRouteDefinition[];
+}) {
+  const pages = getDebugPages(pagesProp);
+  const [openSectionsInSheet, setOpenSectionsInSheet] = useState(false);
+  const [panelSheetOpen, setPanelSheetOpen] = useState(false);
+  const [sectionSheetPosition, setSectionSheetPosition] = useState(0);
+  const [openSectionSheets, setOpenSectionSheets] = useState<Set<RnUiKitDebugRouteKey>>(new Set());
+
+  return (
+    <YStack background="$background" flex={1} {...props}>
+      <RnUiKitDebugHomePage
+        onOpenPanelSheet={() => setPanelSheetOpen(true)}
+        onOpenSection={(key) => {
+          if (openSectionsInSheet) {
+            setOpenSectionSheets((current) => new Set(current).add(key));
+            return;
+          }
+          blurActiveElementOnWeb();
+          onOpenSection(key);
+        }}
+        pages={pages}
+        onOpenSectionsInSheetChange={(enabled) => {
+          setOpenSectionsInSheet(enabled);
+          if (!enabled) setOpenSectionSheets(new Set());
+        }}
+        onSectionSheetPositionChange={setSectionSheetPosition}
+        openSectionsInSheet={openSectionsInSheet}
+        sectionSheetPosition={sectionSheetPosition}
+      />
+
+      <RnUiKitDebugSectionSheets
+        pages={pages}
+        instancePrefix="host"
+        onOpenChange={setOpenSectionSheets}
+        openKeys={openSectionSheets}
+        position={sectionSheetPosition}
+      />
+
+      <RnUiKitDebugPanel
+        onOpenChange={setPanelSheetOpen}
+        open={panelSheetOpen}
+        pages={pages}
+        sheetMode
+      />
+    </YStack>
+  );
 }
 
 function RnUiKitDebugPanelSheet({
@@ -285,15 +474,7 @@ function RnUiKitDebugPanelContent({
         <Stack.Navigator
           id="rn-ui-kit-debug-stack"
           initialRouteName="index"
-          screenOptions={({ navigation }) =>
-            withNativeBackButton(debugStackScreenOptions, {
-              label: "返回",
-              onPress: () => {
-                blurActiveElementOnWeb();
-                navigation.goBack();
-              },
-            })
-          }
+          screenOptions={debugStackScreenOptions}
         >
           <Stack.Screen
             name="index"

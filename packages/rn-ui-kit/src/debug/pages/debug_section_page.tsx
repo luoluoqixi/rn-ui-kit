@@ -12,6 +12,7 @@ export function RnUiKitDebugSectionPage({
   headerTransparent = false,
   instanceId,
   layoutHost = "default",
+  onOpenComponentExample,
   pages,
   sectionKey,
 }: {
@@ -20,6 +21,7 @@ export function RnUiKitDebugSectionPage({
   headerTransparent?: boolean;
   instanceId?: string;
   layoutHost?: "default" | "nativeSheet";
+  onOpenComponentExample?: (key: string) => void;
   pages: RnUiKitDebugRouteDefinition[];
   sectionKey: RnUiKitDebugRouteKey;
 }) {
@@ -45,6 +47,7 @@ export function RnUiKitDebugSectionPage({
           headerTransparent={headerTransparent}
           instanceId={instanceId}
           layoutHost={layoutHost}
+          onOpenComponentExample={onOpenComponentExample}
         />
       </NativeSheetScrollContent>
     );
@@ -64,6 +67,7 @@ export function RnUiKitDebugSectionPage({
           headerTransparent={headerTransparent}
           instanceId={instanceId}
           layoutHost={layoutHost}
+          onOpenComponentExample={onOpenComponentExample}
         />
       </ScrollView>
     );
@@ -76,6 +80,7 @@ export function RnUiKitDebugSectionPage({
         headerTransparent={headerTransparent}
         instanceId={instanceId}
         layoutHost={layoutHost}
+        onOpenComponentExample={onOpenComponentExample}
       />
     </YStack>
   );

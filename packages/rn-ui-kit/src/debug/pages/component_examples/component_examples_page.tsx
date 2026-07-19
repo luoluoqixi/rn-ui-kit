@@ -31,10 +31,21 @@ export function getComponentExampleRouteName(key: string) {
   return `component-example:${key}`;
 }
 
+function getComponentExampleDefinition(key: string) {
+  const definition = componentExampleDefinitions.find((item) => item.key === key);
+  if (definition == null) throw new Error(`Unknown rn-ui-kit component example: ${key}`);
+  return definition;
+}
+
+export function getRnUiKitComponentExampleTitle(key: string) {
+  return getComponentExampleDefinition(key).label;
+}
+
 /** The examples list lives on the debug panel stack; only its detail routes are separate screens. */
 export function RnUiKitComponentExamplesDebugPage({
   header,
   layoutHost = "default",
+  onOpenComponentExample,
 }: RnUiKitDebugSectionContentProps) {
   const appBackgroundColors = useAppBackgroundColors();
   const navigation = useNavigation<NavigationProp<DebugPanelNavigationParamList>>();
@@ -57,6 +68,10 @@ export function RnUiKitComponentExamplesDebugPage({
               key={definition.key}
               onPress={() => {
                 blurActiveElementOnWeb();
+                if (onOpenComponentExample != null) {
+                  onOpenComponentExample(definition.key);
+                  return;
+                }
                 navigation.navigate(getComponentExampleRouteName(definition.key));
               }}
               subtitle={definition.description}
@@ -66,6 +81,26 @@ export function RnUiKitComponentExamplesDebugPage({
         </NativeListSection>
       </NativeList>
     </View>
+  );
+}
+
+export function RnUiKitComponentExampleDebugPage({
+  exampleKey,
+  headerTransparent = false,
+  layoutHost = "default",
+}: {
+  exampleKey: string;
+  headerTransparent?: boolean;
+  layoutHost?: "default" | "nativeSheet";
+}) {
+  const definition = getComponentExampleDefinition(exampleKey);
+
+  return (
+    <RnUiKitComponentExampleDetailPage
+      definition={definition}
+      headerTransparent={headerTransparent}
+      layoutHost={layoutHost}
+    />
   );
 }
 
