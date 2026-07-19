@@ -96,6 +96,8 @@ if (changedPackageJsonPaths.length > 0) {
 
 const tag = `v${version}`;
 
-console.log("\n请先提交版本修改，再执行以下命令：");
+console.log("\n可手动执行以下命令：");
+console.log("git add .");
+console.log(`git commit -S -m "release: ${version}"`);
 console.log(`git tag -a ${tag} -m "${tag}"`);
 console.log(`git push origin ${tag}`);
