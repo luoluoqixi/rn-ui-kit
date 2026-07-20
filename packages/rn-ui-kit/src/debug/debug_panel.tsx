@@ -143,7 +143,9 @@ function useDebugSheetStackScreenOptions() {
         transparentHeader || nativeScrollEdgeHeader ? "transparent" : appBackgroundColors.header,
       height: 56,
     },
-    headerBackButtonDisplayMode: transparentHeader ? ("minimal" as const) : ("default" as const),
+    // Android TrueSheet 使用 JS Stack；保留箭头即可，避免默认的“返回”文案占用标题空间。
+    headerBackButtonDisplayMode:
+      Platform.OS === "android" || transparentHeader ? ("minimal" as const) : ("default" as const),
     // iOS 15–25 必须保持 translucent，内容才能延伸到导航栏下方并触发
     // scrollEdgeAppearance / standardAppearance 原生切换。
     headerTransparent: transparentHeader || nativeScrollEdgeHeader,
