@@ -23,6 +23,7 @@ import {
   nativeStackStatusBarOptions,
   useAppBackgroundColors,
   useColorSchemeSettings,
+  withNativeBackButton,
   withNativeStackGestureOptions,
   RN_UI_KIT_PACKAGE_NAME,
   RN_UI_KIT_PACKAGE_VERSION,
@@ -239,15 +240,23 @@ function RnUiKitDebugHostPanel({
         : `${RN_UI_KIT_PACKAGE_NAME} - ${RN_UI_KIT_PACKAGE_VERSION}`;
 
   useLayoutEffect(() => {
-    navigation.setOptions({
-      ...debugStackScreenOptions,
-      headerBackButtonDisplayMode:
-        isIos26Plus() && !showsExplicitRootBackLabel ? "minimal" : "default",
-      headerBackButtonMenuEnabled: true,
-      headerBackTitle: showsExplicitRootBackLabel ? backButtonLabel : undefined,
-      headerShown: true,
-      title,
-    });
+    navigation.setOptions(
+      withNativeBackButton(
+        {
+          ...debugStackScreenOptions,
+          headerBackButtonDisplayMode:
+            isIos26Plus() && !showsExplicitRootBackLabel ? "minimal" : "default",
+          headerBackButtonMenuEnabled: true,
+          headerBackTitle: showsExplicitRootBackLabel ? backButtonLabel : undefined,
+          headerShown: true,
+          title,
+        },
+        {
+          label: showsExplicitRootBackLabel ? backButtonLabel : "返回",
+          onPress: () => navigation.goBack(),
+        },
+      ),
+    );
   }, [
     backButtonLabel,
     debugStackScreenOptions,
@@ -485,7 +494,12 @@ function RnUiKitDebugPanelContent({
         <Stack.Navigator
           id="rn-ui-kit-debug-stack"
           initialRouteName="index"
-          screenOptions={debugStackScreenOptions}
+          screenOptions={({ navigation }) =>
+            withNativeBackButton(debugStackScreenOptions, {
+              label: "返回",
+              onPress: () => navigation.goBack(),
+            })
+          }
         >
           <Stack.Screen
             name="index"
