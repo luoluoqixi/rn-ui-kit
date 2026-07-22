@@ -6,7 +6,7 @@ import { Platform, StyleSheet, type ViewStyle } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { os } from "../../../utils/platform";
-import { ScreenOverlayPortalProvider } from "../../../utils/screen_overlay_portal";
+import { ScreenOverlayPortalProvider } from "../../../utils/overlay";
 
 import { TrueSheetOverlayLayoutProvider } from "./overlay_layout_context";
 import {

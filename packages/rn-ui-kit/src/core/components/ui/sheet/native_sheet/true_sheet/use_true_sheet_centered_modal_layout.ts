@@ -6,7 +6,7 @@ import {
   useTrueSheetOverlaySheetTopPosition,
 } from "./overlay_layout_context";
 import { getTrueSheetCenteredModalDetentOffsetY } from "./overlay_layout_metrics";
-import { useScreenOverlayPortalHost } from "../../../utils/screen_overlay_portal";
+import { useScreenOverlayPortalHost } from "../../../utils/overlay";
 
 import {
   getTrueSheetCenteredModalLiftAmount,

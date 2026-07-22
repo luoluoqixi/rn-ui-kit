@@ -12,18 +12,18 @@ import { Dimensions, type LayoutChangeEvent, StyleSheet, View, type ViewStyle } 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PortalHost as TeleportPortalHost } from "react-native-teleport";
 
-import { iosMajorVersion, isWeb, os } from "./platform";
+import { iosMajorVersion, isWeb, os } from "../platform";
 import {
   useTrueSheetOverlayDetent,
   useTrueSheetOverlaySheetTopPosition,
-} from "../sheet/native_sheet/true_sheet/overlay_layout_context";
+} from "../../sheet/native_sheet/true_sheet/overlay_layout_context";
 
 import {
   TRUE_SHEET_TOAST_DETENT_LIFT,
   getTrueSheetOverlayLayoutBottomInset,
   shouldApplyIosTrueSheetToastLayerInset,
-} from "../sheet/native_sheet/true_sheet/overlay_toast_layout";
-import { Toaster } from "../toast/toaster";
+} from "../../sheet/native_sheet/true_sheet/overlay_toast_layout";
+import { Toaster } from "../../toast/toaster";
 import { ScreenOverlayFloatingProvider } from "./screen_overlay_floating";
 
 const ScreenOverlayPortalContext = createContext<string | null>(null);

@@ -4,7 +4,7 @@ import { StyleSheet } from "react-native";
 import { isWeb } from "../../../utils/platform";
 import { Sheet as ReplicaSheet } from "../../sheet/replica_sheet/Sheet";
 import type { SnapPointsMode } from "../../sheet/replica_sheet/types";
-import { ScreenOverlayPortalProvider } from "../../../utils/screen_overlay_portal";
+import { ScreenOverlayPortalProvider } from "../../../utils/overlay";
 
 import type { NativeSheetProps } from "../types";
 

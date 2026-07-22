@@ -2,9 +2,9 @@ import { Portal } from "@tamagui/portal";
 import type { PortalProps } from "@tamagui/portal";
 import type { ReactNode } from "react";
 
-import { isWeb } from "./platform";
+import { isWeb } from "../platform";
 
-import { SheetPortal } from "../sheet/sheet/replica_sheet/sheet_portal";
+import { SheetPortal } from "../../sheet/sheet/replica_sheet/sheet_portal";
 import { useScopedOverlayPortalHostName } from "./screen_overlay_portal";
 
 export type OverlayScopedPortalProps = PortalProps & {

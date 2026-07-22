@@ -2,7 +2,7 @@ import { getBurnt } from "@tamagui/native";
 import { PromiseT, toast as tamaguiToast } from "@tamagui/toast/v2";
 
 import { isMobile } from "../utils/platform";
-import { useScopedOverlayPortalHostName } from "../utils/screen_overlay_portal";
+import { useScopedOverlayPortalHostName } from "../utils/overlay";
 
 import type { TitleToast, ToastContext, ToastPromiseData, ToastShowOptions } from "./types";
 

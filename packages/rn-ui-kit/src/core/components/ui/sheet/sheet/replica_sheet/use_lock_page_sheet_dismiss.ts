@@ -4,11 +4,9 @@ import { os } from "../../../utils/platform";
 import {
   acquirePageSheetGestureLock,
   releasePageSheetGestureLock,
-} from "../../../utils/page_sheet_gesture_lock";
-import {
   useScreenOverlayModalLockApi,
   useScreenOverlayPortalHost,
-} from "../../../utils/screen_overlay_portal";
+} from "../../../utils/overlay";
 
 /**
  * 在 iOS pageSheet overlay 内打开 Tamagui modal Sheet 时登记锁计数。

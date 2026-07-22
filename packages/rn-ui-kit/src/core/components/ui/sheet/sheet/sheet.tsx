@@ -3,7 +3,7 @@ import { forwardRef, useEffect, useMemo, useRef } from "react";
 import { BackHandler } from "react-native";
 
 import { isWeb, os } from "../../utils/platform";
-import { useScreenOverlayPortalHost } from "../../utils/screen_overlay_portal";
+import { useScreenOverlayPortalHost } from "../../utils/overlay";
 import { useAppBackgroundColors } from "../../utils/theme";
 
 import {
