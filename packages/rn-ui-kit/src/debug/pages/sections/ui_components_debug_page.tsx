@@ -666,7 +666,7 @@ export function RnUiKitUiComponentsDebugPage({ header }: RnUiKitUiComponentsDebu
         </View>
 
         <View style={styles.field}>
-          <Label>Slider Replica</Label>
+          <Label>Slider</Label>
           <Slider
             max={100}
             min={0}

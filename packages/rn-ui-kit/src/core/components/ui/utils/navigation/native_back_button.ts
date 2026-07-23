@@ -1,4 +1,5 @@
 import type {
+  NativeStackHeaderBackProps,
   NativeStackHeaderItemProps,
   NativeStackNavigationOptions,
 } from "@react-navigation/native-stack";
@@ -6,7 +7,10 @@ import type {
 import { isIos26Plus, os } from "../platform";
 
 type NativeBackButtonOptions = {
-  label: string;
+  /** 省略时沿用 React Navigation 推导出的上一页标题。 */
+  label?: string;
+  /** 上一页没有标题时使用的兜底文案。 */
+  fallbackLabel?: string;
   onPress: () => void;
 };
 
@@ -27,9 +31,21 @@ export function withNativeBackButton<T extends NativeStackNavigationOptions>(
     return screenOptions;
   }
 
+  let inferredLabel: string | undefined;
+
   return {
     ...screenOptions,
     headerBackVisible: false,
+    // unstable_headerLeftItems 的参数没有上一页标题；headerLeft 会先收到完整的 back props，
+    // 即使最终由原生 item 覆盖，也可用它把系统推导的标题传给 iOS 26 原生按钮。
+    ...(options.label == null
+      ? {
+          headerLeft: ({ label }: NativeStackHeaderBackProps) => {
+            inferredLabel = label;
+            return null;
+          },
+        }
+      : {}),
     unstable_headerLeftItems: ({ canGoBack, tintColor }: NativeStackHeaderItemProps) => {
       if (!canGoBack) {
         return [];
@@ -38,7 +54,7 @@ export function withNativeBackButton<T extends NativeStackNavigationOptions>(
       return [
         {
           type: "button" as const,
-          label: options.label,
+          label: options.label ?? inferredLabel ?? options.fallbackLabel ?? "返回",
           icon: { type: "sfSymbol" as const, name: "chevron.left" as const },
           onPress: options.onPress,
           tintColor,

@@ -149,16 +149,18 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
   );
 
   const mergedScreenOptions: TrueSheetInnerStackScreenOptions = {
-    headerBackTitle: "返回",
+    // iOS Native Stack 会从上一页的 title/headerTitle 推导返回文案。
+    ...(trueSheetUsesNativeStackNavigator ? {} : { headerBackTitle: "返回" }),
     headerRight:
       platform === "ios" ? () => <TrueSheetStackHeaderCloseButton title="关闭" /> : undefined,
     headerShown: true,
     ...screenOptions,
   };
 
+  const nativeScreenOptions = mergedScreenOptions as NativeStackNavigationOptions;
   const resolvedScreenOptions: TrueSheetInnerStackScreenOptions = trueSheetUsesNativeStackNavigator
-    ? withNativeBackButton(mergedScreenOptions as NativeStackNavigationOptions, {
-        label: "返回",
+    ? withNativeBackButton(nativeScreenOptions, {
+        fallbackLabel: "返回",
         onPress: () => {
           if (navigationRef.isReady() && navigationRef.canGoBack()) {
             navigationRef.goBack();
