@@ -4,7 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 
-const repoRoot = path.resolve(__dirname, "..");
+const repoRoot = path.resolve(__dirname, "../..");
 const packageJsonPath = path.join(repoRoot, "packages", "rn-ui-kit", "package.json");
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 const packageName = packageJson.name;
@@ -319,7 +319,7 @@ function preferredPushRemote() {
 
 function buildTarball() {
   console.log("[1/4] Building the release package...");
-  run("node", ["scripts/build-release-package.js"]);
+  run("node", ["scripts/release/build-package.js"]);
 
   if (!fs.existsSync(tarballPath)) {
     throw new Error(`Tarball not found: ${tarballPath}`);

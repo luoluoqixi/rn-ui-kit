@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 
-const repoRoot = path.resolve(__dirname, "..");
+const repoRoot = path.resolve(__dirname, "../..");
 const sourcePackageDir = path.join(repoRoot, "packages", "rn-ui-kit");
 const rootPackage = readJson(path.join(repoRoot, "package.json"));
 const sourcePackage = readJson(path.join(sourcePackageDir, "package.json"));

@@ -6,8 +6,8 @@
 - 发布包名：`rn-ui-kit`
 - 发布分支：`rn-ui-kit-<version>`
 - 发布产物目录：`dist/`
-- 发布脚本：`scripts/package-release.js`
-- 构建脚本：`scripts/build-release-package.js`
+- 发布脚本：`scripts/release/package.js`
+- 构建脚本：`scripts/release/build-package.js`
 
 发布分支根目录是一个可被 Bun 直接安装的独立 package，不包含 workspace，也不要求外部 App 执行 TypeScript 构建。
 

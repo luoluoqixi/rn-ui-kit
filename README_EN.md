@@ -402,9 +402,8 @@ rn-ui-kit/
 ├─ examples/
 │  └─ app/                # Expo app for iOS, Android, and Web
 ├─ scripts/
-│  ├─ set-version.js      # Synchronizes the project version
-│  ├─ package-release.js  # Creates compiled release branches
-│  └─ package-release.md  # Detailed release documentation
+│  ├─ android/            # Builds and publishes the Android example APK
+│  └─ release/            # Version, package, and release branch scripts
 ├─ package.json           # Bun workspace, build, and release commands
 └─ bun.lock
 ```
@@ -448,7 +447,7 @@ git push -u origin rn-ui-kit-1.0.1
 The release build compiles the single `packages/rn-ui-kit` package directly; it
 does not merge packages dynamically. A release branch contains only compiled
 `dist` output, package.json, README, LICENSE, patches, and runtime scripts. See
-[`scripts/package-release.md`](./scripts/package-release.md) for the complete
+[`scripts/release/README.md`](./scripts/release/README.md) for the complete
 release process.
 
 ## License

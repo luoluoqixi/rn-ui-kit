@@ -11,8 +11,9 @@
   },
   "scripts": {
     "build": "bun --cwd packages/rn-ui-kit build",
-    "package-release": "node scripts/package-release.js",
-    "set-version": "node scripts/set-version.js",
+    "package-release": "node scripts/release/package.js",
+    "release:android-apk": "node scripts/android/release-example-apk.js",
+    "set-version": "node scripts/release/set-version.js",
     "typecheck": "bun --cwd packages/rn-ui-kit typecheck && bun --cwd examples/app typecheck"
   }
 }

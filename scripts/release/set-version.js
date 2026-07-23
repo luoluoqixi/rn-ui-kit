@@ -4,7 +4,7 @@ const { spawnSync } = require("node:child_process");
 const { existsSync, readFileSync, writeFileSync } = require("node:fs");
 const { resolve } = require("node:path");
 
-const projectRoot = resolve(__dirname, "..");
+const projectRoot = resolve(__dirname, "../..");
 const packageJsonPaths = [
   "package.json",
   "packages/rn-ui-kit/package.json",

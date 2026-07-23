@@ -384,9 +384,8 @@ rn-ui-kit/
 ├─ examples/
 │  └─ app/                # Expo iOS / Android / Web 示例应用
 ├─ scripts/
-│  ├─ set-version.js      # 同步工程版本
-│  ├─ package-release.js  # 创建编译产物发布分支
-│  └─ package-release.md  # 完整发布流程说明
+│  ├─ android/            # 构建并发布 Android 示例 APK
+│  └─ release/            # 版本同步、发布包与发布分支脚本
 ├─ package.json           # Bun workspace、构建与发布命令
 └─ bun.lock
 ```
@@ -428,7 +427,7 @@ git push -u origin rn-ui-kit-1.0.1
 
 发布阶段直接编译单一的 `packages/rn-ui-kit`，不会动态合并 package。发布分支根目录只包含
 编译后的 `dist`、package.json、README、LICENSE、patches 和运行时脚本。完整说明见
-[`scripts/package-release.md`](./scripts/package-release.md)。
+[`scripts/release/README.md`](./scripts/release/README.md)。
 
 ## License
 

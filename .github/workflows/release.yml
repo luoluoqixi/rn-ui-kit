@@ -38,3 +38,33 @@ jobs:
           fi
 
           gh release create "${release_args[@]}"
+
+  android:
+    name: Build and upload Android example
+    needs: release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.19
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build and upload release APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: bun run release:android-apk "$GITHUB_REF_NAME" --upload
