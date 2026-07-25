@@ -321,6 +321,8 @@ export function SettingsList() {
 - 所有基础 Item 都支持 `titleColor` / `titleFontSize`、`subtitleColor` /
   `subtitleFontSize`、`valueColor` / `valueFontSize`。`NativeListSelectItem` 的已选值也会沿用
   `valueColor` 与 `valueFontSize`。
+- 导航行及其他启用 chevron 的 Item 可通过 `chevronColor` 设置行尾箭头颜色；
+  未指定时继续使用平台默认辅助色。
 - fallback Item（包括 `NativeListCustomItem`）支持 `backgroundColor`、
   `hoverBackgroundColor` 与 `pressBackgroundColor`；iOS 原生 List 会忽略这些背景属性。
   未指定时继续使用原有的 fallback 主题颜色。

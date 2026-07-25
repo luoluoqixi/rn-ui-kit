@@ -29,42 +29,44 @@ export type NativeListItemIconProps = {
 /** 通用 item base props */
 export type NativeListItemBaseProps = NativeListItemPaddingProps &
   NativeListItemIconProps & {
-  /** fallback 行的常态背景色；iOS 原生 List 会忽略。 */
-  backgroundColor?: ViewStyle["backgroundColor"];
-  /** `true` 或不传时沿用默认主色，传字符串时使用自定义 tint，传 `false` 时不传 tint。 */
-  btnTint?: boolean | string;
-  chevron?: boolean;
-  disabled?: boolean;
-  /** fallback 行的 hover 背景色；iOS 原生 List 会忽略。 */
-  hoverBackgroundColor?: ViewStyle["backgroundColor"];
-  /** `sfSymbol` 的颜色；自定义 `icon` 需由调用方自行设置颜色。 */
-  iconColor?: string;
-  /** `sfSymbol` 的尺寸；自定义 `icon` 需由调用方自行设置尺寸。 */
-  iconSize?: number;
-  /**
-   * 行首图标列的宽度。iOS 原生 `sfSymbol` 默认取
-   * `Math.max(24, iconSize ?? 20)`；fallback 自定义 `icon` 未指定时保持自身宽度。
-   * 多行可统一设置此值以保持标题左边缘对齐。
-   */
-  iconSlotWidth?: number;
-  nativeHaptics?: NativeHapticsSetting;
-  /** iOS 原生 List 用于滚动定位的稳定 id。 */
-  nativeScrollId?: string | number;
-  onPress?: () => void;
-  /** fallback 行的按下背景色；iOS 原生 List 会忽略。 */
-  pressBackgroundColor?: ViewStyle["backgroundColor"];
-  selected?: boolean;
-  subtitle?: ReactNode;
-  subtitleColor?: string;
-  subtitleFontSize?: number;
-  title?: ReactNode;
-  titleAlign?: "center" | "right" | "left";
-  titleColor?: string;
-  titleFontSize?: number;
-  value?: ReactNode;
-  valueColor?: string;
-  valueFontSize?: number;
-};
+    /** fallback 行的常态背景色；iOS 原生 List 会忽略。 */
+    backgroundColor?: ViewStyle["backgroundColor"];
+    /** `true` 或不传时沿用默认主色，传字符串时使用自定义 tint，传 `false` 时不传 tint。 */
+    btnTint?: boolean | string;
+    chevron?: boolean;
+    /** 行尾 chevron 的颜色；未指定时使用平台默认辅助色。 */
+    chevronColor?: string;
+    disabled?: boolean;
+    /** fallback 行的 hover 背景色；iOS 原生 List 会忽略。 */
+    hoverBackgroundColor?: ViewStyle["backgroundColor"];
+    /** `sfSymbol` 的颜色；自定义 `icon` 需由调用方自行设置颜色。 */
+    iconColor?: string;
+    /** `sfSymbol` 的尺寸；自定义 `icon` 需由调用方自行设置尺寸。 */
+    iconSize?: number;
+    /**
+     * 行首图标列的宽度。iOS 原生 `sfSymbol` 默认取
+     * `Math.max(24, iconSize ?? 20)`；fallback 自定义 `icon` 未指定时保持自身宽度。
+     * 多行可统一设置此值以保持标题左边缘对齐。
+     */
+    iconSlotWidth?: number;
+    nativeHaptics?: NativeHapticsSetting;
+    /** iOS 原生 List 用于滚动定位的稳定 id。 */
+    nativeScrollId?: string | number;
+    onPress?: () => void;
+    /** fallback 行的按下背景色；iOS 原生 List 会忽略。 */
+    pressBackgroundColor?: ViewStyle["backgroundColor"];
+    selected?: boolean;
+    subtitle?: ReactNode;
+    subtitleColor?: string;
+    subtitleFontSize?: number;
+    title?: ReactNode;
+    titleAlign?: "center" | "right" | "left";
+    titleColor?: string;
+    titleFontSize?: number;
+    value?: ReactNode;
+    valueColor?: string;
+    valueFontSize?: number;
+  };
 
 export type NativeListActionItemProps = NativeListItemBaseProps;
 export type NativeListNavigationItemProps = NativeListItemBaseProps;
@@ -113,22 +115,22 @@ export type NativeListSectionProps = {
 /** NativeList Root props */
 export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
   NavigationBarScrollEdgeTrackingProps & {
-  /** 列表宿主背景色：iOS 原生 List 直接作用于 List，自定义 fallback 作用于根容器。 */
-  backgroundColor?: ViewStyle["backgroundColor"];
-  children?: ReactNode;
-  /** 原生 List 内容顶部内边距。 */
-  contentMarginTop?: number;
-  /** 原生 List 内容底部内边距。 */
-  contentMarginBottom?: number;
-  /**
-   * 修正 iOS 26+ 在外层 ScrollView 中嵌套原生 List 时错误缓存窗口底部安全区，
-   * 导致内部滚动条提前结束的问题。默认关闭；非 iOS 26+ 平台会被忽略。
-   */
-  fixesIOS26NestedScrollIndicatorSafeArea?: boolean;
-  /** iOS 原生 List 初次挂载后滚动到的目标 id。 */
-  initialScrollTarget?: string | number;
-  /** 设为 false 时使用 list_group 回退模式（所有平台一致） */
-  native?: boolean;
-  /** 设为 false 时不创建内部 ScrollView，由外层宿主负责滚动。 */
-  scrollable?: boolean;
-};
+    /** 列表宿主背景色：iOS 原生 List 直接作用于 List，自定义 fallback 作用于根容器。 */
+    backgroundColor?: ViewStyle["backgroundColor"];
+    children?: ReactNode;
+    /** 原生 List 内容顶部内边距。 */
+    contentMarginTop?: number;
+    /** 原生 List 内容底部内边距。 */
+    contentMarginBottom?: number;
+    /**
+     * 修正 iOS 26+ 在外层 ScrollView 中嵌套原生 List 时错误缓存窗口底部安全区，
+     * 导致内部滚动条提前结束的问题。默认关闭；非 iOS 26+ 平台会被忽略。
+     */
+    fixesIOS26NestedScrollIndicatorSafeArea?: boolean;
+    /** iOS 原生 List 初次挂载后滚动到的目标 id。 */
+    initialScrollTarget?: string | number;
+    /** 设为 false 时使用 list_group 回退模式（所有平台一致） */
+    native?: boolean;
+    /** 设为 false 时不创建内部 ScrollView，由外层宿主负责滚动。 */
+    scrollable?: boolean;
+  };

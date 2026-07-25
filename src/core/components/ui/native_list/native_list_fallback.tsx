@@ -2,6 +2,7 @@
 import { Check, ChevronRight, ChevronsUpDown } from "@tamagui/lucide-icons-2";
 import {
   Children,
+  type ComponentProps,
   type ComponentType,
   type ReactElement,
   type ReactNode,
@@ -307,6 +308,7 @@ function renderValueNode(value: ReactNode, valueColor?: string, valueFontSize?: 
 function NativeListRow({
   backgroundColor,
   chevron = false,
+  chevronColor,
   disabled,
   hoverBackgroundColor,
   icon,
@@ -375,7 +377,13 @@ function NativeListRow({
           {valueNode}
           {selected ? <Check color="$accent10" size={18} /> : null}
           {iconAfter}
-          {chevron ? <ChevronRight color="$color" opacity={0.58} size={18} /> : null}
+          {chevron ? (
+            <ChevronRight
+              color={(chevronColor ?? "$color") as ComponentProps<typeof ChevronRight>["color"]}
+              opacity={chevronColor == null ? 0.58 : 1}
+              size={18}
+            />
+          ) : null}
         </View>
       </View>
     </FallbackRowContainer>

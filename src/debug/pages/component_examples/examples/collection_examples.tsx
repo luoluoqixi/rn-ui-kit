@@ -93,6 +93,7 @@ function NativeListExample() {
                 titleColor="#7c3aed"
               >
                 <NativeListNavigationItem
+                  chevronColor={NATIVE_LIST_ICON_COLOR}
                   icon={<Info color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
                   sfSymbol="info.circle"
                   onPress={() => setLastAction("打开详情")}

@@ -114,10 +114,7 @@ function titleModifiers(fontSize?: number) {
 }
 
 function subtitleModifiers(fontSize?: number) {
-  return [
-    font({ size: fontSize ?? DEFAULT_SUBTITLE_FONT_SIZE, weight: "regular" }),
-    lineLimit(4),
-  ];
+  return [font({ size: fontSize ?? DEFAULT_SUBTITLE_FONT_SIZE, weight: "regular" }), lineLimit(4)];
 }
 
 function valueModifiers(fontSize?: number) {
@@ -406,6 +403,7 @@ function NativeHostedCustomRow({ children }: { children: ReactNode }) {
 
 function NativePressRow({
   chevron = false,
+  chevronColor,
   disabled,
   icon,
   iconColor,
@@ -445,6 +443,8 @@ function NativePressRow({
   const resolvedHaptics = useResolvedNativeHaptics(nativeHaptics);
   const accentColor = toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;
   const assistColor = resolveNativeListAssistColor(theme);
+  const resolvedChevronColor =
+    (chevronColor != null ? toSwiftUIHexColor(chevronColor) : undefined) ?? assistColor;
   const resolvedIconColor =
     (iconColor != null ? toSwiftUIHexColor(iconColor) : undefined) ?? accentColor;
   const resolvedIconSize = iconSize ?? 20;
@@ -509,7 +509,7 @@ function NativePressRow({
       ) : null}
       {selected ? <Image color={accentColor} size={18} systemName="checkmark" /> : null}
       {trailingControl}
-      {chevron ? <Image color={assistColor} size={13} systemName="chevron.right" /> : null}
+      {chevron ? <Image color={resolvedChevronColor} size={13} systemName="chevron.right" /> : null}
     </NativeRowContainer>
   );
 }

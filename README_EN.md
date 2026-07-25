@@ -335,6 +335,8 @@ Notes:
 - Every base item supports `titleColor` / `titleFontSize`, `subtitleColor` /
   `subtitleFontSize`, and `valueColor` / `valueFontSize`. A
   `NativeListSelectItem` also applies the value styles to its selected label.
+- Navigation rows and other items with an enabled chevron support
+  `chevronColor`; when omitted, the platform's default assist color is used.
 - Fallback items, including `NativeListCustomItem`, support `backgroundColor`,
   `hoverBackgroundColor`, and `pressBackgroundColor`; native iOS lists ignore
   these background props. When omitted, the existing fallback theme colors are
