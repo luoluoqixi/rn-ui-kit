@@ -40,10 +40,7 @@ import {
   RnUiKitComponentExamplesDebugPage,
 } from "./pages/component_examples/component_examples_page";
 import { componentExampleDefinitions } from "./pages/component_examples/catalog";
-import {
-  getRnUiKitDebugRouteDefinition,
-  rnUiKitDebugRouteDefinitions,
-} from "./routes";
+import { getRnUiKitDebugRouteDefinition, rnUiKitDebugRouteDefinitions } from "./routes";
 import { blurActiveElementOnWeb } from "./web_focus";
 
 import type {
@@ -103,9 +100,7 @@ function useDebugStackScreenOptions(overrides?: RnUiKitDebugPanelPageScreenOptio
   );
 }
 
-function useDebugSheetStackScreenOptions(
-  overrides?: RnUiKitDebugPanelNativeSheetScreenOptions,
-) {
+function useDebugSheetStackScreenOptions(overrides?: RnUiKitDebugPanelNativeSheetScreenOptions) {
   const appBackgroundColors = useAppBackgroundColors();
   const theme = useTheme();
   const transparentHeader = isIos26Plus();
@@ -435,7 +430,7 @@ function RnUiKitDebugPanelSheet({
         open={open}
         overlayPortalHostName={DEBUG_PANEL_SHEET_OVERLAY_HOST}
         screenOptions={debugSheetStackScreenOptions}
-        sheetProps={{ snapPoints: [88], snapPointsMode: "percent", ...panelSheetProps }}
+        sheetProps={{ snapPoints: ["95%"], snapPointsMode: "percent", ...panelSheetProps }}
       >
         <NativeSheetStack.Screen
           name="index"
