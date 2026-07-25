@@ -279,7 +279,7 @@ export function SettingsList() {
     <NativeList>
       <NativeListSection title="工作区" footer="更改会自动保存。">
         <NativeListNavigationItem
-          icon="person.2.fill"
+          sfSymbol="person.2.fill"
           iconColor="#7c3aed"
           title="成员"
           subtitle="邀请、角色与访问权限"
@@ -327,8 +327,13 @@ export function SettingsList() {
 - 所有 Item（包括 `NativeListCustomItem`）支持 `paddingHorizontal`、
   `paddingVertical`、`paddingTop`、`paddingBottom`、`paddingLeft` 与
   `paddingRight`；单边属性优先于 Horizontal / Vertical。
-- `icon` 可传自定义 ReactNode；在 iOS 原生列表中也可直接传 SF Symbol 名称字符串，
-  并通过 `iconColor`、`iconSize` 调整原生图标。字符串图标仅在 iOS 原生模式渲染。
+- `icon` 用于自定义 React Native 图标；`sfSymbol` 用于 iOS 原生 SF Symbol，
+  并可通过 `iconColor`、`iconSize` 调整。`sfSymbol` 在 fallback 模式中不渲染，
+  两个字段可以同时传入：iOS 原生模式优先使用 `sfSymbol`，其他平台和 fallback
+  模式使用 `icon`。
+- `iconSlotWidth` 同时控制 iOS SF Symbol 和 fallback 自定义图标的列宽。iOS 原生模式
+  默认取 `Math.max(24, iconSize ?? 20)`；fallback 未指定时保留自定义图标自身宽度。
+  多行可设置相同的 `iconSlotWidth` 以保持标题左边缘对齐。
 - `NativeListSection` 支持 `titleColor` 与 `titleFontSize`；复杂 ReactNode 标题仍由调用方
   自行设置文本样式。
 - iOS `NativeListSelectItem` 会把 `NativePickerSwiftUI` 接口已声明的 picker 属性完整传入，

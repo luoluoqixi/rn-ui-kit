@@ -4,6 +4,9 @@
   "workspaces": {
     "": {
       "name": "rn-ui-kit",
+      "dependencies": {
+        "sf-symbols-typescript": "=2.2.0",
+      },
       "devDependencies": {
         "@expo/ui": "=55.0.17",
         "@lodev09/react-native-true-sheet": "=3.11.6",

@@ -290,7 +290,7 @@ export function SettingsList() {
     <NativeList>
       <NativeListSection title="Workspace" footer="Changes are saved automatically.">
         <NativeListNavigationItem
-          icon="person.2.fill"
+          sfSymbol="person.2.fill"
           iconColor="#7c3aed"
           title="Members"
           subtitle="Invitations, roles, and access"
@@ -343,9 +343,14 @@ Notes:
   `paddingVertical`, `paddingTop`, `paddingBottom`, `paddingLeft`, and
   `paddingRight`; individual-edge props take precedence over horizontal or
   vertical values.
-- Pass a custom React node to `icon`, or pass an SF Symbol name as a string in
-  native iOS lists. Use `iconColor` and `iconSize` for SF Symbols. String icons
-  are rendered only in native iOS mode.
+- Use `icon` for a custom React Native icon and `sfSymbol` for a native iOS
+  SF Symbol. Use `iconColor` and `iconSize` for SF Symbols. `sfSymbol` is not
+  rendered in fallback mode. Both props can be provided: native iOS mode
+  prefers `sfSymbol`, while other platforms and fallback mode use `icon`.
+- `iconSlotWidth` controls both the native iOS SF Symbol column and the fallback
+  custom-icon column. Native iOS defaults to `Math.max(24, iconSize ?? 20)`;
+  fallback mode keeps the custom icon's intrinsic width when omitted. Give rows
+  the same `iconSlotWidth` to keep their title leading edges aligned.
 - `NativeListSection` supports `titleColor` and `titleFontSize`. Style complex
   React-node headers directly.
 - On iOS, `NativeListSelectItem` now passes every picker prop declared by the

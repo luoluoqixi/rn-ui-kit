@@ -1,5 +1,6 @@
 import type { ReactElement, ReactNode } from "react";
 import type { ScrollViewProps, ViewStyle } from "react-native";
+import type { SFSymbol } from "sf-symbols-typescript";
 
 import type { SelectProps } from "../select";
 import type { SwitchProps } from "../switch";
@@ -15,8 +16,19 @@ export type NativeListItemPaddingProps = {
   paddingVertical?: number;
 };
 
+export type NativeListItemIconProps = {
+  /** 自定义 React Native 行首图标；fallback、Android 与 Web 使用。 */
+  icon?: ReactElement;
+  /**
+   * iOS 原生列表使用的 SF Symbol `systemName`。
+   * 同时传入 `icon` 时，iOS 原生模式使用 `sfSymbol`，其他模式使用 `icon`。
+   */
+  sfSymbol?: SFSymbol;
+};
+
 /** 通用 item base props */
-export type NativeListItemBaseProps = NativeListItemPaddingProps & {
+export type NativeListItemBaseProps = NativeListItemPaddingProps &
+  NativeListItemIconProps & {
   /** fallback 行的常态背景色；iOS 原生 List 会忽略。 */
   backgroundColor?: ViewStyle["backgroundColor"];
   /** `true` 或不传时沿用默认主色，传字符串时使用自定义 tint，传 `false` 时不传 tint。 */
@@ -25,15 +37,16 @@ export type NativeListItemBaseProps = NativeListItemPaddingProps & {
   disabled?: boolean;
   /** fallback 行的 hover 背景色；iOS 原生 List 会忽略。 */
   hoverBackgroundColor?: ViewStyle["backgroundColor"];
-  /**
-   * 行首图标。iOS 原生列表中传字符串时会作为 SF Symbol 的 `systemName`；
-   * 传 ReactElement 时会承载自定义 React Native 图标。其他平台仅渲染 ReactElement。
-   */
-  icon?: ReactElement | string;
-  /** iOS SF Symbol 的颜色；自定义 ReactNode 需由调用方自行设置颜色。 */
+  /** `sfSymbol` 的颜色；自定义 `icon` 需由调用方自行设置颜色。 */
   iconColor?: string;
-  /** iOS SF Symbol 的尺寸；自定义 ReactNode 需由调用方自行设置尺寸。 */
+  /** `sfSymbol` 的尺寸；自定义 `icon` 需由调用方自行设置尺寸。 */
   iconSize?: number;
+  /**
+   * 行首图标列的宽度。iOS 原生 `sfSymbol` 默认取
+   * `Math.max(24, iconSize ?? 20)`；fallback 自定义 `icon` 未指定时保持自身宽度。
+   * 多行可统一设置此值以保持标题左边缘对齐。
+   */
+  iconSlotWidth?: number;
   nativeHaptics?: NativeHapticsSetting;
   /** iOS 原生 List 用于滚动定位的稳定 id。 */
   nativeScrollId?: string | number;

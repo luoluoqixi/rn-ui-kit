@@ -36,11 +36,11 @@ import type { ComponentExampleDefinition } from "../types";
 const NATIVE_LIST_ICON_COLOR = "#7c3aed";
 const NATIVE_LIST_ICON_SIZE = 20;
 const NATIVE_LIST_BACKUP_OPTIONS = [
-  { Icon: Timer, title: "30 分钟", value: "thirty-minutes" },
-  { Icon: Clock, title: "1 小时", value: "one-hour" },
-  { Icon: Clock4, title: "4 小时", value: "four-hours" },
-  { Icon: CalendarDays, title: "每天", value: "daily" },
-  { Icon: CircleOff, title: "从不", value: "never" },
+  { Icon: Timer, sfSymbol: "timer", title: "30 分钟", value: "thirty-minutes" },
+  { Icon: Clock, sfSymbol: "clock", title: "1 小时", value: "one-hour" },
+  { Icon: Clock4, sfSymbol: "clock.badge", title: "4 小时", value: "four-hours" },
+  { Icon: CalendarDays, sfSymbol: "calendar", title: "每天", value: "daily" },
+  { Icon: CircleOff, sfSymbol: "nosign", title: "从不", value: "never" },
 ] as const;
 
 function NativeListExample() {
@@ -94,6 +94,7 @@ function NativeListExample() {
               >
                 <NativeListNavigationItem
                   icon={<Info color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
+                  sfSymbol="info.circle"
                   onPress={() => setLastAction("打开详情")}
                   subtitle="带有 chevron 的导航行"
                   subtitleColor="#64748b"
@@ -104,6 +105,7 @@ function NativeListExample() {
                 />
                 <NativeListNavigationItem
                   icon={<Users color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
+                  sfSymbol="person.2"
                   onPress={() => setLastAction("打开成员管理")}
                   subtitle="邀请、角色与访问权限"
                   title="成员"
@@ -112,11 +114,13 @@ function NativeListExample() {
               <NativeListSection footer="Switch 适合即时生效的独立偏好。" title="同步">
                 <NativeListSwitchItem
                   icon={<RefreshCw color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
+                  sfSymbol="arrow.clockwise"
                   switchProps={{ checked: autoSyncEnabled, onCheckedChange: setAutoSyncEnabled }}
                   title="自动同步"
                 />
                 <NativeListSelectItem
                   icon={<Palette color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
+                  sfSymbol="paintpalette"
                   selectProps={{
                     onValueChange: setTheme,
                     options: [
@@ -132,6 +136,7 @@ function NativeListExample() {
                 />
                 <NativeListSelectItem
                   icon={<Timer color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
+                  sfSymbol="timer"
                   selectProps={{
                     onValueChange: setSyncInterval,
                     options: [
@@ -148,13 +153,14 @@ function NativeListExample() {
                 footer="selected 与 chevron={false} 可组合成互斥选择列表。"
                 title="自动备份"
               >
-                {NATIVE_LIST_BACKUP_OPTIONS.map(({ Icon, title, value }) => (
+                {NATIVE_LIST_BACKUP_OPTIONS.map(({ Icon, sfSymbol, title, value }) => (
                   <NativeListItem
                     chevron={false}
                     icon={<Icon color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
                     key={value}
                     onPress={() => setBackupInterval(value)}
                     selected={backupInterval === value}
+                    sfSymbol={sfSymbol}
                     title={title}
                   />
                 ))}
@@ -165,6 +171,7 @@ function NativeListExample() {
               >
                 <NativeListSelectItem
                   icon={<ListFilter color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
+                  sfSymbol="line.3.horizontal.decrease.circle"
                   selectProps={{
                     onValueChange: setTheme,
                     options: [
@@ -185,6 +192,7 @@ function NativeListExample() {
                         size={NATIVE_LIST_ICON_SIZE}
                       />
                     }
+                    sfSymbol="slider.horizontal.3"
                     selectProps={{
                       nativePickerMode: "wheel",
                       onValueChange: setTheme,

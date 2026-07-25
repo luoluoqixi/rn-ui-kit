@@ -34,7 +34,7 @@ import {
   tint,
   viewID,
 } from "@expo/ui/swift-ui/modifiers";
-import { type ComponentProps, type ReactNode, createContext, useContext, useRef } from "react";
+import { type ReactNode, createContext, useContext, useRef } from "react";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "tamagui";
@@ -359,10 +359,27 @@ function NativeRowContainer({
   );
 }
 
+function NativeHostedIcon({ children }: { children: ReactNode }) {
+  return (
+    <RNHostView matchContents>
+      {/*
+       * RNHostView(matchContents) reads the bounds of its first direct native child.
+       * Keep this wrapper from being flattened, otherwise SVG-based icons can make
+       * RNHostView fall back to an unbounded SwiftUI frame and consume the whole row.
+       */}
+      <View collapsable={false} style={styles.hostedIcon}>
+        {children}
+      </View>
+    </RNHostView>
+  );
+}
+
 function NativeHostedContent({ children }: { children: ReactNode }) {
   return (
     <RNHostView matchContents>
-      <View style={styles.hostedContent}>{children}</View>
+      <View collapsable={false} style={styles.hostedContent}>
+        {children}
+      </View>
     </RNHostView>
   );
 }
@@ -370,7 +387,9 @@ function NativeHostedContent({ children }: { children: ReactNode }) {
 function NativeHostedTrailingControl({ children }: { children: ReactNode }) {
   return (
     <RNHostView matchContents>
-      <View style={styles.trailingHostedContent}>{children}</View>
+      <View collapsable={false} style={styles.trailingHostedContent}>
+        {children}
+      </View>
     </RNHostView>
   );
 }
@@ -378,7 +397,9 @@ function NativeHostedTrailingControl({ children }: { children: ReactNode }) {
 function NativeHostedCustomRow({ children }: { children: ReactNode }) {
   return (
     <RNHostView matchContents={{ vertical: true } as unknown as boolean}>
-      <View style={styles.customRowShell}>{children}</View>
+      <View collapsable={false} style={styles.customRowShell}>
+        {children}
+      </View>
     </RNHostView>
   );
 }
@@ -389,6 +410,8 @@ function NativePressRow({
   icon,
   iconColor,
   iconSize,
+  iconSlotWidth,
+  sfSymbol,
   nativeHaptics,
   nativeScrollId,
   onPress,
@@ -424,6 +447,8 @@ function NativePressRow({
   const assistColor = resolveNativeListAssistColor(theme);
   const resolvedIconColor =
     (iconColor != null ? toSwiftUIHexColor(iconColor) : undefined) ?? accentColor;
+  const resolvedIconSize = iconSize ?? 20;
+  const resolvedIconSlotWidth = iconSlotWidth ?? Math.max(24, resolvedIconSize);
   const resolvedValueColor =
     (valueColor != null ? toSwiftUIHexColor(valueColor) : undefined) ?? assistColor;
   const titleText = toPlainText(title);
@@ -453,14 +478,15 @@ function NativePressRow({
       paddingTop={paddingTop}
       paddingVertical={paddingVertical}
     >
-      {typeof icon === "string" ? (
-        <Image
-          color={resolvedIconColor}
-          size={iconSize ?? 20}
-          systemName={icon as ComponentProps<typeof Image>["systemName"]}
-        />
+      {sfSymbol != null ? (
+        <ZStack
+          alignment="center"
+          modifiers={[frame({ width: resolvedIconSlotWidth, alignment: "center" })]}
+        >
+          <Image color={resolvedIconColor} size={resolvedIconSize} systemName={sfSymbol} />
+        </ZStack>
       ) : icon != null ? (
-        <NativeHostedContent>{icon}</NativeHostedContent>
+        <NativeHostedIcon>{icon}</NativeHostedIcon>
       ) : null}
       <NativeRowLabel
         subtitle={subtitleText ?? undefined}
@@ -969,6 +995,12 @@ const styles = StyleSheet.create({
   hostedContent: {
     flexDirection: "row",
     alignItems: "center",
+  },
+  hostedIcon: {
+    alignItems: "center",
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    justifyContent: "center",
   },
   nativeRoot: {
     flex: 1,

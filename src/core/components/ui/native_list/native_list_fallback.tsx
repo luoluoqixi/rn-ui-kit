@@ -311,6 +311,7 @@ function NativeListRow({
   hoverBackgroundColor,
   icon,
   iconAfter,
+  iconSlotWidth,
   nativeHaptics,
   onPress,
   paddingBottom,
@@ -338,7 +339,7 @@ function NativeListRow({
   const titleNode = renderTitleNode(title, titleColor, titleFontSize, textAlign);
   const subtitleNode = renderSubtitleNode(subtitle, subtitleColor, subtitleFontSize);
   const valueNode = renderValueNode(value, valueColor, valueFontSize);
-  const customIcon = typeof icon === "string" ? null : icon;
+  const customIcon = icon;
 
   return (
     <FallbackRowContainer
@@ -356,7 +357,16 @@ function NativeListRow({
       pressBackgroundColor={pressBackgroundColor}
     >
       <View style={styles.rowContent}>
-        {customIcon != null ? <View style={styles.iconBefore}>{customIcon}</View> : null}
+        {customIcon != null ? (
+          <View
+            style={[
+              styles.iconBefore,
+              iconSlotWidth != null ? { width: iconSlotWidth } : undefined,
+            ]}
+          >
+            {customIcon}
+          </View>
+        ) : null}
         <View style={[styles.textColumn, { alignItems: titleAlignment }]}>
           {titleNode}
           {subtitleNode}
