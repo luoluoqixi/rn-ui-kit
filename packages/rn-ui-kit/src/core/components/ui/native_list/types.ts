@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ReactElement, ReactNode } from "react";
 import type { ScrollViewProps, ViewStyle } from "react-native";
 
 import type { SelectProps } from "../select";
@@ -8,19 +8,40 @@ import type { NavigationBarScrollEdgeTrackingProps } from "../utils/navigation";
 
 /** 通用 item base props */
 export type NativeListItemBaseProps = {
+  /** fallback 行的常态背景色；iOS 原生 List 会忽略。 */
+  backgroundColor?: ViewStyle["backgroundColor"];
   /** `true` 或不传时沿用默认主色，传字符串时使用自定义 tint，传 `false` 时不传 tint。 */
   btnTint?: boolean | string;
   chevron?: boolean;
   disabled?: boolean;
+  /** fallback 行的 hover 背景色；iOS 原生 List 会忽略。 */
+  hoverBackgroundColor?: ViewStyle["backgroundColor"];
+  /**
+   * 行首图标。iOS 原生列表中传字符串时会作为 SF Symbol 的 `systemName`；
+   * 传 ReactElement 时会承载自定义 React Native 图标。其他平台仅渲染 ReactElement。
+   */
+  icon?: ReactElement | string;
+  /** iOS SF Symbol 的颜色；自定义 ReactNode 需由调用方自行设置颜色。 */
+  iconColor?: string;
+  /** iOS SF Symbol 的尺寸；自定义 ReactNode 需由调用方自行设置尺寸。 */
+  iconSize?: number;
   nativeHaptics?: NativeHapticsSetting;
   /** iOS 原生 List 用于滚动定位的稳定 id。 */
   nativeScrollId?: string | number;
   onPress?: () => void;
+  /** fallback 行的按下背景色；iOS 原生 List 会忽略。 */
+  pressBackgroundColor?: ViewStyle["backgroundColor"];
   selected?: boolean;
   subtitle?: ReactNode;
+  subtitleColor?: string;
+  subtitleFontSize?: number;
   title?: ReactNode;
   titleAlign?: "center" | "right" | "left";
+  titleColor?: string;
+  titleFontSize?: number;
   value?: ReactNode;
+  valueColor?: string;
+  valueFontSize?: number;
 };
 
 export type NativeListActionItemProps = NativeListItemBaseProps;
@@ -44,10 +65,16 @@ export type NativeListItemProps = NativeListItemBaseProps & {
 export type NativeListButtonItemProps = NativeListItemProps;
 
 export type NativeListCustomItemProps = {
+  /** fallback 行的常态背景色；iOS 原生 List 会忽略。 */
+  backgroundColor?: ViewStyle["backgroundColor"];
   children?: ReactNode;
   disabled?: boolean;
+  /** fallback 行的 hover 背景色；iOS 原生 List 会忽略。 */
+  hoverBackgroundColor?: ViewStyle["backgroundColor"];
   nativeHaptics?: NativeHapticsSetting;
   onPress?: () => void;
+  /** fallback 行的按下背景色；iOS 原生 List 会忽略。 */
+  pressBackgroundColor?: ViewStyle["backgroundColor"];
 };
 
 /** Section props */
@@ -55,6 +82,10 @@ export type NativeListSectionProps = {
   children?: ReactNode;
   footer?: ReactNode;
   title?: ReactNode;
+  /** Section 标题文本颜色；复杂 ReactNode 标题请直接在节点上设置样式。 */
+  titleColor?: string;
+  /** Section 标题字体大小；复杂 ReactNode 标题请直接在节点上设置样式。 */
+  titleFontSize?: number;
 };
 
 /** NativeList Root props */

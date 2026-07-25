@@ -34,7 +34,7 @@ import {
   tint,
   viewID,
 } from "@expo/ui/swift-ui/modifiers";
-import { type ReactNode, createContext, useContext, useRef } from "react";
+import { type ComponentProps, type ReactNode, createContext, useContext, useRef } from "react";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "tamagui";
@@ -87,9 +87,25 @@ const NativeListContext = createContext<NativeListContextValue>({ native: true }
 
 const ROW_INSETS = listRowInsets({ top: 0, leading: 0, bottom: 0, trailing: 0 });
 const ROW_PADDING = { top: 0, bottom: 0, leading: 0, trailing: 0 } as const;
-const TITLE_MODIFIERS = [font({ size: 17, weight: "regular" })];
-const SUBTITLE_MODIFIERS = [font({ size: 13, weight: "regular" }), lineLimit(4)];
-const VALUE_MODIFIERS = [font({ size: 17, weight: "regular" }), lineLimit(1)];
+const DEFAULT_TITLE_FONT_SIZE = 17;
+const DEFAULT_SUBTITLE_FONT_SIZE = 13;
+const DEFAULT_VALUE_FONT_SIZE = 17;
+const DEFAULT_SECTION_TITLE_FONT_SIZE = 13;
+
+function titleModifiers(fontSize?: number) {
+  return [font({ size: fontSize ?? DEFAULT_TITLE_FONT_SIZE, weight: "regular" })];
+}
+
+function subtitleModifiers(fontSize?: number) {
+  return [
+    font({ size: fontSize ?? DEFAULT_SUBTITLE_FONT_SIZE, weight: "regular" }),
+    lineLimit(4),
+  ];
+}
+
+function valueModifiers(fontSize?: number) {
+  return [font({ size: fontSize ?? DEFAULT_VALUE_FONT_SIZE, weight: "regular" }), lineLimit(1)];
+}
 
 function toPlainText(value: ReactNode): string | null {
   if (typeof value === "string" || typeof value === "number") {
@@ -126,7 +142,9 @@ function resolveNativeListTitleColor(
     return null;
   }
   const primaryColor = toSwiftUIHexColor(theme.gray12.val) ?? theme.gray12.val;
-  return typeof titleColor === "string" ? titleColor : primaryColor;
+  return typeof titleColor === "string"
+    ? (toSwiftUIHexColor(titleColor) ?? titleColor)
+    : primaryColor;
 }
 
 function resolveNativeListAssistColor(theme: ReturnType<typeof useTheme>) {
@@ -142,17 +160,23 @@ function resolveNativeListAssistColor(theme: ReturnType<typeof useTheme>) {
 
 function NativeRowLabel({
   subtitle,
+  subtitleColor,
+  subtitleFontSize,
   title,
   titleAlign,
   expand = false,
   titleColor,
+  titleFontSize,
   preserveLeadingAnchor = false,
 }: {
   subtitle?: ReactNode;
+  subtitleColor?: string;
+  subtitleFontSize?: number;
   title?: ReactNode;
   titleAlign?: "center" | "right" | "left";
   expand?: boolean;
   titleColor?: boolean | string | null;
+  titleFontSize?: number;
   preserveLeadingAnchor?: boolean;
 }) {
   const theme = useTheme();
@@ -162,6 +186,8 @@ function NativeRowLabel({
   const resolvedTextAlignment =
     titleAlign === "center" ? "center" : titleAlign === "right" ? "trailing" : "leading";
   const resolvedTitleColor = resolveNativeListTitleColor(titleColor ?? undefined, theme);
+  const resolvedSubtitleColor =
+    (subtitleColor != null ? toSwiftUIHexColor(subtitleColor) : undefined) ?? assistColor;
 
   if ((title != null && titleText == null) || (subtitle != null && subtitleText == null)) {
     return null;
@@ -178,7 +204,7 @@ function NativeRowLabel({
       {titleText != null ? (
         <SwiftText
           modifiers={[
-            ...TITLE_MODIFIERS,
+            ...titleModifiers(titleFontSize),
             ...(resolvedTitleColor != null ? [foregroundStyle(resolvedTitleColor)] : []),
             lineLimit(subtitleText != null ? 2 : 1),
             multilineTextAlignment(resolvedTextAlignment),
@@ -188,7 +214,12 @@ function NativeRowLabel({
         </SwiftText>
       ) : null}
       {subtitleText != null ? (
-        <SwiftText modifiers={[...SUBTITLE_MODIFIERS, foregroundStyle(assistColor)]}>
+        <SwiftText
+          modifiers={[
+            ...subtitleModifiers(subtitleFontSize),
+            foregroundStyle(resolvedSubtitleColor),
+          ]}
+        >
           {subtitleText}
         </SwiftText>
       ) : null}
@@ -210,12 +241,17 @@ function NativeRowLabel({
           spacing={subtitleText != null ? 4 : 0}
         >
           {titleText != null ? (
-            <SwiftText modifiers={[...TITLE_MODIFIERS, lineLimit(subtitleText != null ? 2 : 1)]}>
+            <SwiftText
+              modifiers={[
+                ...titleModifiers(titleFontSize),
+                lineLimit(subtitleText != null ? 2 : 1),
+              ]}
+            >
               {titleText}
             </SwiftText>
           ) : null}
           {subtitleText != null ? (
-            <SwiftText modifiers={[...SUBTITLE_MODIFIERS]}>{subtitleText}</SwiftText>
+            <SwiftText modifiers={subtitleModifiers(subtitleFontSize)}>{subtitleText}</SwiftText>
           ) : null}
         </VStack>
         {labelContent}
@@ -315,15 +351,24 @@ function NativeHostedCustomRow({ children }: { children: ReactNode }) {
 function NativePressRow({
   chevron = false,
   disabled,
+  icon,
+  iconColor,
+  iconSize,
   nativeHaptics,
   nativeScrollId,
   onPress,
   selected = false,
   subtitle,
+  subtitleColor,
+  subtitleFontSize,
   title,
   titleAlign,
+  titleColor,
+  titleFontSize,
   trailingControl,
   value,
+  valueColor,
+  valueFontSize,
   btnStyle,
   btnTint,
   preserveLeadingAnchor = false,
@@ -336,6 +381,10 @@ function NativePressRow({
   const resolvedHaptics = useResolvedNativeHaptics(nativeHaptics);
   const accentColor = toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;
   const assistColor = resolveNativeListAssistColor(theme);
+  const resolvedIconColor =
+    (iconColor != null ? toSwiftUIHexColor(iconColor) : undefined) ?? accentColor;
+  const resolvedValueColor =
+    (valueColor != null ? toSwiftUIHexColor(valueColor) : undefined) ?? assistColor;
   const titleText = toPlainText(title);
   const subtitleText = toPlainText(subtitle);
   const valueText = toPlainText(value);
@@ -357,17 +406,31 @@ function NativePressRow({
       btnTint={btnTint}
       nativeScrollId={nativeScrollId}
     >
+      {typeof icon === "string" ? (
+        <Image
+          color={resolvedIconColor}
+          size={iconSize ?? 20}
+          systemName={icon as ComponentProps<typeof Image>["systemName"]}
+        />
+      ) : icon != null ? (
+        <NativeHostedContent>{icon}</NativeHostedContent>
+      ) : null}
       <NativeRowLabel
         subtitle={subtitleText ?? undefined}
+        subtitleColor={subtitleColor}
+        subtitleFontSize={subtitleFontSize}
         title={titleText ?? undefined}
         titleAlign={titleAlign}
         expand={titleAlign != null}
-        titleColor={btnTint}
+        titleColor={titleColor ?? btnTint}
+        titleFontSize={titleFontSize}
         preserveLeadingAnchor={preserveLeadingAnchor}
       />
       {showTrailingSpacer ? <Spacer minLength={12} /> : null}
       {valueText != null ? (
-        <SwiftText modifiers={[...VALUE_MODIFIERS, foregroundStyle(assistColor)]}>
+        <SwiftText
+          modifiers={[...valueModifiers(valueFontSize), foregroundStyle(resolvedValueColor)]}
+        >
           {valueText}
         </SwiftText>
       ) : null}
@@ -532,10 +595,21 @@ function NativeListRoot({
   );
 }
 
-function NativeListSection({ children, footer, title }: NativeListSectionProps) {
+function NativeListSection({
+  children,
+  footer,
+  title,
+  titleColor,
+  titleFontSize,
+}: NativeListSectionProps) {
   if (!useNativeListEnabled()) {
     return (
-      <FallbackSection footer={footer} title={title}>
+      <FallbackSection
+        footer={footer}
+        title={title}
+        titleColor={titleColor}
+        titleFontSize={titleFontSize}
+      >
         {children}
       </FallbackSection>
     );
@@ -543,19 +617,36 @@ function NativeListSection({ children, footer, title }: NativeListSectionProps) 
 
   const stringTitle = toPlainText(title);
   const stringFooter = toPlainText(footer);
+  const resolvedSectionTitleColor =
+    titleColor != null ? (toSwiftUIHexColor(titleColor) ?? titleColor) : undefined;
   const header =
-    title != null && stringTitle == null ? (
+    stringTitle != null && (resolvedSectionTitleColor != null || titleFontSize != null) ? (
+      <SwiftText
+        modifiers={[
+          font({ size: titleFontSize ?? DEFAULT_SECTION_TITLE_FONT_SIZE, weight: "regular" }),
+          ...(resolvedSectionTitleColor != null
+            ? [foregroundStyle(resolvedSectionTitleColor)]
+            : []),
+        ]}
+      >
+        {stringTitle}
+      </SwiftText>
+    ) : title != null && stringTitle == null ? (
       <NativeHostedContent>{title}</NativeHostedContent>
     ) : undefined;
   const footerView =
     stringFooter != null ? (
-      <SwiftText modifiers={SUBTITLE_MODIFIERS}>{stringFooter}</SwiftText>
+      <SwiftText modifiers={subtitleModifiers()}>{stringFooter}</SwiftText>
     ) : footer != null ? (
       <NativeHostedContent>{footer}</NativeHostedContent>
     ) : undefined;
 
   return (
-    <SwiftUISection footer={footerView} header={header} title={stringTitle ?? undefined}>
+    <SwiftUISection
+      footer={footerView}
+      header={header}
+      title={header == null ? (stringTitle ?? undefined) : undefined}
+    >
       {children}
     </SwiftUISection>
   );
@@ -715,18 +806,24 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
             items={selectItems}
             mode={resolvedPickerMode}
             nativeDropdownAlign={selectProps.nativeDropdownAlign ?? "end"}
+            nativeDropdownAnchorWidth={selectProps.nativeDropdownAnchorWidth}
+            nativeDropdownEdgeOffset={selectProps.nativeDropdownEdgeOffset}
             nativeTrigger
             nativeTriggerContainerStyle={[
               styles.selectInlineTrigger,
               disabled ? styles.disabledContent : null,
+              selectProps.nativeTriggerContainerStyle,
             ]}
-            nativeTriggerIcon="chevrons-up-down"
+            nativeTriggerContent={selectProps.nativeTriggerContent}
+            nativeTriggerIcon={selectProps.nativeTriggerIcon ?? "chevrons-up-down"}
             nativeTriggerLabelProps={{
-              color: "$color10",
-              fontSize: "$4",
+              color: itemProps.valueColor ?? "$color10",
+              fontSize: itemProps.valueFontSize ?? "$4",
               numberOfLines: 1,
               opacity: 1,
+              ...selectProps.nativeTriggerLabelProps,
             }}
+            onOpenChange={selectProps.onOpenChange}
             onValueChange={selectProps.onValueChange}
             placeholder={selectProps.placeholder}
             resolvedNativeHaptics={resolvedHaptics}
@@ -740,14 +837,24 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
 }
 
 export function NativeListCustomItem({
+  backgroundColor,
   children,
   disabled,
+  hoverBackgroundColor,
   nativeHaptics,
   onPress,
+  pressBackgroundColor,
 }: NativeListCustomItemProps) {
   if (!useNativeListEnabled()) {
     return (
-      <FallbackCustomItem disabled={disabled} nativeHaptics={nativeHaptics} onPress={onPress}>
+      <FallbackCustomItem
+        backgroundColor={backgroundColor}
+        disabled={disabled}
+        hoverBackgroundColor={hoverBackgroundColor}
+        nativeHaptics={nativeHaptics}
+        onPress={onPress}
+        pressBackgroundColor={pressBackgroundColor}
+      >
         {children}
       </FallbackCustomItem>
     );

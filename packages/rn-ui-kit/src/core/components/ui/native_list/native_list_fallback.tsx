@@ -48,8 +48,10 @@ type RowContainerProps = {
   backgroundColor?: ViewStyle["backgroundColor"];
   children: ReactNode;
   disabled?: boolean;
+  hoverBackgroundColor?: ViewStyle["backgroundColor"];
   nativeHaptics?: NativeListItemBaseProps["nativeHaptics"];
   onPress?: () => void;
+  pressBackgroundColor?: ViewStyle["backgroundColor"];
 };
 
 type FallbackListEntry =
@@ -57,6 +59,8 @@ type FallbackListEntry =
       key: string;
       sectionKey: string;
       title: ReactNode;
+      titleColor?: string;
+      titleFontSize?: number;
       type: "sectionHeader";
     }
   | {
@@ -99,8 +103,10 @@ function FallbackRowContainer({
   backgroundColor,
   children,
   disabled,
+  hoverBackgroundColor,
   nativeHaptics,
   onPress,
+  pressBackgroundColor,
 }: RowContainerProps) {
   const resolvedHaptics = useResolvedNativeHaptics(nativeHaptics);
   const { defaultRowBackground, theme } = useFallbackRowThemeColors();
@@ -108,10 +114,17 @@ function FallbackRowContainer({
   // Read interactive colors while this component renders so Tamagui can track these
   // theme tokens. Reading them only inside Pressable's render callback can retain the
   // previous token values when "system" resolves to a different color scheme.
+  const normalRowBackground = backgroundColor ?? defaultRowBackground;
   const pressedRowBackground =
-    theme.color4?.val ?? theme.backgroundPress?.val ?? theme.background?.val;
+    pressBackgroundColor ??
+    theme.color4?.val ??
+    theme.backgroundPress?.val ??
+    theme.background?.val;
   const hoveredRowBackground =
-    theme.color3?.val ?? theme.backgroundHover?.val ?? theme.background?.val;
+    hoverBackgroundColor ??
+    theme.color3?.val ??
+    theme.backgroundHover?.val ??
+    theme.background?.val;
 
   const getRowBackground = (pressed = false) => ({
     backgroundColor:
@@ -119,7 +132,7 @@ function FallbackRowContainer({
         ? pressedRowBackground
         : hovered && !disabled
           ? hoveredRowBackground
-          : (backgroundColor ?? defaultRowBackground),
+          : normalRowBackground,
   });
 
   if (onPress == null) {
@@ -159,14 +172,13 @@ function FallbackRowContainer({
 }
 
 type NativeListRowProps = NativeListItemBaseProps & {
-  backgroundColor?: ViewStyle["backgroundColor"];
   iconAfter?: ReactNode;
-  titleColor?: string | false;
 };
 
 function renderTitleNode(
   title: ReactNode,
   titleColor: string | false | undefined,
+  titleFontSize: number | undefined,
   textAlign: "center" | "left" | "right",
 ) {
   if (title == null || typeof title === "boolean") {
@@ -176,6 +188,7 @@ function renderTitleNode(
   if (typeof title === "string" || typeof title === "number") {
     const titleStyle = {
       ...(titleColor ? { color: titleColor } : null),
+      ...(titleFontSize != null ? { fontSize: titleFontSize } : null),
       textAlign,
     };
 
@@ -189,14 +202,23 @@ function renderTitleNode(
   return title;
 }
 
-function renderSubtitleNode(subtitle: ReactNode) {
+function renderSubtitleNode(
+  subtitle: ReactNode,
+  subtitleColor?: string,
+  subtitleFontSize?: number,
+) {
   if (subtitle == null || typeof subtitle === "boolean") {
     return null;
   }
 
   if (typeof subtitle === "string" || typeof subtitle === "number") {
     return (
-      <Text opacity={0.6} fontSize="$3" numberOfLines={4}>
+      <Text
+        color={subtitleColor as any}
+        opacity={subtitleColor == null ? 0.6 : 1}
+        fontSize={subtitleFontSize ?? "$3"}
+        numberOfLines={4}
+      >
         {subtitle}
       </Text>
     );
@@ -205,14 +227,19 @@ function renderSubtitleNode(subtitle: ReactNode) {
   return subtitle;
 }
 
-function renderValueNode(value: ReactNode) {
+function renderValueNode(value: ReactNode, valueColor?: string, valueFontSize?: number) {
   if (value == null || typeof value === "boolean") {
     return null;
   }
 
   if (typeof value === "string" || typeof value === "number") {
     return (
-      <Text color="$color" fontSize="$4" numberOfLines={1} opacity={0.58}>
+      <Text
+        color={(valueColor ?? "$color") as any}
+        fontSize={valueFontSize ?? "$4"}
+        numberOfLines={1}
+        opacity={valueColor == null ? 0.58 : 1}
+      >
         {value}
       </Text>
     );
@@ -225,31 +252,43 @@ function NativeListRow({
   backgroundColor,
   chevron = false,
   disabled,
+  hoverBackgroundColor,
+  icon,
   iconAfter,
   nativeHaptics,
   onPress,
+  pressBackgroundColor,
   selected = false,
   subtitle,
+  subtitleColor,
+  subtitleFontSize,
   title,
   titleAlign,
   titleColor,
+  titleFontSize,
   value,
+  valueColor,
+  valueFontSize,
 }: NativeListRowProps) {
   const titleAlignment =
     titleAlign === "center" ? "center" : titleAlign === "right" ? "flex-end" : "flex-start";
   const textAlign = titleAlign === "center" ? "center" : titleAlign === "right" ? "right" : "left";
-  const titleNode = renderTitleNode(title, titleColor, textAlign);
-  const subtitleNode = renderSubtitleNode(subtitle);
-  const valueNode = renderValueNode(value);
+  const titleNode = renderTitleNode(title, titleColor, titleFontSize, textAlign);
+  const subtitleNode = renderSubtitleNode(subtitle, subtitleColor, subtitleFontSize);
+  const valueNode = renderValueNode(value, valueColor, valueFontSize);
+  const customIcon = typeof icon === "string" ? null : icon;
 
   return (
     <FallbackRowContainer
       backgroundColor={backgroundColor}
       disabled={disabled}
+      hoverBackgroundColor={hoverBackgroundColor}
       nativeHaptics={nativeHaptics}
       onPress={onPress}
+      pressBackgroundColor={pressBackgroundColor}
     >
       <View style={styles.rowContent}>
+        {customIcon != null ? <View style={styles.iconBefore}>{customIcon}</View> : null}
         <View style={[styles.textColumn, { alignItems: titleAlignment }]}>
           {titleNode}
           {subtitleNode}
@@ -439,6 +478,8 @@ function appendSectionEntries(
       key: `${sectionKey}-header`,
       sectionKey,
       title: sectionProps.title,
+      titleColor: sectionProps.titleColor,
+      titleFontSize: sectionProps.titleFontSize,
       type: "sectionHeader",
     });
   }
@@ -492,7 +533,10 @@ function renderFallbackListEntry({
       return (
         <View style={styles.sectionLabel}>
           {typeof item.title === "string" || typeof item.title === "number" ? (
-            <Text color="$color10" fontSize="$3">
+            <Text
+              color={(item.titleColor ?? "$color10") as any}
+              fontSize={item.titleFontSize ?? "$3"}
+            >
               {item.title}
             </Text>
           ) : (
@@ -657,7 +701,7 @@ export function NativeListItem({
       {...itemProps}
       btnTint={btnTint}
       titleAlign={titleAlign}
-      titleColor={typeof btnTint !== "boolean" ? btnTint : undefined}
+      titleColor={itemProps.titleColor ?? (typeof btnTint !== "boolean" ? btnTint : undefined)}
       title={title}
       disabled={disabled}
       onPress={onPress}
@@ -669,6 +713,7 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
   const disabled = itemProps.disabled || selectProps.disabled || selectProps.isDisabled;
   const selectedLabel = getSelectedLabel(selectProps);
   const { defaultRowBackground } = useFallbackRowThemeColors();
+  const normalRowBackground = itemProps.backgroundColor ?? defaultRowBackground;
 
   return (
     <Select
@@ -682,11 +727,16 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
       nativeTriggerContent={
         <NativeListRow
           {...itemProps}
-          backgroundColor={isWeb() ? "transparent" : undefined}
+          backgroundColor={itemProps.backgroundColor ?? (isWeb() ? "transparent" : undefined)}
           disabled={disabled}
           iconAfter={
             <View style={styles.selectValue}>
-              <Text color="$color" fontSize="$4" numberOfLines={1} opacity={0.58}>
+              <Text
+                color={(itemProps.valueColor ?? "$color") as any}
+                fontSize={itemProps.valueFontSize ?? "$4"}
+                numberOfLines={1}
+                opacity={itemProps.valueColor == null ? 0.58 : 1}
+              >
                 {selectedLabel}
               </Text>
               <ChevronsUpDown color="$color" opacity={0.58} size={14} />
@@ -708,35 +758,62 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
       }}
       placement={selectProps.placement ?? (isWeb() ? "bottom-end" : undefined)}
       triggerProps={{
-        backgroundColor: isWeb() ? (defaultRowBackground as any) : undefined,
+        backgroundColor: isWeb()
+          ? (normalRowBackground as any)
+          : undefined,
         ...selectProps.triggerProps,
-        hoverStyle: selectProps.triggerProps?.hoverStyle ?? {
-          backgroundColor: "$color3",
-        },
-        pressStyle: selectProps.triggerProps?.pressStyle ?? {
-          background: "$color4",
-        },
+        hoverStyle:
+          selectProps.triggerProps?.hoverStyle ??
+          ({
+            backgroundColor: itemProps.hoverBackgroundColor ?? "$color3",
+          } as any),
+        pressStyle:
+          selectProps.triggerProps?.pressStyle ??
+          ({
+            background: itemProps.pressBackgroundColor ?? "$color4",
+          } as any),
       }}
     />
   );
 }
 
 export function NativeListCustomItem({
+  backgroundColor,
   children,
   disabled,
+  hoverBackgroundColor,
   nativeHaptics,
   onPress,
+  pressBackgroundColor,
 }: NativeListCustomItemProps) {
   return (
-    <FallbackRowContainer disabled={disabled} nativeHaptics={nativeHaptics} onPress={onPress}>
+    <FallbackRowContainer
+      backgroundColor={backgroundColor}
+      disabled={disabled}
+      hoverBackgroundColor={hoverBackgroundColor}
+      nativeHaptics={nativeHaptics}
+      onPress={onPress}
+      pressBackgroundColor={pressBackgroundColor}
+    >
       <View style={styles.customRowContent}>{children}</View>
     </FallbackRowContainer>
   );
 }
 
-export function NativeListSection({ children, footer, title }: NativeListSectionProps) {
+export function NativeListSection({
+  children,
+  footer,
+  title,
+  titleColor,
+  titleFontSize,
+}: NativeListSectionProps) {
   const entries = createFallbackListEntries(
-    <NativeListSection footer={footer} title={title}>
+    <NativeListSection
+      footer={footer}
+      title={title}
+      titleColor={titleColor}
+      titleFontSize={titleFontSize}
+    >
       {children}
     </NativeListSection>,
   );
@@ -929,6 +1006,12 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     maxWidth: "50%",
     minWidth: 0,
+  },
+  iconBefore: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexShrink: 0,
+    justifyContent: "center",
   },
   pressable: {
     width: "100%",

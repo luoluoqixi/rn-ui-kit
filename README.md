@@ -278,8 +278,12 @@ export function SettingsList() {
     <NativeList>
       <NativeListSection title="工作区" footer="更改会自动保存。">
         <NativeListNavigationItem
+          icon="person.2.fill"
+          iconColor="#7c3aed"
           title="成员"
           subtitle="邀请、角色与访问权限"
+          titleFontSize={17}
+          subtitleFontSize={13}
           onPress={() => console.log("open members")}
         />
         <NativeListSwitchItem
@@ -313,6 +317,20 @@ export function SettingsList() {
 - 在 iOS 上传入 `<NativeList native={false}>`，可主动使用相同的 fallback 外观。
 - 原生文本行的 `title`、`subtitle` 和 `value` 适合传入字符串或数字；无法直接映射到
   SwiftUI 的复杂 ReactNode 会按行降级渲染。
+- 所有基础 Item 都支持 `titleColor` / `titleFontSize`、`subtitleColor` /
+  `subtitleFontSize`、`valueColor` / `valueFontSize`。`NativeListSelectItem` 的已选值也会沿用
+  `valueColor` 与 `valueFontSize`。
+- fallback Item（包括 `NativeListCustomItem`）支持 `backgroundColor`、
+  `hoverBackgroundColor` 与 `pressBackgroundColor`；iOS 原生 List 会忽略这些背景属性。
+  未指定时继续使用原有的 fallback 主题颜色。
+- `icon` 可传自定义 ReactNode；在 iOS 原生列表中也可直接传 SF Symbol 名称字符串，
+  并通过 `iconColor`、`iconSize` 调整原生图标。字符串图标仅在 iOS 原生模式渲染。
+- `NativeListSection` 支持 `titleColor` 与 `titleFontSize`；复杂 ReactNode 标题仍由调用方
+  自行设置文本样式。
+- iOS `NativeListSelectItem` 会把 `NativePickerSwiftUI` 接口已声明的 picker 属性完整传入，
+  包括 dropdown 对齐/偏移、原生 trigger 样式与内容、`onOpenChange`；具体行为沿用
+  `NativePickerSwiftUI` 的现有实现。仅属于 Web、Tamagui viewport 或自定义 Sheet 的
+  `SelectProps` 不适用于这条原生 picker 路径。
 - `NativeListCustomItem` 可在原生列表中承载自定义 React Native 内容。
 - `initialScrollTarget` 与行上的 `nativeScrollId` 可用于 iOS 原生列表的初始滚动定位。
 

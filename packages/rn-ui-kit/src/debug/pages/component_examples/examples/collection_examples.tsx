@@ -1,3 +1,4 @@
+import { Users } from "@tamagui/lucide-icons-2";
 import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import {
@@ -63,13 +64,23 @@ function NativeListExample() {
               native={native}
               nestedScrollEnabled
             >
-            <NativeListSection footer="导航行适合跳转到更深层的设置页。" title="工作区">
+            <NativeListSection
+              footer="导航行适合跳转到更深层的设置页。"
+              title="工作区"
+              titleColor="#7c3aed"
+            >
               <NativeListNavigationItem
+                icon="info.circle.fill"
+                iconColor="#7c3aed"
                 onPress={() => setLastAction("打开详情")}
                 subtitle="带有 chevron 的导航行"
+                subtitleColor="#64748b"
+                subtitleFontSize={12}
                 title="详情"
+                titleFontSize={18}
               />
               <NativeListNavigationItem
+                icon={<Users color="#7c3aed" size={20} />}
                 onPress={() => setLastAction("打开成员管理")}
                 subtitle="邀请、角色与访问权限"
                 title="成员"
@@ -91,6 +102,8 @@ function NativeListExample() {
                   value: theme ?? undefined,
                 }}
                 title="主题模式"
+                valueColor="#7c3aed"
+                valueFontSize={15}
               />
               <NativeListSelectItem
                 selectProps={{

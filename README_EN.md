@@ -289,8 +289,12 @@ export function SettingsList() {
     <NativeList>
       <NativeListSection title="Workspace" footer="Changes are saved automatically.">
         <NativeListNavigationItem
+          icon="person.2.fill"
+          iconColor="#7c3aed"
           title="Members"
           subtitle="Invitations, roles, and access"
+          titleFontSize={17}
+          subtitleFontSize={13}
           onPress={() => console.log("open members")}
         />
         <NativeListSwitchItem
@@ -327,6 +331,23 @@ Notes:
 - Plain strings or numbers are recommended for a native row's `title`,
   `subtitle`, and `value`. Complex React nodes that cannot map directly to
   SwiftUI fall back to the cross-platform row implementation.
+- Every base item supports `titleColor` / `titleFontSize`, `subtitleColor` /
+  `subtitleFontSize`, and `valueColor` / `valueFontSize`. A
+  `NativeListSelectItem` also applies the value styles to its selected label.
+- Fallback items, including `NativeListCustomItem`, support `backgroundColor`,
+  `hoverBackgroundColor`, and `pressBackgroundColor`; native iOS lists ignore
+  these background props. When omitted, the existing fallback theme colors are
+  preserved.
+- Pass a custom React node to `icon`, or pass an SF Symbol name as a string in
+  native iOS lists. Use `iconColor` and `iconSize` for SF Symbols. String icons
+  are rendered only in native iOS mode.
+- `NativeListSection` supports `titleColor` and `titleFontSize`. Style complex
+  React-node headers directly.
+- On iOS, `NativeListSelectItem` now passes every picker prop declared by the
+  existing `NativePickerSwiftUI` interface, including dropdown
+  alignment/offset, native-trigger customization, and `onOpenChange`; behavior
+  remains defined by the existing picker implementation. Web-, Tamagui
+  viewport-, and custom-sheet props do not apply to this native picker path.
 - `NativeListCustomItem` can host custom React Native content inside the native
   list.
 - Use `initialScrollTarget` with a row's `nativeScrollId` for initial scroll
