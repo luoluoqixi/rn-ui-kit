@@ -38,7 +38,7 @@
 
 `rn-ui-kit` 现在是单一 package：默认入口仅导出 core，debug API 需从
 `rn-ui-kit/debug` 显式导入。运行时框架和原生模块统一声明在
-[`packages/rn-ui-kit/package.json`](./packages/rn-ui-kit/package.json) 的
+根目录 [`package.json`](./package.json) 的
 `peerDependencies` 中。接入已有应用时，请以该文件为准，并确保 Expo、React Native、
 Tamagui 及原生模块版本兼容。
 
@@ -49,27 +49,28 @@ Tamagui 及原生模块版本兼容。
 
 ```bash
 bun install
+bun install --cwd examples/app
 bun run typecheck
 
 # 启动 Expo 开发服务器
-bun --cwd examples/app start
+bun run --cwd examples/app start
 
 # 或直接启动指定平台
-bun --cwd examples/app web
-bun --cwd examples/app android
-bun --cwd examples/app ios
+bun run --cwd examples/app web
+bun run --cwd examples/app android
+bun run --cwd examples/app ios
 ```
 
 Android 与 iOS 命令需要本机已配置相应的原生开发环境；Web 示例可以直接通过浏览器运行。
 
-### 在工作区中接入
+### 运行本地示例
 
-当前仓库采用 Bun workspaces，示例应用只需通过 `workspace:*` 使用公开聚合包：
+仓库根目录就是 `rn-ui-kit` package；示例应用是独立 Bun 项目，通过本地目录依赖使用它：
 
 ```json
 {
   "dependencies": {
-    "rn-ui-kit": "workspace:*"
+    "rn-ui-kit": "file:../.."
   }
 }
 ```
@@ -90,7 +91,7 @@ bun add "git+ssh://git@github.com/luoluoqixi/rn-ui-kit.git#rn-ui-kit-<version>"
 ```
 
 外部项目仍需满足
-[`peerDependencies`](./packages/rn-ui-kit/package.json) 中声明的 Expo、React Native、
+[`peerDependencies`](./package.json) 中声明的 Expo、React Native、
 Tamagui 和原生模块版本。
 
 ## 屏幕截图
@@ -338,7 +339,7 @@ export function SettingsList() {
 - `initialScrollTarget` 与行上的 `nativeScrollId` 可用于 iOS 原生列表的初始滚动定位。
 
 完整交互示例见
-[`collection_examples.tsx`](./packages/rn-ui-kit/src/debug/pages/component_examples/examples/collection_examples.tsx)。
+[`collection_examples.tsx`](./src/debug/pages/component_examples/examples/collection_examples.tsx)。
 
 ## 组件
 
@@ -353,7 +354,7 @@ export function SettingsList() {
 | 基础设施 | `RootProvider`、`UIProvider`、主题工具、导航工具、Portal 与平台工具 |
 
 所有公开导出可在
-[`packages/rn-ui-kit/src/core/components/ui/index.ts`](./packages/rn-ui-kit/src/core/components/ui/index.ts)
+[`src/core/components/ui/index.ts`](./src/core/components/ui/index.ts)
 中查看。各组件目录同时导出 Props 类型。
 
 ## 补丁同步
@@ -392,42 +393,42 @@ bun run sync-patches
 
 ```text
 rn-ui-kit/
-├─ packages/
-│  └─ rn-ui-kit/          # 唯一的对外 package
-│     ├─ src/
-│     │  ├─ core/         # 核心组件、Provider、主题与平台适配
-│     │  ├─ debug/        # 组件目录、调试页面与示例界面
-│     │  ├─ index.ts      # 默认入口，仅导出 core
-│     │  ├─ debug.ts      # rn-ui-kit/debug 子路径
-│     │  └─ initialize.ts # rn-ui-kit/initialize 子路径
-│     ├─ patches/         # 需要同步到 App 的上游补丁
-│     └─ scripts/         # rn-ui-sync-patches
+├─ src/
+│  ├─ core/               # 核心组件、Provider、主题与平台适配
+│  ├─ debug/              # 组件目录、调试页面与示例界面
+│  ├─ index.ts            # 默认入口，仅导出 core
+│  ├─ debug.ts            # rn-ui-kit/debug 子路径
+│  └─ initialize.ts       # rn-ui-kit/initialize 子路径
+├─ patches/               # 需要同步到 App 的上游补丁
+├─ deprecated_patches/    # 已停用补丁归档
+├─ test/                  # 测试与公开 API 类型检查
 ├─ examples/
 │  └─ app/                # Expo iOS / Android / Web 示例应用
 ├─ scripts/
+│  ├─ sync-patches.mjs    # rn-ui-sync-patches
 │  ├─ android/            # 构建并发布 Android 示例 APK
 │  └─ release/            # 版本同步、发布包与发布分支脚本
-├─ package.json           # Bun workspace、构建与发布命令
+├─ package.json           # 库 manifest、构建与发布命令
 └─ bun.lock
 ```
 
 ## 开发
 
 ```bash
-# 编译 rn-ui-kit 到 packages/rn-ui-kit/dist
+# 编译 rn-ui-kit 到 dist
 bun run build
 
 # 检查 package 和示例 App
 bun run typecheck
 
 # 仅检查 rn-ui-kit
-bun --cwd packages/rn-ui-kit typecheck
+bun run typecheck:library
 
 # 仅检查示例应用
-bun --cwd examples/app typecheck
+bun run --cwd examples/app typecheck
 ```
 
-新增或修改组件时，建议同时在 `packages/rn-ui-kit/src/debug` 的组件目录中添加示例，
+新增或修改组件时，建议同时在 `src/debug` 的组件目录中添加示例，
 以便在 iOS、Android 和 Web 上核对交互与视觉表现。
 
 ## 构建与发布
@@ -456,10 +457,10 @@ bun run package-release
 git push -u origin rn-ui-kit-1.0.1
 ```
 
-发布阶段直接编译单一的 `packages/rn-ui-kit`，不会动态合并 package。发布分支根目录只包含
+发布阶段直接编译根目录 package，不会动态合并 package。发布分支根目录只包含
 编译后的 `dist`、package.json、README、LICENSE、patches 和运行时脚本。完整说明见
 [`scripts/release/README.md`](./scripts/release/README.md)。
 
 ## License
 
-[MIT](./packages/rn-ui-kit/LICENSE) © 2026 luoluoqixi
+[MIT](./LICENSE) © 2026 luoluoqixi

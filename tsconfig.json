@@ -21,6 +21,12 @@
     "node_modules",
     "**/dist/**"
   ],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "test/**/*.ts",
+    "test/**/*.tsx"
+  ],
   "watchOptions": {
     "excludeDirectories": [
       "**/dist",

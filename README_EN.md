@@ -44,7 +44,7 @@ The repository currently targets these major versions:
 `rn-ui-kit` is now a single package. Its default entry exports only core APIs,
 while debug APIs are opt-in through `rn-ui-kit/debug`. Runtime frameworks and
 native modules are declared in
-[`packages/rn-ui-kit/package.json`](./packages/rn-ui-kit/package.json) under
+the root [`package.json`](./package.json) under
 `peerDependencies`. Use that file as the source of truth and keep Expo, React
 Native, Tamagui, and native module versions compatible.
 
@@ -54,29 +54,30 @@ Native, Tamagui, and native module versions compatible.
 
 ```bash
 bun install
+bun install --cwd examples/app
 bun run typecheck
 
 # Start the Expo development server
-bun --cwd examples/app start
+bun run --cwd examples/app start
 
 # Or launch a specific platform
-bun --cwd examples/app web
-bun --cwd examples/app android
-bun --cwd examples/app ios
+bun run --cwd examples/app web
+bun run --cwd examples/app android
+bun run --cwd examples/app ios
 ```
 
 The Android and iOS commands require their respective native development
 toolchains. The Web example can run directly in a browser.
 
-### Add the package to a workspace
+### Use the package in the local example
 
-This repository uses Bun workspaces. The example app only consumes the public
-aggregate package through `workspace:*`:
+The repository root is the `rn-ui-kit` package. The example app is an
+independent Bun project and consumes it through a local directory dependency:
 
 ```json
 {
   "dependencies": {
-    "rn-ui-kit": "workspace:*"
+    "rn-ui-kit": "file:../.."
   }
 }
 ```
@@ -98,7 +99,7 @@ bun add "git+ssh://git@github.com/luoluoqixi/rn-ui-kit.git#rn-ui-kit-<version>"
 ```
 
 The consuming app must still satisfy the
-[`peerDependencies`](./packages/rn-ui-kit/package.json) for Expo, React Native,
+[`peerDependencies`](./package.json) for Expo, React Native,
 Tamagui, and the required native modules.
 
 ## Screenshots
@@ -358,7 +359,7 @@ Notes:
   positioning in the native iOS list.
 
 See
-[`collection_examples.tsx`](./packages/rn-ui-kit/src/debug/pages/component_examples/examples/collection_examples.tsx)
+[`collection_examples.tsx`](./src/debug/pages/component_examples/examples/collection_examples.tsx)
 for a complete interactive example.
 
 ## Components
@@ -374,7 +375,7 @@ for a complete interactive example.
 | Infrastructure | `RootProvider`, `UIProvider`, theme helpers, navigation helpers, portals, and platform utilities |
 
 All public exports are listed in
-[`packages/rn-ui-kit/src/core/components/ui/index.ts`](./packages/rn-ui-kit/src/core/components/ui/index.ts).
+[`src/core/components/ui/index.ts`](./src/core/components/ui/index.ts).
 Each component directory also exports its prop types.
 
 ## Patch synchronization
@@ -414,43 +415,43 @@ Excluded dependencies are neither copied nor registered.
 
 ```text
 rn-ui-kit/
-├─ packages/
-│  └─ rn-ui-kit/          # The single public package
-│     ├─ src/
-│     │  ├─ core/         # Components, providers, themes, and platform adapters
-│     │  ├─ debug/        # Component catalog, debug pages, and examples
-│     │  ├─ index.ts      # Default entry; exports core only
-│     │  ├─ debug.ts      # rn-ui-kit/debug subpath
-│     │  └─ initialize.ts # rn-ui-kit/initialize subpath
-│     ├─ patches/         # Upstream patches synchronized into consuming apps
-│     └─ scripts/         # rn-ui-sync-patches
+├─ src/
+│  ├─ core/               # Components, providers, themes, and platform adapters
+│  ├─ debug/              # Component catalog, debug pages, and examples
+│  ├─ index.ts            # Default entry; exports core only
+│  ├─ debug.ts            # rn-ui-kit/debug subpath
+│  └─ initialize.ts       # rn-ui-kit/initialize subpath
+├─ patches/               # Upstream patches synchronized into consuming apps
+├─ deprecated_patches/    # Archived patches that are no longer active
+├─ test/                  # Tests and public API type checks
 ├─ examples/
 │  └─ app/                # Expo app for iOS, Android, and Web
 ├─ scripts/
+│  ├─ sync-patches.mjs    # rn-ui-sync-patches
 │  ├─ android/            # Builds and publishes the Android example APK
 │  └─ release/            # Version, package, and release branch scripts
-├─ package.json           # Bun workspace, build, and release commands
+├─ package.json           # Library manifest, build, and release commands
 └─ bun.lock
 ```
 
 ## Development
 
 ```bash
-# Compile rn-ui-kit into packages/rn-ui-kit/dist
+# Compile rn-ui-kit into dist
 bun run build
 
 # Type-check the package and example app
 bun run typecheck
 
 # Type-check rn-ui-kit only
-bun --cwd packages/rn-ui-kit typecheck
+bun run typecheck:library
 
 # Type-check the example app
-bun --cwd examples/app typecheck
+bun run --cwd examples/app typecheck
 ```
 
 When adding or changing a component, consider adding a matching entry to the
-`packages/rn-ui-kit/src/debug` component catalog so its behavior and visuals
+`src/debug` component catalog so its behavior and visuals
 can be checked on iOS, Android, and Web.
 
 ## Build and release
@@ -479,7 +480,7 @@ bun run package-release
 git push -u origin rn-ui-kit-1.0.1
 ```
 
-The release build compiles the single `packages/rn-ui-kit` package directly; it
+The release build compiles the root package directly; it
 does not merge packages dynamically. A release branch contains only compiled
 `dist` output, package.json, README, LICENSE, patches, and runtime scripts. See
 [`scripts/release/README.md`](./scripts/release/README.md) for the complete
@@ -487,4 +488,4 @@ release process.
 
 ## License
 
-[MIT](./packages/rn-ui-kit/LICENSE) © 2026 luoluoqixi
+[MIT](./LICENSE) © 2026 luoluoqixi

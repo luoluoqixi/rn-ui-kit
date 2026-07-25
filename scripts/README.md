@@ -14,7 +14,7 @@ bun run set-version 1.2.3 --push
 任一已配置的 `origin`/`nas` 已存在同名 tag，则拒绝继续。
 
 发布脚本位于 `scripts/release/`，Android 示例 APK 发布脚本位于
-`scripts/android/release-example-apk.js`。
+`scripts/android/release-example-apk.cjs`。
 
 推送 `v<semver>` tag 后，`.github/workflows/release.yml` 会先创建 GitHub
 Release。Release 说明会扫描上一个 tag 到当前 tag 的提交，按

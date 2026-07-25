@@ -5,8 +5,7 @@ const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 
 const repoRoot = path.resolve(__dirname, "../..");
-const sourcePackageDir = path.join(repoRoot, "packages", "rn-ui-kit");
-const rootPackage = readJson(path.join(repoRoot, "package.json"));
+const sourcePackageDir = repoRoot;
 const sourcePackage = readJson(path.join(sourcePackageDir, "package.json"));
 const releaseName = `${sourcePackage.name}-${sourcePackage.version}`;
 const distDir = path.join(repoRoot, "dist");
@@ -46,16 +45,6 @@ function clearDirectory(targetPath) {
   fs.mkdirSync(targetPath, { recursive: true });
 }
 
-function validateVersion() {
-  if (rootPackage.version !== sourcePackage.version) {
-    throw new Error(
-      `Version mismatch: root=${rootPackage.version}, ` +
-        `${sourcePackage.name}=${sourcePackage.version}. ` +
-        "Run: bun run set-version <version>",
-    );
-  }
-}
-
 function releaseEntry(baseName) {
   return {
     "types": `./dist/${baseName}.d.ts`,
@@ -77,7 +66,14 @@ function createReleaseManifest() {
     "./initialize": releaseEntry("initialize"),
     "./package.json": "./package.json",
   };
-  manifest.files = ["dist", "src", "patches", "scripts", "README.md", "LICENSE"];
+  manifest.files = [
+    "dist",
+    "src",
+    "patches",
+    "scripts/sync-patches.mjs",
+    "README.md",
+    "LICENSE",
+  ];
   manifest.scripts = {
     "sync-patches": sourcePackage.scripts?.["sync-patches"] ?? "bun scripts/sync-patches.mjs",
   };
@@ -91,13 +87,20 @@ function copyReleaseFiles() {
     fs.copyFileSync(path.join(sourcePackageDir, fileName), path.join(packageDir, fileName));
   }
 
-  for (const directoryName of ["src", "patches", "scripts"]) {
+  for (const directoryName of ["src", "patches"]) {
     const sourcePath = path.join(sourcePackageDir, directoryName);
     if (fs.existsSync(sourcePath)) {
       fs.cpSync(sourcePath, path.join(packageDir, directoryName), {
         recursive: true,
       });
     }
+  }
+
+  const syncPatchesScript = path.join(sourcePackageDir, "scripts", "sync-patches.mjs");
+  if (fs.existsSync(syncPatchesScript)) {
+    const targetScriptsDir = path.join(packageDir, "scripts");
+    fs.mkdirSync(targetScriptsDir, { recursive: true });
+    fs.copyFileSync(syncPatchesScript, path.join(targetScriptsDir, "sync-patches.mjs"));
   }
 }
 
@@ -150,7 +153,6 @@ function pack() {
 }
 
 function main() {
-  validateVersion();
   clearDirectory(packageDir);
   writeJson(path.join(packageDir, "package.json"), createReleaseManifest());
   copyReleaseFiles();

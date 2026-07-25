@@ -24,6 +24,12 @@ function fail(message) {
   throw new Error(message);
 }
 
+function printUsage() {
+  console.log("用法: bun run release:android-apk [v<semver>] [--upload]");
+  console.log("示例: bun run release:android-apk v1.2.3");
+  console.log("      bun run release:android-apk v1.2.3 --upload");
+}
+
 function parseOptions(argv) {
   if (argv.includes("--help") || argv.includes("-h")) {
     printUsage();
@@ -75,7 +81,6 @@ function validateVersion(tag) {
   const expectedVersion = tag.slice(1);
   const packagePaths = [
     path.join(repoRoot, "package.json"),
-    path.join(repoRoot, "packages", "rn-ui-kit", "package.json"),
     path.join(appDir, "package.json"),
   ];
 
@@ -99,8 +104,8 @@ function buildApk() {
   run("bun", ["run", "prebuild:android"], appDir, buildEnv);
 
   const gradlew = process.platform === "win32" ? "gradlew.bat" : "./gradlew";
-  // The workspace package lives outside examples/app, so Gradle does not track
-  // all of its sources as bundle inputs. Force only the JS bundle task to run;
+  // The linked package source lives outside examples/app, so Gradle does not
+  // track all of it as bundle inputs. Force only the JS bundle task to run;
   // the task itself invokes Metro with --reset-cache.
   run(gradlew, ["createBundleReleaseJsAndAssets", "--rerun-tasks"], androidDir, buildEnv);
   run(gradlew, ["assembleRelease"], androidDir, buildEnv);

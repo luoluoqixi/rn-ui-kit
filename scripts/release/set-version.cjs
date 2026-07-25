@@ -1,16 +1,13 @@
 #!/usr/bin/env node
 
 const { spawnSync } = require("node:child_process");
-const { existsSync, readFileSync, writeFileSync } = require("node:fs");
+const { existsSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
 const { resolve } = require("node:path");
 
 const projectRoot = resolve(__dirname, "../..");
-const packageJsonPaths = [
-  "package.json",
-  "packages/rn-ui-kit/package.json",
-  "examples/app/package.json",
-];
-const sourcePackageJsonPath = resolve(projectRoot, "packages/rn-ui-kit/package.json");
+const packageJsonPaths = ["package.json", "examples/app/package.json"];
+const sourcePackageJsonPath = resolve(projectRoot, "package.json");
+const lockfileDirectories = [projectRoot];
 const pushRemoteCandidates = ["origin", "nas"];
 const semverPattern =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
@@ -201,7 +198,7 @@ function remoteTagExists(remote, tag) {
 
 function readSourcePackage() {
   if (!existsSync(sourcePackageJsonPath)) {
-    fail("找不到 packages/rn-ui-kit/package.json。");
+    fail("找不到根目录 package.json。");
   }
 
   return JSON.parse(readFileSync(sourcePackageJsonPath, "utf8"));
@@ -301,14 +298,17 @@ function updateVersions(version) {
     changedPackageJsonPaths.push(relativePath);
   }
 
+  for (const directory of lockfileDirectories) {
+    const lockfilePath = resolve(directory, "bun.lock");
+    originalFiles.set(
+      lockfilePath,
+      existsSync(lockfilePath) ? readFileSync(lockfilePath, "utf8") : null,
+    );
+  }
+
   if (changedPackageJsonPaths.length === 0) {
     console.log(`工程当前已经是 ${version}，无需修改版本文件。`);
     return;
-  }
-
-  const lockfilePath = resolve(projectRoot, "bun.lock");
-  if (existsSync(lockfilePath)) {
-    originalFiles.set(lockfilePath, readFileSync(lockfilePath, "utf8"));
   }
 
   console.log(`已将工程版本更新为 ${version}：`);
@@ -316,28 +316,30 @@ function updateVersions(version) {
     console.log(`  - ${relativePath}`);
   }
 
-  console.log("\n正在同步 bun.lock...");
+  console.log("\n正在同步根项目 bun.lock...");
   const bunCommand = process.platform === "win32" ? "bun.exe" : "bun";
-  const lockfileResult = spawnSync(bunCommand, ["install", "--lockfile-only"], {
-    cwd: projectRoot,
-    stdio: "inherit",
-    shell: false,
-  });
+  for (const directory of lockfileDirectories) {
+    const lockfileResult = spawnSync(bunCommand, ["install", "--lockfile-only"], {
+      cwd: directory,
+      stdio: "inherit",
+      shell: false,
+    });
 
-  if (lockfileResult.error) {
-    for (const [absolutePath, originalContent] of originalFiles) {
-      writeFileSync(absolutePath, originalContent, "utf8");
+    if (lockfileResult.error || lockfileResult.status !== 0) {
+      for (const [absolutePath, originalContent] of originalFiles) {
+        if (originalContent == null) {
+          rmSync(absolutePath, { force: true });
+        } else {
+          writeFileSync(absolutePath, originalContent, "utf8");
+        }
+      }
+
+      if (lockfileResult.error) {
+        throw lockfileResult.error;
+      }
+
+      fail("bun.lock 同步失败，已恢复版本文件和锁文件。");
     }
-
-    throw lockfileResult.error;
-  }
-
-  if (lockfileResult.status !== 0) {
-    for (const [absolutePath, originalContent] of originalFiles) {
-      writeFileSync(absolutePath, originalContent, "utf8");
-    }
-
-    fail("bun.lock 同步失败，已恢复版本文件。");
   }
 }
 

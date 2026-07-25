@@ -2,14 +2,14 @@
 
 本工程使用“源码单包 + 编译产物发布分支”的发布方式。
 
-- 源码包：`packages/rn-ui-kit`
+- 源码包：仓库根目录
 - 发布包名：`rn-ui-kit`
 - 发布分支：`rn-ui-kit-<version>`
 - 发布产物目录：`dist/`
-- 发布脚本：`scripts/release/package.js`
-- 构建脚本：`scripts/release/build-package.js`
+- 发布脚本：`scripts/release/package.cjs`
+- 构建脚本：`scripts/release/build-package.cjs`
 
-发布分支根目录是一个可被 Bun 直接安装的独立 package，不包含 workspace，也不要求外部 App 执行 TypeScript 构建。
+发布分支根目录是一个可被 Bun 直接安装的独立 package，不包含仓库中的示例 App 与发布工具。
 
 ## 1. 本地构建
 
@@ -19,16 +19,10 @@
 bun run build
 ```
 
-该命令等价于：
-
-```bash
-bun --cwd packages/rn-ui-kit build
-```
-
-使用 `packages/rn-ui-kit/tsconfig.build.json` 编译源码，输出到：
+该命令使用根目录 `tsconfig.build.json` 编译源码，输出到：
 
 ```text
-packages/rn-ui-kit/dist/
+dist/
 ```
 
 执行完整类型检查：
@@ -48,9 +42,8 @@ bun run set-version 1.2.3
 该命令会更新：
 
 - 根 `package.json`
-- `packages/rn-ui-kit/package.json`
 - `examples/app/package.json`
-- `bun.lock`
+- 根目录 `bun.lock`
 
 默认不会 commit 或 push。自动创建签名 release commit 和 tag：
 
@@ -108,15 +101,13 @@ bun run package-release --pack-only
 
 `--pack-only` 只构建发布目录和 tarball，不创建 Git 分支或 commit。
 
-### 3.1 校验版本
+### 3.1 读取版本
 
 脚本读取：
 
 ```text
-packages/rn-ui-kit/package.json
+package.json
 ```
-
-并检查根 `package.json` 与包版本是否一致。
 
 假设当前版本为 `1.2.3`，发布名称为：
 
@@ -139,7 +130,7 @@ dist/rn-ui-kit-1.2.3-package/
 发布 manifest 基于：
 
 ```text
-packages/rn-ui-kit/package.json
+package.json
 ```
 
 生成。
@@ -190,7 +181,7 @@ rn-ui-kit/package.json
 构建器直接编译：
 
 ```text
-packages/rn-ui-kit/src/
+src/
 ```
 
 输出到：
@@ -238,7 +229,8 @@ patches/
 scripts/
 ```
 
-其中 `scripts/` 来自 `packages/rn-ui-kit/scripts/`，主要用于提供 `rn-ui-sync-patches` 命令。
+其中只复制根目录的 `scripts/sync-patches.mjs`，不会把内部发布与 Android
+自动化脚本打进发布包。
 
 ### 3.6 生成 tarball
 
@@ -312,6 +304,7 @@ package.json
 README.md
 LICENSE
 dist/
+src/
 patches/
 scripts/
 ```
@@ -322,7 +315,6 @@ scripts/
 packages/
 examples/
 workspace 配置
-TypeScript 源码
 开发依赖
 ```
 
@@ -403,10 +395,11 @@ bun add "git+ssh://git@github.com/luoluoqixi/rn-ui-kit.git#rn-ui-kit-1.2.3"
 外部 App 下载的是发布分支根目录，不需要：
 
 - 识别 workspace
-- 安装内部 core/debug 包
 - 执行 tsc
 - 执行 `prepare`
-- 编译 TypeScript 源码
+
+React Native/Metro 会使用发布包中的 `src/` 平台源码；其他默认入口使用已编译的
+`dist/`。
 
 ## 7. 推荐发布流程
 
