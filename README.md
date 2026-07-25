@@ -323,6 +323,9 @@ export function SettingsList() {
 - fallback Item（包括 `NativeListCustomItem`）支持 `backgroundColor`、
   `hoverBackgroundColor` 与 `pressBackgroundColor`；iOS 原生 List 会忽略这些背景属性。
   未指定时继续使用原有的 fallback 主题颜色。
+- 所有 Item（包括 `NativeListCustomItem`）支持 `paddingHorizontal`、
+  `paddingVertical`、`paddingTop`、`paddingBottom`、`paddingLeft` 与
+  `paddingRight`；单边属性优先于 Horizontal / Vertical。
 - `icon` 可传自定义 ReactNode；在 iOS 原生列表中也可直接传 SF Symbol 名称字符串，
   并通过 `iconColor`、`iconSize` 调整原生图标。字符串图标仅在 iOS 原生模式渲染。
 - `NativeListSection` 支持 `titleColor` 与 `titleFontSize`；复杂 ReactNode 标题仍由调用方

@@ -338,6 +338,10 @@ Notes:
   `hoverBackgroundColor`, and `pressBackgroundColor`; native iOS lists ignore
   these background props. When omitted, the existing fallback theme colors are
   preserved.
+- Every item, including `NativeListCustomItem`, supports `paddingHorizontal`,
+  `paddingVertical`, `paddingTop`, `paddingBottom`, `paddingLeft`, and
+  `paddingRight`; individual-edge props take precedence over horizontal or
+  vertical values.
 - Pass a custom React node to `icon`, or pass an SF Symbol name as a string in
   native iOS lists. Use `iconColor` and `iconSize` for SF Symbols. String icons
   are rendered only in native iOS mode.

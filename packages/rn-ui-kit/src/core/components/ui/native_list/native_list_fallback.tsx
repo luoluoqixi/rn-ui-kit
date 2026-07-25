@@ -36,6 +36,7 @@ import type {
   NativeListButtonItemProps,
   NativeListCustomItemProps,
   NativeListItemBaseProps,
+  NativeListItemPaddingProps,
   NativeListItemProps,
   NativeListNavigationItemProps,
   NativeListRootProps,
@@ -44,7 +45,7 @@ import type {
   NativeListSwitchItemProps,
 } from "./types";
 
-type RowContainerProps = {
+type RowContainerProps = NativeListItemPaddingProps & {
   backgroundColor?: ViewStyle["backgroundColor"];
   children: ReactNode;
   disabled?: boolean;
@@ -99,6 +100,41 @@ function useFallbackRowThemeColors() {
   return { defaultRowBackground, theme };
 }
 
+function resolveFallbackRowPadding({
+  paddingBottom,
+  paddingHorizontal,
+  paddingLeft,
+  paddingRight,
+  paddingTop,
+  paddingVertical,
+}: NativeListItemPaddingProps): ViewStyle | undefined {
+  if (
+    paddingBottom == null &&
+    paddingHorizontal == null &&
+    paddingLeft == null &&
+    paddingRight == null &&
+    paddingTop == null &&
+    paddingVertical == null
+  ) {
+    return undefined;
+  }
+
+  return {
+    ...((paddingTop ?? paddingVertical) != null
+      ? { paddingTop: paddingTop ?? paddingVertical }
+      : null),
+    ...((paddingRight ?? paddingHorizontal) != null
+      ? { paddingRight: paddingRight ?? paddingHorizontal }
+      : null),
+    ...((paddingBottom ?? paddingVertical) != null
+      ? { paddingBottom: paddingBottom ?? paddingVertical }
+      : null),
+    ...((paddingLeft ?? paddingHorizontal) != null
+      ? { paddingLeft: paddingLeft ?? paddingHorizontal }
+      : null),
+  };
+}
+
 function FallbackRowContainer({
   backgroundColor,
   children,
@@ -106,11 +142,25 @@ function FallbackRowContainer({
   hoverBackgroundColor,
   nativeHaptics,
   onPress,
+  paddingBottom,
+  paddingHorizontal,
+  paddingLeft,
+  paddingRight,
+  paddingTop,
+  paddingVertical,
   pressBackgroundColor,
 }: RowContainerProps) {
   const resolvedHaptics = useResolvedNativeHaptics(nativeHaptics);
   const { defaultRowBackground, theme } = useFallbackRowThemeColors();
   const [hovered, setHovered] = useState(false);
+  const resolvedRowPadding = resolveFallbackRowPadding({
+    paddingBottom,
+    paddingHorizontal,
+    paddingLeft,
+    paddingRight,
+    paddingTop,
+    paddingVertical,
+  });
   // Read interactive colors while this component renders so Tamagui can track these
   // theme tokens. Reading them only inside Pressable's render callback can retain the
   // previous token values when "system" resolves to a different color scheme.
@@ -138,7 +188,12 @@ function FallbackRowContainer({
   if (onPress == null) {
     return (
       <View
-        style={[styles.rowContainer, getRowBackground(), disabled ? styles.disabledContent : null]}
+        style={[
+          styles.rowContainer,
+          resolvedRowPadding,
+          getRowBackground(),
+          disabled ? styles.disabledContent : null,
+        ]}
       >
         {children}
       </View>
@@ -160,6 +215,7 @@ function FallbackRowContainer({
         <View
           style={[
             styles.rowContainer,
+            resolvedRowPadding,
             getRowBackground(pressed),
             disabled ? styles.disabledContent : null,
           ]}
@@ -257,6 +313,12 @@ function NativeListRow({
   iconAfter,
   nativeHaptics,
   onPress,
+  paddingBottom,
+  paddingHorizontal,
+  paddingLeft,
+  paddingRight,
+  paddingTop,
+  paddingVertical,
   pressBackgroundColor,
   selected = false,
   subtitle,
@@ -285,6 +347,12 @@ function NativeListRow({
       hoverBackgroundColor={hoverBackgroundColor}
       nativeHaptics={nativeHaptics}
       onPress={onPress}
+      paddingBottom={paddingBottom}
+      paddingHorizontal={paddingHorizontal}
+      paddingLeft={paddingLeft}
+      paddingRight={paddingRight}
+      paddingTop={paddingTop}
+      paddingVertical={paddingVertical}
       pressBackgroundColor={pressBackgroundColor}
     >
       <View style={styles.rowContent}>
@@ -782,6 +850,12 @@ export function NativeListCustomItem({
   hoverBackgroundColor,
   nativeHaptics,
   onPress,
+  paddingBottom,
+  paddingHorizontal,
+  paddingLeft,
+  paddingRight,
+  paddingTop,
+  paddingVertical,
   pressBackgroundColor,
 }: NativeListCustomItemProps) {
   return (
@@ -791,6 +865,12 @@ export function NativeListCustomItem({
       hoverBackgroundColor={hoverBackgroundColor}
       nativeHaptics={nativeHaptics}
       onPress={onPress}
+      paddingBottom={paddingBottom}
+      paddingHorizontal={paddingHorizontal}
+      paddingLeft={paddingLeft}
+      paddingRight={paddingRight}
+      paddingTop={paddingTop}
+      paddingVertical={paddingVertical}
       pressBackgroundColor={pressBackgroundColor}
     >
       <View style={styles.customRowContent}>{children}</View>

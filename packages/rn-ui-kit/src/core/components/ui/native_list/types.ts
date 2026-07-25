@@ -6,8 +6,17 @@ import type { SwitchProps } from "../switch";
 import type { NativeHapticsSetting } from "../utils";
 import type { NavigationBarScrollEdgeTrackingProps } from "../utils/navigation";
 
+export type NativeListItemPaddingProps = {
+  paddingBottom?: number;
+  paddingHorizontal?: number;
+  paddingLeft?: number;
+  paddingRight?: number;
+  paddingTop?: number;
+  paddingVertical?: number;
+};
+
 /** 通用 item base props */
-export type NativeListItemBaseProps = {
+export type NativeListItemBaseProps = NativeListItemPaddingProps & {
   /** fallback 行的常态背景色；iOS 原生 List 会忽略。 */
   backgroundColor?: ViewStyle["backgroundColor"];
   /** `true` 或不传时沿用默认主色，传字符串时使用自定义 tint，传 `false` 时不传 tint。 */
@@ -64,7 +73,7 @@ export type NativeListItemProps = NativeListItemBaseProps & {
 
 export type NativeListButtonItemProps = NativeListItemProps;
 
-export type NativeListCustomItemProps = {
+export type NativeListCustomItemProps = NativeListItemPaddingProps & {
   /** fallback 行的常态背景色；iOS 原生 List 会忽略。 */
   backgroundColor?: ViewStyle["backgroundColor"];
   children?: ReactNode;

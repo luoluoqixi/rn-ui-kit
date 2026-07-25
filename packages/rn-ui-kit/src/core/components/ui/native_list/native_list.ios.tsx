@@ -62,6 +62,7 @@ import type {
   NativeListButtonItemProps,
   NativeListCustomItemProps,
   NativeListItemBaseProps,
+  NativeListItemPaddingProps,
   NativeListItemProps,
   NativeListNavigationItemProps,
   NativeListRootProps,
@@ -91,6 +92,22 @@ const DEFAULT_TITLE_FONT_SIZE = 17;
 const DEFAULT_SUBTITLE_FONT_SIZE = 13;
 const DEFAULT_VALUE_FONT_SIZE = 17;
 const DEFAULT_SECTION_TITLE_FONT_SIZE = 13;
+
+function resolveRowPadding({
+  paddingBottom,
+  paddingHorizontal,
+  paddingLeft,
+  paddingRight,
+  paddingTop,
+  paddingVertical,
+}: NativeListItemPaddingProps) {
+  return {
+    top: paddingTop ?? paddingVertical ?? ROW_PADDING.top,
+    bottom: paddingBottom ?? paddingVertical ?? ROW_PADDING.bottom,
+    leading: paddingLeft ?? paddingHorizontal ?? ROW_PADDING.leading,
+    trailing: paddingRight ?? paddingHorizontal ?? ROW_PADDING.trailing,
+  };
+}
 
 function titleModifiers(fontSize?: number) {
   return [font({ size: fontSize ?? DEFAULT_TITLE_FONT_SIZE, weight: "regular" })];
@@ -267,6 +284,12 @@ function NativeRowContainer({
   disabled,
   nativeScrollId,
   onPress,
+  paddingBottom,
+  paddingHorizontal,
+  paddingLeft,
+  paddingRight,
+  paddingTop,
+  paddingVertical,
   btnStyle,
   btnTint,
 }: {
@@ -276,11 +299,23 @@ function NativeRowContainer({
   onPress?: () => void;
   btnStyle?: SwiftUIButtonStyle;
   btnTint?: boolean | string;
-}) {
+} & NativeListItemPaddingProps) {
   const theme = useTheme();
   const primaryColor = toSwiftUIHexColor(theme.color.val) ?? theme.color.val;
   const resolvedTint = resolveNativeListBtnTintColor(btnTint, primaryColor);
-  const baseModifiers = [ROW_INSETS, padding(ROW_PADDING)];
+  const baseModifiers = [
+    ROW_INSETS,
+    padding(
+      resolveRowPadding({
+        paddingBottom,
+        paddingHorizontal,
+        paddingLeft,
+        paddingRight,
+        paddingTop,
+        paddingVertical,
+      }),
+    ),
+  ];
 
   if (onPress != null) {
     return (
@@ -357,6 +392,12 @@ function NativePressRow({
   nativeHaptics,
   nativeScrollId,
   onPress,
+  paddingBottom,
+  paddingHorizontal,
+  paddingLeft,
+  paddingRight,
+  paddingTop,
+  paddingVertical,
   selected = false,
   subtitle,
   subtitleColor,
@@ -405,6 +446,12 @@ function NativePressRow({
       btnStyle={btnStyle}
       btnTint={btnTint}
       nativeScrollId={nativeScrollId}
+      paddingBottom={paddingBottom}
+      paddingHorizontal={paddingHorizontal}
+      paddingLeft={paddingLeft}
+      paddingRight={paddingRight}
+      paddingTop={paddingTop}
+      paddingVertical={paddingVertical}
     >
       {typeof icon === "string" ? (
         <Image
@@ -843,8 +890,23 @@ export function NativeListCustomItem({
   hoverBackgroundColor,
   nativeHaptics,
   onPress,
+  paddingBottom,
+  paddingHorizontal,
+  paddingLeft,
+  paddingRight,
+  paddingTop,
+  paddingVertical,
   pressBackgroundColor,
 }: NativeListCustomItemProps) {
+  const rowPaddingProps = {
+    paddingBottom,
+    paddingHorizontal,
+    paddingLeft,
+    paddingRight,
+    paddingTop,
+    paddingVertical,
+  };
+
   if (!useNativeListEnabled()) {
     return (
       <FallbackCustomItem
@@ -853,6 +915,7 @@ export function NativeListCustomItem({
         hoverBackgroundColor={hoverBackgroundColor}
         nativeHaptics={nativeHaptics}
         onPress={onPress}
+        {...rowPaddingProps}
         pressBackgroundColor={pressBackgroundColor}
       >
         {children}
@@ -862,7 +925,13 @@ export function NativeListCustomItem({
 
   if (onPress == null) {
     return (
-      <VStack modifiers={[ROW_INSETS, disabledModifier(disabled ?? false), padding(ROW_PADDING)]}>
+      <VStack
+        modifiers={[
+          ROW_INSETS,
+          disabledModifier(disabled ?? false),
+          padding(resolveRowPadding(rowPaddingProps)),
+        ]}
+      >
         <NativeHostedCustomRow>{children}</NativeHostedCustomRow>
       </VStack>
     );
@@ -872,7 +941,11 @@ export function NativeListCustomItem({
 
   return (
     <SwiftButton
-      modifiers={[disabledModifier(disabled ?? false), ROW_INSETS, padding(ROW_PADDING)]}
+      modifiers={[
+        disabledModifier(disabled ?? false),
+        ROW_INSETS,
+        padding(resolveRowPadding(rowPaddingProps)),
+      ]}
       onPress={() => {
         onPress();
         triggerNativeHaptics(resolvedHaptics);

@@ -1,4 +1,17 @@
-import { Users } from "@tamagui/lucide-icons-2";
+import {
+  CalendarDays,
+  CircleOff,
+  Clock,
+  Clock4,
+  Info,
+  ListFilter,
+  Palette,
+  RefreshCw,
+  SlidersHorizontal,
+  Smartphone,
+  Timer,
+  Users,
+} from "@tamagui/lucide-icons-2";
 import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import {
@@ -19,6 +32,16 @@ import {
 
 import { ExampleBlock, ExampleStack } from "../shared";
 import type { ComponentExampleDefinition } from "../types";
+
+const NATIVE_LIST_ICON_COLOR = "#7c3aed";
+const NATIVE_LIST_ICON_SIZE = 20;
+const NATIVE_LIST_BACKUP_OPTIONS = [
+  { Icon: Timer, title: "30 分钟", value: "thirty-minutes" },
+  { Icon: Clock, title: "1 小时", value: "one-hour" },
+  { Icon: Clock4, title: "4 小时", value: "four-hours" },
+  { Icon: CalendarDays, title: "每天", value: "daily" },
+  { Icon: CircleOff, title: "从不", value: "never" },
+] as const;
 
 function NativeListExample() {
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
@@ -64,101 +87,85 @@ function NativeListExample() {
               native={native}
               nestedScrollEnabled
             >
-            <NativeListSection
-              footer="导航行适合跳转到更深层的设置页。"
-              title="工作区"
-              titleColor="#7c3aed"
-            >
-              <NativeListNavigationItem
-                icon="info.circle.fill"
-                iconColor="#7c3aed"
-                onPress={() => setLastAction("打开详情")}
-                subtitle="带有 chevron 的导航行"
-                subtitleColor="#64748b"
-                subtitleFontSize={12}
-                title="详情"
-                titleFontSize={18}
-              />
-              <NativeListNavigationItem
-                icon={<Users color="#7c3aed" size={20} />}
-                onPress={() => setLastAction("打开成员管理")}
-                subtitle="邀请、角色与访问权限"
-                title="成员"
-              />
-            </NativeListSection>
-            <NativeListSection footer="Switch 适合即时生效的独立偏好。" title="同步">
-              <NativeListSwitchItem
-                switchProps={{ checked: autoSyncEnabled, onCheckedChange: setAutoSyncEnabled }}
-                title="自动同步"
-              />
-              <NativeListSelectItem
-                selectProps={{
-                  onValueChange: setTheme,
-                  options: [
-                    { label: "浅色", value: "light" },
-                    { label: "深色", value: "dark" },
-                    { label: "跟随系统", value: "system" },
-                  ],
-                  value: theme ?? undefined,
-                }}
-                title="主题模式"
-                valueColor="#7c3aed"
-                valueFontSize={15}
-              />
-              <NativeListSelectItem
-                selectProps={{
-                  onValueChange: setSyncInterval,
-                  options: [
-                    { label: "每 15 分钟", value: "15-minutes" },
-                    { label: "每小时", value: "hourly" },
-                    { label: "每天", value: "daily" },
-                  ],
-                  value: syncInterval ?? undefined,
-                }}
-                title="同步频率"
-              />
-            </NativeListSection>
-            <NativeListSection
-              footer="selected 与 chevron={false} 可组合成互斥选择列表。"
-              title="自动备份"
-            >
-              {[
-                ["thirty-minutes", "30 分钟"],
-                ["one-hour", "1 小时"],
-                ["four-hours", "4 小时"],
-                ["daily", "每天"],
-                ["never", "从不"],
-              ].map(([value, title]) => (
-                <NativeListItem
-                  chevron={false}
-                  key={value}
-                  onPress={() => setBackupInterval(value)}
-                  selected={backupInterval === value}
-                  title={title}
+              <NativeListSection
+                footer="导航行适合跳转到更深层的设置页。"
+                title="工作区"
+                titleColor="#7c3aed"
+              >
+                <NativeListNavigationItem
+                  icon={<Info color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
+                  onPress={() => setLastAction("打开详情")}
+                  subtitle="带有 chevron 的导航行"
+                  subtitleColor="#64748b"
+                  subtitleFontSize={12}
+                  title="详情"
+                  titleColor="#7c3aed"
+                  titleFontSize={18}
                 />
-              ))}
-            </NativeListSection>
-            <NativeListSection
-              footer="同一个 Select 可根据平台选择不同的原生 picker 形态。"
-              title="平台 picker"
-            >
-              <NativeListSelectItem
-                selectProps={{
-                  onValueChange: setTheme,
-                  options: [
-                    { label: "浅色", value: "light" },
-                    { label: "深色", value: "dark" },
-                    { label: "跟随系统", value: "system" },
-                  ],
-                  placeholder: "选择主题模式",
-                  value: theme ?? undefined,
-                }}
-                title="默认 Select"
-              />
-              {os() === "ios" ? (
+                <NativeListNavigationItem
+                  icon={<Users color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
+                  onPress={() => setLastAction("打开成员管理")}
+                  subtitle="邀请、角色与访问权限"
+                  title="成员"
+                />
+              </NativeListSection>
+              <NativeListSection footer="Switch 适合即时生效的独立偏好。" title="同步">
+                <NativeListSwitchItem
+                  icon={<RefreshCw color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
+                  switchProps={{ checked: autoSyncEnabled, onCheckedChange: setAutoSyncEnabled }}
+                  title="自动同步"
+                />
                 <NativeListSelectItem
+                  icon={<Palette color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
                   selectProps={{
-                    nativePickerMode: "wheel",
+                    onValueChange: setTheme,
+                    options: [
+                      { label: "浅色", value: "light" },
+                      { label: "深色", value: "dark" },
+                      { label: "跟随系统", value: "system" },
+                    ],
+                    value: theme ?? undefined,
+                  }}
+                  title="主题模式"
+                  valueColor="#7c3aed"
+                  valueFontSize={15}
+                />
+                <NativeListSelectItem
+                  icon={<Timer color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
+                  selectProps={{
+                    onValueChange: setSyncInterval,
+                    options: [
+                      { label: "每 15 分钟", value: "15-minutes" },
+                      { label: "每小时", value: "hourly" },
+                      { label: "每天", value: "daily" },
+                    ],
+                    value: syncInterval ?? undefined,
+                  }}
+                  title="同步频率"
+                />
+              </NativeListSection>
+              <NativeListSection
+                footer="selected 与 chevron={false} 可组合成互斥选择列表。"
+                title="自动备份"
+              >
+                {NATIVE_LIST_BACKUP_OPTIONS.map(({ Icon, title, value }) => (
+                  <NativeListItem
+                    chevron={false}
+                    icon={<Icon color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
+                    key={value}
+                    onPress={() => setBackupInterval(value)}
+                    selected={backupInterval === value}
+                    title={title}
+                  />
+                ))}
+              </NativeListSection>
+              <NativeListSection
+                footer="同一个 Select 可根据平台选择不同的原生 picker 形态。"
+                title="平台 picker"
+              >
+                <NativeListSelectItem
+                  icon={<ListFilter color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
+                  selectProps={{
                     onValueChange: setTheme,
                     options: [
                       { label: "浅色", value: "light" },
@@ -168,26 +175,50 @@ function NativeListExample() {
                     placeholder: "选择主题模式",
                     value: theme ?? undefined,
                   }}
-                  title="iOS Wheel"
+                  title="默认 Select"
                 />
-              ) : null}
-              {os() === "android" ? (
-                <NativeListSelectItem
-                  selectProps={{
-                    nativePickerMode: "dialog",
-                    onValueChange: setTheme,
-                    options: [
-                      { label: "浅色", value: "light" },
-                      { label: "深色", value: "dark" },
-                      { label: "跟随系统", value: "system" },
-                    ],
-                    placeholder: "选择主题模式",
-                    value: theme ?? undefined,
-                  }}
-                  title="Android Dialog"
-                />
-              ) : null}
-            </NativeListSection>
+                {os() === "ios" ? (
+                  <NativeListSelectItem
+                    icon={
+                      <SlidersHorizontal
+                        color={NATIVE_LIST_ICON_COLOR}
+                        size={NATIVE_LIST_ICON_SIZE}
+                      />
+                    }
+                    selectProps={{
+                      nativePickerMode: "wheel",
+                      onValueChange: setTheme,
+                      options: [
+                        { label: "浅色", value: "light" },
+                        { label: "深色", value: "dark" },
+                        { label: "跟随系统", value: "system" },
+                      ],
+                      placeholder: "选择主题模式",
+                      value: theme ?? undefined,
+                    }}
+                    title="iOS Wheel"
+                  />
+                ) : null}
+                {os() === "android" ? (
+                  <NativeListSelectItem
+                    icon={
+                      <Smartphone color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />
+                    }
+                    selectProps={{
+                      nativePickerMode: "dialog",
+                      onValueChange: setTheme,
+                      options: [
+                        { label: "浅色", value: "light" },
+                        { label: "深色", value: "dark" },
+                        { label: "跟随系统", value: "system" },
+                      ],
+                      placeholder: "选择主题模式",
+                      value: theme ?? undefined,
+                    }}
+                    title="Android Dialog"
+                  />
+                ) : null}
+              </NativeListSection>
             </NativeList>
           ) : null}
         </View>
