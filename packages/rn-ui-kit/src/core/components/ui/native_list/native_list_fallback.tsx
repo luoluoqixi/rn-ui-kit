@@ -117,12 +117,12 @@ function FallbackRowContainer({
   const normalRowBackground = backgroundColor ?? defaultRowBackground;
   const pressedRowBackground =
     pressBackgroundColor ??
-    theme.color4?.val ??
+    theme.color5?.val ??
     theme.backgroundPress?.val ??
     theme.background?.val;
   const hoveredRowBackground =
     hoverBackgroundColor ??
-    theme.color3?.val ??
+    theme.color4?.val ??
     theme.backgroundHover?.val ??
     theme.background?.val;
 
@@ -758,19 +758,17 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
       }}
       placement={selectProps.placement ?? (isWeb() ? "bottom-end" : undefined)}
       triggerProps={{
-        backgroundColor: isWeb()
-          ? (normalRowBackground as any)
-          : undefined,
+        backgroundColor: isWeb() ? (normalRowBackground as any) : undefined,
         ...selectProps.triggerProps,
         hoverStyle:
           selectProps.triggerProps?.hoverStyle ??
           ({
-            backgroundColor: itemProps.hoverBackgroundColor ?? "$color3",
+            backgroundColor: itemProps.hoverBackgroundColor ?? "$color4",
           } as any),
         pressStyle:
           selectProps.triggerProps?.pressStyle ??
           ({
-            background: itemProps.pressBackgroundColor ?? "$color4",
+            background: itemProps.pressBackgroundColor ?? "$color5",
           } as any),
       }}
     />
@@ -938,7 +936,9 @@ export function NativeListRoot({
         nestedScrollEnabled={nestedScrollEnabled ?? true}
         onScroll={trackedOnScroll}
         scrollEnabled={scrollable}
-        scrollEventThrottle={scrollEventThrottle ?? (tracksNavigationBarScrollEdge ? 16 : undefined)}
+        scrollEventThrottle={
+          scrollEventThrottle ?? (tracksNavigationBarScrollEdge ? 16 : undefined)
+        }
         showsVerticalScrollIndicator={showsVerticalScrollIndicator ?? true}
         style={[styles.root, rootBackground, style]}
         {...scrollViewProps}
