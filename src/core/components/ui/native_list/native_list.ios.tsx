@@ -28,6 +28,7 @@ import {
   multilineTextAlignment,
   opacity,
   padding,
+  refreshable,
   scrollContentBackground,
   scrollDisabled,
   shapes,
@@ -526,6 +527,7 @@ function NativeListRoot({
   native = true,
   nestedScrollEnabled,
   navigationBarScrollEdgeOptions,
+  onRefresh,
   scrollIndicatorInsets,
   style,
   scrollable = true,
@@ -555,6 +557,7 @@ function NativeListRoot({
           contentInsetAdjustmentBehavior={contentInsetAdjustmentBehavior}
           nestedScrollEnabled={nestedScrollEnabled}
           navigationBarScrollEdgeOptions={navigationBarScrollEdgeOptions}
+          onRefresh={onRefresh}
           scrollIndicatorInsets={scrollIndicatorInsets}
           style={style}
           scrollable={scrollable}
@@ -658,6 +661,13 @@ function NativeListRoot({
                     }),
                   ]
                 : []),
+            ...(onRefresh != null
+              ? [
+                  refreshable(async () => {
+                    await onRefresh();
+                  }),
+                ]
+              : []),
             scrollDisabled(!scrollable),
           ]}
         >

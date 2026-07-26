@@ -67,7 +67,7 @@ function NativeListExample() {
   return (
     <ExampleStack>
       <ExampleBlock
-        description="完整覆盖导航、开关、单选、Select 与平台原生 picker 变体。"
+        description="完整覆盖下拉刷新、导航、开关、单选、Select 与平台原生 picker 变体。"
         title="工作区设置"
       >
         <Switch
@@ -86,6 +86,12 @@ function NativeListExample() {
               key={native ? "native-list" : "fallback-list"}
               native={native}
               nestedScrollEnabled
+              onRefresh={async () => {
+                await new Promise<void>((resolve) => {
+                  setTimeout(resolve, 1200);
+                });
+                setLastAction("下拉刷新完成");
+              }}
             >
               <NativeListSection
                 footer="导航行适合跳转到更深层的设置页。"

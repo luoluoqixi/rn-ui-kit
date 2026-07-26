@@ -131,6 +131,11 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
     initialScrollTarget?: string | number;
     /** 设为 false 时使用 list_group 回退模式（所有平台一致） */
     native?: boolean;
+    /**
+     * 下拉刷新回调。返回 Promise 时，刷新指示器会保持到 Promise settled。
+     * TrueSheet Android 的静态 ScrollView 回退分支不支持此参数。
+     */
+    onRefresh?: () => Promise<void> | void;
     /** 设为 false 时不创建内部 ScrollView，由外层宿主负责滚动。 */
     scrollable?: boolean;
   };

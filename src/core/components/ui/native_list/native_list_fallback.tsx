@@ -927,6 +927,7 @@ export function NativeListRoot({
   initialScrollTarget,
   native: _native,
   navigationBarScrollEdgeOptions,
+  onRefresh,
   scrollable = true,
   style,
   tracksNavigationBarScrollEdge = false,
@@ -952,6 +953,7 @@ export function NativeListRoot({
   void _maintainVisibleContentPosition;
   const headerHeight = useContext(HeaderHeightContext) ?? 0;
   const insets = useSafeAreaInsets();
+  const [refreshing, setRefreshing] = useState(false);
   const entries = useMemo(() => createFallbackListEntries(children), [children]);
   const initialScrollIndex = useMemo(
     () => getInitialScrollIndex(entries, initialScrollTarget),
@@ -1018,6 +1020,17 @@ export function NativeListRoot({
     ...(contentBottomPadding != null ? { paddingBottom: contentBottomPadding } : null),
   };
   const shouldUseTrueSheetScrollView = insideTrueSheet && os() === "android";
+  const handleRefresh =
+    onRefresh == null
+      ? undefined
+      : async () => {
+          setRefreshing(true);
+          try {
+            await onRefresh();
+          } finally {
+            setRefreshing(false);
+          }
+        };
 
   if (shouldUseTrueSheetScrollView) {
     return (
@@ -1070,7 +1083,9 @@ export function NativeListRoot({
       keyboardShouldPersistTaps={keyboardShouldPersistTaps ?? "handled"}
       keyExtractor={getEntryKey}
       nestedScrollEnabled={nestedScrollEnabled ?? true}
+      onRefresh={handleRefresh}
       onScroll={trackedOnScroll}
+      refreshing={onRefresh != null ? refreshing : undefined}
       renderItem={renderFallbackListEntry}
       scrollEnabled={scrollable}
       scrollEventThrottle={scrollEventThrottle ?? (tracksNavigationBarScrollEdge ? 16 : undefined)}
