@@ -1,6 +1,11 @@
 import { useColorScheme } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider as NavigationThemeProvider,
+} from "@react-navigation/native";
 
 import { SheetProvider } from "../sheet/provider";
 import {
@@ -15,6 +20,7 @@ export function RootProvider({
   accentThemeName,
   children,
   colorScheme,
+  navigationTheme,
   preferences,
   ...providerProps
 }: RootProviderProps) {
@@ -26,6 +32,8 @@ export function RootProvider({
   const resolvedAccentThemeName = resolveAccentThemeName(
     accentThemeName ?? resolvedPreferences.appearance.accentColor,
   );
+  const resolvedNavigationTheme =
+    navigationTheme ?? (resolvedColorScheme === "dark" ? DarkTheme : DefaultTheme);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -36,7 +44,9 @@ export function RootProvider({
           colorScheme={resolvedColorScheme}
           preferences={resolvedPreferences}
         >
-          <SheetProvider>{children}</SheetProvider>
+          <NavigationThemeProvider value={resolvedNavigationTheme}>
+            <SheetProvider>{children}</SheetProvider>
+          </NavigationThemeProvider>
         </UIProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

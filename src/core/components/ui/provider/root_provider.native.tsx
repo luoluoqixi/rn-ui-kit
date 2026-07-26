@@ -2,6 +2,11 @@ import { useEffect } from "react";
 import { Appearance, useColorScheme } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider as NavigationThemeProvider,
+} from "@react-navigation/native";
 
 import { SheetProvider } from "../sheet/provider";
 import {
@@ -17,6 +22,7 @@ export function RootProvider({
   accentThemeName,
   children,
   colorScheme,
+  navigationTheme,
   preferences,
   ...providerProps
 }: RootProviderProps) {
@@ -30,9 +36,14 @@ export function RootProvider({
   );
   const rootBackgroundColor = getAppWindowBackgroundColor(resolvedColorScheme);
 
+  const resolvedNavigationTheme =
+    navigationTheme ?? (resolvedColorScheme === "dark" ? DarkTheme : DefaultTheme);
+
   useEffect(() => {
     Appearance.setColorScheme(
-      colorScheme == null && preferredColorScheme === "system" ? "unspecified" : resolvedColorScheme,
+      colorScheme == null && preferredColorScheme === "system"
+        ? "unspecified"
+        : resolvedColorScheme,
     );
   }, [colorScheme, preferredColorScheme, resolvedColorScheme]);
 
@@ -45,7 +56,9 @@ export function RootProvider({
           colorScheme={resolvedColorScheme}
           preferences={resolvedPreferences}
         >
-          <SheetProvider>{children}</SheetProvider>
+          <NavigationThemeProvider value={resolvedNavigationTheme}>
+            <SheetProvider>{children}</SheetProvider>
+          </NavigationThemeProvider>
         </UIProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

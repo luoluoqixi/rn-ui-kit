@@ -1,5 +1,6 @@
 import type { ComponentProps, ReactNode } from "react";
 import type { TamaguiProvider } from "tamagui";
+import type { Theme as NavigationTheme } from "@react-navigation/native";
 
 import type {
   AccentThemeName,
@@ -13,6 +14,7 @@ export interface UIProviderProps {
   accentThemeNames?: AccentThemeNames;
   children: ReactNode;
   colorScheme?: ResolvedColorScheme;
+  navigationTheme?: NavigationTheme;
   defaultNativeHapticsEnabled?: boolean;
   preferences?: Partial<UiPreferences>;
   tamaguiConfig: ComponentProps<typeof TamaguiProvider>["config"];
