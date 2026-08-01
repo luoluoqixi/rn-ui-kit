@@ -404,23 +404,6 @@ function RnUiKitDebugPanelSheet({
     onOpenChange(nextOpen);
   };
 
-  function HomeRoute() {
-    return (
-      <RnUiKitDebugHomeRoute
-        layoutHost="nativeSheet"
-        onOpenInSheet={(key) => setOpenSectionSheets((current) => new Set(current).add(key))}
-        pages={pages}
-        onOpenSectionsInSheetChange={(enabled) => {
-          setOpenSectionsInSheet(enabled);
-          if (!enabled) setOpenSectionSheets(new Set());
-        }}
-        onSectionSheetPositionChange={setSectionSheetPosition}
-        openSectionsInSheet={openSectionsInSheet}
-        sectionSheetPosition={sectionSheetPosition}
-      />
-    );
-  }
-
   return (
     <>
       <NativeSheetStack
@@ -436,7 +419,20 @@ function RnUiKitDebugPanelSheet({
           name="index"
           options={{ title: `${RN_UI_KIT_PACKAGE_NAME} - ${RN_UI_KIT_PACKAGE_VERSION}` }}
         >
-          {() => <HomeRoute />}
+          {() => (
+            <RnUiKitDebugHomeRoute
+              layoutHost="nativeSheet"
+              onOpenInSheet={(key) => setOpenSectionSheets((current) => new Set(current).add(key))}
+              pages={pages}
+              onOpenSectionsInSheetChange={(enabled) => {
+                setOpenSectionsInSheet(enabled);
+                if (!enabled) setOpenSectionSheets(new Set());
+              }}
+              onSectionSheetPositionChange={setSectionSheetPosition}
+              openSectionsInSheet={openSectionsInSheet}
+              sectionSheetPosition={sectionSheetPosition}
+            />
+          )}
         </NativeSheetStack.Screen>
         {pages.map((definition) => (
           <NativeSheetStack.Screen
