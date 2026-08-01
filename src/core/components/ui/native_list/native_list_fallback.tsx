@@ -8,6 +8,7 @@ import {
   type ReactNode,
   isValidElement,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -53,6 +54,7 @@ type RowContainerProps = NativeListItemPaddingProps & {
   hoverBackgroundColor?: ViewStyle["backgroundColor"];
   nativeHaptics?: NativeListItemBaseProps["nativeHaptics"];
   onPress?: () => void;
+  pressResetToken?: number;
   pressBackgroundColor?: ViewStyle["backgroundColor"];
 };
 
@@ -149,11 +151,22 @@ function FallbackRowContainer({
   paddingRight,
   paddingTop,
   paddingVertical,
+  pressResetToken,
   pressBackgroundColor,
 }: RowContainerProps) {
   const resolvedHaptics = useResolvedNativeHaptics(nativeHaptics);
   const { defaultRowBackground, theme } = useFallbackRowThemeColors();
   const [hovered, setHovered] = useState(false);
+  const [pressed, setPressed] = useState(false);
+  const usesIosSwitchPressFallback = os() === "ios" && pressResetToken != null;
+  // A native UISwitch can take over a gesture after the parent Pressable has already
+  // entered its pressed state, without delivering a matching press-out event to it.
+  // Keep the visual state under our control so an embedded control can clear it.
+  useEffect(() => {
+    if (usesIosSwitchPressFallback) {
+      setPressed(false);
+    }
+  }, [pressResetToken, usesIosSwitchPressFallback]);
   const resolvedRowPadding = resolveFallbackRowPadding({
     paddingBottom,
     paddingHorizontal,
@@ -206,18 +219,20 @@ function FallbackRowContainer({
       disabled={disabled}
       onHoverIn={() => setHovered(true)}
       onHoverOut={() => setHovered(false)}
+      onPressIn={usesIosSwitchPressFallback ? () => setPressed(true) : undefined}
       onPress={() => {
         onPress();
         triggerNativeHaptics(resolvedHaptics);
       }}
+      onPressOut={usesIosSwitchPressFallback ? () => setPressed(false) : undefined}
       style={styles.pressable}
     >
-      {({ pressed }) => (
+      {({ pressed: pressablePressed }) => (
         <View
           style={[
             styles.rowContainer,
             resolvedRowPadding,
-            getRowBackground(pressed),
+            getRowBackground(usesIosSwitchPressFallback ? pressed : pressablePressed),
             disabled ? styles.disabledContent : null,
           ]}
         >
@@ -230,6 +245,7 @@ function FallbackRowContainer({
 
 type NativeListRowProps = NativeListItemBaseProps & {
   iconAfter?: ReactNode;
+  pressResetToken?: number;
 };
 
 function renderTitleNode(
@@ -322,6 +338,7 @@ function NativeListRow({
   paddingRight,
   paddingTop,
   paddingVertical,
+  pressResetToken,
   pressBackgroundColor,
   selected = false,
   subtitle,
@@ -356,6 +373,7 @@ function NativeListRow({
       paddingRight={paddingRight}
       paddingTop={paddingTop}
       paddingVertical={paddingVertical}
+      pressResetToken={pressResetToken}
       pressBackgroundColor={pressBackgroundColor}
     >
       <View style={styles.rowContent}>
@@ -727,6 +745,13 @@ export function NativeListNavigationItem(props: NativeListNavigationItemProps) {
 export function NativeListSwitchItem({ switchProps, ...itemProps }: NativeListSwitchItemProps) {
   const checked = switchProps.checked ?? switchProps.defaultChecked ?? false;
   const disabled = itemProps.disabled || switchProps.disabled;
+  const isIos = os() === "ios";
+  const [pressResetToken, setPressResetToken] = useState(0);
+  const resetRowPress = () => {
+    if (isIos) {
+      setPressResetToken((token) => token + 1);
+    }
+  };
 
   return (
     <NativeListRow
@@ -734,6 +759,7 @@ export function NativeListSwitchItem({ switchProps, ...itemProps }: NativeListSw
       disabled={disabled}
       nativeHaptics={itemProps.nativeHaptics ?? true}
       onPress={() => switchProps.onCheckedChange?.(!checked)}
+      pressResetToken={isIos ? pressResetToken : undefined}
       iconAfter={
         <View style={styles.trailingControl}>
           <Switch
@@ -742,7 +768,20 @@ export function NativeListSwitchItem({ switchProps, ...itemProps }: NativeListSw
             onPress={(event) => {
               switchProps.onPress?.(event);
               event.stopPropagation();
+              resetRowPress();
             }}
+            {...(isIos
+              ? {
+                  onCheckedChange: (nextChecked: boolean) => {
+                    switchProps.onCheckedChange?.(nextChecked);
+                    resetRowPress();
+                  },
+                  onPressOut: (event: Parameters<NonNullable<typeof switchProps.onPressOut>>[0]) => {
+                    switchProps.onPressOut?.(event);
+                    resetRowPress();
+                  },
+                }
+              : null)}
           />
         </View>
       }
