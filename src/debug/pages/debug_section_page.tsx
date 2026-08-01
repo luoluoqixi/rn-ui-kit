@@ -41,7 +41,7 @@ export function RnUiKitDebugSectionPage({
         bindToNativeSheet={bindToNativeSheet}
         contentContainerStyle={styles.staticScrollContent}
         style={styles.staticScrollView}
-        tracksNavigationBarScrollEdge={Platform.OS === "android"}
+        tracksNavigationBarScrollEdge={Platform.OS === "android" || Platform.OS === "web"}
       >
         {header != null ? <View style={styles.staticContentHeader}>{header}</View> : null}
         <SectionPage
@@ -62,7 +62,7 @@ export function RnUiKitDebugSectionPage({
         nestedScrollEnabled
         showsVerticalScrollIndicator
         style={styles.staticScrollView}
-        tracksNavigationBarScrollEdge={Platform.OS === "android"}
+        tracksNavigationBarScrollEdge={Platform.OS === "android" || Platform.OS === "web"}
       >
         <SectionPage
           header={header}

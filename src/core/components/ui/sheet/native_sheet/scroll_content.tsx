@@ -9,7 +9,10 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import type { NavigationBarScrollEdgeTrackingProps } from "../../utils/navigation";
+import {
+  type NavigationBarScrollEdgeTrackingProps,
+  useNavigationBarScrollEdge,
+} from "../../utils/navigation";
 import { os } from "../../utils/platform";
 
 import { AndroidClippedScrollView } from "./true_sheet/android_clipped_scroll_view";
@@ -53,6 +56,8 @@ export const NativeSheetScrollContent = forwardRef<ScrollView, NativeSheetScroll
       contentContainerStyle,
       extraBottomPadding,
       navigationBarScrollEdgeOptions,
+      onScroll,
+      scrollEventThrottle,
       style,
       tracksNavigationBarScrollEdge,
       ...rest
@@ -67,6 +72,12 @@ export const NativeSheetScrollContent = forwardRef<ScrollView, NativeSheetScroll
     const bindingOwnerRef = useRef<object>({});
     const scrollViewRef = useRef<ScrollView | null>(null);
     const shouldBindToNativeSheet = os() === "ios" && bindToNativeSheet;
+    const trackedOnScroll = useNavigationBarScrollEdge({
+      navigationBarScrollEdgeOptions,
+      onScroll,
+      tracksNavigationBarScrollEdge:
+        os() === "web" && tracksNavigationBarScrollEdge === true,
+    });
     const { automaticContentInsetAdjustment, insetAdjustment, nativeScrollInsetsApplied } =
       useTrueSheetScrollLayout();
     // Once the exact ScrollView is registered, TrueSheet applies its native content/indicator
@@ -121,6 +132,8 @@ export const NativeSheetScrollContent = forwardRef<ScrollView, NativeSheetScroll
           keyboardShouldPersistTaps="handled"
           nestedScrollEnabled
           navigationBarScrollEdgeOptions={navigationBarScrollEdgeOptions}
+          onScroll={onScroll}
+          scrollEventThrottle={scrollEventThrottle}
           showsVerticalScrollIndicator
           style={[styles.androidScroll, style]}
           contentContainerStyle={[styles.androidContent, contentContainerStyle]}
@@ -149,6 +162,7 @@ export const NativeSheetScrollContent = forwardRef<ScrollView, NativeSheetScroll
         ref={setScrollViewRef}
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled
+        onScroll={trackedOnScroll}
         showsVerticalScrollIndicator
         style={[styles.iosScroll, style]}
         contentContainerStyle={[
@@ -159,6 +173,7 @@ export const NativeSheetScrollContent = forwardRef<ScrollView, NativeSheetScroll
         scrollIndicatorInsets={{
           bottom: indicatorBottomInset,
         }}
+        scrollEventThrottle={scrollEventThrottle ?? (trackedOnScroll == null ? undefined : 16)}
         contentInsetAdjustmentBehavior={automaticContentInsetAdjustment ? "automatic" : "never"}
         {...rest}
       >

@@ -161,7 +161,7 @@ export function RnUiKitComponentExampleDetailPage({
         nestedScrollEnabled
         showsVerticalScrollIndicator
         style={scrollStyle}
-        tracksNavigationBarScrollEdge={Platform.OS === "android"}
+        tracksNavigationBarScrollEdge={Platform.OS === "android" || Platform.OS === "web"}
       >
         {contents}
       </NativeSheetScrollContent>
@@ -176,7 +176,7 @@ export function RnUiKitComponentExampleDetailPage({
       nestedScrollEnabled
       showsVerticalScrollIndicator
       style={scrollStyle}
-      tracksNavigationBarScrollEdge={Platform.OS === "android"}
+      tracksNavigationBarScrollEdge={Platform.OS === "android" || Platform.OS === "web"}
     >
       {contents}
     </ScrollView>

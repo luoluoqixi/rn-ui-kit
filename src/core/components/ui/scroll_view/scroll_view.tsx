@@ -34,20 +34,38 @@ const AndroidTrackedScrollView = forwardRef<any, ScrollViewProps>((props, ref) =
 });
 AndroidTrackedScrollView.displayName = "AndroidTrackedScrollView";
 
+const WebTrackedScrollView = forwardRef<any, ScrollViewProps>((props, ref) => {
+  const {
+    bottomSheetScrollable: _bottomSheetScrollable,
+    navigationBarScrollEdgeOptions,
+    onScroll,
+    scrollEventThrottle,
+    tracksNavigationBarScrollEdge,
+    ...webProps
+  } = props;
+  void _bottomSheetScrollable;
+  const trackedOnScroll = useNavigationBarScrollEdge({
+    navigationBarScrollEdgeOptions,
+    onScroll: onScroll as any,
+    tracksNavigationBarScrollEdge,
+  });
+
+  return (
+    <TamaguiScrollView
+      ref={ref}
+      onScroll={trackedOnScroll as any}
+      scrollEventThrottle={scrollEventThrottle ?? (trackedOnScroll == null ? undefined : 16)}
+      {...webProps}
+    />
+  );
+});
+WebTrackedScrollView.displayName = "WebTrackedScrollView";
+
 export const ScrollView = forwardRef<any, ScrollViewProps>((props, ref) => {
   const { active: insideTrueSheet } = useTrueSheetScrollLayout();
 
   if (isWeb()) {
-    const {
-      bottomSheetScrollable: _bottomSheetScrollable,
-      navigationBarScrollEdgeOptions: _navigationBarScrollEdgeOptions,
-      tracksNavigationBarScrollEdge: _tracksNavigationBarScrollEdge,
-      ...webProps
-    } = props;
-    void _bottomSheetScrollable;
-    void _navigationBarScrollEdgeOptions;
-    void _tracksNavigationBarScrollEdge;
-    return <TamaguiScrollView ref={ref} {...webProps} />;
+    return <WebTrackedScrollView ref={ref} {...props} />;
   }
 
   const {
