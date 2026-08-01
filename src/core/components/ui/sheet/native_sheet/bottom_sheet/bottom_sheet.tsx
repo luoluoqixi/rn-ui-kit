@@ -216,6 +216,7 @@ export function BottomSheetPanel({
       ) : null}
       {enableHandle ? <ReplicaSheet.Handle /> : null}
       <ReplicaSheet.Frame
+        adjustPaddingForOffscreenContent={isWeb()}
         style={[styles.content, backgroundColor != null ? { backgroundColor } : null]}
       >
         {body}
