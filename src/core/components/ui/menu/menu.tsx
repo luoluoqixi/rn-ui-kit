@@ -3,11 +3,7 @@ import { StyleSheet } from "react-native";
 import { SizableText, Menu as TamaguiMenu, YStack } from "tamagui";
 
 import { isWeb, os } from "../utils/platform";
-import {
-  resolveAriaLabel,
-  triggerNativeHaptics,
-  useResolvedNativeHaptics,
-} from "../utils";
+import { resolveAriaLabel, triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
 
 import type {
   MenuArrowProps,
@@ -103,13 +99,11 @@ function MenuRoot(props: MenuProps) {
       triggerNativeHaptics(resolvedNativeHaptics);
     }
   };
-  const iosOpenWillChangeProps = ios
-    ? { onOpenWillChange: handleOpenWillChange }
-    : undefined;
+  const iosOpenWillChangeProps = ios ? { onOpenWillChange: handleOpenWillChange } : undefined;
 
   // Menu 在 native 上浮动定位后视觉顺序反转，统一反转 children / items
   const resolvedChildren = Children.toArray(children).reverse();
-  const resolvedItems = items ? [...items].reverse() : items;
+  const resolvedItems = ios && items ? [...items].reverse() : items;
 
   if (!hasDefaultStructure) {
     return (
