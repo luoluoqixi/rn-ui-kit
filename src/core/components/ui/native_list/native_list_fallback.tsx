@@ -1,7 +1,10 @@
 ﻿import { HeaderHeightContext } from "@react-navigation/elements";
+import { NavigationContext } from "@react-navigation/native";
 import { Check, ChevronRight, ChevronsUpDown } from "@tamagui/lucide-icons-2";
 import {
   Children,
+  createContext,
+  useCallback,
   type ComponentProps,
   type ComponentType,
   type ReactElement,
@@ -10,16 +13,26 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
-import { Pressable, ScrollView, StyleSheet, View, type ViewStyle } from "react-native";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  type ViewStyle,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "tamagui";
 
 import { isWeb, os } from "../utils/platform";
 import { useAppBackgroundColors, useUiPreferences } from "../utils/theme";
 
-import { FlashList, type ListRenderItemInfo } from "../flash_list";
+import { FlashList, type FlashListRef, type ListRenderItemInfo } from "../flash_list";
 import { Select } from "../select";
 import {
   getTrueSheetScrollBottomPadding,
@@ -90,6 +103,37 @@ type FallbackListEntry =
       type: "sectionFooter";
     };
 
+type ScrollEvent = NativeSyntheticEvent<NativeScrollEvent>;
+
+type NavigationWithFocusEvents = {
+  addListener: (event: "blur" | "focus" | "transitionEnd", listener: () => void) => () => void;
+  isFocused: () => boolean;
+};
+
+type WebScrollableNode = {
+  scrollTop: number;
+};
+
+const WEB_SCROLL_RESTORE_STABLE_FRAMES = 8;
+const WEB_SCROLL_RESTORE_MAX_FRAMES = 30;
+const WEB_SCROLL_RESTORE_TOLERANCE = 1;
+
+const FallbackListScrollCaptureContext = createContext<(() => void) | null>(null);
+
+function getWebScrollableNode(
+  list: FlashListRef<FallbackListEntry> | null,
+): WebScrollableNode | null {
+  try {
+    const scrollableNode = list?.getScrollableNode() as WebScrollableNode | null | undefined;
+    return scrollableNode != null && typeof scrollableNode.scrollTop === "number"
+      ? scrollableNode
+      : null;
+  } catch {
+    // FlashList can expose its public ref one render before the inner ScrollView ref is ready.
+    return null;
+  }
+}
+
 function useFallbackRowThemeColors() {
   const appBackgroundColors = useAppBackgroundColors();
   const { preferences } = useUiPreferences();
@@ -154,6 +198,7 @@ function FallbackRowContainer({
   pressResetToken,
   pressBackgroundColor,
 }: RowContainerProps) {
+  const captureListScrollPosition = useContext(FallbackListScrollCaptureContext);
   const resolvedHaptics = useResolvedNativeHaptics(nativeHaptics);
   const { defaultRowBackground, theme } = useFallbackRowThemeColors();
   const [hovered, setHovered] = useState(false);
@@ -221,6 +266,7 @@ function FallbackRowContainer({
       onHoverOut={() => setHovered(false)}
       onPressIn={usesIosSwitchPressFallback ? () => setPressed(true) : undefined}
       onPress={() => {
+        captureListScrollPosition?.();
         onPress();
         triggerNativeHaptics(resolvedHaptics);
       }}
@@ -776,7 +822,9 @@ export function NativeListSwitchItem({ switchProps, ...itemProps }: NativeListSw
                     switchProps.onCheckedChange?.(nextChecked);
                     resetRowPress();
                   },
-                  onPressOut: (event: Parameters<NonNullable<typeof switchProps.onPressOut>>[0]) => {
+                  onPressOut: (
+                    event: Parameters<NonNullable<typeof switchProps.onPressOut>>[0],
+                  ) => {
                     switchProps.onPressOut?.(event);
                     resetRowPress();
                   },
@@ -983,16 +1031,33 @@ export function NativeListRoot({
     keyboardShouldPersistTaps,
     maintainVisibleContentPosition: _maintainVisibleContentPosition,
     nestedScrollEnabled,
+    onLayout,
     onScroll,
     scrollEventThrottle,
     scrollIndicatorInsets,
     showsVerticalScrollIndicator,
+    webAutoRestoreScroll = true,
     ...scrollViewProps
   } = rest;
   void _maintainVisibleContentPosition;
   const headerHeight = useContext(HeaderHeightContext) ?? 0;
+  const navigation = useContext(NavigationContext) as NavigationWithFocusEvents | undefined;
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
+  const flashListRef = useRef<FlashListRef<FallbackListEntry> | null>(null);
+  const currentWebScrollOffsetRef = useRef(0);
+  const pendingWebScrollRestoreRef = useRef(false);
+  const savedWebScrollOffsetRef = useRef(0);
+
+  const isRestoreScroll = webAutoRestoreScroll && isWeb();
+  const captureWebScrollPosition = useCallback(() => {
+    if (!isRestoreScroll) return;
+
+    const actualOffset = getWebScrollableNode(flashListRef.current)?.scrollTop;
+    const offset = Math.max(0, actualOffset ?? currentWebScrollOffsetRef.current);
+    currentWebScrollOffsetRef.current = offset;
+    savedWebScrollOffsetRef.current = offset;
+  }, []);
   const entries = useMemo(() => createFallbackListEntries(children), [children]);
   const initialScrollIndex = useMemo(
     () => getInitialScrollIndex(entries, initialScrollTarget),
@@ -1010,6 +1075,110 @@ export function NativeListRoot({
     onScroll,
     tracksNavigationBarScrollEdge,
   });
+  const handleFlashListScroll = useCallback(
+    (event: ScrollEvent) => {
+      trackedOnScroll?.(event);
+      // native-stack's Web fallback can emit a final zero-offset event while hiding this route.
+      // It is a layout reset, not user scroll input, so it must not overwrite the saved position.
+      if (isRestoreScroll && (navigation == null || navigation.isFocused())) {
+        currentWebScrollOffsetRef.current = Math.max(0, event.nativeEvent.contentOffset.y);
+      }
+    },
+    [navigation, trackedOnScroll],
+  );
+  const restoreWebScrollPosition = useCallback(() => {
+    if (!isRestoreScroll || contentOffset != null || !pendingWebScrollRestoreRef.current) return;
+
+    const offset = savedWebScrollOffsetRef.current;
+    if (offset <= 0) return;
+
+    flashListRef.current?.scrollToOffset({ animated: false, offset });
+    const scrollableNode = getWebScrollableNode(flashListRef.current);
+    if (scrollableNode != null) {
+      scrollableNode.scrollTop = offset;
+    }
+  }, [contentOffset]);
+  const getActualWebScrollOffset = useCallback(() => {
+    return getWebScrollableNode(flashListRef.current)?.scrollTop ?? null;
+  }, []);
+  const handleFlashListLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      onLayout?.(event);
+      if (!isRestoreScroll || event.nativeEvent.layout.height <= 0) return;
+
+      restoreWebScrollPosition();
+    },
+    [onLayout, restoreWebScrollPosition],
+  );
+
+  useEffect(() => {
+    if (!isRestoreScroll || navigation == null || contentOffset != null) return;
+
+    let restoreAnimationFrame: number | undefined;
+    const cancelScrollRestore = () => {
+      pendingWebScrollRestoreRef.current = false;
+      if (restoreAnimationFrame != null) {
+        cancelAnimationFrame(restoreAnimationFrame);
+        restoreAnimationFrame = undefined;
+      }
+    };
+    const requestScrollRestore = () => {
+      if (savedWebScrollOffsetRef.current <= 0) return;
+
+      if (restoreAnimationFrame != null) {
+        cancelAnimationFrame(restoreAnimationFrame);
+      }
+      pendingWebScrollRestoreRef.current = true;
+      const targetOffset = savedWebScrollOffsetRef.current;
+      let stableFrames = 0;
+      let attemptedFrames = 0;
+
+      const verifyScrollPosition = () => {
+        if (!pendingWebScrollRestoreRef.current) return;
+
+        const actualOffset = getActualWebScrollOffset();
+        if (
+          actualOffset != null &&
+          Math.abs(actualOffset - targetOffset) <= WEB_SCROLL_RESTORE_TOLERANCE
+        ) {
+          stableFrames += 1;
+        } else {
+          stableFrames = 0;
+          restoreWebScrollPosition();
+        }
+        attemptedFrames += 1;
+
+        if (
+          stableFrames >= WEB_SCROLL_RESTORE_STABLE_FRAMES ||
+          attemptedFrames >= WEB_SCROLL_RESTORE_MAX_FRAMES
+        ) {
+          pendingWebScrollRestoreRef.current = false;
+          restoreAnimationFrame = undefined;
+          return;
+        }
+
+        restoreAnimationFrame = requestAnimationFrame(verifyScrollPosition);
+      };
+
+      restoreWebScrollPosition();
+      restoreAnimationFrame = requestAnimationFrame(verifyScrollPosition);
+    };
+    const unsubscribeBlur = navigation.addListener("blur", () => {
+      cancelScrollRestore();
+      savedWebScrollOffsetRef.current = currentWebScrollOffsetRef.current;
+    });
+    const unsubscribeFocus = navigation.addListener("focus", requestScrollRestore);
+    // The Web native-stack transition may reset FlashList after focus has already restored it.
+    // Start a fresh verified restore once the transition itself has finished.
+    const unsubscribeTransitionEnd = navigation.addListener("transitionEnd", requestScrollRestore);
+
+    return () => {
+      cancelScrollRestore();
+      unsubscribeBlur();
+      unsubscribeFocus();
+      unsubscribeTransitionEnd();
+    };
+  }, [contentOffset, getActualWebScrollOffset, navigation, restoreWebScrollPosition]);
   const resolvedScrollEventThrottle =
     scrollEventThrottle ?? (trackedOnScroll == null ? undefined : 16);
   const rootBackground = { backgroundColor: backgroundColor ?? appBackgroundColors.screen };
@@ -1086,6 +1255,7 @@ export function NativeListRoot({
         ]}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps ?? "handled"}
         nestedScrollEnabled={nestedScrollEnabled ?? true}
+        onLayout={onLayout}
         onScroll={trackedOnScroll}
         scrollEnabled={scrollable}
         scrollEventThrottle={resolvedScrollEventThrottle}
@@ -1099,47 +1269,51 @@ export function NativeListRoot({
   }
 
   return (
-    <FlashList
-      automaticallyAdjustsScrollIndicatorInsets={
-        manuallyAdjustNormalPageIndicator ? false : automaticallyAdjustsScrollIndicatorInsets
-      }
-      alwaysBounceVertical={alwaysBounceVertical ?? (!insideTrueSheet && os() === "ios")}
-      contentInset={contentInset}
-      contentContainerStyle={[
-        insideTrueSheet ? styles.rootContent : styles.scrollRootContent,
-        styles.scrollViewportFill,
-        rootBackground,
-        contentSpacingStyle,
-        contentContainerStyle,
-      ]}
-      contentInsetAdjustmentBehavior={resolvedContentInsetAdjustmentBehavior}
-      contentOffset={contentOffset}
-      data={entries}
-      extraData={entries}
-      getItemType={getEntryType}
-      initialScrollIndex={initialScrollIndex}
-      ItemSeparatorComponent={FallbackListItemSeparator}
-      keyboardShouldPersistTaps={keyboardShouldPersistTaps ?? "handled"}
-      keyExtractor={getEntryKey}
-      nestedScrollEnabled={nestedScrollEnabled ?? true}
-      onRefresh={handleRefresh}
-      onScroll={trackedOnScroll}
-      refreshing={onRefresh != null ? refreshing : undefined}
-      renderItem={renderFallbackListEntry}
-      scrollEnabled={scrollable}
-      scrollEventThrottle={scrollEventThrottle ?? 16}
-      showsVerticalScrollIndicator={showsVerticalScrollIndicator ?? true}
-      scrollIndicatorInsets={
-        indicatorBottomInset != null
-          ? {
-              ...scrollIndicatorInsets,
-              bottom: indicatorBottomInset,
-            }
-          : scrollIndicatorInsets
-      }
-      style={[styles.root, rootBackground, style]}
-      {...scrollViewProps}
-    />
+    <FallbackListScrollCaptureContext.Provider value={captureWebScrollPosition}>
+      <FlashList
+        automaticallyAdjustsScrollIndicatorInsets={
+          manuallyAdjustNormalPageIndicator ? false : automaticallyAdjustsScrollIndicatorInsets
+        }
+        alwaysBounceVertical={alwaysBounceVertical ?? (!insideTrueSheet && os() === "ios")}
+        contentInset={contentInset}
+        contentContainerStyle={[
+          insideTrueSheet ? styles.rootContent : styles.scrollRootContent,
+          styles.scrollViewportFill,
+          rootBackground,
+          contentSpacingStyle,
+          contentContainerStyle,
+        ]}
+        contentInsetAdjustmentBehavior={resolvedContentInsetAdjustmentBehavior}
+        contentOffset={contentOffset}
+        data={entries}
+        extraData={entries}
+        getItemType={getEntryType}
+        initialScrollIndex={initialScrollIndex}
+        ItemSeparatorComponent={FallbackListItemSeparator}
+        keyboardShouldPersistTaps={keyboardShouldPersistTaps ?? "handled"}
+        keyExtractor={getEntryKey}
+        nestedScrollEnabled={nestedScrollEnabled ?? true}
+        onLayout={handleFlashListLayout}
+        onRefresh={handleRefresh}
+        onScroll={handleFlashListScroll}
+        ref={flashListRef}
+        refreshing={onRefresh != null ? refreshing : undefined}
+        renderItem={renderFallbackListEntry}
+        scrollEnabled={scrollable}
+        scrollEventThrottle={scrollEventThrottle ?? 16}
+        showsVerticalScrollIndicator={showsVerticalScrollIndicator ?? true}
+        scrollIndicatorInsets={
+          indicatorBottomInset != null
+            ? {
+                ...scrollIndicatorInsets,
+                bottom: indicatorBottomInset,
+              }
+            : scrollIndicatorInsets
+        }
+        style={[styles.root, rootBackground, style]}
+        {...scrollViewProps}
+      />
+    </FallbackListScrollCaptureContext.Provider>
   );
 }
 

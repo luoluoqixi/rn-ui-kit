@@ -138,4 +138,6 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
     onRefresh?: () => Promise<void> | void;
     /** 设为 false 时不创建内部 ScrollView，由外层宿主负责滚动。 */
     scrollable?: boolean;
+    /** web 自动还原 scroll */
+    webAutoRestoreScroll?: boolean | undefined;
   };

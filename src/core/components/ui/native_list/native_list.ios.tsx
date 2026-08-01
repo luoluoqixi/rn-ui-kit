@@ -532,6 +532,7 @@ function NativeListRoot({
   style,
   scrollable = true,
   tracksNavigationBarScrollEdge,
+  webAutoRestoreScroll: _webAutoRestoreScroll,
   ...fallbackProps
 }: NativeListRootProps) {
   const insets = useSafeAreaInsets();

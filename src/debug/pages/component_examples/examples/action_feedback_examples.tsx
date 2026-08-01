@@ -9,6 +9,7 @@ import {
   Text,
   ToggleGroup,
   confirmNative,
+  isWeb,
   useToast,
 } from "rn-ui-kit/core";
 
@@ -168,17 +169,19 @@ function SliderExample() {
           step={1}
           value={[value]}
         />
-        <Slider
-          style={{
-            marginVertical: 15,
-          }}
-          native={false}
-          max={72}
-          min={12}
-          onValueChange={(next) => setValue(next[0] ?? 12)}
-          step={1}
-          value={[value]}
-        />
+        {!isWeb() && (
+          <Slider
+            style={{
+              marginVertical: 15,
+            }}
+            native={false}
+            max={72}
+            min={12}
+            onValueChange={(next) => setValue(next[0] ?? 12)}
+            step={1}
+            value={[value]}
+          />
+        )}
         <ExampleRow>
           <Button onPress={() => setValue(12)} size="$3" variant="outlined">
             最小
