@@ -38,7 +38,7 @@ export function RnUiKitDebugHomePage({
   const isNativeIosPage = Platform.OS === "ios";
   const usesPreIos26ScrollEdgeHeader = isNativeIosPage && !isIos26Plus();
   const tracksScrollEdgeHeader =
-    Platform.OS === "android" || usesPreIos26ScrollEdgeHeader;
+    Platform.OS === "android" || Platform.OS === "web" || usesPreIos26ScrollEdgeHeader;
   const sections = Array.from(
     pages.reduce((groups, page) => {
       const section = page.section ?? "调试分区";

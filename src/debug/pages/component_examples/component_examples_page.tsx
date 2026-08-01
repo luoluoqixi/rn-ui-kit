@@ -52,7 +52,7 @@ export function RnUiKitComponentExamplesDebugPage({
   const isNativeIosPage = Platform.OS === "ios";
   const usesPreIos26ScrollEdgeHeader = isNativeIosPage && !isIos26Plus();
   const tracksScrollEdgeHeader =
-    Platform.OS === "android" || usesPreIos26ScrollEdgeHeader;
+    Platform.OS === "android" || Platform.OS === "web" || usesPreIos26ScrollEdgeHeader;
   const pageBackgroundColor =
     layoutHost === "nativeSheet" && isIos26Plus() ? "transparent" : appBackgroundColors.screen;
 

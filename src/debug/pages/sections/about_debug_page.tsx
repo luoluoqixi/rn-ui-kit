@@ -14,7 +14,7 @@ const platformNames: Record<string, string> = {
 export function RnUiKitAboutDebugPage() {
   const usesPreIos26ScrollEdgeHeader = Platform.OS === "ios" && !isIos26Plus();
   const tracksScrollEdgeHeader =
-    Platform.OS === "android" || usesPreIos26ScrollEdgeHeader;
+    Platform.OS === "android" || Platform.OS === "web" || usesPreIos26ScrollEdgeHeader;
 
   return (
     <View style={styles.nativeListHost}>

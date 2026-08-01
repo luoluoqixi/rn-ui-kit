@@ -18,7 +18,7 @@ function createThemeDebugPage(preferences: UiPreferences, updatePreferences: Upd
   return function AppThemeDebugPage() {
     const usesPreIos26ScrollEdgeHeader = Platform.OS === "ios" && !isIos26Plus();
     const tracksScrollEdgeHeader =
-      Platform.OS === "android" || usesPreIos26ScrollEdgeHeader;
+      Platform.OS === "android" || Platform.OS === "web" || usesPreIos26ScrollEdgeHeader;
     const accentOptions = useMemo(
       () => accentThemeNames.map((value) => ({ label: value, value })),
       [],
