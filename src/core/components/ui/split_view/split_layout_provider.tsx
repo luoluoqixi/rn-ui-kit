@@ -141,6 +141,10 @@ export function useSplitLayoutStorage(
 } {
   const context = useContext(SplitLayoutStorageContext);
   const useContextStorage = storageKey == null && storageAdapter == null && context != null;
+  // Provider 会随持久化状态变化重新渲染，但其 setState 回调在配置不变时保持稳定。
+  // 不直接把整个 context 放进下方 useCallback 的依赖，避免每次写入状态都让
+  // SplitLayout 的模型初始化 effect 重新执行并打断当前拖拽。
+  const contextSetState = context?.setState;
   const resolvedStorageKey = storageKey ?? context?.storageKey;
   const resolvedStorageAdapter = storageAdapter ?? context?.storageAdapter;
   const hasStorage = resolvedStorageAdapter != null && resolvedStorageKey != null;
@@ -186,7 +190,7 @@ export function useSplitLayoutStorage(
   const setState = useCallback(
     (updater: SplitLayoutStateUpdater) => {
       if (useContextStorage) {
-        context!.setState(updater);
+        contextSetState?.(updater);
         return;
       }
 
@@ -204,7 +208,7 @@ export function useSplitLayoutStorage(
       void writeSplitLayoutState(resolvedStorageAdapter, resolvedStorageKey, nextState);
     },
     [
-      context,
+      contextSetState,
       fallbackState,
       hasStorage,
       resolvedStorageAdapter,
