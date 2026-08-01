@@ -971,6 +971,8 @@ export function NativeListRoot({
     onScroll,
     tracksNavigationBarScrollEdge,
   });
+  const resolvedScrollEventThrottle =
+    scrollEventThrottle ?? (trackedOnScroll == null ? undefined : 16);
   const rootBackground = { backgroundColor: backgroundColor ?? appBackgroundColors.screen };
   const isNestedFallbackList = nestedScrollEnabled === true;
 
@@ -1047,9 +1049,7 @@ export function NativeListRoot({
         nestedScrollEnabled={nestedScrollEnabled ?? true}
         onScroll={trackedOnScroll}
         scrollEnabled={scrollable}
-        scrollEventThrottle={
-          scrollEventThrottle ?? (tracksNavigationBarScrollEdge ? 16 : undefined)
-        }
+        scrollEventThrottle={resolvedScrollEventThrottle}
         showsVerticalScrollIndicator={showsVerticalScrollIndicator ?? true}
         style={[styles.root, rootBackground, style]}
         {...scrollViewProps}
@@ -1088,7 +1088,7 @@ export function NativeListRoot({
       refreshing={onRefresh != null ? refreshing : undefined}
       renderItem={renderFallbackListEntry}
       scrollEnabled={scrollable}
-      scrollEventThrottle={scrollEventThrottle ?? (tracksNavigationBarScrollEdge ? 16 : undefined)}
+      scrollEventThrottle={scrollEventThrottle ?? 16}
       showsVerticalScrollIndicator={showsVerticalScrollIndicator ?? true}
       scrollIndicatorInsets={
         indicatorBottomInset != null
