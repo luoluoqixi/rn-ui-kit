@@ -1,0 +1,16 @@
+diff --git a/src/recyclerview/RecyclerView.tsx b/src/recyclerview/RecyclerView.tsx
+index 3c25e7e8..0cda6c68 100644
+--- a/src/recyclerview/RecyclerView.tsx
++++ b/src/recyclerview/RecyclerView.tsx
+@@ -374,7 +374,10 @@ const RecyclerViewComponent = <T,>(
+    */
+   const validateItemSize = useCallback(
+     (index: number, size: RVDimension) => {
+-      const layout = recyclerViewManager.getLayout(index);
++      const layout = recyclerViewManager.tryGetLayout(index);
++      if (layout === undefined) {
++        return;
++      }
+       const width = Math.max(
+         Math.min(layout.width, layout.maxWidth ?? Infinity),
+         layout.minWidth ?? 0
