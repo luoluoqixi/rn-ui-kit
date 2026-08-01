@@ -56,9 +56,13 @@ export const Button = forwardRef<ComponentRef<typeof TamaguiButton>, ButtonProps
   }
 
   if (isWeb()) {
+    let webTitle = children ?? resolvedTitle;
+    if (webTitle === "") {
+      webTitle = undefined;
+    }
     return (
       <TamaguiButton opacity={resolvedOpacity} {...buttonProps} onPress={handlePress} ref={ref}>
-        {children}
+        {webTitle}
       </TamaguiButton>
     );
   }
