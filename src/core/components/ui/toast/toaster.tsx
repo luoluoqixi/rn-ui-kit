@@ -284,12 +284,18 @@ export function Toaster({
   const position = isWeb() ? "bottom-right" : "bottom-center";
   const scopedViewport = viewportName != null;
   const viewportStyle = scopedViewport
-    ? {
-        bottom: getScopedToastViewportBottomInset(viewportName, detent),
-        left: 16,
-        right: 16,
-        top: "auto" as const,
-      }
+    ? isWeb()
+      ? {
+          bottom: getScopedToastViewportBottomInset(viewportName, detent),
+          right: 16,
+          top: "auto" as const,
+        }
+      : {
+          bottom: getScopedToastViewportBottomInset(viewportName, detent),
+          left: 16,
+          right: 16,
+          top: "auto" as const,
+        }
     : undefined;
   const portalToRoot = viewportName == null;
   return (
