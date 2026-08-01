@@ -126,7 +126,7 @@ function NativePickerDefaultTrigger({
 }: {
   label: React.ReactNode;
   placeholder: boolean;
-  onPress: () => void;
+  onPress?: () => void;
 }) {
   return (
     <TamaguiListItem
@@ -226,16 +226,12 @@ type NativePickerSwiftUIMenuTriggerProps = {
   icon?: SelectNativeTriggerIcon;
   items: ResolvedSelectItemData[];
   labelProps?: TextProps;
-  onBeforePress?: () => void;
   value: string | null | undefined;
   onPress?: PressableProps["onPress"];
 };
 
 const NativePickerSwiftUIMenuTrigger = React.forwardRef<View, NativePickerSwiftUIMenuTriggerProps>(
-  (
-    { containerStyle, content, icon, items, labelProps, onBeforePress, value, onPress },
-    forwardedRef,
-  ) => {
+  ({ containerStyle, content, icon, items, labelProps, value, onPress }, forwardedRef) => {
     const selectedValue = (value as string) ?? items[0]?.value ?? "";
     const selectedLabel = items.find((item) => item.value === selectedValue)?.label ?? "";
 
@@ -247,10 +243,7 @@ const NativePickerSwiftUIMenuTrigger = React.forwardRef<View, NativePickerSwiftU
         icon={icon}
         label={selectedLabel}
         labelProps={labelProps}
-        onPress={(event) => {
-          onBeforePress?.();
-          onPress?.(event);
-        }}
+        onPress={onPress}
       />
     );
   },
@@ -409,19 +402,18 @@ function NativePickerDropdownCustom({
       icon={nativeTriggerIcon}
       items={items}
       labelProps={nativeTriggerLabelProps}
-      onBeforePress={() => triggerNativeHaptics(resolvedNativeHaptics)}
       value={value}
     />
   ) : (
     <NativePickerDefaultTrigger
       label={selectedLabel ?? (typeof placeholder === "string" ? placeholder : "选择")}
-      onPress={() => triggerNativeHaptics(resolvedNativeHaptics)}
       placeholder={selectedLabel == null}
     />
   );
 
   return (
     <Menu
+      nativeHaptics={resolvedNativeHaptics}
       onOpenChange={handleOpenChange}
       open={resolvedOpen}
       trigger={trigger}

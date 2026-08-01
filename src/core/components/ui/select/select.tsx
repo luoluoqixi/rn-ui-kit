@@ -1355,7 +1355,6 @@ const SelectRoot = forwardRef<any, SelectProps>(
       }
 
       onOpenChange?.(nextOpen);
-      if (nextOpen) triggerNativeHaptics(resolvedNativeHaptics);
     };
 
     const handleWebMenuValueChange = (nextValue: string) => {
@@ -1504,6 +1503,7 @@ const SelectRoot = forwardRef<any, SelectProps>(
           resolvedItems.length === 0 ? null : (
             <Menu
               modal
+              nativeHaptics={resolvedNativeHaptics}
               onOpenChange={handleWebMenuOpenChange}
               open={resolvedWebMenuOpen}
               offset={8}

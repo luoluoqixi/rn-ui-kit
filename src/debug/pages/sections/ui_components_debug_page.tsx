@@ -1165,26 +1165,17 @@ export function RnUiKitUiComponentsDebugPage({ header }: RnUiKitUiComponentsDebu
                 value: "quick-delete-all",
               },
             ]}
+            nativeHaptics
             trigger={
-              <Button
-                icon={Backpack}
-                nativeHaptics={debugNativeHaptics}
-                size="$4"
-                variant="outlined"
-              >
+              <Button icon={Backpack} size="$4" variant="outlined">
                 打开快捷 Menu
               </Button>
             }
           />
 
-          <Menu>
+          <Menu nativeHaptics={debugNativeHaptics}>
             <Menu.Trigger>
-              <Button
-                icon={Backpack}
-                nativeHaptics={debugNativeHaptics}
-                size="$4"
-                variant="outlined"
-              >
+              <Button icon={Backpack} size="$4" variant="outlined">
                 打开复杂 Menu
               </Button>
             </Menu.Trigger>

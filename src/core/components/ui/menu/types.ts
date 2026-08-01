@@ -1,6 +1,8 @@
 import type { ComponentProps, ReactNode } from "react";
 import type { Menu as TamaguiMenu } from "tamagui";
 
+import type { NativeHapticsSetting } from "../utils";
+
 export interface MenuItemData {
   "aria-label"?: string;
   destructive?: boolean;
@@ -20,6 +22,7 @@ export interface MenuProps extends ComponentProps<typeof TamaguiMenu> {
   contentProps?: MenuContentProps;
   itemProps?: Omit<MenuItemProps, "children" | "onPress" | "onSelect">;
   items?: MenuItemData[];
+  nativeHaptics?: NativeHapticsSetting;
   portalProps?: MenuPortalProps;
   trigger?: ReactNode;
   triggerProps?: MenuTriggerProps;

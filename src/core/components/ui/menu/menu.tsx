@@ -2,8 +2,12 @@ import { Children, type ReactNode, isValidElement } from "react";
 import { StyleSheet } from "react-native";
 import { SizableText, Menu as TamaguiMenu, YStack } from "tamagui";
 
-import { isWeb } from "../utils/platform";
-import { resolveAriaLabel } from "../utils";
+import { isWeb, os } from "../utils/platform";
+import {
+  resolveAriaLabel,
+  triggerNativeHaptics,
+  useResolvedNativeHaptics,
+} from "../utils";
 
 import type {
   MenuArrowProps,
@@ -73,13 +77,35 @@ function MenuRoot(props: MenuProps) {
     contentProps,
     itemProps,
     items,
+    nativeHaptics,
     offset,
+    onOpenChange,
+    onOpenWillChange,
     portalProps,
     trigger,
     triggerProps,
     ...rootProps
   } = props;
   const hasDefaultStructure = trigger != null || items != null || arrow != null;
+  const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics);
+  const ios = os() === "ios";
+  const handleOpenChange: NonNullable<MenuProps["onOpenChange"]> = (nextOpen) => {
+    onOpenChange?.(nextOpen);
+
+    if (nextOpen && !ios) {
+      triggerNativeHaptics(resolvedNativeHaptics);
+    }
+  };
+  const handleOpenWillChange: NonNullable<MenuProps["onOpenWillChange"]> = (nextOpen) => {
+    onOpenWillChange?.(nextOpen);
+
+    if (nextOpen) {
+      triggerNativeHaptics(resolvedNativeHaptics);
+    }
+  };
+  const iosOpenWillChangeProps = ios
+    ? { onOpenWillChange: handleOpenWillChange }
+    : undefined;
 
   // Menu 在 native 上浮动定位后视觉顺序反转，统一反转 children / items
   const resolvedChildren = Children.toArray(children).reverse();
@@ -87,14 +113,24 @@ function MenuRoot(props: MenuProps) {
 
   if (!hasDefaultStructure) {
     return (
-      <TamaguiMenu {...rootProps} offset={offset ?? 8}>
+      <TamaguiMenu
+        {...rootProps}
+        {...iosOpenWillChangeProps}
+        offset={offset ?? 8}
+        onOpenChange={handleOpenChange}
+      >
         {resolvedChildren}
       </TamaguiMenu>
     );
   }
 
   return (
-    <TamaguiMenu {...rootProps} offset={offset ?? 8}>
+    <TamaguiMenu
+      {...rootProps}
+      {...iosOpenWillChangeProps}
+      offset={offset ?? 8}
+      onOpenChange={handleOpenChange}
+    >
       {trigger != null ? <MenuTrigger {...triggerProps}>{trigger}</MenuTrigger> : null}
       <MenuPortal {...portalProps}>
         <MenuContent {...contentProps}>
