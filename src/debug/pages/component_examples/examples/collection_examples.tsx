@@ -37,6 +37,7 @@ import {
   SelectItemData,
   Switch,
   Text,
+  isIos15,
   os,
 } from "rn-ui-kit/core";
 
@@ -138,26 +139,30 @@ function NativeListExample() {
                 title="工作区"
                 titleColor="#7c3aed"
                 trailing={
-                  <Select
-                    value="defaultSort"
-                    renderValue={() => "排序方式"}
-                    options={NATIVE_LIST_SORT_LIST}
-                    nativeTrigger
-                    nativeTriggerLabelProps={{
-                      fontSize: 14,
-                      color: "$accent11",
-                      opacity: 1,
-                    }}
-                    nativeTriggerContainerStyle={{
-                      alignItems: "center",
-                      flexDirection: "row",
-                      flexShrink: 1,
-                      gap: 4,
-                      maxWidth: 180,
-                      minHeight: 32,
-                      minWidth: 0,
-                    }}
-                  />
+                  isIos15() ? (
+                    "trailing"
+                  ) : (
+                    <Select
+                      value="defaultSort"
+                      renderValue={() => "排序方式"}
+                      options={NATIVE_LIST_SORT_LIST}
+                      nativeTrigger
+                      nativeTriggerLabelProps={{
+                        fontSize: 14,
+                        color: "$accent11",
+                        opacity: 1,
+                      }}
+                      nativeTriggerContainerStyle={{
+                        alignItems: "center",
+                        flexDirection: "row",
+                        flexShrink: 1,
+                        gap: 4,
+                        maxWidth: 180,
+                        minHeight: 32,
+                        minWidth: 0,
+                      }}
+                    />
+                  )
                 }
               >
                 <NativeListNavigationItem
