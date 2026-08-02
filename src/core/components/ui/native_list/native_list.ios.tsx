@@ -43,7 +43,6 @@ import { useTheme } from "tamagui";
 import { NativePickerSwiftUI } from "../select/native_picker";
 import type { NativePickerSwiftUIHandle } from "../select/native_picker";
 import { resolveSelectItemGroups } from "../select/select_grouping";
-import { Input } from "../input";
 import { getTrueSheetScrollBottomPadding } from "../sheet/native_sheet/true_sheet/sheet_scroll_layout";
 import { useTrueSheetScrollLayout } from "../sheet/native_sheet/true_sheet/true_sheet_scroll_context";
 import { Switch } from "../switch";
@@ -857,15 +856,32 @@ export function NativeListButtonItem({
  */
 export function NativeListInputItem({ inputProps, ...itemProps }: NativeListInputItemProps) {
   const nativeListEnabled = useNativeListEnabled();
+  const theme = useTheme();
   const disabled = itemProps.disabled || inputProps.disabled;
   const hasLeadingLabel = itemProps.title != null || itemProps.subtitle != null;
+  const {
+    autoFocusNative,
+    disabled: _inputDisabled,
+    style: inputStyle,
+    unstyled: _unstyled,
+    ...nativeInputProps
+  } = inputProps;
   const resolvedInput = (
-    <Input
-      {...inputProps}
+    <TextInput
+      {...(nativeInputProps as any)}
+      autoFocus={autoFocusNative ?? inputProps.autoFocus ?? false}
       clearButtonMode={inputProps.clearButtonMode ?? "while-editing"}
-      disabled={disabled}
-      style={[styles.input, !hasLeadingLabel ? styles.fullWidthInput : null, inputProps.style]}
-      unstyled={inputProps.unstyled ?? true}
+      editable={!disabled}
+      multiline={inputProps.multiline ?? false}
+      placeholderTextColor={
+        inputProps.placeholderTextColor ?? theme.gray9?.val ?? theme.color10.val
+      }
+      style={[
+        styles.input,
+        !hasLeadingLabel ? styles.fullWidthInput : null,
+        { color: theme.gray12?.val ?? theme.color.val },
+        inputStyle,
+      ]}
     />
   );
 
@@ -930,10 +946,13 @@ export function NativeListTextAreaItem({
           scrollEnabled={scrollEnabled ?? true}
           style={[
             styles.textArea,
-            { color: theme.color.val, height: textAreaHeight, minHeight: textAreaHeight },
+            {
+              color: theme.gray12?.val ?? theme.color.val,
+              height: textAreaHeight,
+              minHeight: textAreaHeight,
+            },
             inputStyle,
           ]}
-          unstyled={textAreaProps.unstyled ?? true}
         />
       </View>
     </NativeListCustomItem>
