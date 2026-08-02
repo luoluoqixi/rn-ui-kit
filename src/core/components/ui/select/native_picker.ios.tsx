@@ -224,29 +224,23 @@ type NativePickerSwiftUIMenuTriggerProps = {
   containerStyle?: StyleProp<ViewStyle>;
   content?: React.ReactNode;
   icon?: SelectNativeTriggerIcon;
-  items: ResolvedSelectItemData[];
+  label: React.ReactNode;
   labelProps?: TextProps;
-  value: string | null | undefined;
   onPress?: PressableProps["onPress"];
 };
 
 const NativePickerSwiftUIMenuTrigger = React.forwardRef<View, NativePickerSwiftUIMenuTriggerProps>(
-  ({ containerStyle, content, icon, items, labelProps, value, onPress }, forwardedRef) => {
-    const selectedValue = (value as string) ?? items[0]?.value ?? "";
-    const selectedLabel = items.find((item) => item.value === selectedValue)?.label ?? "";
-
-    return (
-      <NativeTriggerPressable
-        ref={forwardedRef}
-        content={content}
-        containerStyle={containerStyle}
-        icon={icon}
-        label={selectedLabel}
-        labelProps={labelProps}
-        onPress={onPress}
-      />
-    );
-  },
+  ({ containerStyle, content, icon, label, labelProps, onPress }, forwardedRef) => (
+    <NativeTriggerPressable
+      ref={forwardedRef}
+      content={content}
+      containerStyle={containerStyle}
+      icon={icon}
+      label={label}
+      labelProps={labelProps}
+      onPress={onPress}
+    />
+  ),
 );
 
 /** wheel + 原生 trigger（SwiftUI menu 按钮） */
@@ -256,6 +250,7 @@ const NativePickerWheelNativeTriggerSheet = React.forwardRef<
     nativeTriggerContainerStyle?: StyleProp<ViewStyle>;
     nativeTriggerContent?: React.ReactNode;
     nativeTriggerIcon?: SelectNativeTriggerIcon;
+    nativeTriggerLabel: React.ReactNode;
     nativeTriggerLabelProps?: TextProps;
     items: ResolvedSelectItemData[];
     placeholder?: React.ReactNode;
@@ -269,6 +264,7 @@ const NativePickerWheelNativeTriggerSheet = React.forwardRef<
       nativeTriggerContainerStyle,
       nativeTriggerContent,
       nativeTriggerIcon,
+      nativeTriggerLabel,
       nativeTriggerLabelProps,
       items,
       placeholder,
@@ -320,9 +316,8 @@ const NativePickerWheelNativeTriggerSheet = React.forwardRef<
           containerStyle={nativeTriggerContainerStyle}
           content={nativeTriggerContent}
           icon={nativeTriggerIcon}
-          items={items}
+          label={nativeTriggerLabel}
           labelProps={nativeTriggerLabelProps}
-          value={value}
           onPress={() => openSheet(true)}
         />
 
@@ -356,6 +351,7 @@ function NativePickerDropdownCustom({
   nativeTriggerContainerStyle,
   nativeTriggerContent,
   nativeTriggerIcon,
+  nativeTriggerLabel,
   nativeTriggerLabelProps,
   __menuRef,
 }: {
@@ -370,6 +366,7 @@ function NativePickerDropdownCustom({
   nativeTriggerContainerStyle?: StyleProp<ViewStyle>;
   nativeTriggerContent?: React.ReactNode;
   nativeTriggerIcon?: SelectNativeTriggerIcon;
+  nativeTriggerLabel: React.ReactNode;
   nativeTriggerLabelProps?: TextProps;
   __menuRef?: React.MutableRefObject<{ presentMenu: () => void } | null>;
 }) {
@@ -400,9 +397,8 @@ function NativePickerDropdownCustom({
       containerStyle={nativeTriggerContainerStyle}
       content={nativeTriggerContent}
       icon={nativeTriggerIcon}
-      items={items}
+      label={nativeTriggerLabel}
       labelProps={nativeTriggerLabelProps}
-      value={value}
     />
   ) : (
     <NativePickerDefaultTrigger
@@ -466,6 +462,7 @@ export const NativePickerSwiftUI = React.forwardRef<
     nativeTriggerContainerStyle?: StyleProp<ViewStyle>;
     nativeTriggerContent?: React.ReactNode;
     nativeTriggerIcon?: SelectNativeTriggerIcon;
+    nativeTriggerLabel: React.ReactNode;
     nativeTriggerLabelProps?: TextProps;
     onValueChange?: (value: string | null) => void;
     onOpenChange?: (open: boolean) => void;
@@ -497,6 +494,7 @@ export const NativePickerSwiftUI = React.forwardRef<
     nativeTriggerContainerStyle,
     nativeTriggerContent,
     nativeTriggerIcon,
+    nativeTriggerLabel,
     nativeTriggerLabelProps,
     onValueChange,
     onOpenChange,
@@ -519,6 +517,7 @@ export const NativePickerSwiftUI = React.forwardRef<
         nativeTriggerContainerStyle={nativeTriggerContainerStyle}
         nativeTriggerContent={nativeTriggerContent}
         nativeTriggerIcon={nativeTriggerIcon}
+        nativeTriggerLabel={nativeTriggerLabel}
         nativeTriggerLabelProps={nativeTriggerLabelProps}
         __menuRef={menuControlRef}
       />
@@ -534,6 +533,7 @@ export const NativePickerSwiftUI = React.forwardRef<
         nativeTriggerContainerStyle={nativeTriggerContainerStyle}
         nativeTriggerContent={nativeTriggerContent}
         nativeTriggerIcon={nativeTriggerIcon}
+        nativeTriggerLabel={nativeTriggerLabel}
         nativeTriggerLabelProps={nativeTriggerLabelProps}
         value={value}
         placeholder={placeholder}

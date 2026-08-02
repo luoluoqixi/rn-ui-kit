@@ -20,6 +20,8 @@ import {
   FlashList,
   ListGroup,
   ListItem,
+  Menu,
+  MenuItemData,
   NativeList,
   NativeListInputItem,
   NativeListItem,
@@ -29,7 +31,10 @@ import {
   NativeListSelectItem,
   NativeListSwitchItem,
   NativeListTextAreaItem,
+  NativeTrigger,
   ScrollView,
+  Select,
+  SelectItemData,
   Switch,
   Text,
   os,
@@ -47,6 +52,11 @@ const NATIVE_LIST_BACKUP_OPTIONS = [
   { Icon: CalendarDays, sfSymbol: "calendar", title: "每天", value: "daily" },
   { Icon: CircleOff, sfSymbol: "nosign", title: "从不", value: "never" },
 ] as const;
+
+const NATIVE_LIST_SORT_LIST: SelectItemData[] = [
+  { value: "defaultSort", label: "默认排序" },
+  { value: "timeSort", label: "时间排序" },
+];
 
 function NativeListExample() {
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
@@ -128,7 +138,26 @@ function NativeListExample() {
                 title="工作区"
                 titleColor="#7c3aed"
                 trailing={
-                  <Button chromeless size={22} fontSize={12} color="$blue10" title="全部显示" />
+                  <Select
+                    value="defaultSort"
+                    renderValue={() => "排序方式"}
+                    options={NATIVE_LIST_SORT_LIST}
+                    nativeTrigger
+                    nativeTriggerLabelProps={{
+                      fontSize: 14,
+                      color: "$accent11",
+                      opacity: 1,
+                    }}
+                    nativeTriggerContainerStyle={{
+                      alignItems: "center",
+                      flexDirection: "row",
+                      flexShrink: 1,
+                      gap: 4,
+                      maxWidth: 180,
+                      minHeight: 32,
+                      minWidth: 0,
+                    }}
+                  />
                 }
               >
                 <NativeListNavigationItem

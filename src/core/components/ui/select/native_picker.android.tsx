@@ -133,6 +133,7 @@ export const NativePickerSwiftUI = React.forwardRef<
     nativeTriggerContainerStyle?: StyleProp<ViewStyle>;
     nativeTriggerContent?: React.ReactNode;
     nativeTriggerIcon?: SelectNativeTriggerIcon;
+    nativeTriggerLabel: React.ReactNode;
     nativeTriggerLabelProps?: TextProps;
     onValueChange?: (value: string | null) => void;
     resolvedNativeHaptics: ReturnType<typeof useResolvedNativeHaptics>;
@@ -148,6 +149,7 @@ export const NativePickerSwiftUI = React.forwardRef<
     nativeTriggerContainerStyle,
     nativeTriggerContent,
     nativeTriggerIcon,
+    nativeTriggerLabel,
     nativeTriggerLabelProps,
     onValueChange,
     resolvedNativeHaptics,
@@ -161,8 +163,6 @@ export const NativePickerSwiftUI = React.forwardRef<
   }));
 
   const [visible, setVisible] = React.useState(false);
-  const selectedLabel =
-    items.find((item) => item.value === ((value as string) ?? items[0]?.value ?? ""))?.label ?? "";
   const openPicker = React.useCallback(
     (shouldTriggerHaptics: boolean) => {
       if (shouldTriggerHaptics) {
@@ -195,7 +195,7 @@ export const NativePickerSwiftUI = React.forwardRef<
         content={nativeTriggerContent}
         containerStyle={nativeTriggerContainerStyle}
         icon={nativeTriggerIcon}
-        label={selectedLabel}
+        label={nativeTriggerLabel}
         labelProps={nativeTriggerLabelProps}
         onPress={() => {
           openPicker(true);

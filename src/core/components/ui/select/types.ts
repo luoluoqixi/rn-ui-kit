@@ -95,6 +95,7 @@ export interface SelectProps extends Omit<
    * true = 在 Web / iOS / Android 上都使用统一的文本 + 双箭头 trigger 外观
    *   原生 picker 路径：打开平台原生 picker
    *   Tamagui Select 路径：打开现有 Select/Sheet/Menu 内容
+   *   已选值会应用 `renderValue`；`nativeTriggerContent` 仍会完全覆盖默认内容
    * false = 使用各路径默认 trigger 外观 */
   nativeTrigger?: boolean;
   onValueChange?: (nextValue: string | null) => void;

@@ -1066,6 +1066,10 @@ const SelectRoot = forwardRef<any, SelectProps>(
       resolvedItems.find((item) => item.value === value)?.label ?? null;
     const selectedItem = getItemLabelByValue(selectedValue);
     const triggerLabel = selectedItem ?? placeholder ?? "";
+    const nativeTriggerLabel =
+      selectedValue == null || selectedValue === "" || props.renderValue == null
+        ? triggerLabel
+        : props.renderValue(selectedValue);
     const defaultAndroidDropdownAlign =
       platform === "android" && resolvedPickerMode === "dropdown" ? "center" : undefined;
     const resolvedNativeDropdownAlign = nativeDropdownAlign ?? defaultAndroidDropdownAlign;
@@ -1218,6 +1222,16 @@ const SelectRoot = forwardRef<any, SelectProps>(
 
       onValueChange?.(nextValue ?? null);
       triggerNativeHaptics(resolvedNativeHaptics);
+    };
+
+    // 平台 picker 不经过 Tamagui Select 的 onValueChange；同步内部值以支持
+    // defaultValue / 非受控使用方式，同时避免与 picker 自己的触感反馈重复触发。
+    const handleNativePickerValueChange = (nextValue: string | null) => {
+      if (props.value === undefined) {
+        setWebMenuValue(nextValue ?? undefined);
+      }
+
+      onValueChange?.(nextValue);
     };
 
     /** 打开 Sheet 时滚动到选中项位置。 */
@@ -1482,7 +1496,7 @@ const SelectRoot = forwardRef<any, SelectProps>(
             content={nativeTriggerContent}
             containerStyle={nativeTriggerContainerStyle}
             icon={nativeTriggerIcon}
-            label={triggerLabel}
+            label={nativeTriggerLabel}
             labelProps={nativeTriggerLabelProps}
           />
         ) : (
@@ -1614,7 +1628,7 @@ const SelectRoot = forwardRef<any, SelectProps>(
                 content={nativeTriggerContent}
                 containerStyle={nativeTriggerContainerStyle}
                 icon={nativeTriggerIcon}
-                label={triggerLabel}
+                label={nativeTriggerLabel}
                 labelProps={nativeTriggerLabelProps}
               />
             ) : (
@@ -1658,7 +1672,7 @@ const SelectRoot = forwardRef<any, SelectProps>(
         ) : shouldRenderNativePlatformPicker ? (
           <NativePickerSwiftUI
             items={resolvedItems}
-            value={props.value}
+            value={selectedValue}
             placeholder={placeholder}
             nativeDropdownAlign={resolvedNativeDropdownAlign}
             nativeDropdownAnchorWidth={nativeDropdownAnchorWidth}
@@ -1668,8 +1682,9 @@ const SelectRoot = forwardRef<any, SelectProps>(
             nativeTriggerContainerStyle={nativeTriggerContainerStyle}
             nativeTriggerContent={nativeTriggerContent}
             nativeTriggerIcon={nativeTriggerIcon}
+            nativeTriggerLabel={nativeTriggerLabel}
             nativeTriggerLabelProps={nativeTriggerLabelProps}
-            onValueChange={onValueChange}
+            onValueChange={handleNativePickerValueChange}
             resolvedNativeHaptics={resolvedNativeHaptics}
           />
         ) : (
@@ -1722,7 +1737,7 @@ const SelectRoot = forwardRef<any, SelectProps>(
                         content={nativeTriggerContent}
                         containerStyle={nativeTriggerContainerStyle}
                         icon={nativeTriggerIcon}
-                        label={triggerLabel}
+                        label={nativeTriggerLabel}
                         labelProps={nativeTriggerLabelProps}
                       />
                     ) : (
