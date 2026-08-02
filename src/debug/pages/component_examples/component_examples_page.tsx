@@ -50,9 +50,9 @@ export function RnUiKitComponentExamplesDebugPage({
   const appBackgroundColors = useAppBackgroundColors();
   const navigation = useNavigation<NavigationProp<DebugPanelNavigationParamList>>();
   const isNativeIosPage = Platform.OS === "ios";
-  const usesPreIos26ScrollEdgeHeader = isNativeIosPage && !isIos26Plus();
+  const usesNativeIosScrollEdgeHeader = isNativeIosPage;
   const tracksScrollEdgeHeader =
-    Platform.OS === "android" || Platform.OS === "web" || usesPreIos26ScrollEdgeHeader;
+    Platform.OS === "android" || Platform.OS === "web" || usesNativeIosScrollEdgeHeader;
   const pageBackgroundColor =
     layoutHost === "nativeSheet" && isIos26Plus() ? "transparent" : appBackgroundColors.screen;
 
@@ -61,7 +61,7 @@ export function RnUiKitComponentExamplesDebugPage({
       {header != null ? <View style={styles.routeHeader}>{header}</View> : null}
       <NativeList
         automaticallyAdjustsScrollIndicatorInsets={isNativeIosPage ? true : undefined}
-        contentInsetAdjustmentBehavior={usesPreIos26ScrollEdgeHeader ? "automatic" : undefined}
+        contentInsetAdjustmentBehavior={usesNativeIosScrollEdgeHeader ? "automatic" : undefined}
         tracksNavigationBarScrollEdge={tracksScrollEdgeHeader}
       >
         <NativeListSection>

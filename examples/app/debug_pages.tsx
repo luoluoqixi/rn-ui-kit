@@ -7,7 +7,6 @@ import {
   NativeListSelectItem,
   NativeListSwitchItem,
   type UiPreferences,
-  isIos26Plus,
 } from "rn-ui-kit";
 
 import { accentThemeNames } from "./themes";
@@ -16,9 +15,9 @@ type UpdatePreferences = (updater: (current: UiPreferences) => UiPreferences) =>
 
 function createThemeDebugPage(preferences: UiPreferences, updatePreferences: UpdatePreferences) {
   return function AppThemeDebugPage() {
-    const usesPreIos26ScrollEdgeHeader = Platform.OS === "ios" && !isIos26Plus();
+    const usesNativeIosScrollEdgeHeader = Platform.OS === "ios";
     const tracksScrollEdgeHeader =
-      Platform.OS === "android" || Platform.OS === "web" || usesPreIos26ScrollEdgeHeader;
+      Platform.OS === "android" || Platform.OS === "web" || usesNativeIosScrollEdgeHeader;
     const accentOptions = useMemo(
       () => accentThemeNames.map((value) => ({ label: value, value })),
       [],
@@ -28,9 +27,9 @@ function createThemeDebugPage(preferences: UiPreferences, updatePreferences: Upd
       <View style={styles.nativeListHost}>
         <NativeList
           automaticallyAdjustsScrollIndicatorInsets={
-            usesPreIos26ScrollEdgeHeader ? true : undefined
+            usesNativeIosScrollEdgeHeader ? true : undefined
           }
-          contentInsetAdjustmentBehavior={usesPreIos26ScrollEdgeHeader ? "automatic" : undefined}
+          contentInsetAdjustmentBehavior={usesNativeIosScrollEdgeHeader ? "automatic" : undefined}
           tracksNavigationBarScrollEdge={tracksScrollEdgeHeader}
         >
           <NativeListSection title="主题">

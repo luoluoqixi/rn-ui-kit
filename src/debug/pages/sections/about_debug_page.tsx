@@ -1,5 +1,5 @@
 import { Linking, Platform, StyleSheet, View } from "react-native";
-import { NativeList, NativeListItem, NativeListSection, isIos26Plus } from "rn-ui-kit/core";
+import { NativeList, NativeListItem, NativeListSection } from "rn-ui-kit/core";
 
 import debugPackage from "../../../../package.json";
 
@@ -12,15 +12,15 @@ const platformNames: Record<string, string> = {
 };
 
 export function RnUiKitAboutDebugPage() {
-  const usesPreIos26ScrollEdgeHeader = Platform.OS === "ios" && !isIos26Plus();
+  const usesNativeIosScrollEdgeHeader = Platform.OS === "ios";
   const tracksScrollEdgeHeader =
-    Platform.OS === "android" || Platform.OS === "web" || usesPreIos26ScrollEdgeHeader;
+    Platform.OS === "android" || Platform.OS === "web" || usesNativeIosScrollEdgeHeader;
 
   return (
     <View style={styles.nativeListHost}>
       <NativeList
-        automaticallyAdjustsScrollIndicatorInsets={usesPreIos26ScrollEdgeHeader ? true : undefined}
-        contentInsetAdjustmentBehavior={usesPreIos26ScrollEdgeHeader ? "automatic" : undefined}
+        automaticallyAdjustsScrollIndicatorInsets={usesNativeIosScrollEdgeHeader ? true : undefined}
+        contentInsetAdjustmentBehavior={usesNativeIosScrollEdgeHeader ? "automatic" : undefined}
         tracksNavigationBarScrollEdge={tracksScrollEdgeHeader}
       >
         <NativeListSection title="关于">

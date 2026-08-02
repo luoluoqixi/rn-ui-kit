@@ -605,7 +605,6 @@ function NativeListRoot({
           }
           contentInsetAdjustmentBehavior={resolvedContentInsetAdjustmentBehavior}
           tracksNavigationBarScrollEdge={
-            !isIos26Plus() &&
             (!insideTrueSheet || trueSheetPresentationActive) &&
             (tracksNavigationBarScrollEdge ??
               (!insideTrueSheet && resolvedContentInsetAdjustmentBehavior === "automatic"))

@@ -59,9 +59,14 @@ type RnUiKitDebugStackParamList = {
 const Stack = createNativeStackNavigator<RnUiKitDebugStackParamList>();
 const DEBUG_PANEL_SHEET_OVERLAY_HOST = "rn-ui-kit-debug-panel-sheet-overlay";
 const DEBUG_SECTION_SHEET_OVERLAY_HOST = "rn-ui-kit-debug-section-sheet-overlay";
-const DEBUG_SECTION_SHEET_SNAP_POINTS = [50, 75, 100];
 const DEBUG_HOST_SECTION_PARAM = "__rnUiKitDebugSection";
 const DEBUG_HOST_EXAMPLE_PARAM = "__rnUiKitDebugExample";
+
+// ios26 中如果 Sheet 太高, 背景颜色会发生变化
+// 默认的背景颜色会变的和 NativeList 一样
+// 所以这里 ios26 示例默认限制最大高度
+const DEBUG_SECTION_SHEET_SNAP_POINTS = isIos26Plus() ? [50, 75, 85] : [50, 75, 100];
+const DEBUG_DEFAULT_SNAP_POINT = isIos26Plus() ? ["85%"] : ["95%"];
 
 function getDebugPages(pages?: RnUiKitDebugRouteDefinition[]) {
   return Array.from(
@@ -413,7 +418,11 @@ function RnUiKitDebugPanelSheet({
         open={open}
         overlayPortalHostName={DEBUG_PANEL_SHEET_OVERLAY_HOST}
         screenOptions={debugSheetStackScreenOptions}
-        sheetProps={{ snapPoints: ["95%"], snapPointsMode: "percent", ...panelSheetProps }}
+        sheetProps={{
+          snapPoints: DEBUG_DEFAULT_SNAP_POINT,
+          snapPointsMode: "percent",
+          ...panelSheetProps,
+        }}
       >
         <NativeSheetStack.Screen
           name="index"

@@ -9,7 +9,6 @@ import {
   NativeListSection,
   NativeListSwitchItem,
   Slider,
-  isIos26Plus,
 } from "rn-ui-kit/core";
 
 import type { RnUiKitDebugRouteDefinition, RnUiKitDebugRouteKey } from "../types";
@@ -36,9 +35,9 @@ export function RnUiKitDebugHomePage({
   onOpenSectionsInSheetChange?: (openInSheet: boolean) => void;
 }) {
   const isNativeIosPage = Platform.OS === "ios";
-  const usesPreIos26ScrollEdgeHeader = isNativeIosPage && !isIos26Plus();
+  const usesNativeIosScrollEdgeHeader = isNativeIosPage;
   const tracksScrollEdgeHeader =
-    Platform.OS === "android" || Platform.OS === "web" || usesPreIos26ScrollEdgeHeader;
+    Platform.OS === "android" || Platform.OS === "web" || usesNativeIosScrollEdgeHeader;
   const sections = Array.from(
     pages.reduce((groups, page) => {
       const section = page.section ?? "调试分区";
@@ -52,7 +51,7 @@ export function RnUiKitDebugHomePage({
   return (
     <NativeList
       automaticallyAdjustsScrollIndicatorInsets={isNativeIosPage ? true : undefined}
-      contentInsetAdjustmentBehavior={usesPreIos26ScrollEdgeHeader ? "automatic" : undefined}
+      contentInsetAdjustmentBehavior={usesNativeIosScrollEdgeHeader ? "automatic" : undefined}
       tracksNavigationBarScrollEdge={tracksScrollEdgeHeader}
     >
       {sections.map(([section, sectionPages]) => (
