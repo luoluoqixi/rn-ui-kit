@@ -12,6 +12,7 @@ import {
 import {
   createNativeStackNavigator,
   type NativeStackNavigationProp,
+  type NativeStackNavigationOptions,
 } from "@react-navigation/native-stack";
 import { type ComponentProps, useLayoutEffect, useMemo, useState } from "react";
 import { Platform, View } from "react-native";
@@ -61,6 +62,14 @@ const DEBUG_PANEL_SHEET_OVERLAY_HOST = "rn-ui-kit-debug-panel-sheet-overlay";
 const DEBUG_SECTION_SHEET_OVERLAY_HOST = "rn-ui-kit-debug-section-sheet-overlay";
 const DEBUG_HOST_SECTION_PARAM = "__rnUiKitDebugSection";
 const DEBUG_HOST_EXAMPLE_PARAM = "__rnUiKitDebugExample";
+const DEBUG_HOME_LARGE_TITLE_OPTIONS: NativeStackNavigationOptions =
+  Platform.OS === "ios"
+    ? {
+        headerLargeTitle: true,
+        headerLargeTitleEnabled: true,
+        headerLargeTitleShadowVisible: false,
+      }
+    : {};
 
 // ios26 中如果 Sheet 太高, 背景颜色会发生变化
 // 默认的背景颜色会变的和 NativeList 一样
@@ -262,6 +271,7 @@ function RnUiKitDebugHostPanel({
         headerBackTitle: showsExplicitRootBackLabel ? backButtonLabel : undefined,
         headerShown: true,
         title,
+        ...(isRootRoute ? DEBUG_HOME_LARGE_TITLE_OPTIONS : {}),
         ...pageScreenOptions,
       }),
     );
@@ -520,7 +530,10 @@ function RnUiKitDebugPanelContent({
         >
           <Stack.Screen
             name="index"
-            options={{ title: `${RN_UI_KIT_PACKAGE_NAME} - ${RN_UI_KIT_PACKAGE_VERSION}` }}
+            options={{
+              title: `${RN_UI_KIT_PACKAGE_NAME} - ${RN_UI_KIT_PACKAGE_VERSION}`,
+              ...DEBUG_HOME_LARGE_TITLE_OPTIONS,
+            }}
           >
             {() => (
               <RnUiKitDebugHomeRoute
