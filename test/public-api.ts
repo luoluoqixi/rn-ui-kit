@@ -73,6 +73,7 @@ const nativeListMenuItemProps = {
   menuProps: {
     items: [{ label: "编辑", value: "edit" }],
   },
+  nativeDropdownPlacement: "bottom",
   title: "更多操作",
 } satisfies NativeListMenuItemProps;
 

@@ -1169,6 +1169,7 @@ function NativeListMenuTrigger({
 /** Android 使用 Select 相同的 RNPPicker 锚点逻辑，确保原生弹层严格右对齐。 */
 function NativeListAndroidMenuItem({
   menuProps,
+  nativeDropdownPlacement,
   ...itemProps
 }: NativeListMenuItemProps) {
   const disabled = itemProps.disabled || menuProps.triggerProps?.disabled;
@@ -1207,6 +1208,7 @@ function NativeListAndroidMenuItem({
       mode="dropdown"
       nativeDropdownAlign="end"
       nativeDropdownEdgeOffset={-14}
+      nativeDropdownPlacement={nativeDropdownPlacement ?? "bottom"}
       nativeTriggerContent={trigger}
       nativeTriggerIcon="chevrons-up-down"
       resolvedNativeHaptics={resolvedNativeHaptics}
@@ -1220,9 +1222,19 @@ function NativeListAndroidMenuItem({
 }
 
 /** 以整行 NativeList 样式作为 `Menu` 的 native trigger，不维护选中状态。 */
-export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuItemProps) {
+export function NativeListMenuItem({
+  menuProps,
+  nativeDropdownPlacement,
+  ...itemProps
+}: NativeListMenuItemProps) {
   if (os() === "android" && menuProps.items != null) {
-    return <NativeListAndroidMenuItem menuProps={menuProps} {...itemProps} />;
+    return (
+      <NativeListAndroidMenuItem
+        menuProps={menuProps}
+        nativeDropdownPlacement={nativeDropdownPlacement}
+        {...itemProps}
+      />
+    );
   }
 
   const disabled = itemProps.disabled || menuProps.triggerProps?.disabled;
