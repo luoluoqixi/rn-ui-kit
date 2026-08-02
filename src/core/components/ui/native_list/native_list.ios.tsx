@@ -1049,6 +1049,12 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
   });
   const selectItems = resolvedItemGroups.flatMap((group) => group.items);
   const selectedValue = selectProps.value ?? selectProps.defaultValue;
+  const selectedItem = selectItems.find((item) => item.value === selectedValue);
+  const defaultTriggerLabel = selectedItem?.label ?? selectProps.placeholder ?? "";
+  const nativeTriggerLabel =
+    selectedValue == null || selectedValue === "" || selectProps.renderValue == null
+      ? defaultTriggerLabel
+      : selectProps.renderValue(selectedValue);
   const disabled = itemProps.disabled || selectProps.disabled || selectProps.isDisabled;
   const pickerRef = useRef<NativePickerSwiftUIHandle>(null);
 
@@ -1078,6 +1084,7 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
             ]}
             nativeTriggerContent={selectProps.nativeTriggerContent}
             nativeTriggerIcon={selectProps.nativeTriggerIcon ?? "chevrons-up-down"}
+            nativeTriggerLabel={nativeTriggerLabel}
             nativeTriggerLabelProps={{
               color: itemProps.valueColor ?? "$color10",
               fontSize: itemProps.valueFontSize ?? "$4",
