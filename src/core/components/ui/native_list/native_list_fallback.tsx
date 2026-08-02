@@ -34,6 +34,7 @@ import { isWeb, os } from "../utils/platform";
 import { useAppBackgroundColors, useUiPreferences } from "../utils/theme";
 
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from "../flash_list";
+import { Menu } from "../menu";
 import { Select } from "../select";
 import {
   getTrueSheetScrollBottomPadding,
@@ -55,6 +56,7 @@ import type {
   NativeListInputItemProps,
   NativeListItemPaddingProps,
   NativeListItemProps,
+  NativeListMenuItemProps,
   NativeListNavigationItemProps,
   NativeListRootProps,
   NativeListSectionProps,
@@ -94,6 +96,7 @@ type FallbackListEntry =
         | "customRow"
         | "inputRow"
         | "itemRow"
+        | "menuRow"
         | "navigationRow"
         | "selectRow"
         | "switchRow"
@@ -585,6 +588,17 @@ function createFallbackRowEntry(
       nativeScrollId: child.props.nativeScrollId,
       renderRow: () => <NativeListSelectItem {...child.props} />,
       rowType: "selectRow",
+      sectionKey,
+      type: "row",
+    };
+  }
+
+  if (isNativeListElementType(child, NativeListMenuItem)) {
+    return {
+      key,
+      nativeScrollId: child.props.nativeScrollId,
+      renderRow: () => <NativeListMenuItem {...child.props} />,
+      rowType: "menuRow",
       sectionKey,
       type: "row",
     };
@@ -1109,6 +1123,33 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
           ({
             background: itemProps.pressBackgroundColor ?? "$color5",
           } as any),
+      }}
+    />
+  );
+}
+
+/** 以整行 NativeList 样式作为 `Menu` 的 native trigger，不维护选中状态。 */
+export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuItemProps) {
+  const disabled = itemProps.disabled;
+
+  return (
+    <Menu
+      {...menuProps}
+      nativeHaptics={menuProps.nativeHaptics ?? itemProps.nativeHaptics ?? false}
+      native={menuProps.native ?? (os() === "android" ? false : undefined)}
+      placement={menuProps.placement ?? (os() === "android" ? "bottom-end" : undefined)}
+      nativeTrigger
+      nativeTriggerContent={
+        <NativeListRow
+          {...itemProps}
+          backgroundColor={itemProps.backgroundColor ?? (isWeb() ? "transparent" : undefined)}
+          disabled={disabled}
+          iconAfter={<ChevronsUpDown color="$color" opacity={0.58} size={14} />}
+        />
+      }
+      triggerProps={{
+        ...menuProps.triggerProps,
+        disabled: disabled || menuProps.triggerProps?.disabled,
       }}
     />
   );

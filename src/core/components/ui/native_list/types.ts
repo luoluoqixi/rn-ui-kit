@@ -3,6 +3,7 @@ import type { ScrollViewProps, ViewStyle } from "react-native";
 import type { SFSymbol } from "sf-symbols-typescript";
 
 import type { SelectProps } from "../select";
+import type { MenuProps } from "../menu";
 import type { SwitchProps } from "../switch";
 import type { InputProps } from "../input";
 import type { TextAreaProps } from "../text_area";
@@ -81,6 +82,20 @@ export type NativeListSwitchItemProps = NativeListItemBaseProps & {
 
 export type NativeListSelectItemProps = NativeListItemBaseProps & {
   selectProps: Omit<SelectProps, "nativeTrigger">;
+};
+
+/** 使用 `Menu` + native trigger 的列表行；Menu 本身不维护选中值。 */
+export type NativeListMenuItemProps = NativeListItemBaseProps & {
+  menuProps: Omit<
+    MenuProps,
+    | "nativeTrigger"
+    | "nativeTriggerContainerStyle"
+    | "nativeTriggerContent"
+    | "nativeTriggerIcon"
+    | "nativeTriggerLabel"
+    | "nativeTriggerLabelProps"
+    | "trigger"
+  >;
 };
 
 export type NativeListItemProps = NativeListItemBaseProps & {

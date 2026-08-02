@@ -5,6 +5,7 @@ import {
   Clock4,
   Info,
   ListFilter,
+  MoreHorizontal,
   Palette,
   RefreshCw,
   SlidersHorizontal,
@@ -22,6 +23,7 @@ import {
   NativeList,
   NativeListInputItem,
   NativeListItem,
+  NativeListMenuItem,
   NativeListNavigationItem,
   NativeListSection,
   NativeListSelectItem,
@@ -198,6 +200,54 @@ function NativeListExample() {
                     value: syncInterval ?? undefined,
                   }}
                   title="同步频率"
+                />
+                <NativeListMenuItem
+                  icon={
+                    <MoreHorizontal color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />
+                  }
+                  menuProps={{
+                    items: [
+                      {
+                        label: "立即同步",
+                        onSelect: () => setLastAction("立即同步"),
+                        value: "sync-now",
+                      },
+                      {
+                        label: "查看同步记录",
+                        onSelect: () => setLastAction("查看同步记录"),
+                        value: "view-sync-history",
+                      },
+                    ],
+                  }}
+                  sfSymbol="ellipsis.circle"
+                  subtitle="Menu 不维护选中值，仅触发操作"
+                  title="同步操作"
+                  value="更多"
+                />
+                <NativeListMenuItem
+                  icon={
+                    <MoreHorizontal color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />
+                  }
+                  menuProps={{
+                    items: [
+                      {
+                        label: "立即同步",
+                        onSelect: () => setLastAction("立即同步"),
+                        value: "sync-now",
+                      },
+                      {
+                        label: "查看同步记录",
+                        onSelect: () => setLastAction("查看同步记录"),
+                        value: "view-sync-history",
+                      },
+                    ],
+                  }}
+                  sfSymbol="ellipsis.circle"
+                  subtitle="自定义颜色和大小"
+                  title="同步操作"
+                  value="更多"
+                  valueColor="#7c3aed"
+                  valueFontSize={15}
                 />
               </NativeListSection>
               <NativeListSection

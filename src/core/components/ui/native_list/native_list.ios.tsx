@@ -43,6 +43,7 @@ import { useTheme } from "tamagui";
 import { NativePickerSwiftUI } from "../select/native_picker";
 import type { NativePickerSwiftUIHandle } from "../select/native_picker";
 import { resolveSelectItemGroups } from "../select/select_grouping";
+import { Menu } from "../menu";
 import { getTrueSheetScrollBottomPadding } from "../sheet/native_sheet/true_sheet/sheet_scroll_layout";
 import { useTrueSheetScrollLayout } from "../sheet/native_sheet/true_sheet/true_sheet_scroll_context";
 import { Switch } from "../switch";
@@ -53,6 +54,7 @@ import {
   NativeListCustomItem as FallbackCustomItem,
   NativeListInputItem as FallbackInputItem,
   NativeListItem as FallbackItem,
+  NativeListMenuItem as FallbackMenuItem,
   NativeListNavigationItem as FallbackNavigationItem,
   NativeListRoot as FallbackRoot,
   NativeListSection as FallbackSection,
@@ -67,6 +69,7 @@ import type {
   NativeListInputItemProps,
   NativeListItemPaddingProps,
   NativeListItemProps,
+  NativeListMenuItemProps,
   NativeListNavigationItemProps,
   NativeListRootProps,
   NativeListSectionProps,
@@ -1083,6 +1086,58 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
             placeholder={selectProps.placeholder}
             resolvedNativeHaptics={resolvedHaptics}
             value={selectedValue ?? null}
+          />
+        </NativeHostedTrailingControl>
+      }
+      value={undefined}
+    />
+  );
+}
+
+/** 在 iOS 原生列表中保留原生行布局，并将 Menu trigger 托管到行尾。 */
+export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuItemProps) {
+  if (!useNativeListEnabled()) {
+    return <FallbackMenuItem menuProps={menuProps} {...itemProps} />;
+  }
+
+  if (!supportsNativeTextRow(itemProps.title, itemProps.subtitle)) {
+    return <FallbackMenuItem menuProps={menuProps} {...itemProps} />;
+  }
+
+  const disabled = itemProps.disabled || menuProps.triggerProps?.disabled;
+  const menuRef = useRef<{ presentMenu: () => void } | null>(null);
+
+  return (
+    <NativePressRow
+      {...itemProps}
+      disabled={disabled}
+      nativeHaptics={false}
+      onPress={() => menuRef.current?.presentMenu()}
+      trailingControl={
+        <NativeHostedTrailingControl>
+          <Menu
+            {...menuProps}
+            nativeHaptics={menuProps.nativeHaptics ?? itemProps.nativeHaptics ?? false}
+            nativeTrigger
+            nativeTriggerContainerStyle={[
+              styles.selectInlineTrigger,
+              disabled ? styles.disabledContent : null,
+            ]}
+            nativeTriggerIcon="chevrons-up-down"
+            nativeTriggerLabel={itemProps.value ?? "更多"}
+            nativeTriggerLabelProps={{
+              color: itemProps.valueColor ?? "$color10",
+              fontSize: itemProps.valueFontSize ?? "$4",
+              numberOfLines: 1,
+              opacity: 1,
+            } as any}
+            triggerProps={{
+              ...menuProps.triggerProps,
+              disabled,
+            }}
+            // `Menu` 在 iOS 使用 ContextMenuButton；通过该句柄由整行打开，不嵌套 SwiftUI 行。
+            // @ts-expect-error Tamagui/Zeego 的原生菜单控制句柄。
+            __menuRef={menuRef}
           />
         </NativeHostedTrailingControl>
       }

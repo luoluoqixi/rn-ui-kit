@@ -2,11 +2,13 @@ import "rn-ui-kit/initialize";
 import {
   Button,
   Menu,
+  NativeListMenuItem,
   NativeTrigger,
   NativeTriggerPressable,
   Select,
   type ButtonProps,
   type MenuProps,
+  type NativeListMenuItemProps,
   type NativeTriggerPressableProps,
   type NativeTriggerProps,
   type SelectNativeTriggerPressableProps,
@@ -22,6 +24,7 @@ import {
 
 void Button;
 void Menu;
+void NativeListMenuItem;
 void NativeTrigger;
 void NativeTriggerPressable;
 void Select.NativeTrigger;
@@ -31,6 +34,7 @@ void RnUiKitDebugPanel;
 type PublicCoreProps = ButtonProps;
 type PublicNativeTriggerProps = NativeTriggerProps;
 type PublicNativeTriggerPressableProps = NativeTriggerPressableProps;
+type PublicNativeListMenuItemProps = NativeListMenuItemProps;
 type PublicSelectNativeTriggerProps = SelectNativeTriggerProps;
 type PublicSelectNativeTriggerPressableProps = SelectNativeTriggerPressableProps;
 type PublicDebugProps = RnUiKitDebugPanelProps;
@@ -65,6 +69,15 @@ const nativeTriggerProps = {
 void nativeMenuProps;
 void nativeTriggerProps;
 
+const nativeListMenuItemProps = {
+  menuProps: {
+    items: [{ label: "编辑", value: "edit" }],
+  },
+  title: "更多操作",
+} satisfies NativeListMenuItemProps;
+
+void nativeListMenuItemProps;
+
 export type {
   PublicCoreProps,
   PublicDebugNativeSheetScreenOptions,
@@ -73,6 +86,7 @@ export type {
   PublicDebugSheetProps,
   PublicNativeTriggerPressableProps,
   PublicNativeTriggerProps,
+  PublicNativeListMenuItemProps,
   PublicSelectNativeTriggerPressableProps,
   PublicSelectNativeTriggerProps,
 };

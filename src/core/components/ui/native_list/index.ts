@@ -5,6 +5,7 @@ export {
   NativeListNavigationItem,
   NativeListSwitchItem,
   NativeListSelectItem,
+  NativeListMenuItem,
   NativeListButtonItem,
   NativeListInputItem,
   NativeListTextAreaItem,
@@ -12,4 +13,8 @@ export {
   NativeListCustomItem,
 } from "./native_list";
 
-export type { NativeListInputItemProps, NativeListTextAreaItemProps } from "./types";
+export type {
+  NativeListInputItemProps,
+  NativeListMenuItemProps,
+  NativeListTextAreaItemProps,
+} from "./types";

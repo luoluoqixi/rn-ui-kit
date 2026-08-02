@@ -6,6 +6,7 @@ export {
   NativeListNavigationItem,
   NativeListSwitchItem,
   NativeListSelectItem,
+  NativeListMenuItem,
   NativeListButtonItem,
   NativeListInputItem,
   NativeListTextAreaItem,
