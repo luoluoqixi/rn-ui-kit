@@ -1085,14 +1085,14 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
           iconAfter={
             <View style={styles.selectValue}>
               <Text
-                color={(itemProps.valueColor ?? "$color") as any}
+                color={(itemProps.valueColor ?? "$color10") as any}
                 fontSize={itemProps.valueFontSize ?? "$4"}
                 numberOfLines={1}
-                opacity={itemProps.valueColor == null ? 0.58 : 1}
+                opacity={1}
               >
                 {selectedLabel}
               </Text>
-              <ChevronsUpDown color="$color" opacity={0.58} size={14} />
+              <ChevronsUpDown color={(itemProps.valueColor ?? "$color10") as any} size={14} />
             </View>
           }
         />
@@ -1131,6 +1131,8 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
 /** 以整行 NativeList 样式作为 `Menu` 的 native trigger，不维护选中状态。 */
 export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuItemProps) {
   const disabled = itemProps.disabled;
+  const triggerLabel = itemProps.value ?? "更多";
+  const triggerColor = itemProps.valueColor ?? "$color10";
 
   return (
     <Menu
@@ -1144,7 +1146,19 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
           {...itemProps}
           backgroundColor={itemProps.backgroundColor ?? (isWeb() ? "transparent" : undefined)}
           disabled={disabled}
-          iconAfter={<ChevronsUpDown color="$color" opacity={0.58} size={14} />}
+          iconAfter={
+            <View style={styles.selectValue}>
+              <Text
+                color={triggerColor as any}
+                fontSize={itemProps.valueFontSize ?? "$4"}
+                numberOfLines={1}
+              >
+                {triggerLabel}
+              </Text>
+              <ChevronsUpDown color={triggerColor as any} size={14} />
+            </View>
+          }
+          value={undefined}
         />
       }
       triggerProps={{
