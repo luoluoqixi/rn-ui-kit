@@ -36,13 +36,14 @@ import {
   viewID,
 } from "@expo/ui/swift-ui/modifiers";
 import { type ReactNode, createContext, useContext, useRef } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "tamagui";
 
 import { NativePickerSwiftUI } from "../select/native_picker";
 import type { NativePickerSwiftUIHandle } from "../select/native_picker";
 import { resolveSelectItemGroups } from "../select/select_grouping";
+import { Input } from "../input";
 import { getTrueSheetScrollBottomPadding } from "../sheet/native_sheet/true_sheet/sheet_scroll_layout";
 import { useTrueSheetScrollLayout } from "../sheet/native_sheet/true_sheet/true_sheet_scroll_context";
 import { Switch } from "../switch";
@@ -51,6 +52,7 @@ import { toSwiftUIHexColor, triggerNativeHaptics, useResolvedNativeHaptics } fro
 import {
   NativeListActionItem as FallbackActionItem,
   NativeListCustomItem as FallbackCustomItem,
+  NativeListInputItem as FallbackInputItem,
   NativeListItem as FallbackItem,
   NativeListNavigationItem as FallbackNavigationItem,
   NativeListRoot as FallbackRoot,
@@ -63,6 +65,7 @@ import type {
   NativeListButtonItemProps,
   NativeListCustomItemProps,
   NativeListItemBaseProps,
+  NativeListInputItemProps,
   NativeListItemPaddingProps,
   NativeListItemProps,
   NativeListNavigationItemProps,
@@ -70,6 +73,7 @@ import type {
   NativeListSectionProps,
   NativeListSelectItemProps,
   NativeListSwitchItemProps,
+  NativeListTextAreaItemProps,
 } from "./types";
 
 type NativeListContextValue = {
@@ -93,6 +97,9 @@ const DEFAULT_TITLE_FONT_SIZE = 17;
 const DEFAULT_SUBTITLE_FONT_SIZE = 13;
 const DEFAULT_VALUE_FONT_SIZE = 17;
 const DEFAULT_SECTION_TITLE_FONT_SIZE = 13;
+const DEFAULT_TEXT_AREA_LINES = 4;
+const TEXT_AREA_LINE_HEIGHT = 24;
+const TEXT_AREA_VERTICAL_PADDING = 20;
 
 function resolveRowPadding({
   paddingBottom,
@@ -108,6 +115,25 @@ function resolveRowPadding({
     leading: paddingLeft ?? paddingHorizontal ?? ROW_PADDING.leading,
     trailing: paddingRight ?? paddingHorizontal ?? ROW_PADDING.trailing,
   };
+}
+
+function resolveTextAreaHeight(textAreaProps: NativeListTextAreaItemProps["textAreaProps"]) {
+  const style = StyleSheet.flatten(textAreaProps.style) as {
+    height?: unknown;
+    minHeight?: unknown;
+  };
+  const numberOfLines =
+    typeof textAreaProps.numberOfLines === "number"
+      ? textAreaProps.numberOfLines
+      : DEFAULT_TEXT_AREA_LINES;
+  const configuredHeight =
+    typeof style?.height === "number"
+      ? style.height
+      : typeof style?.minHeight === "number"
+        ? style.minHeight
+        : undefined;
+
+  return configuredHeight ?? Math.max(100, numberOfLines * TEXT_AREA_LINE_HEIGHT + TEXT_AREA_VERTICAL_PADDING);
 }
 
 function titleModifiers(fontSize?: number) {
@@ -392,6 +418,16 @@ function NativeHostedTrailingControl({ children }: { children: ReactNode }) {
   );
 }
 
+function NativeTrailingContent({ children }: { children: ReactNode }) {
+  const text = toPlainText(children);
+
+  if (text != null) {
+    return <SwiftText modifiers={valueModifiers()}>{text}</SwiftText>;
+  }
+
+  return <NativeHostedTrailingControl>{children}</NativeHostedTrailingControl>;
+}
+
 function NativeHostedCustomRow({ children }: { children: ReactNode }) {
   return (
     <RNHostView matchContents={{ vertical: true } as unknown as boolean}>
@@ -424,6 +460,7 @@ function NativePressRow({
   subtitle,
   subtitleColor,
   subtitleFontSize,
+  trailing,
   title,
   titleAlign,
   titleColor,
@@ -455,7 +492,8 @@ function NativePressRow({
   const titleText = toPlainText(title);
   const subtitleText = toPlainText(subtitle);
   const valueText = toPlainText(value);
-  const hasTrailingContent = valueText != null || selected || trailingControl != null || chevron;
+  const hasTrailingContent =
+    valueText != null || selected || trailing != null || trailingControl != null || chevron;
   const showTrailingSpacer = hasTrailingContent && (titleText != null || subtitleText != null);
 
   const handlePress = onPress
@@ -509,6 +547,7 @@ function NativePressRow({
         </SwiftText>
       ) : null}
       {selected ? <Image color={accentColor} size={18} systemName="checkmark" /> : null}
+      {trailing != null ? <NativeTrailingContent>{trailing}</NativeTrailingContent> : null}
       {trailingControl}
       {chevron ? <Image color={resolvedChevronColor} size={13} systemName="chevron.right" /> : null}
     </NativeRowContainer>
@@ -681,6 +720,7 @@ function NativeListRoot({
 function NativeListSection({
   children,
   footer,
+  trailing,
   title,
   titleColor,
   titleFontSize,
@@ -689,6 +729,7 @@ function NativeListSection({
     return (
       <FallbackSection
         footer={footer}
+        trailing={trailing}
         title={title}
         titleColor={titleColor}
         titleFontSize={titleFontSize}
@@ -703,7 +744,30 @@ function NativeListSection({
   const resolvedSectionTitleColor =
     titleColor != null ? (toSwiftUIHexColor(titleColor) ?? titleColor) : undefined;
   const header =
-    stringTitle != null && (resolvedSectionTitleColor != null || titleFontSize != null) ? (
+    trailing != null ? (
+      <HStack
+        alignment="center"
+        modifiers={[frame({ maxWidth: 99999, alignment: "leading" })]}
+        spacing={8}
+      >
+        {stringTitle != null ? (
+          <SwiftText
+            modifiers={[
+              font({ size: titleFontSize ?? DEFAULT_SECTION_TITLE_FONT_SIZE, weight: "regular" }),
+              ...(resolvedSectionTitleColor != null
+                ? [foregroundStyle(resolvedSectionTitleColor)]
+                : []),
+            ]}
+          >
+            {stringTitle}
+          </SwiftText>
+        ) : title != null ? (
+          <NativeHostedContent>{title}</NativeHostedContent>
+        ) : null}
+        <Spacer minLength={0} />
+        <NativeTrailingContent>{trailing}</NativeTrailingContent>
+      </HStack>
+    ) : stringTitle != null && (resolvedSectionTitleColor != null || titleFontSize != null) ? (
       <SwiftText
         modifiers={[
           font({ size: titleFontSize ?? DEFAULT_SECTION_TITLE_FONT_SIZE, weight: "regular" }),
@@ -784,6 +848,95 @@ export function NativeListButtonItem({
       value={undefined}
       btnTint={resolveColor}
     />
+  );
+}
+
+/**
+ * Keeps a React Native text input inside the SwiftUI List row, which preserves
+ * controlled values and the full `Input` API while retaining native list chrome.
+ */
+export function NativeListInputItem({ inputProps, ...itemProps }: NativeListInputItemProps) {
+  const nativeListEnabled = useNativeListEnabled();
+  const disabled = itemProps.disabled || inputProps.disabled;
+  const hasLeadingLabel = itemProps.title != null || itemProps.subtitle != null;
+  const resolvedInput = (
+    <Input
+      {...inputProps}
+      clearButtonMode={inputProps.clearButtonMode ?? "while-editing"}
+      disabled={disabled}
+      style={[styles.input, !hasLeadingLabel ? styles.fullWidthInput : null, inputProps.style]}
+      unstyled={inputProps.unstyled ?? true}
+    />
+  );
+
+  if (hasLeadingLabel) {
+    if (!nativeListEnabled) {
+      return <FallbackInputItem inputProps={inputProps} {...itemProps} />;
+    }
+
+    return (
+      <NativePressRow
+        {...itemProps}
+        disabled={disabled}
+        trailingControl={
+          <NativeHostedTrailingControl>
+            <View collapsable={false} style={styles.inputTrailing}>
+              {resolvedInput}
+            </View>
+          </NativeHostedTrailingControl>
+        }
+      />
+    );
+  }
+
+  return (
+    <NativeListCustomItem
+      {...itemProps}
+      disabled={disabled}
+      paddingVertical={itemProps.paddingVertical ?? 0}
+    >
+      <View collapsable={false} style={styles.inputRow}>
+        {resolvedInput}
+      </View>
+    </NativeListCustomItem>
+  );
+}
+
+export function NativeListTextAreaItem({
+  textAreaProps,
+  ...itemProps
+}: NativeListTextAreaItemProps) {
+  const theme = useTheme();
+  const disabled = itemProps.disabled || textAreaProps.disabled;
+  const textAreaHeight = resolveTextAreaHeight(textAreaProps);
+  const {
+    disabled: _inputDisabled,
+    scrollEnabled,
+    style: inputStyle,
+    unstyled: _unstyled,
+    ...nativeTextAreaProps
+  } = textAreaProps;
+
+  return (
+    <NativeListCustomItem {...itemProps} disabled={disabled}>
+      <View collapsable={false} style={[styles.textAreaRow, { height: textAreaHeight }]}>
+        <TextInput
+          {...(nativeTextAreaProps as any)}
+          editable={!disabled}
+          multiline
+          placeholderTextColor={
+            textAreaProps.placeholderTextColor ?? theme.gray9?.val ?? theme.color10.val
+          }
+          scrollEnabled={scrollEnabled ?? true}
+          style={[
+            styles.textArea,
+            { color: theme.color.val, height: textAreaHeight, minHeight: textAreaHeight },
+            inputStyle,
+          ]}
+          unstyled={textAreaProps.unstyled ?? true}
+        />
+      </View>
+    </NativeListCustomItem>
   );
 }
 
@@ -1012,6 +1165,25 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
   },
+  input: {
+    fontSize: 17,
+    height: 30,
+    maxHeight: 30,
+    minHeight: 0,
+    paddingHorizontal: 16,
+    paddingVertical: 0,
+    width: "100%",
+  },
+  inputRow: {
+    height: 30,
+    width: "100%",
+  },
+  fullWidthInput: {
+    paddingHorizontal: 0,
+  },
+  inputTrailing: {
+    width: 160,
+  },
   nativeRoot: {
     flex: 1,
   },
@@ -1029,6 +1201,17 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     flexDirection: "row",
     justifyContent: "flex-start",
+  },
+  textArea: {
+    fontSize: 17,
+    minHeight: 100,
+    paddingHorizontal: 0,
+    paddingVertical: 10,
+    textAlignVertical: "top",
+    width: "100%",
+  },
+  textAreaRow: {
+    width: "100%",
   },
 });
 

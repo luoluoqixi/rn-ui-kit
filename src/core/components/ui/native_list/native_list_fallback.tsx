@@ -20,6 +20,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  TextInput,
   View,
   type LayoutChangeEvent,
   type NativeScrollEvent,
@@ -33,6 +34,7 @@ import { isWeb, os } from "../utils/platform";
 import { useAppBackgroundColors, useUiPreferences } from "../utils/theme";
 
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from "../flash_list";
+import { Input } from "../input";
 import { Select } from "../select";
 import {
   getTrueSheetScrollBottomPadding,
@@ -51,6 +53,7 @@ import type {
   NativeListButtonItemProps,
   NativeListCustomItemProps,
   NativeListItemBaseProps,
+  NativeListInputItemProps,
   NativeListItemPaddingProps,
   NativeListItemProps,
   NativeListNavigationItemProps,
@@ -58,6 +61,7 @@ import type {
   NativeListSectionProps,
   NativeListSelectItemProps,
   NativeListSwitchItemProps,
+  NativeListTextAreaItemProps,
 } from "./types";
 
 type RowContainerProps = NativeListItemPaddingProps & {
@@ -75,9 +79,10 @@ type FallbackListEntry =
   | {
       key: string;
       sectionKey: string;
-      title: ReactNode;
+      title?: ReactNode;
       titleColor?: string;
       titleFontSize?: number;
+      trailing?: ReactNode;
       type: "sectionHeader";
     }
   | {
@@ -88,10 +93,12 @@ type FallbackListEntry =
         | "actionRow"
         | "buttonRow"
         | "customRow"
+        | "inputRow"
         | "itemRow"
         | "navigationRow"
         | "selectRow"
         | "switchRow"
+        | "textAreaRow"
         | "unknownRow";
       sectionKey: string;
       type: "row";
@@ -117,6 +124,9 @@ type WebScrollableNode = {
 const WEB_SCROLL_RESTORE_STABLE_FRAMES = 8;
 const WEB_SCROLL_RESTORE_MAX_FRAMES = 30;
 const WEB_SCROLL_RESTORE_TOLERANCE = 1;
+const DEFAULT_TEXT_AREA_LINES = 4;
+const TEXT_AREA_LINE_HEIGHT = 24;
+const TEXT_AREA_VERTICAL_PADDING = 20;
 
 const FallbackListScrollCaptureContext = createContext<(() => void) | null>(null);
 
@@ -132,6 +142,25 @@ function getWebScrollableNode(
     // FlashList can expose its public ref one render before the inner ScrollView ref is ready.
     return null;
   }
+}
+
+function resolveTextAreaHeight(textAreaProps: NativeListTextAreaItemProps["textAreaProps"]) {
+  const style = StyleSheet.flatten(textAreaProps.style) as {
+    height?: unknown;
+    minHeight?: unknown;
+  };
+  const numberOfLines =
+    typeof textAreaProps.numberOfLines === "number"
+      ? textAreaProps.numberOfLines
+      : DEFAULT_TEXT_AREA_LINES;
+  const configuredHeight =
+    typeof style?.height === "number"
+      ? style.height
+      : typeof style?.minHeight === "number"
+        ? style.minHeight
+        : undefined;
+
+  return configuredHeight ?? Math.max(100, numberOfLines * TEXT_AREA_LINE_HEIGHT + TEXT_AREA_VERTICAL_PADDING);
 }
 
 function useFallbackRowThemeColors() {
@@ -390,6 +419,7 @@ function NativeListRow({
   subtitle,
   subtitleColor,
   subtitleFontSize,
+  trailing,
   title,
   titleAlign,
   titleColor,
@@ -404,6 +434,7 @@ function NativeListRow({
   const titleNode = renderTitleNode(title, titleColor, titleFontSize, textAlign);
   const subtitleNode = renderSubtitleNode(subtitle, subtitleColor, subtitleFontSize);
   const valueNode = renderValueNode(value, valueColor, valueFontSize);
+  const trailingNode = renderValueNode(trailing);
   const customIcon = icon;
 
   return (
@@ -440,6 +471,7 @@ function NativeListRow({
         <View style={styles.iconAfterRow}>
           {valueNode}
           {selected ? <Check color="$accent10" size={18} /> : null}
+          {trailingNode}
           {iconAfter}
           {chevron ? (
             <ChevronRight
@@ -570,6 +602,26 @@ function createFallbackRowEntry(
     };
   }
 
+  if (isNativeListElementType(child, NativeListInputItem)) {
+    return {
+      key,
+      renderRow: () => <NativeListInputItem {...child.props} />,
+      rowType: "inputRow",
+      sectionKey,
+      type: "row",
+    };
+  }
+
+  if (isNativeListElementType(child, NativeListTextAreaItem)) {
+    return {
+      key,
+      renderRow: () => <NativeListTextAreaItem {...child.props} />,
+      rowType: "textAreaRow",
+      sectionKey,
+      type: "row",
+    };
+  }
+
   if (isNativeListElementType(child, NativeListItem)) {
     return {
       key,
@@ -617,19 +669,23 @@ function appendSectionEntries(
 ) {
   const sectionChildren = Children.toArray(sectionProps.children);
   const hasSectionContent =
-    sectionProps.title != null || sectionChildren.length > 0 || sectionProps.footer != null;
+    sectionProps.title != null ||
+    sectionProps.trailing != null ||
+    sectionChildren.length > 0 ||
+    sectionProps.footer != null;
 
   if (!hasSectionContent) {
     return;
   }
 
-  if (sectionProps.title != null) {
+  if (sectionProps.title != null || sectionProps.trailing != null) {
     entries.push({
       key: `${sectionKey}-header`,
       sectionKey,
       title: sectionProps.title,
       titleColor: sectionProps.titleColor,
       titleFontSize: sectionProps.titleFontSize,
+      trailing: sectionProps.trailing,
       type: "sectionHeader",
     });
   }
@@ -682,16 +738,29 @@ function renderFallbackListEntry({
     case "sectionHeader":
       return (
         <View style={styles.sectionLabel}>
-          {typeof item.title === "string" || typeof item.title === "number" ? (
-            <Text
-              color={(item.titleColor ?? "$color10") as any}
-              fontSize={item.titleFontSize ?? "$3"}
-            >
-              {item.title}
-            </Text>
-          ) : (
-            item.title
-          )}
+          <View style={styles.sectionTitle}>
+            {typeof item.title === "string" || typeof item.title === "number" ? (
+              <Text
+                color={(item.titleColor ?? "$color10") as any}
+                fontSize={item.titleFontSize ?? "$3"}
+              >
+                {item.title}
+              </Text>
+            ) : (
+              item.title
+            )}
+          </View>
+          {item.trailing != null ? (
+            <View style={styles.sectionTrailing}>
+              {typeof item.trailing === "string" || typeof item.trailing === "number" ? (
+                <Text color="$accent10" fontSize="$4">
+                  {item.trailing}
+                </Text>
+              ) : (
+                item.trailing
+              )}
+            </View>
+          ) : null}
         </View>
       );
     case "row":
@@ -861,6 +930,84 @@ export function NativeListButtonItem({
   );
 }
 
+/**
+ * A full-width editable text field that follows the surrounding NativeList row styling.
+ * `clearButtonMode` defaults to `while-editing` so iOS gets the familiar clear affordance.
+ */
+export function NativeListInputItem({ inputProps, ...itemProps }: NativeListInputItemProps) {
+  const disabled = itemProps.disabled || inputProps.disabled;
+  const hasLeadingLabel = itemProps.title != null || itemProps.subtitle != null;
+  const resolvedInput = (
+    <Input
+      {...inputProps}
+      clearButtonMode={inputProps.clearButtonMode ?? "while-editing"}
+      disabled={disabled}
+      style={[styles.input, !hasLeadingLabel ? styles.fullWidthInput : null, inputProps.style]}
+      unstyled={inputProps.unstyled ?? true}
+    />
+  );
+
+  if (hasLeadingLabel) {
+    return (
+      <NativeListRow
+        {...itemProps}
+        disabled={disabled}
+        iconAfter={<View style={styles.inputTrailing}>{resolvedInput}</View>}
+      />
+    );
+  }
+
+  return (
+    <NativeListCustomItem
+      {...itemProps}
+      disabled={disabled}
+      paddingVertical={itemProps.paddingVertical ?? 0}
+    >
+      <View collapsable={false} style={styles.inputRow}>
+        {resolvedInput}
+      </View>
+    </NativeListCustomItem>
+  );
+}
+
+export function NativeListTextAreaItem({
+  textAreaProps,
+  ...itemProps
+}: NativeListTextAreaItemProps) {
+  const theme = useTheme();
+  const disabled = itemProps.disabled || textAreaProps.disabled;
+  const textAreaHeight = resolveTextAreaHeight(textAreaProps);
+  const {
+    disabled: _inputDisabled,
+    scrollEnabled,
+    style: inputStyle,
+    unstyled: _unstyled,
+    ...nativeTextAreaProps
+  } = textAreaProps;
+
+  return (
+    <NativeListCustomItem {...itemProps} disabled={disabled}>
+      <View collapsable={false} style={[styles.textAreaRow, { height: textAreaHeight }]}>
+        <TextInput
+          {...(nativeTextAreaProps as any)}
+          editable={!disabled}
+          multiline
+          placeholderTextColor={
+            textAreaProps.placeholderTextColor ?? theme.gray9?.val ?? theme.color10.val
+          }
+          scrollEnabled={scrollEnabled ?? true}
+          style={[
+            styles.textArea,
+            { color: theme.color.val, height: textAreaHeight, minHeight: textAreaHeight },
+            inputStyle,
+          ]}
+          unstyled={textAreaProps.unstyled ?? true}
+        />
+      </View>
+    </NativeListCustomItem>
+  );
+}
+
 export function NativeListItem({
   title,
   onPress,
@@ -986,6 +1133,7 @@ export function NativeListCustomItem({
 export function NativeListSection({
   children,
   footer,
+  trailing,
   title,
   titleColor,
   titleFontSize,
@@ -993,6 +1141,7 @@ export function NativeListSection({
   const entries = createFallbackListEntries(
     <NativeListSection
       footer={footer}
+      trailing={trailing}
       title={title}
       titleColor={titleColor}
       titleFontSize={titleFontSize}
@@ -1339,6 +1488,25 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     justifyContent: "center",
   },
+  input: {
+    fontSize: 17,
+    height: 44,
+    maxHeight: 44,
+    minHeight: 0,
+    paddingHorizontal: 16,
+    paddingVertical: 0,
+    width: "100%",
+  },
+  inputRow: {
+    height: 44,
+    width: "100%",
+  },
+  fullWidthInput: {
+    paddingHorizontal: 0,
+  },
+  inputTrailing: {
+    width: 160,
+  },
   pressable: {
     width: "100%",
   },
@@ -1387,9 +1555,21 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   sectionLabel: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 12,
     paddingBottom: 8,
     paddingHorizontal: 30,
     paddingTop: 18,
+    width: "100%",
+  },
+  sectionTitle: {
+    flex: 1,
+    minWidth: 0,
+  },
+  sectionTrailing: {
+    alignItems: "center",
+    flexDirection: "row",
   },
   sectionSpacer: {
     height: 16,
@@ -1411,6 +1591,17 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 4,
     minWidth: 0,
+  },
+  textArea: {
+    fontSize: 17,
+    minHeight: 100,
+    paddingHorizontal: 0,
+    paddingVertical: 10,
+    textAlignVertical: "top",
+    width: "100%",
+  },
+  textAreaRow: {
+    width: "100%",
   },
   trailingControl: {
     alignItems: "center",

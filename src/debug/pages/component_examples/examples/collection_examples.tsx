@@ -15,15 +15,18 @@ import {
 import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import {
+  Button,
   FlashList,
   ListGroup,
   ListItem,
   NativeList,
+  NativeListInputItem,
   NativeListItem,
   NativeListNavigationItem,
   NativeListSection,
   NativeListSelectItem,
   NativeListSwitchItem,
+  NativeListTextAreaItem,
   ScrollView,
   Switch,
   Text,
@@ -51,6 +54,8 @@ function NativeListExample() {
   const [syncInterval, setSyncInterval] = useState<string | null>("hourly");
   const [backupInterval, setBackupInterval] = useState("four-hours");
   const [lastAction, setLastAction] = useState("尚未点击");
+  const [workspaceName, setWorkspaceName] = useState("rn-ui-kit");
+  const [workspaceNote, setWorkspaceNote] = useState("");
 
   useEffect(() => {
     if (native) {
@@ -94,9 +99,35 @@ function NativeListExample() {
               }}
             >
               <NativeListSection
+                footer="输入框占满一行；iOS 聚焦编辑时会显示系统清除按钮。"
+                title="名称"
+              >
+                <NativeListInputItem
+                  inputProps={{
+                    autoCapitalize: "none",
+                    onChangeText: setWorkspaceName,
+                    placeholder: "输入工作区名称",
+                    value: workspaceName,
+                  }}
+                />
+                <NativeListInputItem
+                  subtitle="subtitle"
+                  title="名称"
+                  inputProps={{
+                    autoCapitalize: "none",
+                    onChangeText: setWorkspaceName,
+                    placeholder: "输入工作区名称",
+                    value: workspaceName,
+                  }}
+                />
+              </NativeListSection>
+              <NativeListSection
                 footer="导航行适合跳转到更深层的设置页。"
                 title="工作区"
                 titleColor="#7c3aed"
+                trailing={
+                  <Button chromeless size={22} fontSize={12} color="$blue10" title="全部显示" />
+                }
               >
                 <NativeListNavigationItem
                   chevronColor={NATIVE_LIST_ICON_COLOR}
@@ -116,6 +147,19 @@ function NativeListExample() {
                   onPress={() => setLastAction("打开成员管理")}
                   subtitle="邀请、角色与访问权限"
                   title="成员"
+                />
+              </NativeListSection>
+              <NativeListSection
+                footer="numberOfLines 控制可见高度；超出内容可在整个输入区域内滚动。"
+                title="备注"
+              >
+                <NativeListTextAreaItem
+                  textAreaProps={{
+                    numberOfLines: 4,
+                    onChangeText: setWorkspaceNote,
+                    placeholder: "添加工作区备注",
+                    value: workspaceNote,
+                  }}
                 />
               </NativeListSection>
               <NativeListSection footer="Switch 适合即时生效的独立偏好。" title="同步">
@@ -239,7 +283,8 @@ function NativeListExample() {
         </View>
         <Text opacity={0.6}>
           最近动作：{lastAction} · 自动同步：{autoSyncEnabled ? "开启" : "关闭"} · 主题：
-          {theme ?? "未选择"} · 频率：{syncInterval ?? "未选择"} · 备份：{backupInterval}
+          {theme ?? "未选择"} · 频率：{syncInterval ?? "未选择"} · 备份：{backupInterval} · 名称：
+          {workspaceName || "未填写"} · 备注：{workspaceNote || "未填写"}
         </Text>
       </ExampleBlock>
     </ExampleStack>

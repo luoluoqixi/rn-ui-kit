@@ -7,6 +7,8 @@ export {
   NativeListSwitchItem,
   NativeListSelectItem,
   NativeListButtonItem,
+  NativeListInputItem,
+  NativeListTextAreaItem,
   NativeListItem,
   NativeListCustomItem,
 } from "./native_list_fallback";

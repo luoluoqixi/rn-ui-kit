@@ -265,19 +265,40 @@ export function ConfirmDialog() {
 import { useState } from "react";
 import {
   NativeList,
+  NativeListInputItem,
+  NativeListItem,
   NativeListNavigationItem,
   NativeListSection,
   NativeListSelectItem,
   NativeListSwitchItem,
+  NativeListTextAreaItem,
+  Text,
 } from "rn-ui-kit";
 
 export function SettingsList() {
   const [autoSync, setAutoSync] = useState(true);
   const [themeMode, setThemeMode] = useState<string | null>("system");
+  const [workspaceName, setWorkspaceName] = useState("rn-ui-kit");
+  const [workspaceNote, setWorkspaceNote] = useState("");
 
   return (
     <NativeList>
-      <NativeListSection title="工作区" footer="更改会自动保存。">
+      <NativeListSection title="名称" footer="编辑时会显示系统清除按钮。">
+        <NativeListInputItem
+          subtitle="显示在行尾的单行输入框"
+          title="工作区名称"
+          inputProps={{
+            autoCapitalize: "none",
+            onChangeText: setWorkspaceName,
+            value: workspaceName,
+          }}
+        />
+      </NativeListSection>
+      <NativeListSection
+        title="工作区"
+        footer="更改会自动保存。"
+        trailing={<Text color="$blue10">全部显示</Text>}
+      >
         <NativeListNavigationItem
           sfSymbol="person.2.fill"
           iconColor="#7c3aed"
@@ -286,6 +307,11 @@ export function SettingsList() {
           titleFontSize={17}
           subtitleFontSize={13}
           onPress={() => console.log("open members")}
+        />
+        <NativeListItem
+          chevron
+          title="存储空间"
+          trailing={<Text color="$color10">27.74 GB</Text>}
         />
         <NativeListSwitchItem
           title="自动同步"
@@ -304,6 +330,15 @@ export function SettingsList() {
               { label: "深色", value: "dark" },
               { label: "跟随系统", value: "system" },
             ],
+          }}
+        />
+      </NativeListSection>
+      <NativeListSection title="备注">
+        <NativeListTextAreaItem
+          textAreaProps={{
+            numberOfLines: 4,
+            onChangeText: setWorkspaceNote,
+            value: workspaceNote,
           }}
         />
       </NativeListSection>
@@ -343,6 +378,14 @@ export function SettingsList() {
   `NativePickerSwiftUI` 的现有实现。仅属于 Web、Tamagui viewport 或自定义 Sheet 的
   `SelectProps` 不适用于这条原生 picker 路径。
 - `NativeListCustomItem` 可在原生列表中承载自定义 React Native 内容。
+- `NativeListInputItem` 提供占满一行的单行输入框，使用 `inputProps` 传入 `Input` 的
+  `value`、`onChangeText`、`placeholder`、`autoFocus` 等属性；传入 `title` 或 `subtitle`
+  时，文本显示在左侧、输入框显示在右侧。默认在 iOS 编辑时显示清除按钮；传入
+  `inputProps.clearButtonMode` 可以覆盖该行为。
+- `NativeListItem.trailing` 可渲染自定义行尾内容；`NativeListSection.trailing` 可渲染分组
+  标题右侧内容，例如“全部显示”。
+- `NativeListTextAreaItem` 提供占满一行的多行文本框，使用 `textAreaProps` 传入 `TextArea`
+  的属性。
 - `initialScrollTarget` 与行上的 `nativeScrollId` 可用于 iOS 原生列表的初始滚动定位。
 
 完整交互示例见

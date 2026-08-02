@@ -276,19 +276,40 @@ feedback, and scrolling behavior.
 import { useState } from "react";
 import {
   NativeList,
+  NativeListInputItem,
+  NativeListItem,
   NativeListNavigationItem,
   NativeListSection,
   NativeListSelectItem,
   NativeListSwitchItem,
+  NativeListTextAreaItem,
+  Text,
 } from "rn-ui-kit";
 
 export function SettingsList() {
   const [autoSync, setAutoSync] = useState(true);
   const [themeMode, setThemeMode] = useState<string | null>("system");
+  const [workspaceName, setWorkspaceName] = useState("rn-ui-kit");
+  const [workspaceNote, setWorkspaceNote] = useState("");
 
   return (
     <NativeList>
-      <NativeListSection title="Workspace" footer="Changes are saved automatically.">
+      <NativeListSection title="Name" footer="A native clear button appears while editing.">
+        <NativeListInputItem
+          subtitle="A single-line field displayed at the trailing edge"
+          title="Workspace name"
+          inputProps={{
+            autoCapitalize: "none",
+            onChangeText: setWorkspaceName,
+            value: workspaceName,
+          }}
+        />
+      </NativeListSection>
+      <NativeListSection
+        title="Workspace"
+        footer="Changes are saved automatically."
+        trailing={<Text color="$blue10">Show all</Text>}
+      >
         <NativeListNavigationItem
           sfSymbol="person.2.fill"
           iconColor="#7c3aed"
@@ -297,6 +318,11 @@ export function SettingsList() {
           titleFontSize={17}
           subtitleFontSize={13}
           onPress={() => console.log("open members")}
+        />
+        <NativeListItem
+          chevron
+          title="Storage"
+          trailing={<Text color="$color10">27.74 GB</Text>}
         />
         <NativeListSwitchItem
           title="Automatic sync"
@@ -315,6 +341,15 @@ export function SettingsList() {
               { label: "Dark", value: "dark" },
               { label: "System", value: "system" },
             ],
+          }}
+        />
+      </NativeListSection>
+      <NativeListSection title="Notes">
+        <NativeListTextAreaItem
+          textAreaProps={{
+            numberOfLines: 4,
+            onChangeText: setWorkspaceNote,
+            value: workspaceNote,
           }}
         />
       </NativeListSection>
@@ -362,6 +397,16 @@ Notes:
   viewport-, and custom-sheet props do not apply to this native picker path.
 - `NativeListCustomItem` can host custom React Native content inside the native
   list.
+- `NativeListInputItem` provides a single-line text field that fills a list row.
+  Pass normal `Input` props such as `value`, `onChangeText`, `placeholder`, and
+  `autoFocus` through `inputProps`. With `title` or `subtitle`, the text is shown
+  on the leading edge and the input on the trailing edge. On iOS it shows a clear
+  button while editing by default; use `inputProps.clearButtonMode` to override it.
+- `NativeListItem.trailing` renders custom row-end content, while
+  `NativeListSection.trailing` renders content on the right of a section header,
+  such as a “Show all” action.
+- `NativeListTextAreaItem` provides a full-row multiline text field. Pass normal
+  `TextArea` props through `textAreaProps`.
 - Use `initialScrollTarget` with a row's `nativeScrollId` for initial scroll
   positioning in the native iOS list.
 

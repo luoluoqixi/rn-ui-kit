@@ -4,6 +4,8 @@ import type { SFSymbol } from "sf-symbols-typescript";
 
 import type { SelectProps } from "../select";
 import type { SwitchProps } from "../switch";
+import type { InputProps } from "../input";
+import type { TextAreaProps } from "../text_area";
 import type { NativeHapticsSetting } from "../utils";
 import type { NavigationBarScrollEdgeTrackingProps } from "../utils/navigation";
 
@@ -59,6 +61,8 @@ export type NativeListItemBaseProps = NativeListItemPaddingProps &
     subtitle?: ReactNode;
     subtitleColor?: string;
     subtitleFontSize?: number;
+    /** 行尾自定义内容。iOS 原生模式会自动承载 React Native 节点。 */
+    trailing?: ReactNode;
     title?: ReactNode;
     titleAlign?: "center" | "right" | "left";
     titleColor?: string;
@@ -88,6 +92,15 @@ export type NativeListItemProps = NativeListItemBaseProps & {
 
 export type NativeListButtonItemProps = NativeListItemProps;
 
+/** 单行输入框；传入 title 或 subtitle 时显示在左侧，输入框显示在右侧。 */
+export type NativeListInputItemProps = Omit<
+  NativeListItemBaseProps,
+  "onPress" | "selected" | "trailing" | "value"
+> & {
+  /** 传递给 `Input` 的属性，例如 `value`、`onChangeText`、`placeholder` 与 `autoFocus`。 */
+  inputProps: InputProps;
+};
+
 export type NativeListCustomItemProps = NativeListItemPaddingProps & {
   /** fallback 行的常态背景色；iOS 原生 List 会忽略。 */
   backgroundColor?: ViewStyle["backgroundColor"];
@@ -101,10 +114,18 @@ export type NativeListCustomItemProps = NativeListItemPaddingProps & {
   pressBackgroundColor?: ViewStyle["backgroundColor"];
 };
 
+/** 一个占满列表行的多行文本输入框。 */
+export type NativeListTextAreaItemProps = Omit<NativeListCustomItemProps, "children"> & {
+  /** 传递给 `TextArea` 的属性，例如 `value`、`onChangeText`、`placeholder` 与 `numberOfLines`。 */
+  textAreaProps: TextAreaProps;
+};
+
 /** Section props */
 export type NativeListSectionProps = {
   children?: ReactNode;
   footer?: ReactNode;
+  /** 显示在分组标题右侧的自定义内容，例如“全部显示”按钮。 */
+  trailing?: ReactNode;
   title?: ReactNode;
   /** Section 标题文本颜色；复杂 ReactNode 标题请直接在节点上设置样式。 */
   titleColor?: string;
