@@ -164,7 +164,10 @@ function resolveTextAreaHeight(textAreaProps: NativeListTextAreaItemProps["textA
         ? style.minHeight
         : undefined;
 
-  return configuredHeight ?? Math.max(100, numberOfLines * TEXT_AREA_LINE_HEIGHT + TEXT_AREA_VERTICAL_PADDING);
+  return (
+    configuredHeight ??
+    Math.max(100, numberOfLines * TEXT_AREA_LINE_HEIGHT + TEXT_AREA_VERTICAL_PADDING)
+  );
 }
 
 function useFallbackRowThemeColors() {
@@ -968,6 +971,7 @@ export function NativeListInputItem({ inputProps, ...itemProps }: NativeListInpu
     <TextInput
       {...(nativeInputProps as any)}
       autoFocus={autoFocusNative ?? inputProps.autoFocus ?? false}
+      textAlign={inputProps.textAlign ?? (hasLeadingLabel ? "right" : undefined)}
       clearButtonMode={inputProps.clearButtonMode ?? "while-editing"}
       editable={!disabled}
       multiline={inputProps.multiline ?? false}

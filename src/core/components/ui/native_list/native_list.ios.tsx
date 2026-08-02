@@ -135,7 +135,10 @@ function resolveTextAreaHeight(textAreaProps: NativeListTextAreaItemProps["textA
         ? style.minHeight
         : undefined;
 
-  return configuredHeight ?? Math.max(100, numberOfLines * TEXT_AREA_LINE_HEIGHT + TEXT_AREA_VERTICAL_PADDING);
+  return (
+    configuredHeight ??
+    Math.max(100, numberOfLines * TEXT_AREA_LINE_HEIGHT + TEXT_AREA_VERTICAL_PADDING)
+  );
 }
 
 function titleModifiers(fontSize?: number) {
@@ -873,6 +876,7 @@ export function NativeListInputItem({ inputProps, ...itemProps }: NativeListInpu
     <TextInput
       {...(nativeInputProps as any)}
       autoFocus={autoFocusNative ?? inputProps.autoFocus ?? false}
+      textAlign={inputProps.textAlign ?? (hasLeadingLabel ? "right" : undefined)}
       clearButtonMode={inputProps.clearButtonMode ?? "while-editing"}
       editable={!disabled}
       multiline={inputProps.multiline ?? false}
@@ -1125,12 +1129,14 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
             ]}
             nativeTriggerIcon="chevrons-up-down"
             nativeTriggerLabel={itemProps.value ?? "更多"}
-            nativeTriggerLabelProps={{
-              color: itemProps.valueColor ?? "$color10",
-              fontSize: itemProps.valueFontSize ?? "$4",
-              numberOfLines: 1,
-              opacity: 1,
-            } as any}
+            nativeTriggerLabelProps={
+              {
+                color: itemProps.valueColor ?? "$color10",
+                fontSize: itemProps.valueFontSize ?? "$4",
+                numberOfLines: 1,
+                opacity: 1,
+              } as any
+            }
             triggerProps={{
               ...menuProps.triggerProps,
               disabled,
