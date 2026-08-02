@@ -1,6 +1,7 @@
 import type { ComponentProps, ReactNode } from "react";
 import type { Menu as TamaguiMenu } from "tamagui";
 
+import type { NativeTriggerFaceProps, NativeTriggerIcon } from "../native_trigger";
 import type { NativeHapticsSetting } from "../utils";
 
 export interface MenuItemData {
@@ -23,7 +24,20 @@ export interface MenuProps extends ComponentProps<typeof TamaguiMenu> {
   itemProps?: Omit<MenuItemProps, "children" | "onPress" | "onSelect">;
   items?: MenuItemData[];
   nativeHaptics?: NativeHapticsSetting;
+  /** 是否以通用 native trigger 外观渲染菜单入口。 */
+  nativeTrigger?: boolean;
+  /** 自定义 native trigger 的完整内容。 */
+  nativeTriggerContent?: NativeTriggerFaceProps["content"];
+  /** native trigger 默认内容容器的样式。 */
+  nativeTriggerContainerStyle?: NativeTriggerFaceProps["containerStyle"];
+  /** native trigger 的图标样式。 */
+  nativeTriggerIcon?: NativeTriggerIcon;
+  /** native trigger 的 label；未提供时使用 `trigger`。 */
+  nativeTriggerLabel?: NativeTriggerFaceProps["label"];
+  /** native trigger 默认 label 的文本属性。 */
+  nativeTriggerLabelProps?: NativeTriggerFaceProps["labelProps"];
   portalProps?: MenuPortalProps;
+  /** 菜单入口；启用 `nativeTrigger` 时作为其默认 label。 */
   trigger?: ReactNode;
   triggerProps?: MenuTriggerProps;
 }

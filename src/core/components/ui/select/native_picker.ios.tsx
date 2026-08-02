@@ -18,6 +18,7 @@ import { ListItem as TamaguiListItem } from "tamagui";
 
 import { Button } from "../button";
 import { Menu } from "../menu";
+import { NativeTriggerPressable } from "../native_trigger";
 import { dismissTrueSheet, presentTrueSheet } from "../sheet/native_sheet/true_sheet";
 import {
   TrueSheetInnerStack,
@@ -28,7 +29,6 @@ import { triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
 import type { ResolvedColorScheme } from "../utils/theme";
 
 import type { TextProps } from "../text";
-import { NativeTriggerPressable } from "./native_trigger";
 import type { ResolvedSelectItemData } from "./select_grouping";
 import type { SelectNativeDropdownAlign, SelectNativeTriggerIcon } from "./types";
 

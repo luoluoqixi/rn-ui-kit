@@ -10,6 +10,7 @@ export * from "./flash_list";
 export * from "./form";
 export * from "./image";
 export * from "./native_list";
+export * from "./native_trigger";
 export * from "./input";
 export * from "./label";
 export * from "./link";

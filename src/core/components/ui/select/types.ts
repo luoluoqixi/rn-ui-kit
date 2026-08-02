@@ -2,13 +2,14 @@ import type { ComponentProps, ReactNode } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
 import type { Select as TamaguiSelect } from "tamagui";
 
+import type { NativeTriggerIcon } from "../native_trigger";
 import type { TextProps } from "../text";
 import type { NativeHapticsSetting } from "../utils";
 
 /** 原生 Picker 弹出模式。仅在 props.native 为 true 时生效。 */
 export type NativePickerMode = "dialog" | "dropdown" | "wheel";
 export type SelectNativeMode = boolean | "native-sheet" | "custom-sheet";
-export type SelectNativeTriggerIcon = "stacked" | "chevrons-up-down" | "none";
+export type SelectNativeTriggerIcon = NativeTriggerIcon;
 export type SelectNativeDropdownAlign = "start" | "center" | "end";
 
 export interface SelectItemData {

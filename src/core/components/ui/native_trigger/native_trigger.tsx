@@ -6,13 +6,13 @@ import {
   type StyleProp,
   StyleSheet,
   View,
-  type ViewProps,
   type ViewStyle,
 } from "react-native";
 import { Text, getFontSize } from "tamagui";
 
 import type { TextProps } from "../text";
-import type { SelectNativeTriggerIcon } from "./types";
+
+export type NativeTriggerIcon = "stacked" | "chevrons-up-down" | "none";
 
 type TriggerIconColor = React.ComponentProps<typeof ChevronDown>["color"];
 
@@ -30,7 +30,7 @@ function renderTriggerLabel(label: React.ReactNode, labelProps?: TextProps) {
   return label;
 }
 
-function renderTriggerIcon(icon: SelectNativeTriggerIcon, color: TriggerIconColor) {
+function renderTriggerIcon(icon: NativeTriggerIcon, color: TriggerIconColor) {
   if (icon === "none") {
     return null;
   }
@@ -47,6 +47,22 @@ function renderTriggerIcon(icon: SelectNativeTriggerIcon, color: TriggerIconColo
   );
 }
 
+/** 通用原生风格 trigger 的纯视觉部分，用于组合到已有的点击容器中。 */
+export type NativeTriggerFaceProps = {
+  /** 完全替换默认 label 与图标结构的内容。 */
+  content?: React.ReactNode;
+  /** 默认 trigger 内容容器的样式。 */
+  containerStyle?: StyleProp<ViewStyle>;
+  /** 右侧图标样式。 */
+  icon?: NativeTriggerIcon;
+  /** 默认 label 的文本属性。 */
+  labelProps?: TextProps;
+  /** 要显示的 label。 */
+  label: React.ReactNode;
+  /** 整个 trigger 的不透明度。 */
+  opacity?: number;
+};
+
 export function NativeTriggerFace({
   content,
   containerStyle,
@@ -54,14 +70,7 @@ export function NativeTriggerFace({
   labelProps,
   label,
   opacity = 1,
-}: {
-  content?: React.ReactNode;
-  containerStyle?: StyleProp<ViewStyle>;
-  icon?: SelectNativeTriggerIcon;
-  labelProps?: TextProps;
-  label: React.ReactNode;
-  opacity?: number;
-}) {
+}: NativeTriggerFaceProps) {
   if (content != null) {
     return (
       <View pointerEvents="none" style={[styles.customContent, { opacity }]}>
@@ -84,47 +93,42 @@ export function NativeTriggerFace({
   );
 }
 
-export const NativeTriggerPressable = React.forwardRef<
-  View,
-  {
-    content?: React.ReactNode;
-    containerStyle?: StyleProp<ViewStyle>;
-    icon?: SelectNativeTriggerIcon;
-    labelProps?: TextProps;
-    label: React.ReactNode;
-    onPress?: PressableProps["onPress"];
-  } & Omit<ViewProps, "children" | "onPress">
->(
-  (
-    { content, containerStyle, icon = "stacked", labelProps, label, onPress, ...viewProps },
-    forwardedRef,
-  ) => {
-    const [isPressed, setIsPressed] = React.useState(false);
+/**
+ * 带默认按压反馈的通用原生风格 trigger。
+ *
+ * 除 `children` 外，全部 React Native `Pressable` props 都可直接传入；未传时保留默认布局和按压反馈。
+ */
+export type NativeTriggerProps = Omit<NativeTriggerFaceProps, "opacity"> &
+  Omit<PressableProps, "children">;
 
-    return (
-      <View
-        ref={forwardedRef}
-        style={content != null ? styles.customTrigger : undefined}
-        {...viewProps}
-      >
-        <NativeTriggerFace
-          content={content}
-          containerStyle={containerStyle}
-          icon={icon}
-          label={label}
-          labelProps={labelProps}
-          opacity={isPressed ? 0.6 : 1}
-        />
-        <Pressable
-          onPress={onPress}
-          onPressIn={() => setIsPressed(true)}
-          onPressOut={() => setIsPressed(false)}
-          style={StyleSheet.absoluteFill}
-        />
-      </View>
-    );
-  },
+export const NativeTrigger = React.forwardRef<View, NativeTriggerProps>(
+  (
+    { content, containerStyle, icon, labelProps, label, style, ...pressableProps },
+    forwardedRef,
+  ) => (
+    <Pressable
+      ref={forwardedRef}
+      {...pressableProps}
+      style={(state) => [
+        content != null ? styles.customTrigger : undefined,
+        { opacity: state.pressed ? 0.6 : 1 },
+        typeof style === "function" ? style(state) : style,
+      ]}
+    >
+      <NativeTriggerFace
+        content={content}
+        containerStyle={containerStyle}
+        icon={icon}
+        label={label}
+        labelProps={labelProps}
+      />
+    </Pressable>
+  ),
 );
+
+/** `NativeTrigger` 的兼容别名。 */
+export const NativeTriggerPressable = NativeTrigger;
+export type NativeTriggerPressableProps = NativeTriggerProps;
 
 const styles = StyleSheet.create({
   chevronColumn: {

@@ -30,6 +30,7 @@ import { LinearGradient } from "tamagui/linear-gradient";
 
 import { isWeb, os } from "../utils/platform";
 import { Menu } from "../menu";
+import { NativeTriggerFace, NativeTriggerPressable } from "../native_trigger";
 import { Sheet } from "../sheet";
 import { NativeSheet, NativeSheetScrollContent } from "../sheet/native_sheet";
 import {
@@ -40,7 +41,6 @@ import {
 import { useAppBackgroundColors } from "../utils/theme";
 
 import { NativePickerDialog, NativePickerSwiftUI } from "./native_picker";
-import { NativeTriggerFace } from "./native_trigger";
 import {
   type ResolvedSelectItemData,
   type ResolvedSelectItemGroupData,
@@ -1881,4 +1881,8 @@ export const Select = Object.assign(SelectRoot, {
   Viewport: SelectViewport,
   Indicator: SelectIndicator,
   FocusScope: SelectFocusScope,
+  /** 可独立点击的 native trigger。 */
+  NativeTrigger: NativeTriggerPressable,
+  /** `NativeTrigger` 的兼容别名。 */
+  NativeTriggerPressable,
 });

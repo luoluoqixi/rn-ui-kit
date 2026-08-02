@@ -4,6 +4,7 @@ import { SizableText, Menu as TamaguiMenu, YStack } from "tamagui";
 
 import { isWeb, os } from "../utils/platform";
 import { resolveAriaLabel, triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
+import { NativeTrigger } from "../native_trigger";
 
 import type {
   MenuArrowProps,
@@ -74,6 +75,12 @@ function MenuRoot(props: MenuProps) {
     itemProps,
     items,
     nativeHaptics,
+    nativeTrigger,
+    nativeTriggerContainerStyle,
+    nativeTriggerContent,
+    nativeTriggerIcon,
+    nativeTriggerLabel,
+    nativeTriggerLabelProps,
     offset,
     onOpenChange,
     onOpenWillChange,
@@ -82,7 +89,12 @@ function MenuRoot(props: MenuProps) {
     triggerProps,
     ...rootProps
   } = props;
-  const hasDefaultStructure = trigger != null || items != null || arrow != null;
+  const resolvedNativeTriggerLabel = nativeTriggerLabel ?? trigger;
+  const shouldRenderTrigger =
+    trigger != null ||
+    (nativeTrigger === true &&
+      (resolvedNativeTriggerLabel != null || nativeTriggerContent != null));
+  const hasDefaultStructure = shouldRenderTrigger || items != null || arrow != null;
   const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics);
   const ios = os() === "ios";
   const handleOpenChange: NonNullable<MenuProps["onOpenChange"]> = (nextOpen) => {
@@ -125,7 +137,21 @@ function MenuRoot(props: MenuProps) {
       offset={offset ?? 8}
       onOpenChange={handleOpenChange}
     >
-      {trigger != null ? <MenuTrigger {...triggerProps}>{trigger}</MenuTrigger> : null}
+      {shouldRenderTrigger ? (
+        <MenuTrigger {...triggerProps} asChild={nativeTrigger ? true : triggerProps?.asChild}>
+          {nativeTrigger ? (
+            <NativeTrigger
+              containerStyle={nativeTriggerContainerStyle}
+              content={nativeTriggerContent}
+              icon={nativeTriggerIcon}
+              label={resolvedNativeTriggerLabel}
+              labelProps={nativeTriggerLabelProps}
+            />
+          ) : (
+            trigger
+          )}
+        </MenuTrigger>
+      ) : null}
       <MenuPortal {...portalProps}>
         <MenuContent {...contentProps}>
           {arrow ? <MenuArrow {...arrowProps} /> : null}

@@ -130,6 +130,7 @@ function MenuExample() {
       <ExampleBlock description="Menu 适合由普通按钮触发的一组轻量操作。" title="项目菜单">
         <Menu
           arrow
+          trigger={<Button variant="outlined">打开 Menu</Button>}
           items={[
             { label: "新建文件", onSelect: () => setAction("新建文件"), value: "new" },
             { label: "打开设置", onSelect: () => setAction("打开设置"), value: "settings" },
@@ -142,7 +143,23 @@ function MenuExample() {
               value: "clear",
             },
           ]}
-          trigger={<Button variant="outlined">打开 Menu</Button>}
+        />
+        <Menu
+          arrow
+          nativeTrigger
+          nativeTriggerLabel="打开Menu"
+          items={[
+            { label: "新建文件", onSelect: () => setAction("新建文件"), value: "new" },
+            { label: "打开设置", onSelect: () => setAction("打开设置"), value: "settings" },
+            { label: "导出快照", onSelect: () => setAction("导出快照"), value: "export" },
+            { label: "separator", separator: true, value: "separator" },
+            {
+              destructive: true,
+              label: "清空记录",
+              onSelect: () => setAction("清空记录"),
+              value: "clear",
+            },
+          ]}
         />
         <Text opacity={0.6}>最近动作：{action}</Text>
       </ExampleBlock>

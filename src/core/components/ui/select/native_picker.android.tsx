@@ -6,9 +6,9 @@ import React, { useEffect, useImperativeHandle, useRef } from "react";
 import { type LayoutChangeEvent, type StyleProp, View, type ViewStyle } from "react-native";
 
 import { triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
+import { NativeTriggerPressable } from "../native_trigger";
 
 import type { TextProps } from "../text";
-import { NativeTriggerPressable } from "./native_trigger";
 import type { ResolvedSelectItemData } from "./select_grouping";
 import type { SelectNativeDropdownAlign, SelectNativeTriggerIcon } from "./types";
 
