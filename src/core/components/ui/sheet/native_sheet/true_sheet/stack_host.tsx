@@ -2,6 +2,7 @@ import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import type { TrueSheetProps } from "@lodev09/react-native-true-sheet";
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationOptions } from "@react-navigation/native-stack";
+import { ArrowLeft } from "@tamagui/lucide-icons-2";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { BackHandler, Platform, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -150,7 +151,16 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
 
   const mergedScreenOptions: TrueSheetInnerStackScreenOptions = {
     // iOS Native Stack 会从上一页的 title/headerTitle 推导返回文案。
-    ...(trueSheetUsesNativeStackNavigator ? {} : { headerBackTitle: "返回" }),
+    ...(trueSheetUsesNativeStackNavigator
+      ? {}
+      : {
+          // Android TrueSheet 使用 JS Stack。用代码图标避免依赖
+          // @react-navigation/elements 的 back-icon 多倍率 PNG 资源。
+          headerBackImage: ({ tintColor }: { tintColor: string }) => (
+            <ArrowLeft color={tintColor as any} size={24} />
+          ),
+          headerBackTitle: "返回",
+        }),
     headerRight:
       platform === "ios" ? () => <TrueSheetStackHeaderCloseButton title="关闭" /> : undefined,
     headerShown: true,
