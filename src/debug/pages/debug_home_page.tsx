@@ -16,6 +16,7 @@ import type { RnUiKitDebugRouteDefinition, RnUiKitDebugRouteKey } from "../types
 export function RnUiKitDebugHomePage({
   layoutHost = "default",
   openSectionsInSheet,
+  onRefresh,
   pages,
   onOpenPanelSheet,
   sectionSheetPosition,
@@ -27,6 +28,7 @@ export function RnUiKitDebugHomePage({
   headerTransparent?: boolean;
   layoutHost?: "default" | "nativeSheet";
   openSectionsInSheet: boolean;
+  onRefresh?: () => Promise<void> | void;
   pages: RnUiKitDebugRouteDefinition[];
   onOpenPanelSheet?: () => void;
   sectionSheetPosition: number;
@@ -50,6 +52,7 @@ export function RnUiKitDebugHomePage({
 
   return (
     <NativeList
+      onRefresh={onRefresh}
       automaticallyAdjustsScrollIndicatorInsets={isNativeIosPage ? true : undefined}
       contentInsetAdjustmentBehavior={usesNativeIosScrollEdgeHeader ? "automatic" : undefined}
       tracksNavigationBarScrollEdge={tracksScrollEdgeHeader}

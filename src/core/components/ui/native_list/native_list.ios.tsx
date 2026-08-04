@@ -1,4 +1,5 @@
 import {
+  Group as SwiftUIGroup,
   HStack,
   Host,
   Image,
@@ -20,9 +21,12 @@ import {
   font,
   foregroundStyle,
   frame,
+  ios15ListRowTopRoundedBackground,
   layoutPriority,
   lineLimit,
+  listRowBackground,
   listRowInsets,
+  listRowSeparator,
   listSectionSpacing,
   listStyle,
   multilineTextAlignment,
@@ -35,7 +39,7 @@ import {
   tint,
   viewID,
 } from "@expo/ui/swift-ui/modifiers";
-import { type ReactNode, createContext, useContext, useRef } from "react";
+import { Children, type ReactNode, createContext, useContext, useRef } from "react";
 import { StyleSheet, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "tamagui";
@@ -47,7 +51,7 @@ import { Menu } from "../menu";
 import { getTrueSheetScrollBottomPadding } from "../sheet/native_sheet/true_sheet/sheet_scroll_layout";
 import { useTrueSheetScrollLayout } from "../sheet/native_sheet/true_sheet/true_sheet_scroll_context";
 import { Switch } from "../switch";
-import { isIos26Plus } from "../utils/platform";
+import { isIos15, isIos26Plus } from "../utils/platform";
 import { toSwiftUIHexColor, triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
 import {
   NativeListActionItem as FallbackActionItem,
@@ -94,6 +98,14 @@ type SwiftUIButtonStyle =
 const NativeListContext = createContext<NativeListContextValue>({ native: true });
 
 const ROW_INSETS = listRowInsets({ top: 0, leading: 0, bottom: 0, trailing: 0 });
+const IOS15_SECTION_HEADER_ROW_INSETS = listRowInsets({
+  top: 0,
+  leading: 20,
+  bottom: 0,
+  trailing: 20,
+});
+const IOS15_SECTION_HEADER_ROW_BACKGROUND = listRowBackground("clear");
+const IOS15_SECTION_HEADER_ROW_SEPARATOR = listRowSeparator("hidden");
 const ROW_PADDING = { top: 0, bottom: 0, leading: 0, trailing: 0 } as const;
 const DEFAULT_TITLE_FONT_SIZE = 17;
 const DEFAULT_SUBTITLE_FONT_SIZE = 13;
@@ -430,7 +442,9 @@ function NativeTrailingContent({ children }: { children: ReactNode }) {
     return <SwiftText modifiers={valueModifiers()}>{text}</SwiftText>;
   }
 
-  return <NativeHostedTrailingControl>{children}</NativeHostedTrailingControl>;
+  return (
+    <NativeHostedTrailingControl>{children}</NativeHostedTrailingControl>
+  );
 }
 
 function NativeHostedCustomRow({ children }: { children: ReactNode }) {
@@ -748,11 +762,27 @@ function NativeListSection({
   const stringFooter = toPlainText(footer);
   const resolvedSectionTitleColor =
     titleColor != null ? (toSwiftUIHexColor(titleColor) ?? titleColor) : undefined;
+  const usesIos15HeaderRow =
+    isIos15() &&
+    ((title != null && stringTitle == null) ||
+      (trailing != null && toPlainText(trailing) == null));
   const header =
-    trailing != null ? (
+    trailing != null || usesIos15HeaderRow ? (
       <HStack
         alignment="center"
-        modifiers={[frame({ maxWidth: 99999, alignment: "leading" })]}
+        modifiers={[
+          frame({
+            maxWidth: 99999,
+            alignment: "leading",
+          }),
+          ...(usesIos15HeaderRow
+            ? [
+                IOS15_SECTION_HEADER_ROW_INSETS,
+                IOS15_SECTION_HEADER_ROW_BACKGROUND,
+                IOS15_SECTION_HEADER_ROW_SEPARATOR,
+              ]
+            : []),
+        ]}
         spacing={8}
       >
         {stringTitle != null ? (
@@ -769,8 +799,10 @@ function NativeListSection({
         ) : title != null ? (
           <NativeHostedContent>{title}</NativeHostedContent>
         ) : null}
-        <Spacer minLength={0} />
-        <NativeTrailingContent>{trailing}</NativeTrailingContent>
+        {trailing != null ? <Spacer minLength={0} /> : null}
+        {trailing != null ? (
+          <NativeTrailingContent>{trailing}</NativeTrailingContent>
+        ) : null}
       </HStack>
     ) : stringTitle != null && (resolvedSectionTitleColor != null || titleFontSize != null) ? (
       <SwiftText
@@ -792,6 +824,22 @@ function NativeListSection({
     ) : footer != null ? (
       <NativeHostedContent>{footer}</NativeHostedContent>
     ) : undefined;
+
+  if (usesIos15HeaderRow && header != null) {
+    const [firstChild, ...remainingChildren] = Children.toArray(children);
+
+    return (
+      <SwiftUISection footer={footerView}>
+        {header}
+        {firstChild != null ? (
+          <SwiftUIGroup modifiers={[ios15ListRowTopRoundedBackground()]}>
+            {firstChild}
+          </SwiftUIGroup>
+        ) : null}
+        {remainingChildren}
+      </SwiftUISection>
+    );
+  }
 
   return (
     <SwiftUISection

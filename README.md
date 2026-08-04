@@ -383,7 +383,8 @@ export function SettingsList() {
   时，文本显示在左侧、输入框显示在右侧。默认在 iOS 编辑时显示清除按钮；传入
   `inputProps.clearButtonMode` 可以覆盖该行为。
 - `NativeListItem.trailing` 可渲染自定义行尾内容；`NativeListSection.trailing` 可渲染分组
-  标题右侧内容，例如“全部显示”。
+  标题右侧内容，例如“全部显示”。iOS 15 会将包含复杂 React Native trailing 的 header
+  放入 Section 的透明首行，并为首个内容行恢复顶部圆角，以绕开系统 section header 的复用问题。
 - `NativeListTextAreaItem` 提供占满一行的多行文本框，使用 `textAreaProps` 传入 `TextArea`
   的属性。
 - `initialScrollTarget` 与行上的 `nativeScrollId` 可用于 iOS 原生列表的初始滚动定位。

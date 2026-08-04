@@ -142,7 +142,6 @@ export type NativeListSectionProps = {
   footer?: ReactNode;
   /**
    * 显示在分组标题右侧的自定义内容，例如“全部显示”按钮。
-   * 在 ios15 上, 使用此字段的 React Native (复杂)自定义组件和 SwiftUI 组合可能导致布局错乱
    */
   trailing?: ReactNode;
   /** title */

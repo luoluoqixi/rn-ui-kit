@@ -404,7 +404,9 @@ Notes:
   button while editing by default; use `inputProps.clearButtonMode` to override it.
 - `NativeListItem.trailing` renders custom row-end content, while
   `NativeListSection.trailing` renders content on the right of a section header,
-  such as a “Show all” action.
+  such as a “Show all” action. On iOS 15, headers containing complex React Native
+  trailing content are rendered as the Section's transparent first row, while
+  the first content row receives restored top corners to avoid the system reuse bug.
 - `NativeListTextAreaItem` provides a full-row multiline text field. Pass normal
   `TextArea` props through `textAreaProps`.
 - Use `initialScrollTarget` with a row's `nativeScrollId` for initial scroll

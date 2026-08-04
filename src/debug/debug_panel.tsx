@@ -357,6 +357,7 @@ function RnUiKitDebugHostHomePage({
   return (
     <YStack background="$background" flex={1} {...props}>
       <RnUiKitDebugHomePage
+        onRefresh={() => {}}
         onOpenPanelSheet={() => setPanelSheetOpen(true)}
         onOpenSection={(key) => {
           if (openSectionsInSheet) {
@@ -537,6 +538,7 @@ function RnUiKitDebugPanelContent({
           >
             {() => (
               <RnUiKitDebugHomeRoute
+                onRefresh={() => {}}
                 onOpenInSheet={(key) =>
                   setOpenSectionSheets((current) => new Set(current).add(key))
                 }
@@ -620,6 +622,7 @@ function RnUiKitDebugHomeRoute({
   onSectionSheetPositionChange,
   openSectionsInSheet,
   sectionSheetPosition,
+  onRefresh,
 }: {
   layoutHost?: "default" | "nativeSheet";
   onOpenInSheet: (key: RnUiKitDebugRouteKey) => void;
@@ -629,11 +632,13 @@ function RnUiKitDebugHomeRoute({
   onSectionSheetPositionChange: (position: number) => void;
   openSectionsInSheet: boolean;
   sectionSheetPosition: number;
+  onRefresh?: () => Promise<void> | void;
 }) {
   const navigation = useNavigation<NavigationProp<RnUiKitDebugStackParamList>>();
 
   return (
     <RnUiKitDebugHomePage
+      onRefresh={onRefresh}
       layoutHost={layoutHost}
       onOpenSection={(key) => {
         if (openSectionsInSheet) return onOpenInSheet(key);
