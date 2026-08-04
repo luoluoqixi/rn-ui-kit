@@ -4,7 +4,7 @@
   useAdaptContext,
   useAdaptIsActive,
 } from "@tamagui/adapt";
-import { Theme, isWeb as isTamaguiWeb, useThemeName } from "@tamagui/core";
+import { Theme, isWeb as isTamaguiWeb, useTheme, useThemeName } from "@tamagui/core";
 import { Dismissable } from "@tamagui/dismissable";
 import { FocusScope } from "@tamagui/focus-scope";
 import { Check, ChevronDown, ChevronUp } from "@tamagui/lucide-icons-2";
@@ -1045,6 +1045,8 @@ const SelectRoot = forwardRef<any, SelectProps>(
     const sheetScrollRef = useRef<any>(null);
     const webMenuRootId = React.useId();
     const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics);
+    const nativeMenuTheme = useTheme();
+    const nativeMenuSelectedItemBackgroundColor = nativeMenuTheme.color3?.val;
     const shouldUseTouchSheetLayout = !isWeb() || selectBehavior.shouldUseWebSheet;
     const resolvedPickerMode =
       nativePickerMode ??
@@ -1188,6 +1190,11 @@ const SelectRoot = forwardRef<any, SelectProps>(
       );
     };
 
+    /** Android dropdown 改用 Zeego Menu；dialog 保留已有 RNPicker 实现。 */
+    const shouldRenderNativeDropdownMenu =
+      platform === "android" &&
+      selectBehavior.shouldUseNativePicker &&
+      resolvedPickerMode === "dropdown";
     /**
      * NativePickerDialog（隐藏渲染 + focus() 触发系统弹窗）仅在 Android 上可用。
      * wheel 为 iOS 专用模式，Android 上不走此路径。
@@ -1197,15 +1204,14 @@ const SelectRoot = forwardRef<any, SelectProps>(
       selectBehavior.shouldUseNativePicker &&
       resolvedPickerMode !== "wheel" &&
       platform === "android" &&
-      !nativeTrigger;
-    /**
-     * iOS native 始终走平台 wrapper。
-     * Android 在 nativeTrigger=true 时也走同一层 wrapper，自绘 trigger + 原生 picker 弹层。
-     */
+      !nativeTrigger &&
+      !shouldRenderNativeDropdownMenu;
+    /** iOS native 始终走平台 wrapper；Android nativeTrigger 保留原 wrapper。 */
     const shouldRenderNativePlatformPicker =
       !isWeb() &&
       selectBehavior.shouldUseNativePicker &&
-      (platform === "ios" || (platform === "android" && !!nativeTrigger));
+      (platform === "ios" ||
+        (platform === "android" && !!nativeTrigger && !shouldRenderNativeDropdownMenu));
 
     const handleTamaguiOpenChange = (nextOpen: boolean) => {
       if (shouldRenderNativePicker && nextOpen) {
@@ -1253,6 +1259,11 @@ const SelectRoot = forwardRef<any, SelectProps>(
             shouldOpenBelow ? 0 : -(estimatedDropdownHeight + height),
           );
         });
+        return;
+      }
+
+      if (shouldRenderNativeDropdownMenu) {
+        // Zeego 的原生 Menu 自己维护 open 状态并派发 onOpenChange。
         return;
       }
 
@@ -1757,7 +1768,10 @@ const SelectRoot = forwardRef<any, SelectProps>(
           <TamaguiSelect
             disablePreventBodyScroll
             {...props}
-            open={shouldRenderNativePicker ? false : undefined}
+            {...(shouldRenderNativeDropdownMenu
+              ? { value: selectedValue ?? undefined }
+              : undefined)}
+            open={shouldRenderNativeDropdownMenu || shouldRenderNativePicker ? false : undefined}
             native={selectBehavior.tamaguiNative}
             onOpenChange={handleTamaguiOpenChange}
             onValueChange={handleTamaguiValueChange}
@@ -1766,7 +1780,68 @@ const SelectRoot = forwardRef<any, SelectProps>(
             {children ??
               (resolvedItems.length === 0 ? null : (
                 <>
-                  {shouldRenderNativePicker ? (
+                  {shouldRenderNativeDropdownMenu ? (
+                    <Menu
+                      nativeAnchorAlignment={resolvedNativeDropdownAlign ?? "center"}
+                      nativeSelectedItemBackgroundColor={nativeMenuSelectedItemBackgroundColor}
+                      items={resolvedItems.map((item) => ({
+                        disabled: item.disabled ?? item.isDisabled,
+                        label: item.label,
+                        onSelect: () => handleTamaguiValueChange(item.value),
+                        selected: item.value === selectedValue,
+                        value: item.value,
+                      }))}
+                      nativeHaptics={resolvedNativeHaptics}
+                      onOpenChange={onOpenChange}
+                      trigger={
+                        <SelectTrigger
+                          disabled={disabled ?? isDisabled ?? triggerProps?.disabled}
+                          {...(!nativeTrigger
+                            ? {
+                                backgroundColor: "$background",
+                                borderRadius: "$4",
+                                iconAfter: ChevronDown,
+                              }
+                            : {
+                                backgroundColor: "transparent",
+                                borderColor: "transparent",
+                                borderRadius: 0,
+                                borderWidth: 0,
+                                justifyContent: "center",
+                                minHeight: 44,
+                                paddingHorizontal: 0,
+                                paddingVertical: 0,
+                                pressStyle: {
+                                  backgroundColor: shouldUseNativeSheetCompactNativeTrigger
+                                    ? SELECT_TRIGGER_PRESS_COLOR
+                                    : "transparent",
+                                  borderColor: "transparent",
+                                  opacity: 0.6,
+                                },
+                              })}
+                          {...triggerProps}
+                          aria-label={resolveAriaLabel(
+                            triggerProps?.["aria-label"] ?? ariaLabel,
+                            selectedItem ?? placeholder,
+                          )}
+                          nativeHaptics={triggerProps?.nativeHaptics ?? resolvedNativeHaptics}
+                        >
+                          {nativeTrigger ? (
+                            <NativeTriggerFace
+                              content={nativeTriggerContent}
+                              containerStyle={nativeTriggerContainerStyle}
+                              icon={nativeTriggerIcon}
+                              label={nativeTriggerLabel}
+                              labelProps={nativeTriggerLabelProps}
+                            />
+                          ) : (
+                            <SelectValue placeholder={placeholder} />
+                          )}
+                        </SelectTrigger>
+                      }
+                      triggerProps={{ asChild: true }}
+                    />
+                  ) : shouldRenderNativePicker ? (
                     <YStack position="relative" width="100%">
                       <SelectTrigger
                         ref={nativePickerTriggerRef}

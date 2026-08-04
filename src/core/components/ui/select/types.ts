@@ -6,7 +6,7 @@ import type { NativeTriggerIcon } from "../native_trigger";
 import type { TextProps } from "../text";
 import type { NativeHapticsSetting } from "../utils";
 
-/** 原生 Picker 弹出模式。仅在 props.native 为 true 时生效。 */
+/** 原生 Select 弹出模式。Android dropdown 使用 Zeego Menu，dialog 保留 RNPicker。 */
 export type NativePickerMode = "dialog" | "dropdown" | "wheel";
 export type SelectNativeMode = boolean | "native-sheet" | "custom-sheet";
 export type SelectNativeTriggerIcon = NativeTriggerIcon;
@@ -76,7 +76,7 @@ export interface SelectProps extends Omit<
   nativeDropdownAlign?: SelectNativeDropdownAlign;
   /** 原生 dropdown 锚点相对边缘的内缩距离。默认 `0`。 */
   nativeDropdownEdgeOffset?: number;
-  /** 原生 dropdown 的垂直位置；默认在 trigger 下方，空间不足时由系统向上展开。 */
+  /** 原生 dropdown 的垂直位置；Android dropdown 由 Zeego 自动选择上下方向。 */
   nativeDropdownPlacement?: SelectNativeDropdownPlacement;
   /** Android 原生 dropdown 锚点宽度。默认使用组件内部宽度。 */
   nativeDropdownAnchorWidth?: number;

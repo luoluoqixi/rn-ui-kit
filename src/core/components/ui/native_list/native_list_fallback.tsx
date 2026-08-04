@@ -36,8 +36,6 @@ import { useAppBackgroundColors, useUiPreferences } from "../utils/theme";
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from "../flash_list";
 import { Menu } from "../menu";
 import { Select } from "../select";
-import { NativePickerSwiftUI } from "../select/native_picker";
-import type { ResolvedSelectItemData } from "../select/select_grouping";
 import {
   getTrueSheetScrollBottomPadding,
   getTrueSheetScrollIndicatorBottomInset,
@@ -328,10 +326,6 @@ function FallbackRowContainer({
 type NativeListRowProps = NativeListItemBaseProps & {
   iconAfter?: ReactNode;
   pressResetToken?: number;
-};
-
-type NativeListAndroidMenuPickerItem = ResolvedSelectItemData & {
-  menuItem: NonNullable<NativeListMenuItemProps["menuProps"]["items"]>[number];
 };
 
 function renderTitleNode(
@@ -1132,6 +1126,7 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
           selectProps.triggerProps?.pressStyle ??
           ({
             background: itemProps.pressBackgroundColor ?? "$color5",
+            opacity: 0.6,
           } as any),
       }}
     />
@@ -1170,83 +1165,20 @@ function NativeListMenuTrigger({
   );
 }
 
-/** Android 使用 Select 相同的 RNPPicker 锚点逻辑，确保原生弹层严格右对齐。 */
-function NativeListAndroidMenuItem({
-  menuProps,
-  nativeDropdownPlacement,
-  ...itemProps
-}: NativeListMenuItemProps) {
-  const disabled = itemProps.disabled || menuProps.triggerProps?.disabled;
-  const resolvedNativeHaptics = useResolvedNativeHaptics(
-    menuProps.nativeHaptics ?? itemProps.nativeHaptics ?? false,
-  );
-  const pickerItems = useMemo<NativeListAndroidMenuPickerItem[]>(() => {
-    const visibleItems = (menuProps.items ?? []).filter((item) => !item.separator);
-
-    return visibleItems.map((item, index) => ({
-      ...item,
-      disabled: item.disabled ?? menuProps.itemProps?.disabled,
-      groupKey: "native-list-menu",
-      index,
-      isFirstInGroup: index === 0,
-      isLastInGroup: index === visibleItems.length - 1,
-      label:
-        typeof item.label === "string" || typeof item.label === "number"
-          ? String(item.label)
-          : (item.textValue ?? item.value),
-      // Menu 没有选中值；使用内部 id 避免与实际 action value 冲突。
-      value: `__native-list-menu-${index}`,
-      menuItem: item,
-    }));
-  }, [menuProps.itemProps?.disabled, menuProps.items]);
-
-  const trigger = <NativeListMenuTrigger disabled={disabled} itemProps={itemProps} />;
-
-  if (disabled || pickerItems.length === 0) {
-    return trigger;
-  }
-
-  return (
-    <NativePickerSwiftUI
-      items={pickerItems}
-      mode="dropdown"
-      nativeDropdownAlign="end"
-      nativeDropdownEdgeOffset={-14}
-      nativeDropdownPlacement={nativeDropdownPlacement ?? "bottom"}
-      nativeTriggerContent={trigger}
-      nativeTriggerIcon="chevrons-up-down"
-      resolvedNativeHaptics={resolvedNativeHaptics}
-      value={null}
-      onValueChange={(pickerValue: string | null) => {
-        const item = pickerItems.find((pickerItem) => pickerItem.value === pickerValue)?.menuItem;
-        ((item?.onSelect ?? item?.onPress) as (() => void) | undefined)?.();
-      }}
-    />
-  );
-}
-
 /** 以整行 NativeList 样式作为 `Menu` 的 native trigger，不维护选中状态。 */
 export function NativeListMenuItem({
   menuProps,
-  nativeDropdownPlacement,
   ...itemProps
 }: NativeListMenuItemProps) {
-  if (os() === "android" && menuProps.items != null) {
-    return (
-      <NativeListAndroidMenuItem
-        menuProps={menuProps}
-        nativeDropdownPlacement={nativeDropdownPlacement}
-        {...itemProps}
-      />
-    );
-  }
-
   const disabled = itemProps.disabled || menuProps.triggerProps?.disabled;
   const trigger = <NativeListMenuTrigger disabled={disabled} itemProps={itemProps} />;
 
   return (
     <Menu
       {...menuProps}
+      nativeAnchorAlignment={
+        menuProps.nativeAnchorAlignment ?? (os() === "android" ? "end" : undefined)
+      }
       nativeHaptics={menuProps.nativeHaptics ?? itemProps.nativeHaptics ?? false}
       nativeTrigger
       nativeTriggerContent={trigger}

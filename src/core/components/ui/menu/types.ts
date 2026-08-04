@@ -1,4 +1,5 @@
 import type { ComponentProps, ReactNode } from "react";
+import type { ColorValue } from "react-native";
 import type { Menu as TamaguiMenu } from "tamagui";
 
 import type { NativeTriggerFaceProps, NativeTriggerIcon } from "../native_trigger";
@@ -13,6 +14,8 @@ export interface MenuItemData {
   onPress?: MenuItemProps["onSelect"];
   onSelect?: MenuItemProps["onSelect"];
   separator?: boolean;
+  /** 原生 Menu 中标识当前项；Android 会应用选中状态。 */
+  selected?: boolean;
   textValue?: string;
   value: string;
 }
@@ -24,6 +27,10 @@ export interface MenuProps extends ComponentProps<typeof TamaguiMenu> {
   itemProps?: Omit<MenuItemProps, "children" | "onPress" | "onSelect">;
   items?: MenuItemData[];
   nativeHaptics?: NativeHapticsSetting;
+  /** Android 原生 Menu 相对 trigger 的水平锚点对齐方式。 */
+  nativeAnchorAlignment?: "start" | "center" | "end";
+  /** Android 原生 Menu 中已选项的背景色；默认使用当前主题的 `color3`。 */
+  nativeSelectedItemBackgroundColor?: ColorValue;
   /** 是否以通用 native trigger 外观渲染菜单入口。 */
   nativeTrigger?: boolean;
   /** 自定义 native trigger 的完整内容。 */

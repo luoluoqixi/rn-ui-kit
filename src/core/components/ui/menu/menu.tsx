@@ -1,6 +1,6 @@
 import { Children, type ReactNode, isValidElement } from "react";
 import { StyleSheet } from "react-native";
-import { SizableText, Menu as TamaguiMenu, YStack } from "tamagui";
+import { SizableText, Menu as TamaguiMenu, YStack, useTheme } from "tamagui";
 
 import { isWeb, os } from "../utils/platform";
 import { resolveAriaLabel, triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
@@ -75,6 +75,8 @@ function MenuRoot(props: MenuProps) {
     itemProps,
     items,
     nativeHaptics,
+    nativeAnchorAlignment,
+    nativeSelectedItemBackgroundColor,
     nativeTrigger,
     nativeTriggerContainerStyle,
     nativeTriggerContent,
@@ -96,6 +98,9 @@ function MenuRoot(props: MenuProps) {
       (resolvedNativeTriggerLabel != null || nativeTriggerContent != null));
   const hasDefaultStructure = shouldRenderTrigger || items != null || arrow != null;
   const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics);
+  const theme = useTheme();
+  const resolvedNativeSelectedItemBackgroundColor =
+    nativeSelectedItemBackgroundColor ?? theme.color3?.val;
   const ios = os() === "ios";
   const handleOpenChange: NonNullable<MenuProps["onOpenChange"]> = (nextOpen) => {
     onOpenChange?.(nextOpen);
@@ -121,6 +126,11 @@ function MenuRoot(props: MenuProps) {
     return (
       <TamaguiMenu
         {...rootProps}
+        {...(nativeAnchorAlignment != null
+          ? ({ anchorAlignment: nativeAnchorAlignment } as any)
+          : undefined)}
+        {...({ isAnchoredToRight: nativeAnchorAlignment === "end" } as any)}
+        {...({ selectedItemBackgroundColor: resolvedNativeSelectedItemBackgroundColor } as any)}
         {...iosOpenWillChangeProps}
         offset={offset ?? 8}
         onOpenChange={handleOpenChange}
@@ -133,6 +143,11 @@ function MenuRoot(props: MenuProps) {
   return (
     <TamaguiMenu
       {...rootProps}
+      {...(nativeAnchorAlignment != null
+        ? ({ anchorAlignment: nativeAnchorAlignment } as any)
+        : undefined)}
+      {...({ isAnchoredToRight: nativeAnchorAlignment === "end" } as any)}
+      {...({ selectedItemBackgroundColor: resolvedNativeSelectedItemBackgroundColor } as any)}
       {...iosOpenWillChangeProps}
       offset={offset ?? 8}
       onOpenChange={handleOpenChange}
@@ -174,6 +189,7 @@ function MenuRoot(props: MenuProps) {
                   disabled={item.disabled ?? itemProps?.disabled}
                   key={item.value}
                   onSelect={item.onSelect ?? item.onPress}
+                  {...({ selected: item.selected } as any)}
                   textValue={item.textValue ?? getMenuItemTextValue(label, item.value)}
                 >
                   <MenuItemTitle>{label}</MenuItemTitle>
