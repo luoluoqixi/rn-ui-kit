@@ -16,12 +16,9 @@ import {
 import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import {
-  Button,
   FlashList,
   ListGroup,
   ListItem,
-  Menu,
-  MenuItemData,
   NativeList,
   NativeListInputItem,
   NativeListItem,
@@ -31,12 +28,12 @@ import {
   NativeListSelectItem,
   NativeListSwitchItem,
   NativeListTextAreaItem,
-  NativeTrigger,
   ScrollView,
   Select,
   SelectItemData,
   Switch,
   Text,
+  isIos15,
   os,
 } from "rn-ui-kit/core";
 
@@ -48,7 +45,12 @@ const NATIVE_LIST_ICON_SIZE = 20;
 const NATIVE_LIST_BACKUP_OPTIONS = [
   { Icon: Timer, sfSymbol: "timer", title: "30 分钟", value: "thirty-minutes" },
   { Icon: Clock, sfSymbol: "clock", title: "1 小时", value: "one-hour" },
-  { Icon: Clock4, sfSymbol: "clock.badge", title: "4 小时", value: "four-hours" },
+  {
+    Icon: Clock4,
+    sfSymbol: isIos15() ? "clock" : "clock.badge",
+    title: "4 小时",
+    value: "four-hours",
+  },
   { Icon: CalendarDays, sfSymbol: "calendar", title: "每天", value: "daily" },
   { Icon: CircleOff, sfSymbol: "nosign", title: "从不", value: "never" },
 ] as const;
