@@ -224,24 +224,40 @@ const NativePickerWheelSheet = React.forwardRef<
  * 不再依赖 SwiftUI Picker 自带按钮，避免嵌套 sheet 等系统着色差异。
  */
 type NativePickerSwiftUIMenuTriggerProps = {
+  active?: boolean;
   containerStyle?: StyleProp<ViewStyle>;
   content?: React.ReactNode;
   icon?: SelectNativeTriggerIcon;
   label: React.ReactNode;
   labelProps?: TextProps;
+  keepPressedOpacity?: boolean;
   onPress?: PressableProps["onPress"];
+  pressedOpacity?: boolean;
 };
 
 const NativePickerSwiftUIMenuTrigger = React.forwardRef<View, NativePickerSwiftUIMenuTriggerProps>(
-  ({ containerStyle, content, icon, label, labelProps, onPress }, forwardedRef) => (
+  ({
+    active,
+    containerStyle,
+    content,
+    icon,
+    keepPressedOpacity,
+    label,
+    labelProps,
+    onPress,
+    pressedOpacity,
+  }, forwardedRef) => (
     <NativeTriggerPressable
       ref={forwardedRef}
+      active={active}
       content={content}
       containerStyle={containerStyle}
       icon={icon}
+      keepPressedOpacity={keepPressedOpacity}
       label={label}
       labelProps={labelProps}
       onPress={onPress}
+      pressedOpacity={pressedOpacity}
     />
   ),
 );
@@ -255,6 +271,7 @@ const NativePickerWheelNativeTriggerSheet = React.forwardRef<
     nativeTriggerIcon?: SelectNativeTriggerIcon;
     nativeTriggerLabel: React.ReactNode;
     nativeTriggerLabelProps?: TextProps;
+    nativeTriggerPressedOpacity?: boolean;
     items: ResolvedSelectItemData[];
     placeholder?: React.ReactNode;
     value: string | null | undefined;
@@ -269,6 +286,7 @@ const NativePickerWheelNativeTriggerSheet = React.forwardRef<
       nativeTriggerIcon,
       nativeTriggerLabel,
       nativeTriggerLabelProps,
+      nativeTriggerPressedOpacity,
       items,
       placeholder,
       value,
@@ -322,6 +340,7 @@ const NativePickerWheelNativeTriggerSheet = React.forwardRef<
           label={nativeTriggerLabel}
           labelProps={nativeTriggerLabelProps}
           onPress={() => openSheet(true)}
+          pressedOpacity={nativeTriggerPressedOpacity}
         />
 
         <WheelTrueSheet
@@ -374,9 +393,12 @@ function NativePickerDropdownCustom({
   __menuRef?: React.MutableRefObject<{ presentMenu: () => void } | null>;
 }) {
   const [internalOpen, setInternalOpen] = React.useState(false);
+  const [willOpen, setWillOpen] = React.useState<boolean | null>(null);
   const selectedLabel = items.find((item) => item.value === value)?.label ?? null;
 
   const resolvedOpen = open ?? internalOpen;
+  // iOS 的 willHide 早于 onOpenChange(false)：一旦收到 will 事件，以它作为视觉状态的准确信号。
+  const isNativeTriggerActive = willOpen ?? resolvedOpen;
   const handleSelect = useCallback(
     (itemValue: string) => {
       onValueChange?.(itemValue || null);
@@ -394,12 +416,17 @@ function NativePickerDropdownCustom({
     },
     [onOpenChange, open],
   );
+  const handleOpenWillChange = useCallback((nextOpen: boolean) => {
+    setWillOpen(nextOpen);
+  }, []);
 
   const trigger = nativeTrigger ? (
     <NativePickerSwiftUIMenuTrigger
+      active={isNativeTriggerActive}
       containerStyle={nativeTriggerContainerStyle}
       content={nativeTriggerContent}
       icon={nativeTriggerIcon}
+      keepPressedOpacity
       label={nativeTriggerLabel}
       labelProps={nativeTriggerLabelProps}
     />
@@ -414,6 +441,7 @@ function NativePickerDropdownCustom({
     <Menu
       nativeHaptics={resolvedNativeHaptics}
       onOpenChange={handleOpenChange}
+      onOpenWillChange={handleOpenWillChange}
       open={resolvedOpen}
       trigger={trigger}
       triggerProps={nativeTrigger ? { asChild: true } : undefined}
@@ -467,6 +495,7 @@ export const NativePickerSwiftUI = React.forwardRef<
     nativeTriggerIcon?: SelectNativeTriggerIcon;
     nativeTriggerLabel: React.ReactNode;
     nativeTriggerLabelProps?: TextProps;
+    nativeTriggerPressedOpacity?: boolean;
     onValueChange?: (value: string | null) => void;
     onOpenChange?: (open: boolean) => void;
     resolvedNativeHaptics: ReturnType<typeof useResolvedNativeHaptics>;
@@ -499,6 +528,7 @@ export const NativePickerSwiftUI = React.forwardRef<
     nativeTriggerIcon,
     nativeTriggerLabel,
     nativeTriggerLabelProps,
+    nativeTriggerPressedOpacity,
     onValueChange,
     onOpenChange,
     resolvedNativeHaptics,
@@ -538,6 +568,7 @@ export const NativePickerSwiftUI = React.forwardRef<
         nativeTriggerIcon={nativeTriggerIcon}
         nativeTriggerLabel={nativeTriggerLabel}
         nativeTriggerLabelProps={nativeTriggerLabelProps}
+        nativeTriggerPressedOpacity={nativeTriggerPressedOpacity}
         value={value}
         placeholder={placeholder}
         onValueChange={onValueChange}

@@ -600,21 +600,28 @@ index d64100e..6a3440a 100644
  type UnitPointValue =
    | 'zero'
    | 'topLeading'
-@@ -773,3 +795,12 @@ export const scrollContentBackground = (visible: 'automatic' | 'hidden' | 'visib
+@@ -773,3 +795,19 @@ export const scrollContentBackground = (visible: 'automatic' | 'hidden' | 'visib
  export const listRowBackground = (color: Color) => createModifier('listRowBackground', { color });
 -
 +
 +/**
-+ * Restores only the top corners of a row background on iOS 15.
-+ * This is useful when a transparent helper row precedes the first visible row.
++ * Masks the square top corners of a row on iOS 15 without replacing its native background.
++ * This preserves the system pressed highlight when a transparent helper row precedes it.
 + * Ignored on newer iOS versions.
 + * @platform ios 15
 + */
-+export const ios15ListRowTopRoundedBackground = (cornerRadius: number = 10) =>
-+  createModifier('ios15ListRowTopRoundedBackground', { cornerRadius });
++export const ios15ListRowTopRoundedBackground = (
++  cornerRadius: number = 10,
++  insets: { horizontal?: number; top?: number } = {}
++) =>
++  createModifier('ios15ListRowTopRoundedBackground', {
++    cornerRadius,
++    horizontalInset: insets.horizontal ?? 0,
++    topInset: insets.top ?? 0,
++  });
 +
  /**
-@@ -1267,6 +1298,8 @@ export type BuiltInModifier =
+@@ -1267,6 +1305,8 @@ export type BuiltInModifier =
    | ReturnType<typeof containerShape>
    | ReturnType<typeof contentShape>
    | ReturnType<typeof containerRelativeFrame>
@@ -623,7 +630,7 @@ index d64100e..6a3440a 100644
    | ReturnType<typeof scrollContentBackground>
    | ReturnType<typeof scrollDisabled>
    | ReturnType<typeof defaultScrollAnchor>
-@@ -1277,6 +1310,7 @@ export type BuiltInModifier =
+@@ -1277,6 +1317,7 @@ export type BuiltInModifier =
    | ReturnType<typeof deleteDisabled>
    | ReturnType<typeof environment>
    | ReturnType<typeof listRowBackground>
@@ -662,21 +669,24 @@ index 1e0d2ba..d0d1a5d 100644
  type UnitPointValue = 'zero' | 'topLeading' | 'top' | 'topTrailing' | 'leading' | 'center' | 'trailing' | 'bottomLeading' | 'bottom' | 'bottomTrailing';
  /**
   * Sets the default anchor point for a scroll view's content.
-@@ -611,6 +631,13 @@ export declare const scrollContentBackground: (visible: "automatic" | "visible"
+@@ -611,6 +631,16 @@ export declare const scrollContentBackground: (visible: "automatic" | "visible"
   * @see Official [SwiftUI documentation](https://developer.apple.com/documentation/swiftui/view/listrowbackground(_:)).
   */
  export declare const listRowBackground: (color: Color) => ModifierConfig;
 +/**
-+ * Restores only the top corners of a row background on iOS 15.
-+ * This is useful when a transparent helper row precedes the first visible row.
++ * Masks the square top corners of a row on iOS 15 without replacing its native background.
++ * This preserves the system pressed highlight when a transparent helper row precedes it.
 + * Ignored on newer iOS versions.
 + * @platform ios 15
 + */
-+export declare const ios15ListRowTopRoundedBackground: (cornerRadius?: number) => ModifierConfig;
++export declare const ios15ListRowTopRoundedBackground: (cornerRadius?: number, insets?: {
++    horizontal?: number;
++    top?: number;
++}) => ModifierConfig;
  /**
   * Controls the visibility of the separator for a list row.
   * @param visibility - The visibility to apply.
-@@ -925,7 +952,7 @@ export declare const resizable: (capInsets?: {
+@@ -925,7 +955,7 @@ export declare const resizable: (capInsets?: {
   * This provides type safety for the modifiers array.
   * @hidden
   */
@@ -685,7 +695,7 @@ index 1e0d2ba..d0d1a5d 100644
  /**
   * Main ViewModifier type that supports both built-in and 3rd party modifiers.
   * 3rd party modifiers should return ModifierConfig objects with their own type strings.
-@@ -959,4 +986,4 @@ export * from './presentationModifiers';
+@@ -959,4 +989,4 @@ export * from './presentationModifiers';
  export * from './environment';
  export * from './widgets';
  export type { TimingAnimationParams, SpringAnimationParams, InterpolatingSpringAnimationParams, ChainableAnimationType, } from './animation/types';
@@ -722,28 +732,30 @@ index 552adc5..3a44a62 100644
  internal struct ScaleEffectModifier: ViewModifier, Record {
    @Field var x: CGFloat = 1.0
    @Field var y: CGFloat = 1.0
-@@ -786,3 +805,46 @@ internal struct ListRowBackground: ViewModifier, Record {
+@@ -786,3 +805,59 @@ internal struct ListRowBackground: ViewModifier, Record {
  }
 -
 +
-+private struct Ios15TopRoundedRectangle: Shape {
++private struct Ios15TopCornerCutouts: Shape {
 +  let cornerRadius: CGFloat
 +
 +  func path(in rect: CGRect) -> Path {
 +    let radius = min(max(0, cornerRadius), min(rect.width / 2, rect.height))
 +    var path = Path()
-+    path.move(to: CGPoint(x: rect.minX, y: rect.maxY))
-+    path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + radius))
++    path.move(to: CGPoint(x: rect.minX, y: rect.minY))
++    path.addLine(to: CGPoint(x: rect.minX + radius, y: rect.minY))
 +    path.addQuadCurve(
-+      to: CGPoint(x: rect.minX + radius, y: rect.minY),
++      to: CGPoint(x: rect.minX, y: rect.minY + radius),
 +      control: CGPoint(x: rect.minX, y: rect.minY)
 +    )
-+    path.addLine(to: CGPoint(x: rect.maxX - radius, y: rect.minY))
++    path.closeSubpath()
++
++    path.move(to: CGPoint(x: rect.maxX, y: rect.minY))
++    path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY + radius))
 +    path.addQuadCurve(
-+      to: CGPoint(x: rect.maxX, y: rect.minY + radius),
++      to: CGPoint(x: rect.maxX - radius, y: rect.minY),
 +      control: CGPoint(x: rect.maxX, y: rect.minY)
 +    )
-+    path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
 +    path.closeSubpath()
 +    return path
 +  }
@@ -751,6 +763,8 @@ index 552adc5..3a44a62 100644
 +
 +internal struct Ios15ListRowTopRoundedBackground: ViewModifier, Record {
 +  @Field var cornerRadius: CGFloat = 10
++  @Field var horizontalInset: CGFloat = 0
++  @Field var topInset: CGFloat = 0
 +
 +  @ViewBuilder
 +  func body(content: Content) -> some View {
@@ -760,9 +774,18 @@ index 552adc5..3a44a62 100644
 +    if #available(iOS 16.0, *) {
 +      content
 +    } else {
-+      content.listRowBackground(
-+        Ios15TopRoundedRectangle(cornerRadius: cornerRadius)
-+          .fill(Color.expoSecondarySystemGroupedBackground)
++      content.overlay(
++        GeometryReader { geometry in
++          Ios15TopCornerCutouts(cornerRadius: cornerRadius)
++            .fill(Color.expoSystemGroupedBackground)
++            .frame(
++              width: geometry.size.width + max(0, horizontalInset) * 2,
++              height: geometry.size.height + max(0, topInset),
++              alignment: .top
++            )
++            .offset(x: -max(0, horizontalInset), y: -max(0, topInset))
++        }
++          .allowsHitTesting(false)
 +      )
 +    }
 +#endif
@@ -770,7 +793,7 @@ index 552adc5..3a44a62 100644
 +}
 +
  internal enum VerticalEdgeOptions: String, Enumerable {
-@@ -1699,6 +1761,10 @@ extension ViewModifierRegistry {
+@@ -1699,6 +1774,10 @@ extension ViewModifierRegistry {
        return try ContainerRelativeFrameModifier(from: params, appContext: appContext)
      }
  
@@ -781,7 +804,7 @@ index 552adc5..3a44a62 100644
      register("buttonStyle") { params, appContext, _ in
        return try ButtonStyleModifier(from: params, appContext: appContext)
      }
-@@ -1728,3 +1794,7 @@ extension ViewModifierRegistry {
+@@ -1728,3 +1807,7 @@ extension ViewModifierRegistry {
      }
 -
 +
@@ -790,7 +813,7 @@ index 552adc5..3a44a62 100644
 +    }
 +
      register("listRowSeparator") { params, appContext, _ in
-@@ -1823,6 +1893,10 @@ extension ViewModifierRegistry {
+@@ -1823,6 +1906,10 @@ extension ViewModifierRegistry {
        return try TagModifier(from: params, appContext: appContext)
      }
  

@@ -1029,12 +1029,15 @@ const SelectRoot = forwardRef<any, SelectProps>(
     const selectBehavior = resolveSelectBehavior(native);
     const platform = os();
     const [nativePickerVisible, setNativePickerVisible] = React.useState(false);
+    const [uncontrolledOpen, setUncontrolledOpen] = React.useState(Boolean(props.defaultOpen));
+    const [nativeTriggerOpening, setNativeTriggerOpening] = React.useState(false);
     const [webMenuValue, setWebMenuValue] = React.useState<string | undefined>(
       typeof props.defaultValue === "string" ? props.defaultValue : undefined,
     );
     const [webMenuOpen, setWebMenuOpen] = React.useState(Boolean(props.defaultOpen));
     const [webMenuTriggerWidth, setWebMenuTriggerWidth] = React.useState<number | undefined>();
     const sheetScrollRef = useRef<any>(null);
+    const nativeTriggerFaceRef = useRef<any>(null);
     const webMenuRootId = React.useId();
     const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics);
     const nativeMenuTheme = useTheme();
@@ -1065,6 +1068,13 @@ const SelectRoot = forwardRef<any, SelectProps>(
       ? [{ key: "native", items: resolvedItems }]
       : resolvedItemGroups;
     const selectedValue = props.value !== undefined ? props.value : (webMenuValue ?? null);
+    const isSelectOpen = props.open ?? uncontrolledOpen;
+    const shouldRestoreNativeTriggerOnPressOut =
+      platform === "ios" &&
+      (selectBehavior.shouldUseNativeSheet || selectBehavior.shouldUseCustomSheet);
+    const isNativeTriggerActive = shouldRestoreNativeTriggerOnPressOut
+      ? false
+      : isSelectOpen || nativeTriggerOpening;
     const getItemLabelByValue = (value: string | null | undefined) =>
       resolvedItems.find((item) => item.value === value)?.label ?? null;
     const selectedItem = getItemLabelByValue(selectedValue);
@@ -1206,6 +1216,13 @@ const SelectRoot = forwardRef<any, SelectProps>(
         (platform === "android" && !!nativeTrigger && !shouldRenderNativeDropdownMenu));
 
     const handleTamaguiOpenChange = (nextOpen: boolean) => {
+      if (props.open === undefined) {
+        setUncontrolledOpen(nextOpen);
+      }
+      if (!nextOpen) {
+        setNativeTriggerOpening(false);
+      }
+
       if (shouldRenderNativePicker && nextOpen) {
         triggerNativeHaptics(resolvedNativeHaptics);
         setNativePickerVisible((prev) => {
@@ -1226,6 +1243,17 @@ const SelectRoot = forwardRef<any, SelectProps>(
 
       onOpenChange?.(nextOpen);
       if (nextOpen) triggerNativeHaptics(resolvedNativeHaptics);
+    };
+
+    const handleNativeDropdownMenuOpenChange = (nextOpen: boolean) => {
+      if (props.open === undefined) {
+        setUncontrolledOpen(nextOpen);
+      }
+      if (!nextOpen) {
+        setNativeTriggerOpening(false);
+      }
+
+      onOpenChange?.(nextOpen);
     };
 
     const nativePickerDialog = shouldRenderNativePicker ? (
@@ -1355,10 +1383,39 @@ const SelectRoot = forwardRef<any, SelectProps>(
       nativeHaptics: _triggerNativeHaptics,
       onLayout: triggerOnLayout,
       onPress: triggerOnPress,
+      onPressIn: triggerOnPressIn,
+      onPressOut: triggerOnPressOut,
       pressStyle: triggerPressStyle,
       ...webMenuTriggerProps
     } = (triggerProps as any) ?? {};
     void _triggerNativeHaptics;
+    const handleNativeTriggerPressIn = (event: any) => {
+      triggerOnPressIn?.(event);
+
+      if (nativeTrigger && !shouldRenderWebNativeTriggerSelect) {
+        nativeTriggerFaceRef.current?.setNativeProps?.({ style: { opacity: 0.6 } });
+        if (!shouldRestoreNativeTriggerOnPressOut) {
+          setNativeTriggerOpening(true);
+        }
+      }
+    };
+    const handleNativeTriggerPress = (event: any) => {
+      if (nativeTrigger && !shouldRenderWebNativeTriggerSelect) {
+        nativeTriggerFaceRef.current?.setNativeProps?.({ style: { opacity: 0.6 } });
+        if (!shouldRestoreNativeTriggerOnPressOut) {
+          setNativeTriggerOpening(true);
+        }
+      }
+
+      triggerOnPress?.(event);
+    };
+    const handleNativeTriggerPressOut = (event: any) => {
+      triggerOnPressOut?.(event);
+
+      if (nativeTrigger && shouldRestoreNativeTriggerOnPressOut) {
+        nativeTriggerFaceRef.current?.setNativeProps?.({ style: { opacity: 1 } });
+      }
+    };
     const {
       maxHeight: webMenuContentMaxHeight,
       maxWidth: webMenuContentMaxWidth,
@@ -1529,6 +1586,7 @@ const SelectRoot = forwardRef<any, SelectProps>(
             icon={nativeTriggerIcon}
             label={nativeTriggerLabel}
             labelProps={nativeTriggerLabelProps}
+            opacity={resolvedWebMenuOpen ? 0.6 : 1}
           />
         ) : (
           <>
@@ -1661,6 +1719,7 @@ const SelectRoot = forwardRef<any, SelectProps>(
                 icon={nativeTriggerIcon}
                 label={nativeTriggerLabel}
                 labelProps={nativeTriggerLabelProps}
+                opacity={isSelectOpen ? 0.6 : 1}
               />
             ) : (
               <>
@@ -1746,7 +1805,8 @@ const SelectRoot = forwardRef<any, SelectProps>(
                         value: item.value,
                       }))}
                       nativeHaptics={resolvedNativeHaptics}
-                      onOpenChange={onOpenChange}
+                      onOpenChange={handleNativeDropdownMenuOpenChange}
+                      open={isSelectOpen}
                       trigger={
                         <SelectTrigger
                           disabled={disabled ?? isDisabled ?? triggerProps?.disabled}
@@ -1770,10 +1830,12 @@ const SelectRoot = forwardRef<any, SelectProps>(
                                     ? SELECT_TRIGGER_PRESS_COLOR
                                     : "transparent",
                                   borderColor: "transparent",
-                                  opacity: 0.6,
                                 },
                               })}
                           {...triggerProps}
+                          onPress={handleNativeTriggerPress}
+                          onPressIn={handleNativeTriggerPressIn}
+                          onPressOut={handleNativeTriggerPressOut}
                           aria-label={resolveAriaLabel(
                             triggerProps?.["aria-label"] ?? ariaLabel,
                             selectedItem ?? placeholder,
@@ -1782,11 +1844,13 @@ const SelectRoot = forwardRef<any, SelectProps>(
                         >
                           {nativeTrigger ? (
                             <NativeTriggerFace
+                              ref={nativeTriggerFaceRef}
                               content={nativeTriggerContent}
                               containerStyle={nativeTriggerContainerStyle}
                               icon={nativeTriggerIcon}
                               label={nativeTriggerLabel}
                               labelProps={nativeTriggerLabelProps}
+                              opacity={isNativeTriggerActive ? 0.6 : 1}
                             />
                           ) : (
                             <SelectValue placeholder={placeholder} />
@@ -1819,10 +1883,12 @@ const SelectRoot = forwardRef<any, SelectProps>(
                                   ? SELECT_TRIGGER_PRESS_COLOR
                                   : "transparent",
                                 borderColor: "transparent",
-                                opacity: 0.6,
                               },
                             })}
                         {...triggerProps}
+                        onPress={handleNativeTriggerPress}
+                        onPressIn={handleNativeTriggerPressIn}
+                        onPressOut={handleNativeTriggerPressOut}
                         aria-label={resolveAriaLabel(
                           triggerProps?.["aria-label"] ?? ariaLabel,
                           selectedItem ?? placeholder,
@@ -1831,11 +1897,13 @@ const SelectRoot = forwardRef<any, SelectProps>(
                       >
                         {nativeTrigger ? (
                           <NativeTriggerFace
+                            ref={nativeTriggerFaceRef}
                             content={nativeTriggerContent}
                             containerStyle={nativeTriggerContainerStyle}
                             icon={nativeTriggerIcon}
                             label={nativeTriggerLabel}
                             labelProps={nativeTriggerLabelProps}
+                            opacity={isNativeTriggerActive ? 0.6 : 1}
                           />
                         ) : (
                           <SelectValue placeholder={placeholder} />
@@ -1866,10 +1934,12 @@ const SelectRoot = forwardRef<any, SelectProps>(
                                 ? SELECT_TRIGGER_PRESS_COLOR
                                 : "transparent",
                               borderColor: "transparent",
-                              opacity: 0.6,
                             },
                           })}
                       {...triggerProps}
+                      onPress={handleNativeTriggerPress}
+                      onPressIn={handleNativeTriggerPressIn}
+                      onPressOut={handleNativeTriggerPressOut}
                       aria-label={resolveAriaLabel(
                         triggerProps?.["aria-label"] ?? ariaLabel,
                         selectedItem ?? placeholder,
@@ -1878,11 +1948,13 @@ const SelectRoot = forwardRef<any, SelectProps>(
                     >
                       {nativeTrigger ? (
                         <NativeTriggerFace
+                          ref={nativeTriggerFaceRef}
                           content={nativeTriggerContent}
                           containerStyle={nativeTriggerContainerStyle}
                           icon={nativeTriggerIcon}
                           label={nativeTriggerLabel}
                           labelProps={nativeTriggerLabelProps}
+                          opacity={isNativeTriggerActive ? 0.6 : 1}
                         />
                       ) : (
                         <SelectValue placeholder={placeholder} />

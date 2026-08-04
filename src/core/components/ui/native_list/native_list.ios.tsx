@@ -1,5 +1,4 @@
 import {
-  Group as SwiftUIGroup,
   HStack,
   Host,
   Image,
@@ -96,6 +95,7 @@ type SwiftUIButtonStyle =
   | "plain";
 
 const NativeListContext = createContext<NativeListContextValue>({ native: true });
+const Ios15FirstVisibleRowContext = createContext(false);
 
 const ROW_INSETS = listRowInsets({ top: 0, leading: 0, bottom: 0, trailing: 0 });
 const IOS15_SECTION_HEADER_ROW_INSETS = listRowInsets({
@@ -342,6 +342,7 @@ function NativeRowContainer({
   btnTint?: boolean | string;
 } & NativeListItemPaddingProps) {
   const theme = useTheme();
+  const restoresIos15TopCorners = useContext(Ios15FirstVisibleRowContext);
   const primaryColor = toSwiftUIHexColor(theme.color.val) ?? theme.color.val;
   const resolvedTint = resolveNativeListBtnTintColor(btnTint, primaryColor);
   const baseModifiers = [
@@ -372,10 +373,19 @@ function NativeRowContainer({
           alignment="center"
           modifiers={[
             ...baseModifiers,
-            ...(btnStyle === "plain"
-              ? [frame({ maxWidth: 99999, alignment: "leading" }), contentShape(shapes.rectangle())]
+            ...(btnStyle === "plain" || restoresIos15TopCorners
+              ? [frame({ maxWidth: 99999, alignment: "leading" })]
               : []),
+            ...(btnStyle === "plain" ? [contentShape(shapes.rectangle())] : []),
             ...(resolvedTint != null ? [tint(resolvedTint)] : []),
+            ...(restoresIos15TopCorners
+              ? [
+                  ios15ListRowTopRoundedBackground(12, {
+                    horizontal: 20,
+                    top: 6,
+                  }),
+                ]
+              : []),
           ]}
           spacing={12}
         >
@@ -392,6 +402,8 @@ function NativeRowContainer({
         ...baseModifiers,
         disabledModifier(disabled ?? false),
         ...(nativeScrollId != null ? [viewID(nativeScrollId)] : []),
+        ...(restoresIos15TopCorners ? [frame({ maxWidth: 99999, alignment: "leading" })] : []),
+        ...(restoresIos15TopCorners ? [ios15ListRowTopRoundedBackground()] : []),
       ]}
       spacing={12}
     >
@@ -442,9 +454,7 @@ function NativeTrailingContent({ children }: { children: ReactNode }) {
     return <SwiftText modifiers={valueModifiers()}>{text}</SwiftText>;
   }
 
-  return (
-    <NativeHostedTrailingControl>{children}</NativeHostedTrailingControl>
-  );
+  return <NativeHostedTrailingControl>{children}</NativeHostedTrailingControl>;
 }
 
 function NativeHostedCustomRow({ children }: { children: ReactNode }) {
@@ -764,8 +774,7 @@ function NativeListSection({
     titleColor != null ? (toSwiftUIHexColor(titleColor) ?? titleColor) : undefined;
   const usesIos15HeaderRow =
     isIos15() &&
-    ((title != null && stringTitle == null) ||
-      (trailing != null && toPlainText(trailing) == null));
+    ((title != null && stringTitle == null) || (trailing != null && toPlainText(trailing) == null));
   const header =
     trailing != null || usesIos15HeaderRow ? (
       <HStack
@@ -800,9 +809,7 @@ function NativeListSection({
           <NativeHostedContent>{title}</NativeHostedContent>
         ) : null}
         {trailing != null ? <Spacer minLength={0} /> : null}
-        {trailing != null ? (
-          <NativeTrailingContent>{trailing}</NativeTrailingContent>
-        ) : null}
+        {trailing != null ? <NativeTrailingContent>{trailing}</NativeTrailingContent> : null}
       </HStack>
     ) : stringTitle != null && (resolvedSectionTitleColor != null || titleFontSize != null) ? (
       <SwiftText
@@ -832,9 +839,9 @@ function NativeListSection({
       <SwiftUISection footer={footerView}>
         {header}
         {firstChild != null ? (
-          <SwiftUIGroup modifiers={[ios15ListRowTopRoundedBackground()]}>
+          <Ios15FirstVisibleRowContext.Provider value>
             {firstChild}
-          </SwiftUIGroup>
+          </Ios15FirstVisibleRowContext.Provider>
         ) : null}
         {remainingChildren}
       </SwiftUISection>
@@ -1140,6 +1147,9 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
               opacity: 1,
               ...selectProps.nativeTriggerLabelProps,
             }}
+            // wheel 行使用 SwiftUI plain Button；整行已经提供按压透明度，
+            // 禁用内部 trigger 的反馈，避免行尾内容被重复降低透明度。
+            nativeTriggerPressedOpacity={resolvedPickerMode === "wheel" ? false : undefined}
             onOpenChange={selectProps.onOpenChange}
             onValueChange={selectProps.onValueChange}
             placeholder={selectProps.placeholder}
@@ -1222,6 +1232,7 @@ export function NativeListCustomItem({
   paddingVertical,
   pressBackgroundColor,
 }: NativeListCustomItemProps) {
+  const restoresIos15TopCorners = useContext(Ios15FirstVisibleRowContext);
   const rowPaddingProps = {
     paddingBottom,
     paddingHorizontal,
@@ -1254,6 +1265,9 @@ export function NativeListCustomItem({
           ROW_INSETS,
           disabledModifier(disabled ?? false),
           padding(resolveRowPadding(rowPaddingProps)),
+          ...(restoresIos15TopCorners
+            ? [frame({ maxWidth: 99999, alignment: "leading" }), ios15ListRowTopRoundedBackground()]
+            : []),
         ]}
       >
         <NativeHostedCustomRow>{children}</NativeHostedCustomRow>
@@ -1262,6 +1276,32 @@ export function NativeListCustomItem({
   }
 
   const resolvedHaptics = useResolvedNativeHaptics(nativeHaptics);
+
+  if (restoresIos15TopCorners) {
+    return (
+      <SwiftButton
+        modifiers={[disabledModifier(disabled ?? false)]}
+        onPress={() => {
+          onPress();
+          triggerNativeHaptics(resolvedHaptics);
+        }}
+      >
+        <VStack
+          modifiers={[
+            ROW_INSETS,
+            padding(resolveRowPadding(rowPaddingProps)),
+            frame({ maxWidth: 99999, alignment: "leading" }),
+            ios15ListRowTopRoundedBackground(12, {
+              horizontal: 20,
+              top: 8,
+            }),
+          ]}
+        >
+          <NativeHostedCustomRow>{children}</NativeHostedCustomRow>
+        </VStack>
+      </SwiftButton>
+    );
+  }
 
   return (
     <SwiftButton

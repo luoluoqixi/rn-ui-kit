@@ -1,4 +1,4 @@
-import { Children, type ReactNode, isValidElement } from "react";
+import { Children, type ReactNode, isValidElement, useState } from "react";
 import { StyleSheet } from "react-native";
 import { SizableText, Menu as TamaguiMenu, YStack, useTheme } from "tamagui";
 
@@ -92,6 +92,9 @@ function MenuRoot(props: MenuProps) {
     ...rootProps
   } = props;
   const resolvedNativeTriggerLabel = nativeTriggerLabel ?? trigger;
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(Boolean(rootProps.defaultOpen));
+  const [uncontrolledWillOpen, setUncontrolledWillOpen] = useState(Boolean(rootProps.defaultOpen));
+  const isOpen = rootProps.open ?? uncontrolledOpen;
   const shouldRenderTrigger =
     trigger != null ||
     (nativeTrigger === true &&
@@ -102,7 +105,11 @@ function MenuRoot(props: MenuProps) {
   const resolvedNativeSelectedItemBackgroundColor =
     nativeSelectedItemBackgroundColor ?? theme.color3?.val;
   const ios = os() === "ios";
+  const isNativeTriggerActive = ios ? (rootProps.open ?? uncontrolledWillOpen) : isOpen;
   const handleOpenChange: NonNullable<MenuProps["onOpenChange"]> = (nextOpen) => {
+    if (rootProps.open === undefined) {
+      setUncontrolledOpen(nextOpen);
+    }
     onOpenChange?.(nextOpen);
 
     if (nextOpen && !ios) {
@@ -110,6 +117,9 @@ function MenuRoot(props: MenuProps) {
     }
   };
   const handleOpenWillChange: NonNullable<MenuProps["onOpenWillChange"]> = (nextOpen) => {
+    if (rootProps.open === undefined) {
+      setUncontrolledWillOpen(nextOpen);
+    }
     onOpenWillChange?.(nextOpen);
 
     if (nextOpen) {
@@ -156,9 +166,11 @@ function MenuRoot(props: MenuProps) {
         <MenuTrigger {...triggerProps} asChild={nativeTrigger ? true : triggerProps?.asChild}>
           {nativeTrigger ? (
             <NativeTrigger
+              active={isNativeTriggerActive}
               containerStyle={nativeTriggerContainerStyle}
               content={nativeTriggerContent}
               icon={nativeTriggerIcon}
+              keepPressedOpacity={ios}
               label={resolvedNativeTriggerLabel}
               labelProps={nativeTriggerLabelProps}
             />

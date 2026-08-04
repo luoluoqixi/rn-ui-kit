@@ -205,6 +205,7 @@ export const NativePickerSwiftUI = React.forwardRef<
   return (
     <View style={styles.triggerAnchor}>
       <NativeTriggerPressable
+        active={visible}
         content={nativeTriggerContent}
         containerStyle={nativeTriggerContainerStyle}
         icon={nativeTriggerIcon}
