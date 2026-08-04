@@ -18,7 +18,6 @@ import {
 } from "@tamagui/select";
 import { forwardRef, useCallback, useRef } from "react";
 import React from "react";
-import { Dimensions } from "react-native";
 import {
   FontSizeTokens,
   SizableText,
@@ -220,8 +219,6 @@ const WEB_MENU_BLOCKING_OVERLAY_STYLE = {
   top: 0,
   width: "100vw",
 } as const;
-const ESTIMATED_ANDROID_DROPDOWN_ITEM_HEIGHT = 50;
-const MAX_ESTIMATED_ANDROID_DROPDOWN_HEIGHT = 320;
 const DEFAULT_SELECT_TRIGGER_HOVER_STYLE = {
   backgroundColor: SELECT_TRIGGER_HOVER_COLOR,
 } as const;
@@ -1008,7 +1005,6 @@ const SelectRoot = forwardRef<any, SelectProps>(
       nativeDropdownAlign,
       nativeDropdownAnchorWidth,
       nativeDropdownEdgeOffset,
-      nativeDropdownPlacement,
       nativePickerMode,
       onOpenChange,
       onValueChange,
@@ -1033,10 +1029,6 @@ const SelectRoot = forwardRef<any, SelectProps>(
     const selectBehavior = resolveSelectBehavior(native);
     const platform = os();
     const [nativePickerVisible, setNativePickerVisible] = React.useState(false);
-    const [nativePickerDropdownVerticalOffset, setNativePickerDropdownVerticalOffset] =
-      React.useState(0);
-    const [nativePickerAnchorTopOffset, setNativePickerAnchorTopOffset] = React.useState(0);
-    const nativePickerTriggerRef = React.useRef<any>(null);
     const [webMenuValue, setWebMenuValue] = React.useState<string | undefined>(
       typeof props.defaultValue === "string" ? props.defaultValue : undefined,
     );
@@ -1216,48 +1208,13 @@ const SelectRoot = forwardRef<any, SelectProps>(
     const handleTamaguiOpenChange = (nextOpen: boolean) => {
       if (shouldRenderNativePicker && nextOpen) {
         triggerNativeHaptics(resolvedNativeHaptics);
-        const showNativePicker = (
-          dropdownVerticalOffset: number,
-          anchorTopOffset: number = 0,
-        ) => {
-          setNativePickerDropdownVerticalOffset(dropdownVerticalOffset);
-          setNativePickerAnchorTopOffset(anchorTopOffset);
-          setNativePickerVisible((prev) => {
-            if (prev) {
-              requestAnimationFrame(() => setNativePickerVisible(true));
-              return false;
-            }
+        setNativePickerVisible((prev) => {
+          if (prev) {
+            requestAnimationFrame(() => setNativePickerVisible(true));
+            return false;
+          }
 
-            return true;
-          });
-        };
-
-        if (nativeDropdownPlacement === "overlay") {
-          showNativePicker(0);
-          return;
-        }
-
-        const trigger = nativePickerTriggerRef.current;
-        if (trigger?.measureInWindow == null) {
-          showNativePicker(0);
-          return;
-        }
-
-        trigger.measureInWindow((_x: number, y: number, _width: number, height: number) => {
-          const availableHeightBelow = Dimensions.get("window").height - y - height;
-          const estimatedDropdownHeight = Math.min(
-            resolvedItems.length * ESTIMATED_ANDROID_DROPDOWN_ITEM_HEIGHT + 16,
-            MAX_ESTIMATED_ANDROID_DROPDOWN_HEIGHT,
-          );
-
-          const shouldOpenBelow = availableHeightBelow >= estimatedDropdownHeight;
-
-          // 向上时将隐藏 anchor 预先移到菜单上方，避免 Android Spinner 在
-          // 临界空间自行翻转/裁切后覆盖 trigger。
-          showNativePicker(
-            height,
-            shouldOpenBelow ? 0 : -(estimatedDropdownHeight + height),
-          );
+          return true;
         });
         return;
       }
@@ -1276,8 +1233,6 @@ const SelectRoot = forwardRef<any, SelectProps>(
         anchorAlign={resolvedNativeDropdownAlign}
         anchorWidth={nativeDropdownAnchorWidth}
         anchorEdgeOffset={nativeDropdownEdgeOffset}
-        anchorTopOffset={nativePickerAnchorTopOffset}
-        dropdownVerticalOffset={nativePickerDropdownVerticalOffset}
         visible={nativePickerVisible}
         value={(props.value as string | undefined) ?? ""}
         items={resolvedItems}
@@ -1753,7 +1708,6 @@ const SelectRoot = forwardRef<any, SelectProps>(
             nativeDropdownAlign={resolvedNativeDropdownAlign}
             nativeDropdownAnchorWidth={nativeDropdownAnchorWidth}
             nativeDropdownEdgeOffset={nativeDropdownEdgeOffset}
-            nativeDropdownPlacement={nativeDropdownPlacement}
             mode={resolvedPickerMode as "dropdown" | "wheel" | "dialog"}
             nativeTrigger={nativeTrigger ?? false}
             nativeTriggerContainerStyle={nativeTriggerContainerStyle}
@@ -1844,7 +1798,6 @@ const SelectRoot = forwardRef<any, SelectProps>(
                   ) : shouldRenderNativePicker ? (
                     <YStack position="relative" width="100%">
                       <SelectTrigger
-                        ref={nativePickerTriggerRef}
                         disabled={disabled ?? isDisabled ?? triggerProps?.disabled}
                         {...(!nativeTrigger
                           ? {

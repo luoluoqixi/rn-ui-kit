@@ -2,7 +2,7 @@ import type { ReactElement, ReactNode } from "react";
 import type { ScrollViewProps, ViewStyle } from "react-native";
 import type { SFSymbol } from "sf-symbols-typescript";
 
-import type { SelectNativeDropdownPlacement, SelectProps } from "../select";
+import type { SelectProps } from "../select";
 import type { MenuProps } from "../menu";
 import type { SwitchProps } from "../switch";
 import type { InputProps } from "../input";
@@ -86,8 +86,6 @@ export type NativeListSelectItemProps = NativeListItemBaseProps & {
 
 /** 使用 `Menu` + native trigger 的列表行；Menu 本身不维护选中值。 */
 export type NativeListMenuItemProps = NativeListItemBaseProps & {
-  /** Android picker Menu 的垂直位置；默认在行下方，空间不足时系统自动改为上方。 */
-  nativeDropdownPlacement?: SelectNativeDropdownPlacement;
   menuProps: Omit<
     MenuProps,
     | "nativeTrigger"

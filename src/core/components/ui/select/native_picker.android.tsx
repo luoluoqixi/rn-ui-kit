@@ -4,7 +4,6 @@ import { Picker as RNPPicker } from "@react-native-picker/picker";
 import { useTheme } from "@tamagui/core";
 import React, { useEffect, useImperativeHandle, useRef } from "react";
 import {
-  Dimensions,
   type LayoutChangeEvent,
   type StyleProp,
   View,
@@ -18,13 +17,10 @@ import type { TextProps } from "../text";
 import type { ResolvedSelectItemData } from "./select_grouping";
 import type {
   SelectNativeDropdownAlign,
-  SelectNativeDropdownPlacement,
   SelectNativeTriggerIcon,
 } from "./types";
 
 const DEFAULT_ANDROID_DROPDOWN_MIN_WIDTH = 240;
-const ESTIMATED_ANDROID_DROPDOWN_ITEM_HEIGHT = 50;
-const MAX_ESTIMATED_ANDROID_DROPDOWN_HEIGHT = 320;
 
 /** Android 原生 Picker Dialog：隐藏渲染 Picker 并通过 focus() 触发系统 dialog */
 export function NativePickerDialog({
@@ -32,7 +28,6 @@ export function NativePickerDialog({
   anchorWidth,
   anchorEdgeOffset = 0,
   anchorVerticalAlign = "top",
-  dropdownVerticalOffset = 0,
   anchorStrategy = "native-offset",
   visible,
   value,
@@ -45,7 +40,6 @@ export function NativePickerDialog({
   anchorWidth?: number;
   anchorEdgeOffset?: number;
   anchorVerticalAlign?: "top" | "bottom";
-  dropdownVerticalOffset?: number;
   anchorStrategy?: "layout" | "native-offset";
   visible: boolean;
   value: string | undefined;
@@ -103,7 +97,6 @@ export function NativePickerDialog({
         <RNPPicker
           ref={pickerRef}
           dropdownHorizontalOffset={dropdownHorizontalOffset}
-          dropdownVerticalOffset={dropdownVerticalOffset}
           dropdownWidth={resolvedAnchorWidth}
           style={[styles.dialogPicker, { width: resolvedAnchorWidth }]}
           selectedValue={value ?? ""}
@@ -147,7 +140,6 @@ export const NativePickerSwiftUI = React.forwardRef<
     nativeDropdownAlign?: SelectNativeDropdownAlign;
     nativeDropdownAnchorWidth?: number;
     nativeDropdownEdgeOffset?: number;
-    nativeDropdownPlacement?: SelectNativeDropdownPlacement;
     nativeTrigger?: boolean;
     nativeTriggerContainerStyle?: StyleProp<ViewStyle>;
     nativeTriggerContent?: React.ReactNode;
@@ -165,7 +157,6 @@ export const NativePickerSwiftUI = React.forwardRef<
     nativeDropdownAlign,
     nativeDropdownAnchorWidth,
     nativeDropdownEdgeOffset,
-    nativeDropdownPlacement = "bottom",
     nativeTriggerContainerStyle,
     nativeTriggerContent,
     nativeTriggerIcon,
@@ -175,8 +166,6 @@ export const NativePickerSwiftUI = React.forwardRef<
     resolvedNativeHaptics,
   } = props;
   const [openSignal, setOpenSignal] = React.useState(0);
-  const [dropdownVerticalOffset, setDropdownVerticalOffset] = React.useState(0);
-  const triggerRef = React.useRef<View>(null);
 
   useImperativeHandle(ref, () => ({
     open() {
@@ -200,37 +189,9 @@ export const NativePickerSwiftUI = React.forwardRef<
       if (shouldTriggerHaptics) {
         triggerNativeHaptics(resolvedNativeHaptics);
       }
-
-      if (nativeDropdownPlacement === "overlay") {
-        setDropdownVerticalOffset(0);
-        setPickerVisible();
-        return;
-      }
-
-      const trigger = triggerRef.current;
-      if (trigger == null) {
-        setDropdownVerticalOffset(0);
-        setPickerVisible();
-        return;
-      }
-
-      trigger.measureInWindow((_x, y, _width, height) => {
-        const availableHeightBelow = Dimensions.get("window").height - y - height;
-        const estimatedDropdownHeight = Math.min(
-          items.length * ESTIMATED_ANDROID_DROPDOWN_ITEM_HEIGHT + 16,
-          MAX_ESTIMATED_ANDROID_DROPDOWN_HEIGHT,
-        );
-
-        // Android Spinner 的下拉菜单以 anchor 顶边为基准。仅在确定向下
-        // 展开时加上行高，使菜单顶边紧贴 trigger 底边；向上时维持 0，
-        // 保留系统已有的“菜单底边贴 trigger 顶边”行为。
-        setDropdownVerticalOffset(
-          availableHeightBelow >= estimatedDropdownHeight ? height : 0,
-        );
-        setPickerVisible();
-      });
+      setPickerVisible();
     },
-    [items.length, nativeDropdownPlacement, resolvedNativeHaptics, setPickerVisible],
+    [resolvedNativeHaptics, setPickerVisible],
   );
 
   useEffect(() => {
@@ -244,7 +205,6 @@ export const NativePickerSwiftUI = React.forwardRef<
   return (
     <View style={styles.triggerAnchor}>
       <NativeTriggerPressable
-        ref={triggerRef}
         content={nativeTriggerContent}
         containerStyle={nativeTriggerContainerStyle}
         icon={nativeTriggerIcon}
@@ -259,7 +219,6 @@ export const NativePickerSwiftUI = React.forwardRef<
         anchorWidth={nativeDropdownAnchorWidth}
         anchorEdgeOffset={nativeDropdownEdgeOffset}
         anchorVerticalAlign="top"
-        dropdownVerticalOffset={dropdownVerticalOffset}
         anchorStrategy="layout"
         visible={visible}
         value={(value as string | undefined) ?? ""}

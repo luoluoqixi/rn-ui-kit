@@ -32,7 +32,6 @@ import type { TextProps } from "../text";
 import type { ResolvedSelectItemData } from "./select_grouping";
 import type {
   SelectNativeDropdownAlign,
-  SelectNativeDropdownPlacement,
   SelectNativeTriggerIcon,
 } from "./types";
 
@@ -462,7 +461,6 @@ export const NativePickerSwiftUI = React.forwardRef<
     nativeDropdownAlign?: SelectNativeDropdownAlign;
     nativeDropdownAnchorWidth?: number;
     nativeDropdownEdgeOffset?: number;
-    nativeDropdownPlacement?: SelectNativeDropdownPlacement;
     nativeTrigger?: boolean;
     nativeTriggerContainerStyle?: StyleProp<ViewStyle>;
     nativeTriggerContent?: React.ReactNode;

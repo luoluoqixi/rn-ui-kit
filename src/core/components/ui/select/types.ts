@@ -11,8 +11,6 @@ export type NativePickerMode = "dialog" | "dropdown" | "wheel";
 export type SelectNativeMode = boolean | "native-sheet" | "custom-sheet";
 export type SelectNativeTriggerIcon = NativeTriggerIcon;
 export type SelectNativeDropdownAlign = "start" | "center" | "end";
-/** 原生 dropdown 相对 trigger 的垂直位置。`bottom` 空间不足时由系统自动向上展开。 */
-export type SelectNativeDropdownPlacement = "overlay" | "bottom";
 
 export interface SelectItemData {
   "aria-label"?: string;
@@ -76,8 +74,6 @@ export interface SelectProps extends Omit<
   nativeDropdownAlign?: SelectNativeDropdownAlign;
   /** 原生 dropdown 锚点相对边缘的内缩距离。默认 `0`。 */
   nativeDropdownEdgeOffset?: number;
-  /** 原生 dropdown 的垂直位置；Android dropdown 由 Zeego 自动选择上下方向。 */
-  nativeDropdownPlacement?: SelectNativeDropdownPlacement;
   /** Android 原生 dropdown 锚点宽度。默认使用组件内部宽度。 */
   nativeDropdownAnchorWidth?: number;
   /** Select 平台弹出模式。
