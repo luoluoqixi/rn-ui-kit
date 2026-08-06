@@ -205,7 +205,10 @@ export const NativePickerSwiftUI = React.forwardRef<
   return (
     <View style={styles.triggerAnchor}>
       <NativeTriggerPressable
-        active={visible}
+        // Android dialog / wheel picker visibility is not a pressed state. Keeping
+        // this active while the picker is visible made the trigger stay dim until
+        // the dialog closed; the Pressable's real pressed state is sufficient.
+        active={false}
         content={nativeTriggerContent}
         containerStyle={nativeTriggerContainerStyle}
         icon={nativeTriggerIcon}

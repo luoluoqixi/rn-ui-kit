@@ -1,4 +1,6 @@
 import {
+  ContextMenu as SwiftContextMenu,
+  Divider as SwiftDivider,
   HStack,
   Host,
   Image,
@@ -31,6 +33,7 @@ import {
   listSectionSpacing,
   listStyle,
   multilineTextAlignment,
+  onLongPressGesture,
   opacity,
   padding,
   refreshable,
@@ -45,6 +48,7 @@ import {
 import {
   Children,
   Fragment,
+  type ReactElement,
   type ReactNode,
   createContext,
   useContext,
@@ -59,11 +63,16 @@ import { useTheme } from "tamagui";
 import { NativePickerSwiftUI } from "../select/native_picker";
 import type { NativePickerSwiftUIHandle } from "../select/native_picker";
 import { resolveSelectItemGroups } from "../select/select_grouping";
+import { ContextMenu, type ContextMenuItemData } from "../context_menu";
 import { Menu } from "../menu";
 import { getTrueSheetScrollBottomPadding } from "../sheet/native_sheet/true_sheet/sheet_scroll_layout";
 import { useTrueSheetScrollLayout } from "../sheet/native_sheet/true_sheet/true_sheet_scroll_context";
 import { isIos15, isIos26Plus } from "../utils/platform";
 import { toSwiftUIHexColor, triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
+import {
+  NativeListContextMenuProvider,
+  useResolvedNativeListContextMenu,
+} from "./context_menu";
 import {
   NativeListEditModeProvider,
   useNativeListEditIcons,
@@ -86,6 +95,7 @@ import type {
   NativeListActionItemProps,
   NativeListButtonItemProps,
   NativeListCustomItemProps,
+  NativeListContextMenuProps,
   NativeListItemBaseProps,
   NativeListInputItemProps,
   NativeListItemPaddingProps,
@@ -100,6 +110,122 @@ import type {
   NativeListTextAreaItemProps,
 } from "./types";
 
+function getNativeContextMenuLabel(item: ContextMenuItemData) {
+  if (typeof item.label === "string" || typeof item.label === "number") {
+    return String(item.label);
+  }
+
+  return item.textValue ?? item.value;
+}
+
+function supportsSwiftUIContextMenuItems(items: ContextMenuItemData[]): boolean {
+  return items.every(
+    (item) =>
+      item["aria-label"] == null &&
+      item.icon == null &&
+      item.indicator == null &&
+      item.subtitle == null &&
+      (item.label == null || typeof item.label === "string" || typeof item.label === "number") &&
+      (item.subMenu == null || supportsSwiftUIContextMenuItems(item.subMenu)),
+  );
+}
+
+function canUseSwiftUIContextMenu(contextMenuProps?: NativeListContextMenuProps) {
+  if (contextMenuProps == null) {
+    return false;
+  }
+
+  const supportedRootProps = new Set(["itemProps", "items", "nativeHaptics", "triggerProps"]);
+  const hasUnsupportedRootProps = Object.entries(contextMenuProps).some(
+    ([key, value]) => value !== undefined && !supportedRootProps.has(key),
+  );
+  const hasUnsupportedItemProps = Object.entries(contextMenuProps.itemProps ?? {}).some(
+    ([key, value]) => value !== undefined && key !== "destructive" && key !== "disabled",
+  );
+  const hasUnsupportedTriggerProps = Object.entries(contextMenuProps.triggerProps ?? {}).some(
+    ([key, value]) => value !== undefined && key !== "disabled",
+  );
+
+  return (
+    !hasUnsupportedRootProps &&
+    !hasUnsupportedItemProps &&
+    !hasUnsupportedTriggerProps &&
+    contextMenuProps.items != null &&
+    contextMenuProps.items.length > 0 &&
+    supportsSwiftUIContextMenuItems(contextMenuProps.items)
+  );
+}
+
+function NativeSwiftUIContextMenuItems({
+  itemProps,
+  items,
+}: {
+  itemProps?: NativeListContextMenuProps["itemProps"];
+  items: ContextMenuItemData[];
+}) {
+  return items.map((item) => {
+    if (item.separator) {
+      return <SwiftDivider key={item.value} />;
+    }
+
+    const label = getNativeContextMenuLabel(item);
+    const disabled = item.disabled ?? itemProps?.disabled ?? false;
+    const destructive = item.destructive ?? itemProps?.destructive ?? false;
+
+    if (item.subMenu?.length) {
+      return (
+        <SwiftContextMenu key={item.value}>
+          <SwiftContextMenu.Trigger>
+            <SwiftButton
+              label={label}
+              modifiers={[disabledModifier(disabled)]}
+              role={destructive ? "destructive" : "default"}
+              systemImage={item.selected ? "checkmark" : undefined}
+            />
+          </SwiftContextMenu.Trigger>
+          <SwiftContextMenu.Items>
+            <NativeSwiftUIContextMenuItems itemProps={itemProps} items={item.subMenu} />
+          </SwiftContextMenu.Items>
+        </SwiftContextMenu>
+      );
+    }
+
+    return (
+      <SwiftButton
+        key={item.value}
+        label={label}
+        modifiers={[disabledModifier(disabled)]}
+        onPress={() => {
+          const handler = item.onSelect ?? item.onPress;
+          (handler as (() => void) | undefined)?.();
+        }}
+        role={destructive ? "destructive" : "default"}
+        systemImage={item.selected ? "checkmark" : undefined}
+      />
+    );
+  });
+}
+
+function NativeSwiftUIContextMenu({
+  children,
+  contextMenuProps,
+}: {
+  children: ReactElement;
+  contextMenuProps: NativeListContextMenuProps;
+}) {
+  return (
+    <SwiftContextMenu>
+      <SwiftContextMenu.Trigger>{children}</SwiftContextMenu.Trigger>
+      <SwiftContextMenu.Items>
+        <NativeSwiftUIContextMenuItems
+          itemProps={contextMenuProps.itemProps}
+          items={contextMenuProps.items ?? []}
+        />
+      </SwiftContextMenu.Items>
+    </SwiftContextMenu>
+  );
+}
+
 type NativeListContextValue = {
   native: boolean;
 };
@@ -112,6 +238,10 @@ type SwiftUIButtonStyle =
   | "glass"
   | "glassProminent"
   | "plain";
+
+type NativeContextMenuHandle = {
+  presentMenu: () => void;
+};
 
 const NativeListContext = createContext<NativeListContextValue>({ native: true });
 const Ios15FirstVisibleRowContext = createContext(false);
@@ -374,6 +504,7 @@ function NativeRowLabel({
 
 function NativeRowContainer({
   children,
+  contextMenuProps,
   disabled,
   editingSelected,
   nativeSelectionId,
@@ -391,6 +522,7 @@ function NativeRowContainer({
   rowMinHeight,
 }: {
   children: ReactNode;
+  contextMenuProps?: NativeListContextMenuProps;
   disabled?: boolean;
   editingSelected?: boolean;
   nativeSelectionId?: NativeListSelectionId;
@@ -408,6 +540,13 @@ function NativeRowContainer({
     toSwiftUIHexColor(theme.color5?.val ?? theme.backgroundPress?.val ?? theme.background?.val) ??
     theme.color5?.val;
   const resolvedTint = resolveNativeListBtnTintColor(btnTint, primaryColor);
+  const usesSwiftUIContextMenu = canUseSwiftUIContextMenu(contextMenuProps);
+  const hostedContextMenuProps = usesSwiftUIContextMenu ? undefined : contextMenuProps;
+  const contextMenuRef = useRef<NativeContextMenuHandle | null>(null);
+  const contextMenuAnchor =
+    hostedContextMenuProps != null ? (
+      <NativeHostedContextMenu contextMenuProps={hostedContextMenuProps} menuRef={contextMenuRef} />
+    ) : null;
   const baseModifiers = [
     ROW_INSETS,
     padding(
@@ -429,9 +568,35 @@ function NativeRowContainer({
         ]
       : []),
   ];
+  const buttonContent = (
+    <HStack
+      alignment={rowAlignment}
+      modifiers={[
+        ...baseModifiers,
+        ...(btnStyle === "plain" || restoresIos15TopCorners || contextMenuProps != null
+          ? [frame({ maxWidth: 99999, alignment: "leading" })]
+          : []),
+        ...(btnStyle === "plain" || contextMenuProps != null
+          ? [contentShape(shapes.rectangle())]
+          : []),
+        ...(resolvedTint != null ? [tint(resolvedTint)] : []),
+        ...(restoresIos15TopCorners
+          ? [
+              ios15ListRowTopRoundedBackground(12, {
+                horizontal: 20,
+                top: 6,
+              }),
+            ]
+          : []),
+      ]}
+      spacing={12}
+    >
+      {children}
+    </HStack>
+  );
 
   if (onPress != null) {
-    return (
+    const button = (
       <SwiftButton
         modifiers={[
           disabledModifier(disabled ?? false),
@@ -441,51 +606,78 @@ function NativeRowContainer({
           ...(editingSelected && selectedBackgroundColor != null
             ? [listRowBackground(selectedBackgroundColor)]
             : []),
+          ...(hostedContextMenuProps != null
+            ? [onLongPressGesture(() => contextMenuRef.current?.presentMenu())]
+            : []),
         ]}
         onPress={onPress}
       >
-        <HStack
-          alignment={rowAlignment}
-          modifiers={[
-            ...baseModifiers,
-            ...(btnStyle === "plain" || restoresIos15TopCorners
-              ? [frame({ maxWidth: 99999, alignment: "leading" })]
-              : []),
-            ...(btnStyle === "plain" ? [contentShape(shapes.rectangle())] : []),
-            ...(resolvedTint != null ? [tint(resolvedTint)] : []),
-            ...(restoresIos15TopCorners
-              ? [
-                  ios15ListRowTopRoundedBackground(12, {
-                    horizontal: 20,
-                    top: 6,
-                  }),
-                ]
-              : []),
-          ]}
-          spacing={12}
-        >
+        {hostedContextMenuProps != null ? (
+          <ZStack alignment="center">
+            {contextMenuAnchor}
+            {buttonContent}
+          </ZStack>
+        ) : (
+          buttonContent
+        )}
+      </SwiftButton>
+    );
+
+    return usesSwiftUIContextMenu && contextMenuProps != null ? (
+      <NativeSwiftUIContextMenu contextMenuProps={contextMenuProps}>
+        {button}
+      </NativeSwiftUIContextMenu>
+    ) : (
+      button
+    );
+  }
+
+  const rowModifiers = [
+    ...baseModifiers,
+    disabledModifier(disabled ?? false),
+    ...(nativeScrollId != null ? [viewID(nativeScrollId)] : []),
+    ...(nativeSelectionId != null ? [tag(nativeSelectionId)] : []),
+    ...(editingSelected && selectedBackgroundColor != null
+      ? [listRowBackground(selectedBackgroundColor)]
+      : []),
+    ...(restoresIos15TopCorners || contextMenuProps != null
+      ? [
+          frame({ maxWidth: 99999, alignment: "leading" }),
+          contentShape(shapes.rectangle()),
+        ]
+      : []),
+    ...(restoresIos15TopCorners ? [ios15ListRowTopRoundedBackground()] : []),
+  ];
+
+  if (usesSwiftUIContextMenu && contextMenuProps != null) {
+    return (
+      <NativeSwiftUIContextMenu contextMenuProps={contextMenuProps}>
+        <HStack alignment={rowAlignment} modifiers={rowModifiers} spacing={12}>
           {children}
         </HStack>
-      </SwiftButton>
+      </NativeSwiftUIContextMenu>
+    );
+  }
+
+  if (hostedContextMenuProps != null) {
+    return (
+      <ZStack
+        alignment="leading"
+        modifiers={[
+          ...rowModifiers,
+          onLongPressGesture(() => contextMenuRef.current?.presentMenu()),
+        ]}
+      >
+        {contextMenuAnchor}
+        <HStack alignment={rowAlignment} modifiers={[frame({ maxWidth: 99999 })]} spacing={12}>
+          {children}
+        </HStack>
+      </ZStack>
     );
   }
 
   return (
-    <HStack
-      alignment={rowAlignment}
-      modifiers={[
-        ...baseModifiers,
-        disabledModifier(disabled ?? false),
-        ...(nativeScrollId != null ? [viewID(nativeScrollId)] : []),
-        ...(nativeSelectionId != null ? [tag(nativeSelectionId)] : []),
-        ...(editingSelected && selectedBackgroundColor != null
-          ? [listRowBackground(selectedBackgroundColor)]
-          : []),
-        ...(restoresIos15TopCorners ? [frame({ maxWidth: 99999, alignment: "leading" })] : []),
-        ...(restoresIos15TopCorners ? [ios15ListRowTopRoundedBackground()] : []),
-      ]}
-      spacing={12}
-    >
+    <HStack alignment={rowAlignment} modifiers={rowModifiers} spacing={12}>
       {children}
     </HStack>
   );
@@ -549,6 +741,48 @@ function NativeHostedEditingIcon({ children }: { children: ReactNode }) {
         {children}
       </View>
     </RNHostView>
+  );
+}
+
+function NativeHostedContextMenu({
+  contextMenuProps,
+  menuRef,
+}: {
+  contextMenuProps: NativeListContextMenuProps;
+  menuRef: { current: NativeContextMenuHandle | null };
+}) {
+  return (
+    <RNHostView matchContents>
+      <View collapsable={false} pointerEvents="none" style={styles.contextMenuAnchor}>
+        <ContextMenu
+          {...contextMenuProps}
+          trigger={<View collapsable={false} style={styles.contextMenuAnchor} />}
+          // Zeego exposes this native handle internally; SwiftUI owns the long-press gesture.
+          {...({ __menuRef: menuRef } as any)}
+        />
+      </View>
+    </RNHostView>
+  );
+}
+
+function NativeFallbackContextMenuRow({
+  children,
+  contextMenuProps,
+}: {
+  children: ReactElement;
+  contextMenuProps?: NativeListContextMenuProps | false;
+}) {
+  const editMode = useNativeListEditMode();
+  const resolvedContextMenuProps = useResolvedNativeListContextMenu(contextMenuProps);
+
+  if (editMode || resolvedContextMenuProps == null) {
+    return children;
+  }
+
+  return (
+    <NativeListContextMenuProvider contextMenuProps={resolvedContextMenuProps}>
+      {children}
+    </NativeListContextMenuProvider>
   );
 }
 
@@ -618,6 +852,7 @@ function NativeHostedCustomRow({
 function NativePressRow({
   chevron = false,
   chevronColor,
+  contextMenuProps,
   disabled,
   icon,
   iconColor,
@@ -668,6 +903,7 @@ function NativePressRow({
   valueSfSymbol?: SFSymbol;
 }) {
   const theme = useTheme();
+  const resolvedContextMenuProps = useResolvedNativeListContextMenu(contextMenuProps);
   const editRow = useNativeListEditRow({
     disabled,
     nativeScrollId,
@@ -707,6 +943,11 @@ function NativePressRow({
 
   return (
     <NativeRowContainer
+      contextMenuProps={
+        editRow.editMode || resolvedContextMenuProps?.triggerProps?.disabled
+          ? undefined
+          : resolvedContextMenuProps
+      }
       disabled={disabled}
       editingSelected={editRow.nativeSelection ? false : editRow.editingSelected}
       nativeSelectionId={editRow.nativeSelection ? editRow.selectionId : undefined}
@@ -796,6 +1037,7 @@ function NativeListRoot({
   automaticallyAdjustsScrollIndicatorInsets,
   backgroundColor,
   children,
+  contextMenuProps,
   contentInsetAdjustmentBehavior,
   contentMarginBottom,
   contentMarginTop,
@@ -854,6 +1096,7 @@ function NativeListRoot({
           automaticallyAdjustsScrollIndicatorInsets={automaticallyAdjustsScrollIndicatorInsets}
           backgroundColor={backgroundColor}
           contentInsetAdjustmentBehavior={contentInsetAdjustmentBehavior}
+          contextMenuProps={contextMenuProps}
           defaultSelectedIds={defaultSelectedIds}
           editMode={editMode}
           editModeIcon={editModeIcon}
@@ -998,7 +1241,9 @@ function NativeListRoot({
               scrollDisabled(!scrollable),
             ]}
           >
-            {children}
+            <NativeListContextMenuProvider contextMenuProps={contextMenuProps}>
+              {children}
+            </NativeListContextMenuProvider>
           </List>
         </Host>
       </NativeListContext.Provider>
@@ -1008,15 +1253,20 @@ function NativeListRoot({
 
 function NativeListSection({
   children,
+  contextMenuProps,
   footer,
   trailing,
   title,
   titleColor,
   titleFontSize,
 }: NativeListSectionProps) {
-  if (!useNativeListEnabled()) {
+  const nativeListEnabled = useNativeListEnabled();
+  const resolvedContextMenuProps = useResolvedNativeListContextMenu(contextMenuProps);
+
+  if (!nativeListEnabled) {
     return (
       <FallbackSection
+        contextMenuProps={contextMenuProps}
         footer={footer}
         trailing={trailing}
         title={title}
@@ -1029,6 +1279,13 @@ function NativeListSection({
   }
 
   const stringTitle = toPlainText(title);
+  const sectionChildren = Children.map(children, (child) =>
+    child != null ? (
+      <NativeListContextMenuProvider contextMenuProps={resolvedContextMenuProps}>
+        {child}
+      </NativeListContextMenuProvider>
+    ) : null,
+  );
   const stringFooter = toPlainText(footer);
   const resolvedSectionTitleColor =
     titleColor != null ? (toSwiftUIHexColor(titleColor) ?? titleColor) : undefined;
@@ -1093,7 +1350,7 @@ function NativeListSection({
     ) : undefined;
 
   if (usesIos15HeaderRow && header != null) {
-    const [firstChild, ...remainingChildren] = Children.toArray(children);
+    const [firstChild, ...remainingChildren] = Children.toArray(sectionChildren);
 
     return (
       <SwiftUISection footer={footerView}>
@@ -1114,7 +1371,7 @@ function NativeListSection({
       header={header}
       title={header == null ? (stringTitle ?? undefined) : undefined}
     >
-      {children}
+      {sectionChildren}
     </SwiftUISection>
   );
 }
@@ -1125,7 +1382,11 @@ export function NativeListActionItem(props: NativeListActionItemProps) {
   }
 
   if (!supportsNativeTextRow(props.title, props.subtitle, props.value)) {
-    return <FallbackActionItem {...props} />;
+    return (
+      <NativeFallbackContextMenuRow contextMenuProps={props.contextMenuProps}>
+        <FallbackActionItem {...props} />
+      </NativeFallbackContextMenuRow>
+    );
   }
 
   return <NativePressRow {...props} chevron={props.chevron} />;
@@ -1137,7 +1398,11 @@ export function NativeListNavigationItem(props: NativeListNavigationItemProps) {
   }
 
   if (!supportsNativeTextRow(props.title, props.subtitle, props.value)) {
-    return <FallbackNavigationItem {...props} />;
+    return (
+      <NativeFallbackContextMenuRow contextMenuProps={props.contextMenuProps}>
+        <FallbackNavigationItem {...props} />
+      </NativeFallbackContextMenuRow>
+    );
   }
 
   return <NativePressRow {...props} chevron={props.chevron ?? true} />;
@@ -1376,8 +1641,10 @@ export function NativeListItem({
   btnTint,
   ...itemProps
 }: NativeListItemProps) {
-  if (!useNativeListEnabled() || !supportsNativeTextRow(itemProps.subtitle)) {
-    return (
+  const nativeListEnabled = useNativeListEnabled();
+
+  if (!nativeListEnabled || !supportsNativeTextRow(itemProps.subtitle)) {
+    const fallbackItem = (
       <FallbackItem
         title={title}
         onPress={onPress}
@@ -1386,6 +1653,14 @@ export function NativeListItem({
         btnTint={btnTint}
         {...itemProps}
       />
+    );
+
+    return nativeListEnabled ? (
+      <NativeFallbackContextMenuRow contextMenuProps={itemProps.contextMenuProps}>
+        {fallbackItem}
+      </NativeFallbackContextMenuRow>
+    ) : (
+      fallbackItem
     );
   }
 
@@ -1408,7 +1683,11 @@ export function NativeListSwitchItem({ switchProps, ...itemProps }: NativeListSw
   }
 
   if (!supportsNativeTextRow(itemProps.title, itemProps.subtitle)) {
-    return <FallbackSwitchItem switchProps={switchProps} {...itemProps} />;
+    return (
+      <NativeFallbackContextMenuRow contextMenuProps={itemProps.contextMenuProps}>
+        <FallbackSwitchItem switchProps={switchProps} {...itemProps} />
+      </NativeFallbackContextMenuRow>
+    );
   }
 
   const editMode = useNativeListEditMode();
@@ -1463,7 +1742,11 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
   }
 
   if (!supportsNativeTextRow(itemProps.title, itemProps.subtitle)) {
-    return <FallbackSelectItem selectProps={selectProps} {...itemProps} />;
+    return (
+      <NativeFallbackContextMenuRow contextMenuProps={itemProps.contextMenuProps}>
+        <FallbackSelectItem selectProps={selectProps} {...itemProps} />
+      </NativeFallbackContextMenuRow>
+    );
   }
 
   const resolvedHaptics = useResolvedNativeHaptics(
@@ -1565,7 +1848,11 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
   }
 
   if (!supportsNativeTextRow(itemProps.title, itemProps.subtitle)) {
-    return <FallbackMenuItem menuProps={menuProps} {...itemProps} />;
+    return (
+      <NativeFallbackContextMenuRow contextMenuProps={itemProps.contextMenuProps}>
+        <FallbackMenuItem menuProps={menuProps} {...itemProps} />
+      </NativeFallbackContextMenuRow>
+    );
   }
 
   const disabled = itemProps.disabled || menuProps.triggerProps?.disabled;
@@ -1626,6 +1913,7 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
 export function NativeListCustomItem({
   backgroundColor,
   children,
+  contextMenuProps,
   disabled,
   hoverBackgroundColor,
   nativeHaptics,
@@ -1641,6 +1929,8 @@ export function NativeListCustomItem({
   selectionId,
 }: NativeListCustomItemProps) {
   const restoresIos15TopCorners = useContext(Ios15FirstVisibleRowContext);
+  const resolvedContextMenuProps = useResolvedNativeListContextMenu(contextMenuProps);
+  const contextMenuRef = useRef<NativeContextMenuHandle | null>(null);
   const editRow = useNativeListEditRow({
     disabled,
     nativeScrollId,
@@ -1656,11 +1946,22 @@ export function NativeListCustomItem({
     paddingTop,
     paddingVertical,
   };
+  const activeContextMenuProps =
+    editRow.editMode || resolvedContextMenuProps?.triggerProps?.disabled
+      ? undefined
+      : resolvedContextMenuProps;
+  const usesSwiftUIContextMenu = canUseSwiftUIContextMenu(activeContextMenuProps);
+  const hostedContextMenuProps = usesSwiftUIContextMenu ? undefined : activeContextMenuProps;
+  const contextMenuAnchor =
+    hostedContextMenuProps != null ? (
+      <NativeHostedContextMenu contextMenuProps={hostedContextMenuProps} menuRef={contextMenuRef} />
+    ) : null;
 
   if (!useNativeListEnabled()) {
     return (
       <FallbackCustomItem
         backgroundColor={backgroundColor}
+        contextMenuProps={contextMenuProps}
         disabled={disabled}
         hoverBackgroundColor={hoverBackgroundColor}
         nativeHaptics={nativeHaptics}
@@ -1695,68 +1996,152 @@ export function NativeListCustomItem({
   }
 
   if (onPress == null) {
-    return (
-      <VStack
-        modifiers={[
-          ROW_INSETS,
-          disabledModifier(disabled ?? false),
-          padding(resolveRowPadding(rowPaddingProps)),
-          ...(restoresIos15TopCorners
-            ? [frame({ maxWidth: 99999, alignment: "leading" }), ios15ListRowTopRoundedBackground()]
-            : []),
-        ]}
-      >
+    const rowModifiers = [
+      ROW_INSETS,
+      disabledModifier(disabled ?? false),
+      padding(resolveRowPadding(rowPaddingProps)),
+      ...(restoresIos15TopCorners
+        ? [frame({ maxWidth: 99999, alignment: "leading" }), ios15ListRowTopRoundedBackground()]
+        : []),
+    ];
+
+    const customRow = (
+      <VStack modifiers={rowModifiers}>
         <NativeHostedCustomRow>{children}</NativeHostedCustomRow>
       </VStack>
     );
+
+    if (usesSwiftUIContextMenu && activeContextMenuProps != null) {
+      return (
+        <NativeSwiftUIContextMenu contextMenuProps={activeContextMenuProps}>
+          {customRow}
+        </NativeSwiftUIContextMenu>
+      );
+    }
+
+    if (hostedContextMenuProps != null) {
+      return (
+        <ZStack
+          alignment="leading"
+          modifiers={[
+            ...rowModifiers,
+            onLongPressGesture(() => contextMenuRef.current?.presentMenu()),
+          ]}
+        >
+          {contextMenuAnchor}
+          <NativeHostedCustomRow>{children}</NativeHostedCustomRow>
+        </ZStack>
+      );
+    }
+
+    return customRow;
   }
 
   const resolvedHaptics = useResolvedNativeHaptics(nativeHaptics);
 
   if (restoresIos15TopCorners) {
-    return (
+    const button = (
       <SwiftButton
-        modifiers={[disabledModifier(disabled ?? false)]}
+        modifiers={[
+          disabledModifier(disabled ?? false),
+          ...(hostedContextMenuProps != null
+            ? [onLongPressGesture(() => contextMenuRef.current?.presentMenu())]
+            : []),
+        ]}
         onPress={() => {
           onPress();
           triggerNativeHaptics(resolvedHaptics);
         }}
       >
-        <VStack
-          modifiers={[
-            ROW_INSETS,
-            padding(resolveRowPadding(rowPaddingProps)),
-            frame({ maxWidth: 99999, alignment: "leading" }),
-            ios15ListRowTopRoundedBackground(12, {
-              horizontal: 20,
-              top: 8,
-            }),
-          ]}
-        >
-          <NativeHostedCustomRow>{children}</NativeHostedCustomRow>
-        </VStack>
+        {hostedContextMenuProps != null ? (
+          <ZStack
+            alignment="center"
+            modifiers={[
+              ROW_INSETS,
+              padding(resolveRowPadding(rowPaddingProps)),
+              frame({ maxWidth: 99999, alignment: "leading" }),
+              ios15ListRowTopRoundedBackground(12, {
+                horizontal: 20,
+                top: 8,
+              }),
+            ]}
+          >
+            {contextMenuAnchor}
+            <NativeHostedCustomRow>{children}</NativeHostedCustomRow>
+          </ZStack>
+        ) : (
+          <VStack
+            modifiers={[
+              ROW_INSETS,
+              padding(resolveRowPadding(rowPaddingProps)),
+              frame({ maxWidth: 99999, alignment: "leading" }),
+              ios15ListRowTopRoundedBackground(12, {
+                horizontal: 20,
+                top: 8,
+              }),
+            ]}
+          >
+            <NativeHostedCustomRow>{children}</NativeHostedCustomRow>
+          </VStack>
+        )}
       </SwiftButton>
+    );
+
+    return usesSwiftUIContextMenu && activeContextMenuProps != null ? (
+      <NativeSwiftUIContextMenu contextMenuProps={activeContextMenuProps}>
+        {button}
+      </NativeSwiftUIContextMenu>
+    ) : (
+      button
     );
   }
 
-  return (
+  const button = (
     <SwiftButton
       modifiers={[
         disabledModifier(disabled ?? false),
         ROW_INSETS,
         padding(resolveRowPadding(rowPaddingProps)),
+        ...(hostedContextMenuProps != null
+          ? [onLongPressGesture(() => contextMenuRef.current?.presentMenu())]
+          : []),
       ]}
       onPress={() => {
         onPress();
         triggerNativeHaptics(resolvedHaptics);
       }}
     >
-      <NativeHostedCustomRow>{children}</NativeHostedCustomRow>
+      {hostedContextMenuProps != null ? (
+        <ZStack alignment="center">
+          {contextMenuAnchor}
+          <NativeHostedCustomRow>{children}</NativeHostedCustomRow>
+        </ZStack>
+      ) : (
+        <NativeHostedCustomRow>{children}</NativeHostedCustomRow>
+      )}
     </SwiftButton>
+  );
+
+  return usesSwiftUIContextMenu && activeContextMenuProps != null ? (
+    <NativeSwiftUIContextMenu contextMenuProps={activeContextMenuProps}>
+      {button}
+    </NativeSwiftUIContextMenu>
+  ) : (
+    button
   );
 }
 
 const styles = StyleSheet.create({
+  contextMenuAnchor: {
+    height: 1,
+    maxHeight: 1,
+    maxWidth: 1,
+    minHeight: 1,
+    minWidth: 1,
+    opacity: 0,
+    overflow: "hidden",
+    width: 1,
+  },
   customRowShell: {
     alignSelf: "stretch",
     maxWidth: "100%",

@@ -14,6 +14,7 @@ export {
 } from "./native_list";
 
 export type {
+  NativeListContextMenuProps,
   NativeListInputItemProps,
   NativeListMenuItemProps,
   NativeListRootProps,

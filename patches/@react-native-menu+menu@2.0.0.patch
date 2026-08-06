@@ -6,6 +6,8 @@
 #   回调，避免已关闭的菜单再次弹出。
 # - 根属性传递丢失时，从选中 action 可靠地取得选中背景色；未选中行恢复各自原有的
 #   background/tint，避免滚动时出现随机高亮。
+# - Android 新架构调用 show 命令时传递空参数数组，避免 undefined 被桥接成 null 后触发
+#   UnexpectedNativeTypeException。
 diff --git a/android/src/main/java/com/reactnativemenu/MenuView.kt b/android/src/main/java/com/reactnativemenu/MenuView.kt
 index c45f5cc..0000000 100644
 --- a/android/src/main/java/com/reactnativemenu/MenuView.kt
@@ -1135,3 +1137,24 @@ index 9c323d9..9c26b9a 100644
 +	"imageColor" | "selectedBackgroundColor" | "titleColor" | "subactions"
 @@ -193,0 +210 @@ export type ProcessedMenuAction = Omit<
 +	selectedBackgroundColor: ReturnType<typeof processColor>;
+diff --git a/src/UIMenuView.android.tsx b/src/UIMenuView.android.tsx
+index 4c8a0cd..0000000 100644
+--- a/src/UIMenuView.android.tsx
++++ b/src/UIMenuView.android.tsx
+@@ -27 +27 @@ const MenuComponent = forwardRef<MenuComponentRef, NativeMenuComponentProps>(
+-						UIManager.dispatchViewManagerCommand(node, command, undefined);
++						UIManager.dispatchViewManagerCommand(node, command, []);
+diff --git a/lib/commonjs/UIMenuView.android.js b/lib/commonjs/UIMenuView.android.js
+index 9a99b5d..0000000 100644
+--- a/lib/commonjs/UIMenuView.android.js
++++ b/lib/commonjs/UIMenuView.android.js
+@@ -18 +18 @@ const MenuComponent = /*#__PURE__*/(0, _react.forwardRef)((props, ref) => {
+-        _reactNative.UIManager.dispatchViewManagerCommand(node, command, undefined);
++        _reactNative.UIManager.dispatchViewManagerCommand(node, command, []);
+diff --git a/lib/module/UIMenuView.android.js b/lib/module/UIMenuView.android.js
+index a6fd64d..0000000 100644
+--- a/lib/module/UIMenuView.android.js
++++ b/lib/module/UIMenuView.android.js
+@@ -14 +14 @@ const MenuComponent = /*#__PURE__*/forwardRef((props, ref) => {
+-        UIManager.dispatchViewManagerCommand(node, command, undefined);
++        UIManager.dispatchViewManagerCommand(node, command, []);

@@ -1,3 +1,4 @@
+import { ChevronRight } from "@tamagui/lucide-icons-2";
 import { Children, type ReactNode, isValidElement } from "react";
 import { StyleSheet } from "react-native";
 import { SizableText, ContextMenu as TamaguiContextMenu } from "tamagui";
@@ -17,6 +18,7 @@ import type {
   ContextMenuItemIconProps,
   ContextMenuItemImageProps,
   ContextMenuItemIndicatorProps,
+  ContextMenuItemData,
   ContextMenuItemProps,
   ContextMenuItemSubtitleProps,
   ContextMenuItemTitleProps,
@@ -86,6 +88,7 @@ function ContextMenuRoot(props: ContextMenuProps) {
     ...rootProps
   } = props;
   const hasDefaultStructure = trigger != null || items != null || arrow != null;
+  const web = isWeb();
   const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics);
   const handleOpenChange: NonNullable<ContextMenuProps["onOpenChange"]> = (nextOpen) => {
     onOpenChange?.(nextOpen);
@@ -96,6 +99,80 @@ function ContextMenuRoot(props: ContextMenuProps) {
 
     triggerNativeHaptics(resolvedNativeHaptics);
   };
+  const renderItems = (contextMenuItems: ContextMenuItemData[], depth = 0): ReactNode =>
+    contextMenuItems.map((item) => {
+      if (item.separator) {
+        return <ContextMenuSeparator key={item.value} />;
+      }
+
+      const label = item.label ?? item.value;
+      const textValue = item.textValue ?? getItemTextValue(label, item.value);
+      const accessibilityLabel = resolveAriaLabel(
+        item["aria-label"] ?? itemProps?.["aria-label"],
+        label,
+      );
+      const hasTrailingContent = item.icon != null || item.indicator != null;
+
+      if (item.subMenu?.length) {
+        const subMenuTitle = item.subMenuTitle === false ? null : (item.subMenuTitle ?? label);
+
+        return (
+          <ContextMenuSub key={item.value}>
+            <ContextMenuSubTrigger
+              {...(itemProps as ContextMenuSubTriggerProps)}
+              aria-label={accessibilityLabel}
+              destructive={item.destructive ?? itemProps?.destructive}
+              disabled={item.disabled ?? itemProps?.disabled}
+              justify={itemProps?.justify ?? "space-between"}
+              textValue={textValue}
+            >
+              <ContextMenuItemTitle>{label}</ContextMenuItemTitle>
+              {item.subtitle != null ? (
+                <ContextMenuItemSubtitle>{item.subtitle}</ContextMenuItemSubtitle>
+              ) : null}
+              {item.icon != null ? <ContextMenuItemIcon>{item.icon}</ContextMenuItemIcon> : null}
+              {item.indicator}
+              {web ? (
+                <ContextMenuItemIcon>
+                  <ChevronRight color="$color10" size={16} />
+                </ContextMenuItemIcon>
+              ) : null}
+            </ContextMenuSubTrigger>
+            <ContextMenuPortal zIndex={200 + depth}>
+              <ContextMenuSubContent>
+                {web && subMenuTitle != null ? (
+                  <ContextMenuLabel>{subMenuTitle}</ContextMenuLabel>
+                ) : null}
+                {renderItems(item.subMenu, depth + 1)}
+              </ContextMenuSubContent>
+            </ContextMenuPortal>
+          </ContextMenuSub>
+        );
+      }
+
+      return (
+        <ContextMenuItem
+          {...itemProps}
+          aria-label={accessibilityLabel}
+          destructive={item.destructive ?? itemProps?.destructive}
+          disabled={item.disabled ?? itemProps?.disabled}
+          justify={itemProps?.justify ?? (hasTrailingContent ? "space-between" : undefined)}
+          key={item.value}
+          onSelect={item.onSelect ?? item.onPress}
+          {...({ selected: item.selected } as any)}
+          textValue={textValue}
+        >
+          <ContextMenuItemTitle>{label}</ContextMenuItemTitle>
+          {item.subtitle != null ? (
+            <ContextMenuItemSubtitle>{item.subtitle}</ContextMenuItemSubtitle>
+          ) : null}
+          {item.icon != null ? <ContextMenuItemIcon>{item.icon}</ContextMenuItemIcon> : null}
+          {item.indicator != null ? (
+            <ContextMenuItemIndicator>{item.indicator}</ContextMenuItemIndicator>
+          ) : null}
+        </ContextMenuItem>
+      );
+    });
 
   if (!hasDefaultStructure) {
     return (
@@ -113,33 +190,7 @@ function ContextMenuRoot(props: ContextMenuProps) {
       <ContextMenuPortal {...portalProps}>
         <ContextMenuContent {...contentProps}>
           {arrow ? <ContextMenuArrow {...arrowProps} /> : null}
-          {items?.map((item) => {
-            if (item.separator) {
-              return <ContextMenuSeparator key={item.value} />;
-            }
-
-            const label = item.label ?? item.value;
-
-            return (
-              <ContextMenuItem
-                {...itemProps}
-                aria-label={resolveAriaLabel(
-                  item["aria-label"] ?? itemProps?.["aria-label"],
-                  label,
-                )}
-                destructive={item.destructive ?? itemProps?.destructive}
-                disabled={item.disabled ?? itemProps?.disabled}
-                key={item.value}
-                onSelect={item.onSelect ?? item.onPress}
-                textValue={item.textValue ?? getItemTextValue(label, item.value)}
-              >
-                <ContextMenuItemTitle>{label}</ContextMenuItemTitle>
-                {item.indicator != null ? (
-                  <ContextMenuItemIndicator>{item.indicator}</ContextMenuItemIndicator>
-                ) : null}
-              </ContextMenuItem>
-            );
-          })}
+          {items ? renderItems(items) : null}
           {children}
         </ContextMenuContent>
       </ContextMenuPortal>

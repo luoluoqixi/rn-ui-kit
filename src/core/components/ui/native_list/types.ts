@@ -4,6 +4,7 @@ import type { SFSymbol } from "sf-symbols-typescript";
 
 import type { SelectProps } from "../select";
 import type { MenuProps } from "../menu";
+import type { ContextMenuProps } from "../context_menu";
 import type { SwitchProps } from "../switch";
 import type { InputProps } from "../input";
 import type { TextAreaProps } from "../text_area";
@@ -11,6 +12,12 @@ import type { NativeHapticsSetting } from "../utils";
 import type { NavigationBarScrollEdgeTrackingProps } from "../utils/navigation";
 
 export type NativeListSelectionId = string | number;
+
+/**
+ * NativeList 行使用的 ContextMenu 配置。trigger 由列表行自身提供；其余 ContextMenu
+ * props（包括 `items`、自定义 children、`contentProps`、`itemProps` 与事件）均可直接传入。
+ */
+export type NativeListContextMenuProps = Omit<ContextMenuProps, "trigger">;
 
 export type NativeListItemPaddingProps = {
   paddingBottom?: number;
@@ -41,6 +48,8 @@ export type NativeListItemBaseProps = NativeListItemPaddingProps &
     chevron?: boolean;
     /** 行尾 chevron 的颜色；未指定时使用平台默认辅助色。 */
     chevronColor?: string;
+    /** 当前行的菜单；覆盖 Section 与 NativeList 上的配置。传 `false` 可关闭继承菜单。 */
+    contextMenuProps?: NativeListContextMenuProps | false;
     disabled?: boolean;
     /** fallback 行的 hover 背景色；iOS 原生 List 会忽略。 */
     hoverBackgroundColor?: ViewStyle["backgroundColor"];
@@ -124,6 +133,8 @@ export type NativeListCustomItemProps = NativeListItemPaddingProps & {
   /** fallback 行的常态背景色；iOS 原生 List 会忽略。 */
   backgroundColor?: ViewStyle["backgroundColor"];
   children?: ReactNode;
+  /** 当前行的菜单；覆盖 Section 与 NativeList 上的配置。传 `false` 可关闭继承菜单。 */
+  contextMenuProps?: NativeListContextMenuProps | false;
   disabled?: boolean;
   /** fallback 行的 hover 背景色；iOS 原生 List 会忽略。 */
   hoverBackgroundColor?: ViewStyle["backgroundColor"];
@@ -146,6 +157,8 @@ export type NativeListTextAreaItemProps = Omit<NativeListCustomItemProps, "child
 /** Section props */
 export type NativeListSectionProps = {
   children?: ReactNode;
+  /** 当前 Section 内所有行的菜单；覆盖 NativeList 配置。传 `false` 可关闭继承菜单。 */
+  contextMenuProps?: NativeListContextMenuProps | false;
   /** footer */
   footer?: ReactNode;
   /**
@@ -166,6 +179,8 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
     /** 列表宿主背景色：iOS 原生 List 直接作用于 List，自定义 fallback 作用于根容器。 */
     backgroundColor?: ViewStyle["backgroundColor"];
     children?: ReactNode;
+    /** 所有行默认使用的菜单；Section 或 item 可逐级覆盖。 */
+    contextMenuProps?: NativeListContextMenuProps;
     /** 原生 List 内容顶部内边距。 */
     contentMarginTop?: number;
     /** 原生 List 内容底部内边距。 */

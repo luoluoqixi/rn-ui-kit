@@ -11,7 +11,7 @@ import {
   useThemeName,
 } from "tamagui";
 
-import { iosMajorVersion, isIos15, isWeb, os, supportsImpactHaptics } from "../utils/platform";
+import { isIos15, isWeb, os, supportsImpactHaptics } from "../utils/platform";
 import { triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
 
 import type { SwitchProps, SwitchThumbProps } from "./types";

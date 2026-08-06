@@ -7,11 +7,21 @@ export interface ContextMenuItemData {
   "aria-label"?: string;
   destructive?: boolean;
   disabled?: boolean;
+  /** 菜单项右侧的自定义图标。原生平台图标能力取决于传入的 ItemIcon。 */
+  icon?: ReactNode;
   indicator?: ReactNode;
   label?: ReactNode;
   onPress?: ContextMenuItemProps["onSelect"];
   onSelect?: ContextMenuItemProps["onSelect"];
   separator?: boolean;
+  /** 原生 ContextMenu 中标识当前项。 */
+  selected?: boolean;
+  /** 原生菜单项副标题。 */
+  subtitle?: string;
+  /** 子菜单条目。Android 原生 ContextMenu 仅支持一级子菜单。 */
+  subMenu?: ContextMenuItemData[];
+  /** Web 子菜单标题。默认使用当前项名称；传 `false` 可隐藏标题。 */
+  subMenuTitle?: ReactNode | false;
   textValue?: string;
   value: string;
 }

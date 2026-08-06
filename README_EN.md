@@ -364,6 +364,14 @@ Notes:
   with `FlashList` and React Native views.
 - Pass `<NativeList native={false}>` on iOS to opt into the same fallback
   appearance.
+- `NativeList`, `NativeListSection`, and every item accept `contextMenuProps`,
+  including `items`, `contentProps`, `itemProps`, and open-state callbacks.
+  Resolution follows Item > Section > NativeList; pass `contextMenuProps={false}`
+  on an item or section to stop inheritance. Long press opens it on iOS/Android,
+  while right click opens it on Web. Context menus are temporarily disabled in
+  edit mode to avoid conflicting with multi-selection. `ContextMenuItemData`
+  supports `icon`, `indicator`, `selected`, `subtitle`, `subMenu`, and
+  `subMenuTitle`; native Android menus support one submenu level.
 - Pass `editMode` to `NativeList` to enable Notes-style multi-selection on iOS,
   Android, and Web. Row actions are replaced with selection toggles. Use
   `selectedIds` / `onSelectedIdsChange` for controlled state, `defaultSelectedIds`

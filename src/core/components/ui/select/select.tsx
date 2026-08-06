@@ -18,6 +18,7 @@ import {
 } from "@tamagui/select";
 import { forwardRef, useCallback, useRef } from "react";
 import React from "react";
+import { View } from "react-native";
 import {
   FontSizeTokens,
   SizableText,
@@ -1033,12 +1034,22 @@ const SelectRoot = forwardRef<any, SelectProps>(
     const [nativePickerVisible, setNativePickerVisible] = React.useState(false);
     const [uncontrolledOpen, setUncontrolledOpen] = React.useState(Boolean(props.defaultOpen));
     const [nativeTriggerOpening, setNativeTriggerOpening] = React.useState(false);
+    const [nativeTriggerPressed, setNativeTriggerPressed] = React.useState(false);
+    const [androidNativeDropdownAnchorSize, setAndroidNativeDropdownAnchorSize] = React.useState({
+      height: 1,
+      width: 1,
+    });
     const [webMenuValue, setWebMenuValue] = React.useState<string | undefined>(
       typeof props.defaultValue === "string" ? props.defaultValue : undefined,
     );
     const [webMenuOpen, setWebMenuOpen] = React.useState(Boolean(props.defaultOpen));
     const sheetScrollRef = useRef<any>(null);
     const nativeTriggerFaceRef = useRef<any>(null);
+    const androidNativeDropdownMenuRef = useRef<{ presentMenu: () => void } | null>(null);
+    const androidNativeDropdownLongPressedRef = useRef(false);
+    const androidNativeDropdownPressCommittedRef = useRef(false);
+    const androidNativeDropdownOpenRef = useRef(false);
+    const androidNativeDropdownHandoffTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const webMenuRootId = React.useId();
     const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics);
     const nativeMenuTheme = useTheme();
@@ -1070,12 +1081,22 @@ const SelectRoot = forwardRef<any, SelectProps>(
       : resolvedItemGroups;
     const selectedValue = props.value !== undefined ? props.value : (webMenuValue ?? null);
     const isSelectOpen = props.open ?? uncontrolledOpen;
+    androidNativeDropdownOpenRef.current = isSelectOpen;
+    const usesAndroidNativeTriggerOpacity = platform === "android";
+    const usesAndroidDropdownOpenOpacity =
+      usesAndroidNativeTriggerOpacity &&
+      selectBehavior.shouldUseNativePicker &&
+      resolvedPickerMode === "dropdown";
     const shouldRestoreNativeTriggerOnPressOut =
-      platform === "ios" &&
-      (selectBehavior.shouldUseNativeSheet || selectBehavior.shouldUseCustomSheet);
-    const isNativeTriggerActive = shouldRestoreNativeTriggerOnPressOut
-      ? false
-      : isSelectOpen || nativeTriggerOpening;
+      usesAndroidNativeTriggerOpacity ||
+      (platform === "ios" &&
+        (selectBehavior.shouldUseNativeSheet || selectBehavior.shouldUseCustomSheet));
+    const isNativeTriggerActive = usesAndroidNativeTriggerOpacity
+      ? nativeTriggerPressed ||
+        (usesAndroidDropdownOpenOpacity && (isSelectOpen || nativeTriggerOpening))
+      : shouldRestoreNativeTriggerOnPressOut
+        ? false
+        : isSelectOpen || nativeTriggerOpening;
     const getItemLabelByValue = (value: string | null | undefined) =>
       resolvedItems.find((item) => item.value === value)?.label ?? null;
     const selectedItem = getItemLabelByValue(selectedValue);
@@ -1194,10 +1215,7 @@ const SelectRoot = forwardRef<any, SelectProps>(
     };
 
     /** Android dropdown 改用 Zeego Menu；dialog 保留已有 RNPicker 实现。 */
-    const shouldRenderNativeDropdownMenu =
-      platform === "android" &&
-      selectBehavior.shouldUseNativePicker &&
-      resolvedPickerMode === "dropdown";
+    const shouldRenderNativeDropdownMenu = usesAndroidDropdownOpenOpacity;
     /**
      * NativePickerDialog（隐藏渲染 + focus() 触发系统弹窗）仅在 Android 上可用。
      * wheel 为 iOS 专用模式，Android 上不走此路径。
@@ -1247,11 +1265,14 @@ const SelectRoot = forwardRef<any, SelectProps>(
     };
 
     const handleNativeDropdownMenuOpenChange = (nextOpen: boolean) => {
+      clearAndroidNativeDropdownHandoffTimer();
+      androidNativeDropdownOpenRef.current = nextOpen;
       if (props.open === undefined) {
         setUncontrolledOpen(nextOpen);
       }
       if (!nextOpen) {
         setNativeTriggerOpening(false);
+        setNativeTriggerPressed(false);
       }
 
       onOpenChange?.(nextOpen);
@@ -1383,25 +1404,105 @@ const SelectRoot = forwardRef<any, SelectProps>(
       hoverStyle: triggerHoverStyle,
       nativeHaptics: _triggerNativeHaptics,
       onLayout: triggerOnLayout,
+      onLongPress: triggerOnLongPress,
       onPress: triggerOnPress,
       onPressIn: triggerOnPressIn,
       onPressOut: triggerOnPressOut,
+      onTouchCancel: triggerOnTouchCancel,
+      onTouchEnd: triggerOnTouchEnd,
       pressStyle: triggerPressStyle,
       ...webMenuTriggerProps
     } = (triggerProps as any) ?? {};
     void _triggerNativeHaptics;
+    const clearAndroidNativeDropdownHandoffTimer = () => {
+      if (androidNativeDropdownHandoffTimerRef.current != null) {
+        clearTimeout(androidNativeDropdownHandoffTimerRef.current);
+        androidNativeDropdownHandoffTimerRef.current = null;
+      }
+    };
+    React.useEffect(() => clearAndroidNativeDropdownHandoffTimer, []);
+    const restoreAndroidNativeTriggerOpacity = () => {
+      if (!usesAndroidNativeTriggerOpacity) {
+        return;
+      }
+
+      setNativeTriggerPressed(false);
+      if (usesAndroidDropdownOpenOpacity) {
+        // A normal release is immediately followed by onPress, which opens the
+        // dropdown and owns the active opacity. A long press does not open it and
+        // must return to the resting opacity as soon as the finger is released.
+        if (androidNativeDropdownLongPressedRef.current) {
+          clearAndroidNativeDropdownHandoffTimer();
+          setNativeTriggerOpening(false);
+          return;
+        }
+
+        // Preserve the pressed appearance across the press-out -> onPress handoff.
+        // If no onPress follows (for example the finger was dragged away), clean it
+        // up on the next task instead of leaving the trigger active indefinitely.
+        clearAndroidNativeDropdownHandoffTimer();
+        androidNativeDropdownHandoffTimerRef.current = setTimeout(() => {
+          if (
+            !androidNativeDropdownPressCommittedRef.current &&
+            !androidNativeDropdownOpenRef.current
+          ) {
+            setNativeTriggerOpening(false);
+          }
+          androidNativeDropdownHandoffTimerRef.current = null;
+        }, 0);
+        return;
+      }
+
+      setNativeTriggerOpening(false);
+    };
     const handleNativeTriggerPressIn = (event: any) => {
+      if (usesAndroidNativeTriggerOpacity) {
+        clearAndroidNativeDropdownHandoffTimer();
+        androidNativeDropdownLongPressedRef.current = false;
+        androidNativeDropdownPressCommittedRef.current = false;
+        setNativeTriggerPressed(true);
+        if (usesAndroidDropdownOpenOpacity) {
+          setNativeTriggerOpening(true);
+        }
+      }
       triggerOnPressIn?.(event);
 
       if (nativeTrigger && !shouldRenderWebNativeTriggerSelect) {
-        nativeTriggerFaceRef.current?.setNativeProps?.({ style: { opacity: 0.6 } });
-        if (!shouldRestoreNativeTriggerOnPressOut) {
+        if (!usesAndroidNativeTriggerOpacity) {
+          nativeTriggerFaceRef.current?.setNativeProps?.({ style: { opacity: 0.6 } });
+        }
+        if (!shouldRestoreNativeTriggerOnPressOut && !usesAndroidNativeTriggerOpacity) {
           setNativeTriggerOpening(true);
         }
       }
     };
     const handleNativeTriggerPress = (event: any) => {
-      if (nativeTrigger && !shouldRenderWebNativeTriggerSelect) {
+      if (usesAndroidDropdownOpenOpacity) {
+        if (androidNativeDropdownLongPressedRef.current) {
+          androidNativeDropdownLongPressedRef.current = false;
+          androidNativeDropdownPressCommittedRef.current = false;
+          setNativeTriggerOpening(false);
+          return;
+        }
+
+        clearAndroidNativeDropdownHandoffTimer();
+        androidNativeDropdownPressCommittedRef.current = true;
+        setNativeTriggerOpening(true);
+        androidNativeDropdownMenuRef.current?.presentMenu();
+        androidNativeDropdownHandoffTimerRef.current = setTimeout(() => {
+          if (!androidNativeDropdownOpenRef.current) {
+            androidNativeDropdownPressCommittedRef.current = false;
+            setNativeTriggerOpening(false);
+          }
+          androidNativeDropdownHandoffTimerRef.current = null;
+        }, 500);
+      }
+
+      if (
+        nativeTrigger &&
+        !shouldRenderWebNativeTriggerSelect &&
+        !usesAndroidNativeTriggerOpacity
+      ) {
         nativeTriggerFaceRef.current?.setNativeProps?.({ style: { opacity: 0.6 } });
         if (!shouldRestoreNativeTriggerOnPressOut) {
           setNativeTriggerOpening(true);
@@ -1410,12 +1511,44 @@ const SelectRoot = forwardRef<any, SelectProps>(
 
       triggerOnPress?.(event);
     };
+    const handleNativeTriggerLongPress = (event: any) => {
+      if (usesAndroidDropdownOpenOpacity) {
+        androidNativeDropdownLongPressedRef.current = true;
+      }
+      triggerOnLongPress?.(event);
+    };
+    const handleAndroidNativeDropdownTriggerLayout = (event: any) => {
+      triggerOnLayout?.(event);
+      const { height, width } = event.nativeEvent.layout;
+      setAndroidNativeDropdownAnchorSize((current) =>
+        Math.abs(current.height - height) < 0.5 && Math.abs(current.width - width) < 0.5
+          ? current
+          : { height, width },
+      );
+    };
     const handleNativeTriggerPressOut = (event: any) => {
       triggerOnPressOut?.(event);
 
-      if (nativeTrigger && shouldRestoreNativeTriggerOnPressOut) {
+      restoreAndroidNativeTriggerOpacity();
+      if (
+        nativeTrigger &&
+        shouldRestoreNativeTriggerOnPressOut &&
+        !usesAndroidNativeTriggerOpacity
+      ) {
         nativeTriggerFaceRef.current?.setNativeProps?.({ style: { opacity: 1 } });
       }
+    };
+    const handleNativeTriggerTouchCancel = (event: any) => {
+      triggerOnTouchCancel?.(event);
+      clearAndroidNativeDropdownHandoffTimer();
+      androidNativeDropdownLongPressedRef.current = false;
+      androidNativeDropdownPressCommittedRef.current = false;
+      setNativeTriggerPressed(false);
+      setNativeTriggerOpening(false);
+    };
+    const handleNativeTriggerTouchEnd = (event: any) => {
+      triggerOnTouchEnd?.(event);
+      restoreAndroidNativeTriggerOpacity();
     };
     const {
       maxHeight: webMenuContentMaxHeight,
@@ -1790,71 +1923,107 @@ const SelectRoot = forwardRef<any, SelectProps>(
               (resolvedItems.length === 0 ? null : (
                 <>
                   {shouldRenderNativeDropdownMenu ? (
-                    <Menu
-                      nativeAnchorAlignment={resolvedNativeDropdownAlign ?? "center"}
-                      nativeSelectedItemBackgroundColor={nativeMenuSelectedItemBackgroundColor}
-                      items={resolvedItems.map((item) => ({
-                        disabled: item.disabled ?? item.isDisabled,
-                        label: item.label,
-                        onSelect: () => handleTamaguiValueChange(item.value),
-                        selected: item.value === selectedValue,
-                        value: item.value,
-                      }))}
-                      nativeHaptics={resolvedNativeHaptics}
-                      onOpenChange={handleNativeDropdownMenuOpenChange}
-                      open={isSelectOpen}
-                      trigger={
-                        <SelectTrigger
-                          disabled={disabled ?? isDisabled ?? triggerProps?.disabled}
-                          {...(!nativeTrigger
-                            ? {
-                                backgroundColor: "$background",
-                                borderRadius: "$4",
-                                iconAfter: ChevronDown,
-                              }
-                            : {
-                                backgroundColor: "transparent",
-                                borderColor: "transparent",
-                                borderRadius: 0,
-                                borderWidth: 0,
-                                justifyContent: "center",
-                                minHeight: 44,
-                                paddingHorizontal: 0,
-                                paddingVertical: 0,
-                                pressStyle: {
-                                  backgroundColor: shouldUseNativeSheetCompactNativeTrigger
-                                    ? SELECT_TRIGGER_PRESS_COLOR
-                                    : "transparent",
-                                  borderColor: "transparent",
-                                },
-                              })}
-                          {...triggerProps}
-                          onPress={handleNativeTriggerPress}
-                          onPressIn={handleNativeTriggerPressIn}
-                          onPressOut={handleNativeTriggerPressOut}
-                          aria-label={resolveAriaLabel(
+                    nativeTrigger ? (
+                      <YStack position="relative">
+                        <NativeTriggerPressable
+                          active={isSelectOpen || nativeTriggerOpening}
+                          accessibilityLabel={resolveAriaLabel(
                             triggerProps?.["aria-label"] ?? ariaLabel,
                             selectedItem ?? placeholder,
                           )}
-                          nativeHaptics={triggerProps?.nativeHaptics ?? resolvedNativeHaptics}
+                          content={nativeTriggerContent}
+                          containerStyle={nativeTriggerContainerStyle}
+                          disabled={disabled ?? isDisabled ?? triggerProps?.disabled}
+                          icon={nativeTriggerIcon}
+                          label={nativeTriggerLabel}
+                          labelProps={nativeTriggerLabelProps}
+                          onLayout={handleAndroidNativeDropdownTriggerLayout}
+                          onLongPress={handleNativeTriggerLongPress}
+                          onPress={handleNativeTriggerPress}
+                          onPressIn={handleNativeTriggerPressIn}
+                          onPressOut={handleNativeTriggerPressOut}
+                          onTouchCancel={handleNativeTriggerTouchCancel}
+                          onTouchEnd={handleNativeTriggerTouchEnd}
+                          style={(triggerProps as any)?.style}
+                        />
+                        <View
+                          collapsable={false}
+                          pointerEvents="none"
+                          style={{
+                            bottom: 0,
+                            left: 0,
+                            position: "absolute",
+                            right: 0,
+                            top: 0,
+                          }}
                         >
-                          {nativeTrigger ? (
-                            <NativeTriggerFace
-                              ref={nativeTriggerFaceRef}
-                              content={nativeTriggerContent}
-                              containerStyle={nativeTriggerContainerStyle}
-                              icon={nativeTriggerIcon}
-                              label={nativeTriggerLabel}
-                              labelProps={nativeTriggerLabelProps}
-                              opacity={isNativeTriggerActive ? 0.6 : 1}
-                            />
-                          ) : (
+                          <Menu
+                            nativeAnchorAlignment={resolvedNativeDropdownAlign ?? "center"}
+                            nativeSelectedItemBackgroundColor={
+                              nativeMenuSelectedItemBackgroundColor
+                            }
+                            items={resolvedItems.map((item) => ({
+                              disabled: item.disabled ?? item.isDisabled,
+                              label: item.label,
+                              onSelect: () => handleTamaguiValueChange(item.value),
+                              selected: item.value === selectedValue,
+                              value: item.value,
+                            }))}
+                            nativeHaptics={resolvedNativeHaptics}
+                            onOpenChange={handleNativeDropdownMenuOpenChange}
+                            open={isSelectOpen}
+                            style={{
+                              height: androidNativeDropdownAnchorSize.height,
+                              width: androidNativeDropdownAnchorSize.width,
+                            }}
+                            trigger={
+                              <View
+                                collapsable={false}
+                                style={{
+                                  height: androidNativeDropdownAnchorSize.height,
+                                  opacity: 0,
+                                  width: androidNativeDropdownAnchorSize.width,
+                                }}
+                              />
+                            }
+                            triggerProps={{ asChild: true }}
+                            {...({ __menuRef: androidNativeDropdownMenuRef } as any)}
+                          />
+                        </View>
+                      </YStack>
+                    ) : (
+                      <Menu
+                        nativeAnchorAlignment={resolvedNativeDropdownAlign ?? "center"}
+                        nativeSelectedItemBackgroundColor={nativeMenuSelectedItemBackgroundColor}
+                        items={resolvedItems.map((item) => ({
+                          disabled: item.disabled ?? item.isDisabled,
+                          label: item.label,
+                          onSelect: () => handleTamaguiValueChange(item.value),
+                          selected: item.value === selectedValue,
+                          value: item.value,
+                        }))}
+                        nativeHaptics={resolvedNativeHaptics}
+                        onOpenChange={handleNativeDropdownMenuOpenChange}
+                        open={isSelectOpen}
+                        trigger={
+                          <SelectTrigger
+                            backgroundColor="$background"
+                            borderRadius="$4"
+                            disabled={disabled ?? isDisabled ?? triggerProps?.disabled}
+                            iconAfter={ChevronDown}
+                            {...triggerProps}
+                            aria-label={resolveAriaLabel(
+                              triggerProps?.["aria-label"] ?? ariaLabel,
+                              selectedItem ?? placeholder,
+                            )}
+                            nativeHaptics={triggerProps?.nativeHaptics ?? resolvedNativeHaptics}
+                          >
                             <SelectValue placeholder={placeholder} />
-                          )}
-                        </SelectTrigger>
-                      }
-                      triggerProps={{ asChild: true }}
-                    />
+                          </SelectTrigger>
+                        }
+                        triggerProps={{ asChild: true }}
+                      />
+                    )
                   ) : shouldRenderNativePicker ? (
                     <YStack position="relative" width="100%">
                       <SelectTrigger
@@ -1882,9 +2051,12 @@ const SelectRoot = forwardRef<any, SelectProps>(
                               },
                             })}
                         {...triggerProps}
+                        onLongPress={handleNativeTriggerLongPress}
                         onPress={handleNativeTriggerPress}
                         onPressIn={handleNativeTriggerPressIn}
                         onPressOut={handleNativeTriggerPressOut}
+                        onTouchCancel={handleNativeTriggerTouchCancel}
+                        onTouchEnd={handleNativeTriggerTouchEnd}
                         aria-label={resolveAriaLabel(
                           triggerProps?.["aria-label"] ?? ariaLabel,
                           selectedItem ?? placeholder,
@@ -1933,9 +2105,12 @@ const SelectRoot = forwardRef<any, SelectProps>(
                             },
                           })}
                       {...triggerProps}
+                      onLongPress={handleNativeTriggerLongPress}
                       onPress={handleNativeTriggerPress}
                       onPressIn={handleNativeTriggerPressIn}
                       onPressOut={handleNativeTriggerPressOut}
+                      onTouchCancel={handleNativeTriggerTouchCancel}
+                      onTouchEnd={handleNativeTriggerTouchEnd}
                       aria-label={resolveAriaLabel(
                         triggerProps?.["aria-label"] ?? ariaLabel,
                         selectedItem ?? placeholder,

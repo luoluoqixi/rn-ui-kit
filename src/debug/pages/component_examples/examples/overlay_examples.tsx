@@ -107,6 +107,24 @@ function ContextMenuExample() {
           items={[
             { label: "重命名", onSelect: () => setAction("重命名"), value: "rename" },
             { label: "复制链接", onSelect: () => setAction("复制链接"), value: "copy-link" },
+            {
+              label: "更多操作",
+              subMenu: [
+                {
+                  icon: <Settings color="$color10" size={14} />,
+                  label: "设置",
+                  onSelect: () => setAction("设置"),
+                  subtitle: "嵌套 ContextMenu",
+                  value: "settings",
+                },
+                {
+                  label: "下载",
+                  onSelect: () => setAction("下载"),
+                  value: "download",
+                },
+              ],
+              value: "more",
+            },
             { label: "separator", separator: true, value: "separator" },
             {
               destructive: true,

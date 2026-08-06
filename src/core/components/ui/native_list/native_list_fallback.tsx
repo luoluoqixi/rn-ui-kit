@@ -4,7 +4,9 @@ import { Check, ChevronRight, ChevronsUpDown } from "@tamagui/lucide-icons-2";
 import {
   Children,
   createContext,
+  forwardRef,
   useCallback,
+  type ComponentRef,
   type ComponentProps,
   type ComponentType,
   type ReactElement,
@@ -35,6 +37,7 @@ import { useAppBackgroundColors, useUiPreferences } from "../utils/theme";
 
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from "../flash_list";
 import { Input } from "../input";
+import { ContextMenu } from "../context_menu";
 import { Menu } from "../menu";
 import { Select } from "../select";
 import {
@@ -57,10 +60,16 @@ import {
   useNativeListEditMode,
   useNativeListEditRow,
 } from "./edit_mode";
+import {
+  NativeListContextMenuProvider,
+  resolveNativeListContextMenu,
+  useResolvedNativeListContextMenu,
+} from "./context_menu";
 import type {
   NativeListActionItemProps,
   NativeListButtonItemProps,
   NativeListCustomItemProps,
+  NativeListContextMenuProps,
   NativeListItemBaseProps,
   NativeListInputItemProps,
   NativeListItemPaddingProps,
@@ -77,6 +86,7 @@ import type {
 type RowContainerProps = NativeListItemPaddingProps & {
   backgroundColor?: ViewStyle["backgroundColor"];
   children: ReactNode;
+  contextMenuProps?: NativeListContextMenuProps | false;
   disabled?: boolean;
   editingSelected?: boolean;
   hoverBackgroundColor?: ViewStyle["backgroundColor"];
@@ -101,6 +111,7 @@ type FallbackListEntry =
       type: "sectionHeader";
     }
   | {
+      contextMenuProps?: NativeListContextMenuProps;
       key: string;
       nativeScrollId?: string | number;
       renderRow: () => ReactElement | null;
@@ -233,6 +244,7 @@ function resolveFallbackRowPadding({
 function FallbackRowContainer({
   backgroundColor,
   children,
+  contextMenuProps,
   disabled,
   editingSelected,
   hoverBackgroundColor,
@@ -248,6 +260,16 @@ function FallbackRowContainer({
   pressBackgroundColor,
 }: RowContainerProps) {
   const captureListScrollPosition = useContext(FallbackListScrollCaptureContext);
+  const editMode = useNativeListEditMode();
+  const resolvedContextMenuProps = useResolvedNativeListContextMenu(contextMenuProps);
+  const contextMenuRef = useRef<{ presentMenu: () => void } | null>(null);
+  const activeNativeContextMenuProps =
+    !isWeb() &&
+    !editMode &&
+    resolvedContextMenuProps != null &&
+    !resolvedContextMenuProps.triggerProps?.disabled
+      ? resolvedContextMenuProps
+      : undefined;
   const resolvedHaptics = useResolvedNativeHaptics(nativeHaptics);
   const { defaultRowBackground, theme } = useFallbackRowThemeColors();
   const [hovered, setHovered] = useState(false);
@@ -294,7 +316,24 @@ function FallbackRowContainer({
           : normalRowBackground,
   });
 
-  if (onPress == null) {
+  const contextMenuAnchor =
+    activeNativeContextMenuProps != null ? (
+      <View
+        pointerEvents="none"
+        style={[
+          styles.contextMenuAnchor,
+          os() === "android" ? styles.contextMenuAnchorCenter : styles.contextMenuAnchorEnd,
+        ]}
+      >
+        <ContextMenu
+          {...activeNativeContextMenuProps}
+          trigger={<View collapsable={false} style={styles.contextMenuAnchorTrigger} />}
+          {...({ __menuRef: contextMenuRef } as any)}
+        />
+      </View>
+    ) : null;
+
+  if (onPress == null && activeNativeContextMenuProps == null) {
     return (
       <View
         style={[
@@ -309,17 +348,26 @@ function FallbackRowContainer({
     );
   }
 
-  return (
+  const row = (
     <Pressable
       disabled={disabled}
       onHoverIn={() => setHovered(true)}
       onHoverOut={() => setHovered(false)}
       onPressIn={usesIosSwitchPressFallback ? () => setPressed(true) : undefined}
-      onPress={() => {
-        captureListScrollPosition?.();
-        onPress();
-        triggerNativeHaptics(resolvedHaptics);
-      }}
+      onLongPress={
+        activeNativeContextMenuProps != null
+          ? () => contextMenuRef.current?.presentMenu()
+          : undefined
+      }
+      onPress={
+        onPress != null
+          ? () => {
+              captureListScrollPosition?.();
+              onPress();
+              triggerNativeHaptics(resolvedHaptics);
+            }
+          : undefined
+      }
       onPressOut={usesIosSwitchPressFallback ? () => setPressed(false) : undefined}
       style={styles.pressable}
     >
@@ -336,6 +384,17 @@ function FallbackRowContainer({
         </View>
       )}
     </Pressable>
+  );
+
+  if (contextMenuAnchor == null) {
+    return row;
+  }
+
+  return (
+    <View collapsable={false} style={styles.contextMenuRow}>
+      {row}
+      {contextMenuAnchor}
+    </View>
   );
 }
 
@@ -447,6 +506,7 @@ function NativeListRow({
   backgroundColor,
   chevron = false,
   chevronColor,
+  contextMenuProps,
   disabled,
   hoverBackgroundColor,
   icon,
@@ -490,6 +550,7 @@ function NativeListRow({
   return (
     <FallbackRowContainer
       backgroundColor={backgroundColor}
+      contextMenuProps={contextMenuProps}
       disabled={disabled}
       editingSelected={editRow.editingSelected}
       hoverBackgroundColor={hoverBackgroundColor}
@@ -575,6 +636,14 @@ function getNativeScrollId(node: ReactNode) {
   return node.props.nativeScrollId;
 }
 
+function getFallbackContextMenuProps(node: ReactNode) {
+  if (!isValidElement<{ contextMenuProps?: NativeListContextMenuProps | false }>(node)) {
+    return undefined;
+  }
+
+  return node.props.contextMenuProps;
+}
+
 function isNativeListSectionType(type: ReactElement["type"]) {
   if (type === NativeListSection) {
     return true;
@@ -598,9 +667,16 @@ function createFallbackRowEntry(
   child: ReactNode,
   key: string,
   sectionKey: string,
+  inheritedContextMenuProps?: NativeListContextMenuProps,
 ): FallbackListEntry {
+  const contextMenuProps = resolveNativeListContextMenu(
+    getFallbackContextMenuProps(child),
+    inheritedContextMenuProps,
+  );
+
   if (isNativeListElementType(child, NativeListActionItem)) {
     return {
+      contextMenuProps,
       key,
       nativeScrollId: child.props.nativeScrollId,
       renderRow: () => <NativeListActionItem {...child.props} />,
@@ -612,6 +688,7 @@ function createFallbackRowEntry(
 
   if (isNativeListElementType(child, NativeListNavigationItem)) {
     return {
+      contextMenuProps,
       key,
       nativeScrollId: child.props.nativeScrollId,
       renderRow: () => <NativeListNavigationItem {...child.props} />,
@@ -623,6 +700,7 @@ function createFallbackRowEntry(
 
   if (isNativeListElementType(child, NativeListSwitchItem)) {
     return {
+      contextMenuProps,
       key,
       nativeScrollId: child.props.nativeScrollId,
       renderRow: () => <NativeListSwitchItem {...child.props} />,
@@ -634,6 +712,7 @@ function createFallbackRowEntry(
 
   if (isNativeListElementType(child, NativeListSelectItem)) {
     return {
+      contextMenuProps,
       key,
       nativeScrollId: child.props.nativeScrollId,
       renderRow: () => <NativeListSelectItem {...child.props} />,
@@ -645,6 +724,7 @@ function createFallbackRowEntry(
 
   if (isNativeListElementType(child, NativeListMenuItem)) {
     return {
+      contextMenuProps,
       key,
       nativeScrollId: child.props.nativeScrollId,
       renderRow: () => <NativeListMenuItem {...child.props} />,
@@ -656,6 +736,7 @@ function createFallbackRowEntry(
 
   if (isNativeListElementType(child, NativeListButtonItem)) {
     return {
+      contextMenuProps,
       key,
       nativeScrollId: child.props.nativeScrollId,
       renderRow: () => <NativeListButtonItem {...child.props} />,
@@ -667,6 +748,7 @@ function createFallbackRowEntry(
 
   if (isNativeListElementType(child, NativeListInputItem)) {
     return {
+      contextMenuProps,
       key,
       renderRow: () => <NativeListInputItem {...child.props} />,
       rowType: "inputRow",
@@ -677,6 +759,7 @@ function createFallbackRowEntry(
 
   if (isNativeListElementType(child, NativeListTextAreaItem)) {
     return {
+      contextMenuProps,
       key,
       renderRow: () => <NativeListTextAreaItem {...child.props} />,
       rowType: "textAreaRow",
@@ -687,6 +770,7 @@ function createFallbackRowEntry(
 
   if (isNativeListElementType(child, NativeListItem)) {
     return {
+      contextMenuProps,
       key,
       nativeScrollId: child.props.nativeScrollId,
       renderRow: () => <NativeListItem {...child.props} />,
@@ -698,6 +782,7 @@ function createFallbackRowEntry(
 
   if (isNativeListElementType(child, NativeListCustomItem)) {
     return {
+      contextMenuProps,
       key,
       nativeScrollId: getNativeScrollId(child),
       renderRow: () => <NativeListCustomItem {...child.props} />,
@@ -708,6 +793,7 @@ function createFallbackRowEntry(
   }
 
   return {
+    contextMenuProps,
     key,
     nativeScrollId: getNativeScrollId(child),
     renderRow: () => (isValidElement(child) ? child : null),
@@ -717,11 +803,43 @@ function createFallbackRowEntry(
   };
 }
 
-function FallbackListRowFrame({ children }: { children: ReactNode }) {
+const FallbackListRowFrame = forwardRef<
+  ComponentRef<typeof View>,
+  ComponentProps<typeof View>
+>(function FallbackListRowFrame({ children, style, ...viewProps }, forwardedRef) {
   return (
-    <View collapsable={false} style={styles.rowFrame}>
+    <View
+      ref={forwardedRef}
+      {...viewProps}
+      collapsable={false}
+      style={[styles.rowFrame, style]}
+    >
       {children}
     </View>
+  );
+});
+
+function FallbackListContextMenuRow({
+  children,
+  contextMenuProps,
+}: {
+  children: ReactElement;
+  contextMenuProps?: NativeListContextMenuProps;
+}) {
+  const editMode = useNativeListEditMode();
+
+  if (editMode || contextMenuProps == null) {
+    return children;
+  }
+
+  if (isWeb()) {
+    return <ContextMenu {...contextMenuProps} trigger={children} />;
+  }
+
+  return (
+    <NativeListContextMenuProvider contextMenuProps={contextMenuProps}>
+      {children}
+    </NativeListContextMenuProvider>
   );
 }
 
@@ -729,8 +847,13 @@ function appendSectionEntries(
   entries: FallbackListEntry[],
   sectionProps: NativeListSectionProps,
   sectionKey: string,
+  inheritedContextMenuProps?: NativeListContextMenuProps,
 ) {
   const sectionChildren = Children.toArray(sectionProps.children);
+  const sectionContextMenuProps = resolveNativeListContextMenu(
+    sectionProps.contextMenuProps,
+    inheritedContextMenuProps,
+  );
   const hasSectionContent =
     sectionProps.title != null ||
     sectionProps.trailing != null ||
@@ -759,6 +882,7 @@ function appendSectionEntries(
         child,
         `${sectionKey}-row-${getNodeKey(child, String(index))}`,
         sectionKey,
+        sectionContextMenuProps,
       ),
     );
   });
@@ -773,12 +897,20 @@ function appendSectionEntries(
   }
 }
 
-function createFallbackListEntries(children: ReactNode) {
+function createFallbackListEntries(
+  children: ReactNode,
+  contextMenuProps?: NativeListContextMenuProps,
+) {
   const entries: FallbackListEntry[] = [];
 
   Children.toArray(children).forEach((child, index) => {
     if (isNativeListSectionElement(child)) {
-      appendSectionEntries(entries, child.props, getNodeKey(child, `section-${index}`));
+      appendSectionEntries(
+        entries,
+        child.props,
+        getNodeKey(child, `section-${index}`),
+        contextMenuProps,
+      );
       return;
     }
 
@@ -787,6 +919,7 @@ function createFallbackListEntries(children: ReactNode) {
         child,
         `direct-row-${getNodeKey(child, String(index))}`,
         `direct-${index}`,
+        contextMenuProps,
       ),
     );
   });
@@ -829,7 +962,9 @@ function renderFallbackListEntry({
     case "row":
       return (
         <NativeListEditRowIdProvider selectionId={item.nativeScrollId ?? item.key}>
-          <FallbackListRowFrame>{item.renderRow()}</FallbackListRowFrame>
+          <FallbackListContextMenuRow contextMenuProps={item.contextMenuProps}>
+            <FallbackListRowFrame>{item.renderRow()}</FallbackListRowFrame>
+          </FallbackListContextMenuRow>
         </NativeListEditRowIdProvider>
       );
     case "sectionFooter":
@@ -1254,7 +1389,10 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
           selectProps.triggerProps?.pressStyle ??
           ({
             background: itemProps.pressBackgroundColor ?? "$color5",
-            opacity: 0.6,
+            // Android 的原生 Select trigger 可能在长按手势被内部控件接管后收不到
+            // press-out。透明度反馈由 Select 的 NativeTriggerFace 负责，避免外层
+            // pressStyle 永久停留在按下态。
+            opacity: os() === "android" ? 1 : 0.6,
           } as any),
       }}
     />
@@ -1352,6 +1490,7 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
 export function NativeListCustomItem({
   backgroundColor,
   children,
+  contextMenuProps,
   disabled,
   hoverBackgroundColor,
   nativeHaptics,
@@ -1371,6 +1510,7 @@ export function NativeListCustomItem({
   return (
     <FallbackRowContainer
       backgroundColor={backgroundColor}
+      contextMenuProps={contextMenuProps}
       disabled={disabled}
       editingSelected={editRow.editingSelected}
       hoverBackgroundColor={hoverBackgroundColor}
@@ -1397,6 +1537,7 @@ export function NativeListCustomItem({
 
 export function NativeListSection({
   children,
+  contextMenuProps,
   footer,
   trailing,
   title,
@@ -1406,6 +1547,7 @@ export function NativeListSection({
   const entries = createFallbackListEntries(
     <NativeListSection
       footer={footer}
+      contextMenuProps={contextMenuProps}
       trailing={trailing}
       title={title}
       titleColor={titleColor}
@@ -1421,6 +1563,7 @@ export function NativeListSection({
 export function NativeListRoot({
   backgroundColor,
   children,
+  contextMenuProps,
   contentContainerStyle,
   contentMarginBottom,
   contentMarginTop,
@@ -1482,7 +1625,10 @@ export function NativeListRoot({
     currentWebScrollOffsetRef.current = offset;
     savedWebScrollOffsetRef.current = offset;
   }, []);
-  const entries = useMemo(() => createFallbackListEntries(children), [children]);
+  const entries = useMemo(
+    () => createFallbackListEntries(children, contextMenuProps),
+    [children, contextMenuProps],
+  );
   const initialScrollIndex = useMemo(
     () => getInitialScrollIndex(entries, initialScrollTarget),
     [entries, initialScrollTarget],
@@ -1827,6 +1973,27 @@ const styles = StyleSheet.create({
   },
   inputTrailing: {
     width: 160,
+  },
+  contextMenuAnchor: {
+    height: 1,
+    position: "absolute",
+    top: "50%",
+    width: 1,
+  },
+  contextMenuAnchorCenter: {
+    left: "50%",
+  },
+  contextMenuAnchorEnd: {
+    right: 0,
+  },
+  contextMenuAnchorTrigger: {
+    height: 1,
+    opacity: 0,
+    width: 1,
+  },
+  contextMenuRow: {
+    position: "relative",
+    width: "100%",
   },
   pressable: {
     width: "100%",

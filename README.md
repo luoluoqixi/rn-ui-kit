@@ -351,6 +351,12 @@ export function SettingsList() {
 
 - Android 和 Web 会自动使用基于 `FlashList` / React Native 视图的跨平台实现。
 - 在 iOS 上传入 `<NativeList native={false}>`，可主动使用相同的 fallback 外观。
+- `NativeList`、`NativeListSection` 与每个 Item 都支持 `contextMenuProps`，可直接传入
+  `items`、`contentProps`、`itemProps`、打开事件等 `ContextMenu` 配置。解析优先级为
+  Item > Section > NativeList；Item 或 Section 传 `contextMenuProps={false}` 可停止继承。
+  iOS/Android 长按打开，Web 右键打开；编辑模式中会暂时停用，避免与多选手势冲突。
+  `ContextMenuItemData` 支持 `icon`、`indicator`、`selected`、`subtitle`、`subMenu` 与
+  `subMenuTitle`，其中 Android 原生菜单只支持一级子菜单。
 - 向 `NativeList` 传入 `editMode` 可在 iOS、Android 与 Web 开启备忘录式多选：每行左侧
   显示选择标记，并将原行操作切换为选择/取消选择。列表可通过 `selectedIds` /
   `onSelectedIdsChange` 受控，也可仅传 `defaultSelectedIds` 使用内部状态；行可传

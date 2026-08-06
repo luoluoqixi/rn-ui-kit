@@ -83,7 +83,9 @@ function NativeListExample() {
     }
 
     const frame = requestAnimationFrame(() => {
-      setFallbackMounted(true);
+      requestAnimationFrame(() => {
+        setFallbackMounted(true);
+      });
     });
 
     return () => cancelAnimationFrame(frame);
@@ -134,6 +136,33 @@ function NativeListExample() {
         <View style={styles.nativeListFrame}>
           {native || fallbackMounted ? (
             <NativeList
+              contextMenuProps={{
+                items: [
+                  {
+                    label: "复制标题",
+                    onSelect: () => setLastAction("根菜单：复制标题"),
+                    value: "copy-title",
+                  },
+                  {
+                    label: "更多操作",
+                    subMenu: [
+                      {
+                        label: "共享",
+                        onSelect: () => setLastAction("根菜单：共享"),
+                        value: "share",
+                      },
+                      {
+                        destructive: true,
+                        label: "删除",
+                        onSelect: () => setLastAction("根菜单：删除"),
+                        value: "delete",
+                      },
+                    ],
+                    subMenuTitle: "更多操作",
+                    value: "more",
+                  },
+                ],
+              }}
               editMode={editMode}
               editModeIcon={customEditModeIcon ? <Square color="$color10" size={24} /> : undefined}
               editModeSelectedIcon={
@@ -177,6 +206,16 @@ function NativeListExample() {
                 />
               </NativeListSection>
               <NativeListSection
+                contextMenuProps={{
+                  items: [
+                    {
+                      label: "工作区菜单",
+                      onSelect: () => setLastAction("Section 菜单：工作区"),
+                      subtitle: "覆盖 NativeList 默认菜单",
+                      value: "workspace-menu",
+                    },
+                  ],
+                }}
                 footer="导航行适合跳转到更深层的设置页。"
                 title="工作区"
                 titleColor="#7c3aed"
@@ -205,6 +244,15 @@ function NativeListExample() {
               >
                 <NativeListNavigationItem
                   chevronColor={NATIVE_LIST_ICON_COLOR}
+                  contextMenuProps={{
+                    items: [
+                      {
+                        label: "详情专属菜单",
+                        onSelect: () => setLastAction("Item 菜单：详情"),
+                        value: "details-menu",
+                      },
+                    ],
+                  }}
                   icon={<Info color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
                   sfSymbol="info.circle"
                   onPress={() => setLastAction("打开详情")}

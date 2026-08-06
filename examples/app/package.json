@@ -92,6 +92,7 @@
     "@shopify/flash-list@2.3.2": "patches/@shopify+flash-list@2.3.2.patch",
     "@tamagui/create-menu@2.4.0": "patches/@tamagui+create-menu@2.4.0.patch",
     "@tamagui/dialog@2.4.0": "patches/@tamagui+dialog@2.4.0.patch",
+    "@tamagui/menu@2.4.0": "patches/@tamagui+menu@2.4.0.patch",
     "@tamagui/native@2.4.0": "patches/@tamagui+native@2.4.0.patch",
     "@tamagui/portal@2.4.0": "patches/@tamagui+portal@2.4.0.patch",
     "@tamagui/toast@2.4.0": "patches/@tamagui+toast@2.4.0.patch",
