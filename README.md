@@ -352,11 +352,14 @@ export function SettingsList() {
 - Android 和 Web 会自动使用基于 `FlashList` / React Native 视图的跨平台实现。
 - 在 iOS 上传入 `<NativeList native={false}>`，可主动使用相同的 fallback 外观。
 - 向 `NativeList` 传入 `editMode` 可在 iOS、Android 与 Web 开启备忘录式多选：每行左侧
-  显示主题色勾选圆标，点击会改为选择/取消选择且不会触发原行操作，选中行会持续使用
-  按下背景色。列表可通过 `selectedIds` / `onSelectedIdsChange` 受控，也可仅传
-  `defaultSelectedIds` 使用内部状态；行可传 `selectionId` 提供稳定标识。左侧图标可通过
-  `editModeIcon` / `editModeSelectedIcon` 自定义；iOS 原生模式还支持优先使用
-  `editModeSfSymbol` / `editModeSelectedSfSymbol`，未传时会回退到自定义图标或默认圆形勾选。
+  显示选择标记，并将原行操作切换为选择/取消选择。列表可通过 `selectedIds` /
+  `onSelectedIdsChange` 受控，也可仅传 `defaultSelectedIds` 使用内部状态；行可传
+  `selectionId` 提供稳定标识。iOS 原生 List 默认使用 `iosEditModeVariant="native"`，由
+  SwiftUI `List` 原生多选负责系统选择圆标、选中背景及滑动快速选择。传入
+  `iosEditModeVariant="custom"` 可保留主题按下背景和现有的自定义选择实现；只有此模式会在
+  iOS 使用 `editModeIcon` / `editModeSelectedIcon` 或优先使用 `editModeSfSymbol` /
+  `editModeSelectedSfSymbol`。Android、Web 与 fallback 始终使用自定义实现，并继续支持
+  React Native 自定义图标。
 - 原生文本行的 `title`、`subtitle` 和 `value` 适合传入字符串或数字；无法直接映射到
   SwiftUI 的复杂 ReactNode 会按行降级渲染。
 - 所有基础 Item 都支持 `titleColor` / `titleFontSize`、`subtitleColor` /

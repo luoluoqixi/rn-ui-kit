@@ -176,14 +176,14 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
     editMode?: boolean;
     /**
      * 编辑模式未选中时的自定义 React Native 图标；Android、Web 与 fallback 使用。
-     * iOS 原生模式未传 `editModeSfSymbol` 时也会使用。
+     * iOS 原生列表仅在 `iosEditModeVariant="custom"` 时使用。
      */
     editModeIcon?: ReactElement;
-    /** 编辑模式已选中时的自定义 React Native 图标。 */
+    /** 编辑模式已选中时的自定义 React Native 图标；iOS `native` 编辑模式会忽略。 */
     editModeSelectedIcon?: ReactElement;
-    /** iOS 原生编辑模式未选中时优先使用的 SF Symbol。 */
+    /** iOS 自定义编辑模式未选中时优先使用的 SF Symbol。 */
     editModeSfSymbol?: SFSymbol;
-    /** iOS 原生编辑模式已选中时优先使用的 SF Symbol。 */
+    /** iOS 自定义编辑模式已选中时优先使用的 SF Symbol。 */
     editModeSelectedSfSymbol?: SFSymbol;
     /**
      * 修正 iOS 26+ 在外层 ScrollView 中嵌套原生 List 时错误缓存窗口底部安全区，
@@ -192,6 +192,12 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
     fixesIOS26NestedScrollIndicatorSafeArea?: boolean;
     /** iOS 原生 List 初次挂载后滚动到的目标 id。 */
     initialScrollTarget?: string | number;
+    /**
+     * iOS 原生 List 的编辑模式实现。`native` 使用 SwiftUI List 原生多选并支持系统快速选择；
+     * `custom` 保留可自定义图标与主题选中背景的现有实现。默认 `native`。
+     * Android、Web 与 fallback 会忽略此参数并继续使用自定义实现。
+     */
+    iosEditModeVariant?: "native" | "custom";
     /** 设为 false 时使用 list_group 回退模式（所有平台一致） */
     native?: boolean;
     /**

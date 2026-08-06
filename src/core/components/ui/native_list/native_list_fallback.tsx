@@ -1432,6 +1432,7 @@ export function NativeListRoot({
   editModeSfSymbol,
   fixesIOS26NestedScrollIndicatorSafeArea: _fixesIOS26NestedScrollIndicatorSafeArea,
   initialScrollTarget,
+  iosEditModeVariant: _iosEditModeVariant,
   native: _native,
   navigationBarScrollEdgeOptions,
   onRefresh,
@@ -1444,6 +1445,7 @@ export function NativeListRoot({
 }: NativeListRootProps) {
   void _native;
   void _fixesIOS26NestedScrollIndicatorSafeArea;
+  void _iosEditModeVariant;
   const {
     alwaysBounceVertical,
     automaticallyAdjustsScrollIndicatorInsets,

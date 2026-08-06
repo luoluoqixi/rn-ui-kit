@@ -18,6 +18,7 @@ import {
   contentMargins,
   contentShape,
   disabled as disabledModifier,
+  environment,
   font,
   foregroundStyle,
   frame,
@@ -36,6 +37,7 @@ import {
   scrollContentBackground,
   scrollDisabled,
   shapes,
+  tag,
   tint,
   toggleStyle,
   viewID,
@@ -92,6 +94,7 @@ import type {
   NativeListNavigationItemProps,
   NativeListRootProps,
   NativeListSectionProps,
+  NativeListSelectionId,
   NativeListSelectItemProps,
   NativeListSwitchItemProps,
   NativeListTextAreaItemProps,
@@ -373,6 +376,7 @@ function NativeRowContainer({
   children,
   disabled,
   editingSelected,
+  nativeSelectionId,
   nativeScrollId,
   onPress,
   paddingBottom,
@@ -389,6 +393,7 @@ function NativeRowContainer({
   children: ReactNode;
   disabled?: boolean;
   editingSelected?: boolean;
+  nativeSelectionId?: NativeListSelectionId;
   nativeScrollId?: string | number;
   onPress?: () => void;
   btnStyle?: SwiftUIButtonStyle;
@@ -432,6 +437,7 @@ function NativeRowContainer({
           disabledModifier(disabled ?? false),
           buttonStyle(btnStyle ?? "automatic"),
           ...(nativeScrollId != null ? [viewID(nativeScrollId)] : []),
+          ...(nativeSelectionId != null ? [tag(nativeSelectionId)] : []),
           ...(editingSelected && selectedBackgroundColor != null
             ? [listRowBackground(selectedBackgroundColor)]
             : []),
@@ -471,6 +477,7 @@ function NativeRowContainer({
         ...baseModifiers,
         disabledModifier(disabled ?? false),
         ...(nativeScrollId != null ? [viewID(nativeScrollId)] : []),
+        ...(nativeSelectionId != null ? [tag(nativeSelectionId)] : []),
         ...(editingSelected && selectedBackgroundColor != null
           ? [listRowBackground(selectedBackgroundColor)]
           : []),
@@ -661,7 +668,13 @@ function NativePressRow({
   valueSfSymbol?: SFSymbol;
 }) {
   const theme = useTheme();
-  const editRow = useNativeListEditRow({ disabled, nativeScrollId, onPress, selectionId });
+  const editRow = useNativeListEditRow({
+    disabled,
+    nativeScrollId,
+    nativeSelection: true,
+    onPress,
+    selectionId,
+  });
   const resolvedHaptics = useResolvedNativeHaptics(nativeHaptics);
   const accentColor = toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;
   const assistColor = resolveNativeListAssistColor(theme);
@@ -695,7 +708,8 @@ function NativePressRow({
   return (
     <NativeRowContainer
       disabled={disabled}
-      editingSelected={editRow.editingSelected}
+      editingSelected={editRow.nativeSelection ? false : editRow.editingSelected}
+      nativeSelectionId={editRow.nativeSelection ? editRow.selectionId : undefined}
       onPress={handlePress}
       btnStyle={btnStyle}
       btnTint={btnTint}
@@ -709,7 +723,7 @@ function NativePressRow({
       rowAlignment={rowAlignment}
       rowMinHeight={rowMinHeight}
     >
-      {editRow.editMode ? (
+      {editRow.editMode && !editRow.nativeSelection ? (
         <NativeEditingIndicator key="edit-mode-indicator" selected={editRow.editingSelected} />
       ) : null}
       {sfSymbol != null ? (
@@ -793,6 +807,7 @@ function NativeListRoot({
   editModeSfSymbol,
   fixesIOS26NestedScrollIndicatorSafeArea,
   initialScrollTarget,
+  iosEditModeVariant = "native",
   native = true,
   nestedScrollEnabled,
   navigationBarScrollEdgeOptions,
@@ -807,6 +822,18 @@ function NativeListRoot({
   ...fallbackProps
 }: NativeListRootProps) {
   const insets = useSafeAreaInsets();
+  const theme = useTheme();
+  const nativeEditTint = toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;
+  const [uncontrolledSelectedIds, setUncontrolledSelectedIds] = useState<
+    NativeListSelectionId[]
+  >(() => [...(defaultSelectedIds ?? [])]);
+  const resolvedSelectedIds = selectedIds ?? uncontrolledSelectedIds;
+  const handleSelectedIdsChange = (nextSelectedIds: NativeListSelectionId[]) => {
+    if (selectedIds == null) {
+      setUncontrolledSelectedIds(nextSelectedIds);
+    }
+    onSelectedIdsChange?.([...nextSelectedIds]);
+  };
   const {
     active: insideTrueSheet,
     automaticContentInsetAdjustment,
@@ -873,16 +900,20 @@ function NativeListRoot({
       : insideTrueSheet && automaticContentInsetAdjustment
         ? "automatic"
         : undefined);
+  const usesNativeEditMode = editMode === true && iosEditModeVariant === "native";
   return (
     <NativeListEditModeProvider
       defaultSelectedIds={defaultSelectedIds}
       editMode={editMode}
-      editModeIcon={editModeIcon}
-      editModeSelectedIcon={editModeSelectedIcon}
-      editModeSelectedSfSymbol={editModeSelectedSfSymbol}
-      editModeSfSymbol={editModeSfSymbol}
-      onSelectedIdsChange={onSelectedIdsChange}
-      selectedIds={selectedIds}
+      editModeIcon={iosEditModeVariant === "custom" ? editModeIcon : undefined}
+      editModeSelectedIcon={iosEditModeVariant === "custom" ? editModeSelectedIcon : undefined}
+      editModeSelectedSfSymbol={
+        iosEditModeVariant === "custom" ? editModeSelectedSfSymbol : undefined
+      }
+      editModeSfSymbol={iosEditModeVariant === "custom" ? editModeSfSymbol : undefined}
+      nativeSelectionEnabled={iosEditModeVariant === "native"}
+      onSelectedIdsChange={handleSelectedIdsChange}
+      selectedIds={resolvedSelectedIds}
     >
       <NativeListContext.Provider value={{ native: true }}>
         <Host style={[styles.nativeRoot, style]}>
@@ -906,9 +937,16 @@ function NativeListRoot({
             }
             initialScrollAnchor="center"
             initialScrollTarget={initialScrollTarget}
+            onSelectionChange={usesNativeEditMode ? handleSelectedIdsChange : undefined}
+            selection={usesNativeEditMode ? [...resolvedSelectedIds] : undefined}
             modifiers={[
               listStyle("insetGrouped"),
               listSectionSpacing("compact"),
+              environment({
+                key: "editMode",
+                value: usesNativeEditMode ? "active" : "inactive",
+              }),
+              ...(usesNativeEditMode ? [tint(nativeEditTint)] : []),
               /**
                * iOS 15 的 SwiftUI List 不支持 `scrollContentBackground(.hidden)`，
                * 因此即使这里传入自定义 `backgroundColor`，系统列表内容背景仍可能覆盖它。
@@ -1603,7 +1641,13 @@ export function NativeListCustomItem({
   selectionId,
 }: NativeListCustomItemProps) {
   const restoresIos15TopCorners = useContext(Ios15FirstVisibleRowContext);
-  const editRow = useNativeListEditRow({ disabled, nativeScrollId, onPress, selectionId });
+  const editRow = useNativeListEditRow({
+    disabled,
+    nativeScrollId,
+    nativeSelection: true,
+    onPress,
+    selectionId,
+  });
   const rowPaddingProps = {
     paddingBottom,
     paddingHorizontal,
@@ -1637,11 +1681,14 @@ export function NativeListCustomItem({
         {...rowPaddingProps}
         btnStyle="plain"
         disabled={disabled}
-        editingSelected={editRow.editingSelected}
+        editingSelected={editRow.nativeSelection ? false : editRow.editingSelected}
+        nativeSelectionId={editRow.nativeSelection ? editRow.selectionId : undefined}
         nativeScrollId={nativeScrollId}
         onPress={editRow.onPress}
       >
-        <NativeEditingIndicator selected={editRow.editingSelected} />
+        {!editRow.nativeSelection ? (
+          <NativeEditingIndicator selected={editRow.editingSelected} />
+        ) : null}
         <NativeHostedCustomRow disableInteractions>{children}</NativeHostedCustomRow>
       </NativeRowContainer>
     );

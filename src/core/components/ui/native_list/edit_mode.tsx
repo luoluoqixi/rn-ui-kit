@@ -17,6 +17,7 @@ type NativeListEditModeContextValue = {
   editModeSelectedSfSymbol: NativeListRootProps["editModeSelectedSfSymbol"];
   editModeSfSymbol: NativeListRootProps["editModeSfSymbol"];
   isSelected: (selectionId: NativeListSelectionId) => boolean;
+  nativeSelectionEnabled: boolean;
   toggleSelection: (selectionId: NativeListSelectionId) => void;
 };
 
@@ -27,6 +28,7 @@ const NativeListEditModeContext = createContext<NativeListEditModeContextValue>(
   editModeSelectedSfSymbol: undefined,
   editModeSfSymbol: undefined,
   isSelected: () => false,
+  nativeSelectionEnabled: false,
   toggleSelection: () => {},
 });
 const NativeListEditRowIdContext = createContext<NativeListSelectionId | undefined>(undefined);
@@ -57,6 +59,7 @@ type NativeListEditModeProviderProps = Pick<
   | "selectedIds"
 > & {
   children: ReactNode;
+  nativeSelectionEnabled?: boolean;
 };
 
 export function NativeListEditModeProvider({
@@ -67,6 +70,7 @@ export function NativeListEditModeProvider({
   editModeSelectedIcon,
   editModeSelectedSfSymbol,
   editModeSfSymbol,
+  nativeSelectionEnabled = false,
   onSelectedIdsChange,
   selectedIds,
 }: NativeListEditModeProviderProps) {
@@ -102,6 +106,7 @@ export function NativeListEditModeProvider({
       editModeSelectedSfSymbol,
       editModeSfSymbol,
       isSelected,
+      nativeSelectionEnabled,
       toggleSelection,
     }),
     [
@@ -111,6 +116,7 @@ export function NativeListEditModeProvider({
       editModeSelectedSfSymbol,
       editModeSfSymbol,
       isSelected,
+      nativeSelectionEnabled,
       toggleSelection,
     ],
   );
@@ -145,25 +151,35 @@ export function useNativeListEditIcons() {
 export function useNativeListEditRow({
   disabled,
   nativeScrollId,
+  nativeSelection = false,
   onPress,
   selectionId,
 }: {
   disabled?: boolean;
   nativeScrollId?: string | number;
+  nativeSelection?: boolean;
   onPress?: () => void;
   selectionId?: NativeListSelectionId;
 }) {
   const generatedSelectionId = useId();
   const inheritedSelectionId = useContext(NativeListEditRowIdContext);
-  const { editMode, isSelected, toggleSelection } = useContext(NativeListEditModeContext);
+  const { editMode, isSelected, nativeSelectionEnabled, toggleSelection } =
+    useContext(NativeListEditModeContext);
   const resolvedSelectionId =
     selectionId ?? nativeScrollId ?? inheritedSelectionId ?? generatedSelectionId;
   const editingSelected = editMode && isSelected(resolvedSelectionId);
+  const usesNativeSelection = editMode && nativeSelectionEnabled && nativeSelection;
   const resolvedOnPress = editMode
-    ? disabled
+    ? disabled || usesNativeSelection
       ? undefined
       : () => toggleSelection(resolvedSelectionId)
     : onPress;
 
-  return { editMode, editingSelected, onPress: resolvedOnPress };
+  return {
+    editMode,
+    editingSelected,
+    nativeSelection: usesNativeSelection,
+    onPress: resolvedOnPress,
+    selectionId: resolvedSelectionId,
+  };
 }

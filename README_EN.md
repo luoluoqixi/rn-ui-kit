@@ -365,13 +365,16 @@ Notes:
 - Pass `<NativeList native={false}>` on iOS to opt into the same fallback
   appearance.
 - Pass `editMode` to `NativeList` to enable Notes-style multi-selection on iOS,
-  Android, and Web. Each row gets a theme-colored leading selection indicator,
-  row actions are intercepted, and selected rows retain their pressed background.
-  Use `selectedIds` / `onSelectedIdsChange` for controlled state,
-  `defaultSelectedIds` for uncontrolled state, and a row `selectionId` for a
-  stable identifier. Customize the leading icons with `editModeIcon` and
-  `editModeSelectedIcon`. Native iOS can prefer `editModeSfSymbol` and
-  `editModeSelectedSfSymbol`, falling back to the custom or default icons.
+  Android, and Web. Row actions are replaced with selection toggles. Use
+  `selectedIds` / `onSelectedIdsChange` for controlled state, `defaultSelectedIds`
+  for uncontrolled state, and a row `selectionId` for a stable identifier. A native
+  iOS List defaults to `iosEditModeVariant="native"`, allowing SwiftUI List to own
+  its system selection indicators, selected background, and fast drag selection.
+  Set `iosEditModeVariant="custom"` to retain the existing theme pressed background
+  and custom selection implementation. Only that iOS variant uses `editModeIcon` /
+  `editModeSelectedIcon` or the preferred `editModeSfSymbol` /
+  `editModeSelectedSfSymbol`. Android, Web, and fallback always use the custom
+  implementation and continue to support React Native custom icons.
 - Plain strings or numbers are recommended for a native row's `title`,
   `subtitle`, and `value`. Complex React nodes that cannot map directly to
   SwiftUI fall back to the cross-platform row implementation.

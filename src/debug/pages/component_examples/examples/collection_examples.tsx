@@ -66,6 +66,7 @@ function NativeListExample() {
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
   const [customEditModeIcon, setCustomEditModeIcon] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [iosCustomEditMode, setIosCustomEditMode] = useState(false);
   const [native, setNative] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Array<string | number>>([]);
   const [fallbackMounted, setFallbackMounted] = useState(true);
@@ -114,8 +115,18 @@ function NativeListExample() {
             }
           }}
         />
+        {os() === "ios" && (
+          <Switch
+            checked={iosCustomEditMode}
+            disabled={os() !== "ios"}
+            label="iOS 使用自定义编辑模式"
+            labelPosition="end"
+            onCheckedChange={setIosCustomEditMode}
+          />
+        )}
         <Switch
           checked={customEditModeIcon}
+          disabled={os() === "ios" && !iosCustomEditMode}
           label="自定义编辑模式图标"
           labelPosition="end"
           onCheckedChange={setCustomEditModeIcon}
@@ -124,13 +135,12 @@ function NativeListExample() {
           {native || fallbackMounted ? (
             <NativeList
               editMode={editMode}
-              editModeIcon={
-                customEditModeIcon ? <Square color="$color10" size={24} /> : undefined
-              }
+              editModeIcon={customEditModeIcon ? <Square color="$color10" size={24} /> : undefined}
               editModeSelectedIcon={
                 customEditModeIcon ? <SquareCheckBig color="$color10" size={24} /> : undefined
               }
               fixesIOS26NestedScrollIndicatorSafeArea
+              iosEditModeVariant={iosCustomEditMode ? "custom" : "native"}
               key={native ? "native-list" : "fallback-list"}
               native={native}
               nestedScrollEnabled
@@ -397,7 +407,8 @@ function NativeListExample() {
           ) : null}
         </View>
         <Text opacity={0.6}>
-          编辑模式：{editMode ? `已选 ${selectedIds.length} 项` : "关闭"} · 编辑图标：
+          编辑模式：{editMode ? `已选 ${selectedIds.length} 项` : "关闭"} · iOS 实现：
+          {iosCustomEditMode ? "自定义" : "原生"} · 编辑图标：
           {customEditModeIcon ? "自定义" : "默认"} · 最近动作：{lastAction} · 自动同步：
           {autoSyncEnabled ? "开启" : "关闭"} · 主题：{theme ?? "未选择"} · 频率：
           {syncInterval ?? "未选择"} · 备份：{backupInterval} · 名称：
