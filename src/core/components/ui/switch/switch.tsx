@@ -76,6 +76,7 @@ function SwitchRoot(props: SwitchProps) {
   const nativeSwitchProps: NativeSwitchProps | undefined = native
     ? {
         ...nativeProps,
+        disabled: rootProps.disabled ?? nativeProps?.disabled,
         ios_backgroundColor: nativeProps?.ios_backgroundColor,
         thumbColor: nativeProps?.thumbColor ?? nativeThumbColor,
         trackColor: {
