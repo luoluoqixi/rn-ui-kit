@@ -1,5 +1,5 @@
 import type { ComponentProps, ReactNode } from "react";
-import type { ColorValue } from "react-native";
+import type { ColorValue, PressableProps } from "react-native";
 import type { Menu as TamaguiMenu } from "tamagui";
 
 import type { NativeTriggerFaceProps, NativeTriggerIcon } from "../native_trigger";
@@ -48,7 +48,8 @@ export interface MenuProps extends ComponentProps<typeof TamaguiMenu> {
   trigger?: ReactNode;
   triggerProps?: MenuTriggerProps;
 }
-export type MenuTriggerProps = ComponentProps<typeof TamaguiMenu.Trigger>;
+export type MenuTriggerProps = ComponentProps<typeof TamaguiMenu.Trigger> &
+  Pick<PressableProps, "onHoverIn" | "onHoverOut">;
 export type MenuPortalProps = ComponentProps<typeof TamaguiMenu.Portal>;
 export type MenuContentProps = ComponentProps<typeof TamaguiMenu.Content>;
 export type MenuScrollViewProps = ComponentProps<typeof TamaguiMenu.ScrollView>;

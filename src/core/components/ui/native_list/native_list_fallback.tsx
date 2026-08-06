@@ -76,6 +76,10 @@ type RowContainerProps = NativeListItemPaddingProps & {
   pressBackgroundColor?: ViewStyle["backgroundColor"];
 };
 
+type PressableHoverEvent = Parameters<
+  NonNullable<ComponentProps<typeof Pressable>["onHoverIn"]>
+>[0];
+
 type FallbackListEntry =
   | {
       key: string;
@@ -1134,9 +1138,11 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
 }
 
 function NativeListMenuTrigger({
+  backgroundColor,
   disabled,
   itemProps,
 }: {
+  backgroundColor?: ViewStyle["backgroundColor"];
   disabled?: boolean;
   itemProps: NativeListItemBaseProps;
 }) {
@@ -1146,7 +1152,9 @@ function NativeListMenuTrigger({
   return (
     <NativeListRow
       {...itemProps}
-      backgroundColor={itemProps.backgroundColor ?? (isWeb() ? "transparent" : undefined)}
+      backgroundColor={
+        backgroundColor ?? itemProps.backgroundColor ?? (isWeb() ? "transparent" : undefined)
+      }
       disabled={disabled}
       iconAfter={
         <View style={styles.selectValue}>
@@ -1171,7 +1179,27 @@ export function NativeListMenuItem({
   ...itemProps
 }: NativeListMenuItemProps) {
   const disabled = itemProps.disabled || menuProps.triggerProps?.disabled;
-  const trigger = <NativeListMenuTrigger disabled={disabled} itemProps={itemProps} />;
+  const [hovered, setHovered] = useState(false);
+  const { defaultRowBackground, theme } = useFallbackRowThemeColors();
+  const normalRowBackground = itemProps.backgroundColor ?? defaultRowBackground;
+  const hoveredRowBackground =
+    itemProps.hoverBackgroundColor ??
+    theme.color4?.val ??
+    theme.backgroundHover?.val ??
+    theme.background?.val;
+  const trigger = (
+    <NativeListMenuTrigger
+      backgroundColor={
+        isWeb()
+          ? hovered && !disabled
+            ? hoveredRowBackground
+            : normalRowBackground
+          : undefined
+      }
+      disabled={disabled}
+      itemProps={itemProps}
+    />
+  );
 
   return (
     <Menu
@@ -1182,9 +1210,18 @@ export function NativeListMenuItem({
       nativeHaptics={menuProps.nativeHaptics ?? itemProps.nativeHaptics ?? false}
       nativeTrigger
       nativeTriggerContent={trigger}
+      placement={menuProps.placement ?? (isWeb() ? "bottom-end" : undefined)}
       triggerProps={{
         ...menuProps.triggerProps,
         disabled: disabled || menuProps.triggerProps?.disabled,
+        onHoverIn: (event: PressableHoverEvent) => {
+          menuProps.triggerProps?.onHoverIn?.(event);
+          setHovered(true);
+        },
+        onHoverOut: (event: PressableHoverEvent) => {
+          menuProps.triggerProps?.onHoverOut?.(event);
+          setHovered(false);
+        },
       }}
     />
   );
