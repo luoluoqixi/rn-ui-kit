@@ -10,7 +10,7 @@ diff --git a/android/src/main/java/com/reactnativemenu/MenuView.kt b/android/src
 index c45f5cc..0000000 100644
 --- a/android/src/main/java/com/reactnativemenu/MenuView.kt
 +++ b/android/src/main/java/com/reactnativemenu/MenuView.kt
-@@ -1,320 +1,686 @@
+@@ -1,320 +1,709 @@
 -package com.reactnativemenu
 -
 -import android.content.res.ColorStateList
@@ -465,6 +465,26 @@ index c45f5cc..0000000 100644
 +  private val getActionsCount: Int
 +    get() = mActions.size()
 +
++  private fun resolveSelectedItemBackgroundColorFromActions(): Int? {
++    for (index in 0 until getActionsCount) {
++      if (mActions.isNull(index)) {
++        continue
++      }
++      val action = mActions.getMap(index) ?: continue
++      val isSelected = action.hasKey("state") &&
++        !action.isNull("state") &&
++        action.getString("state") == "on"
++      if (
++        isSelected &&
++        action.hasKey("selectedBackgroundColor") &&
++        !action.isNull("selectedBackgroundColor")
++      ) {
++        return action.getInt("selectedBackgroundColor")
++      }
++    }
++    return null
++  }
++
 +  private fun prepareMenuItem(menuItem: MenuItem, config: ReadableMap?) {
 +    val titleColor = when (config != null && config.hasKey("titleColor") && !config.isNull("titleColor")) {
 +      true -> config.getInt("titleColor")
@@ -595,6 +615,9 @@ index c45f5cc..0000000 100644
 +
 +  private fun prepareMenu() {
 +    if (getActionsCount > 0) {
++      if (mSelectedItemBackgroundColor == null) {
++        mSelectedItemBackgroundColor = resolveSelectedItemBackgroundColorFromActions()
++      }
 +      // Custom row backgrounds and reliable center alignment require AppCompat's popup ListView.
 +      // Start/end ordinary menus can retain the framework PopupMenu presentation.
 +      if (mSelectedItemBackgroundColor == null && mAnchorAlignment != "center") {
