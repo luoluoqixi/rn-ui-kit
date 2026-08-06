@@ -1,0 +1,2290 @@
+﻿import {
+  AdaptContext,
+  AdaptPortalContents,
+  useAdaptContext,
+  useAdaptIsActive,
+} from "@tamagui/adapt";
+import { Theme, isWeb as isTamaguiWeb, useTheme, useThemeName } from "@tamagui/core";
+import { Dismissable } from "@tamagui/dismissable";
+import { FocusScope } from "@tamagui/focus-scope";
+import { Check, ChevronDown, ChevronUp } from "@tamagui/lucide-icons-2";
+import { Portal } from "@tamagui/portal";
+import { RemoveScroll } from "@tamagui/remove-scroll";
+import {
+  ForwardSelectContext,
+  SelectZIndexContext,
+  useSelectContext,
+  useSelectItemParentContext,
+} from "@tamagui/select";
+import { forwardRef, useCallback, useRef } from "react";
+import React from "react";
+import { View } from "react-native";
+import {
+  FontSizeTokens,
+  SizableText,
+  Select as TamaguiSelect,
+  XStack,
+  YStack,
+  getFontSize,
+} from "tamagui";
+import { LinearGradient } from "tamagui/linear-gradient";
+
+import { isWeb, os } from "../utils/platform";
+import { Menu } from "../menu";
+import { NativeTriggerFace, NativeTriggerPressable } from "../native_trigger";
+import { Sheet } from "../sheet";
+import { NativeSheet, NativeSheetScrollContent } from "../sheet/native_sheet";
+import {
+  resolveAriaLabel,
+  triggerNativeHaptics,
+  useResolvedNativeHaptics,
+} from "../utils";
+import { useAppBackgroundColors } from "../utils/theme";
+
+import { NativePickerDialog, NativePickerSwiftUI } from "./native_picker";
+import {
+  type ResolvedSelectItemData,
+  type ResolvedSelectItemGroupData,
+  resolveSelectItemGroups,
+} from "./select_grouping";
+import type {
+  NativePickerMode,
+  SelectAdaptContentsProps,
+  SelectAdaptProps,
+  SelectContentProps,
+  SelectFocusScopeProps,
+  SelectGroupProps,
+  SelectIconProps,
+  SelectIndicatorProps,
+  SelectItemIndicatorProps,
+  SelectItemProps,
+  SelectItemTextProps,
+  SelectLabelProps,
+  SelectNativeMode,
+  SelectProps,
+  SelectScrollDownButtonProps,
+  SelectScrollUpButtonProps,
+  SelectTriggerProps,
+  SelectValueProps,
+  SelectViewportProps,
+} from "./types";
+
+const DEFAULT_TOUCH_SHEET_VISIBLE_ITEM_COUNT = 6;
+const DEFAULT_TOUCH_SHEET_ITEM_HEIGHT = 48;
+const DEFAULT_TOUCH_SHEET_CHROME_HEIGHT = 88;
+const DEFAULT_TOUCH_SHEET_LABEL_HEIGHT = 32;
+const DEFAULT_TOUCH_SHEET_GROUP_GAP = 12;
+const DEFAULT_IOS_NATIVE_LIST_CONTENT_MARGIN_TOP = 4;
+const DEFAULT_IOS_NATIVE_LIST_CONTENT_MARGIN_BOTTOM = 0;
+const DEFAULT_IOS_NATIVE_SHEET_SECTION_CHROME_HEIGHT = 8;
+const DEFAULT_TOUCH_ITEM_CONTENT_STYLE = {
+  width: "100%",
+  flexDirection: "row",
+  alignItems: "center",
+} as const;
+const DEFAULT_SELECT_ITEM_CONTENT_STYLE = {
+  ...DEFAULT_TOUCH_ITEM_CONTENT_STYLE,
+  paddingHorizontal: 16,
+  paddingLeft: 16,
+  paddingRight: 16,
+} as const;
+const TOUCH_SELECT_ITEM_CONTENT_STYLE = {
+  ...DEFAULT_TOUCH_ITEM_CONTENT_STYLE,
+  minHeight: DEFAULT_TOUCH_SHEET_ITEM_HEIGHT,
+  paddingHorizontal: 24,
+  paddingLeft: 24,
+  paddingRight: 24,
+} as const;
+const TOUCH_SHEET_SCROLL_CONTENT_STYLE = {
+  paddingBottom: 28,
+  paddingHorizontal: 16,
+  paddingLeft: 16,
+  paddingRight: 16,
+  paddingTop: 10,
+  width: "100%",
+} as const;
+const IOS_NATIVE_SHEET_SCROLL_CONTENT_STYLE = {
+  paddingBottom: 0,
+  paddingHorizontal: 4,
+  paddingTop: 0,
+  width: "100%",
+} as const;
+const TOUCH_SHEET_GROUP_RADIUS = 24;
+const TOUCH_SHEET_GROUP_BACKGROUND = "$color1" as const;
+const SHEET_GROUP_HOVER = "$color3" as const;
+const SHEET_GROUP_PRESS = "$color4" as const;
+const TOUCH_SHEET_SEPARATOR_COLOR = "$borderColor" as const;
+
+const SELECT_TRIGGER_HOVER_COLOR = "$color3";
+const SELECT_TRIGGER_PRESS_COLOR = "$color4";
+
+const DEFAULT_ANDROID_NATIVE_PICKER_MODE: NativePickerMode = "dropdown";
+const DEFAULT_IOS_NATIVE_PICKER_MODE: NativePickerMode = "dropdown";
+const DEFAULT_NATIVE = !isWeb();
+
+const SelectAdaptHiddenContext = React.createContext(true);
+const SelectWebSheetLayoutContext = React.createContext(false);
+type SelectSheetControlContextValue = {
+  onAnimationComplete?: (event: { open: boolean }) => void;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+};
+
+const SelectSheetControlContext = React.createContext<SelectSheetControlContextValue | null>(null);
+
+type TouchSheetConfig = {
+  frameMaxHeight?: SelectProps["touchSheetMaxHeight"];
+  shouldEnableScroll: boolean;
+  snapPoints: [number];
+  snapPointsMode: "constant" | "percent";
+};
+
+type ResolvedSelectBehavior = {
+  shouldRenderNativeOptionText: boolean;
+  shouldUseCustomSheet: boolean;
+  shouldUseNativePicker: boolean;
+  shouldUseNativeSheet: boolean;
+  shouldUseWebSheet: boolean;
+  tamaguiNative: boolean;
+};
+
+type SelectSheetBaseProps = {
+  initialScrollY?: number | null;
+  sheetScrollRef: React.RefObject<any>;
+  shouldUseTouchSheetLayout: boolean;
+  touchSheetConfig: TouchSheetConfig;
+};
+
+function resolveSelectBehavior(native: SelectNativeMode | undefined): ResolvedSelectBehavior {
+  const resolvedNative = native ?? DEFAULT_NATIVE;
+
+  if (isWeb()) {
+    const shouldUseWebSheet =
+      resolvedNative === "native-sheet" || resolvedNative === "custom-sheet";
+    const shouldUseWebNativeSelect = !shouldUseWebSheet && resolvedNative !== false;
+
+    return {
+      shouldRenderNativeOptionText: shouldUseWebNativeSelect,
+      shouldUseCustomSheet: shouldUseWebSheet,
+      shouldUseNativePicker: resolvedNative === true,
+      shouldUseNativeSheet: false,
+      shouldUseWebSheet,
+      tamaguiNative: shouldUseWebNativeSelect,
+    };
+  }
+
+  const tameguiNative =
+    resolvedNative === true || resolvedNative === false || resolvedNative === "native-sheet";
+
+  return {
+    shouldRenderNativeOptionText: false,
+    shouldUseCustomSheet: resolvedNative === "custom-sheet",
+    shouldUseNativePicker: resolvedNative === true,
+    shouldUseNativeSheet: resolvedNative === false || resolvedNative === "native-sheet",
+    shouldUseWebSheet: false,
+    tamaguiNative: tameguiNative,
+  };
+}
+
+const WEB_NATIVE_TRIGGER_SELECT_OVERLAY_STYLE = {
+  bottom: 0,
+  height: "100%",
+  left: 0,
+  opacity: 0,
+  position: "absolute",
+  right: 0,
+  top: 0,
+  width: "100%",
+  zIndex: 1,
+} as const;
+
+const WEB_MENU_CONTENT_Z_INDEX = 2_147_483_647;
+const WEB_MENU_CONTENT_MAX_WIDTH = "calc(100vw - 32px)";
+const WEB_MENU_CONTENT_MIN_WIDTH = 220;
+const WEB_MENU_SCROLL_VIEW_MAX_HEIGHT =
+  "min(360px, var(--tamagui-menu-content-available-height, 360px))";
+const WEB_MENU_SCROLL_VIEW_STYLE = {
+  display: "block",
+  overflowX: "hidden",
+  overflowY: "auto",
+  overscrollBehavior: "contain",
+  scrollbarWidth: "auto",
+} as const;
+const WEB_MENU_BLOCKING_OVERLAY_STYLE = {
+  background: "transparent",
+  bottom: 0,
+  cursor: "default",
+  height: "100vh",
+  left: 0,
+  pointerEvents: "auto",
+  position: "fixed",
+  right: 0,
+  top: 0,
+  width: "100vw",
+} as const;
+const DEFAULT_SELECT_TRIGGER_HOVER_STYLE = {
+  backgroundColor: SELECT_TRIGGER_HOVER_COLOR,
+} as const;
+
+const DEFAULT_SELECT_TRIGGER_PRESS_STYLE = {
+  backgroundColor: SELECT_TRIGGER_PRESS_COLOR,
+} as const;
+
+function renderSelectWebMenuTriggerLabel(label: React.ReactNode, isPlaceholder: boolean) {
+  if (typeof label === "string" || typeof label === "number") {
+    return (
+      <SizableText color="$color" opacity={isPlaceholder ? 0.58 : 1} pointerEvents="none">
+        {label}
+      </SizableText>
+    );
+  }
+
+  return label;
+}
+
+function getWebMenuItemElement(rootId: string, itemValue: string) {
+  if (typeof document === "undefined" || typeof HTMLElement === "undefined") {
+    return null;
+  }
+
+  const roots = document.querySelectorAll("[data-rn-ui-kit-select-menu-root]");
+
+  for (let rootIndex = 0; rootIndex < roots.length; rootIndex += 1) {
+    const root = roots[rootIndex];
+
+    if (!(root instanceof HTMLElement) || root.dataset.rnUiKitSelectMenuRoot !== rootId) {
+      continue;
+    }
+
+    const itemElements = root.querySelectorAll("[data-rn-ui-kit-select-menu-item-value]");
+
+    for (let itemIndex = 0; itemIndex < itemElements.length; itemIndex += 1) {
+      const itemElement = itemElements[itemIndex];
+
+      if (
+        itemElement instanceof HTMLElement &&
+        itemElement.dataset.rnUiKitSelectMenuItemValue === itemValue
+      ) {
+        return itemElement;
+      }
+    }
+  }
+
+  return null;
+}
+
+function focusWebMenuItem(rootId: string, itemValue: string) {
+  const element = getWebMenuItemElement(rootId, itemValue);
+
+  if (element == null) {
+    return;
+  }
+
+  element.scrollIntoView({ block: "nearest", inline: "nearest" });
+
+  try {
+    element.focus({ preventScroll: true });
+  } catch {
+    element.focus();
+  }
+}
+
+function parsePercentSnapPoint(value: SelectProps["touchSheetMaxHeight"]) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const matched = value.trim().match(/^(\d+(?:\.\d+)?)%$/);
+
+  if (matched == null) {
+    return null;
+  }
+
+  const parsedValue = Number.parseFloat(matched[1]);
+
+  if (!Number.isFinite(parsedValue)) {
+    return null;
+  }
+
+  return Math.max(0, Math.min(100, parsedValue));
+}
+
+function resolveTouchSheetConfig({
+  groupCount,
+  groupLabelCount,
+  isNativeSheet,
+  itemCount,
+  touchSheetMaxHeight,
+}: {
+  groupCount: number;
+  groupLabelCount: number;
+  isNativeSheet: boolean;
+  itemCount: number;
+  touchSheetMaxHeight: SelectProps["touchSheetMaxHeight"];
+}): TouchSheetConfig {
+  const totalItemCount = Math.max(itemCount, 1);
+  const visibleItemCount = Math.min(totalItemCount, DEFAULT_TOUCH_SHEET_VISIBLE_ITEM_COUNT);
+  const visibleGroupGapCount = Math.max(Math.min(groupCount, visibleItemCount) - 1, 0);
+  const sectionChromeHeight = isNativeSheet
+    ? groupCount * DEFAULT_IOS_NATIVE_SHEET_SECTION_CHROME_HEIGHT
+    : 0;
+  const visibleSectionChromeHeight = isNativeSheet
+    ? Math.min(groupCount, visibleItemCount) * DEFAULT_IOS_NATIVE_SHEET_SECTION_CHROME_HEIGHT
+    : 0;
+  const nativeListMargins = isNativeSheet
+    ? DEFAULT_IOS_NATIVE_LIST_CONTENT_MARGIN_TOP + DEFAULT_IOS_NATIVE_LIST_CONTENT_MARGIN_BOTTOM
+    : 0;
+  const estimatedVisibleContentHeight =
+    visibleItemCount * DEFAULT_TOUCH_SHEET_ITEM_HEIGHT +
+    visibleGroupGapCount * DEFAULT_TOUCH_SHEET_GROUP_GAP +
+    groupLabelCount * DEFAULT_TOUCH_SHEET_LABEL_HEIGHT +
+    visibleSectionChromeHeight +
+    nativeListMargins;
+  const estimatedContentHeight =
+    totalItemCount * DEFAULT_TOUCH_SHEET_ITEM_HEIGHT +
+    Math.max(groupCount - 1, 0) * DEFAULT_TOUCH_SHEET_GROUP_GAP +
+    groupLabelCount * DEFAULT_TOUCH_SHEET_LABEL_HEIGHT +
+    sectionChromeHeight +
+    nativeListMargins;
+  const estimatedVisibleHeight = estimatedVisibleContentHeight + DEFAULT_TOUCH_SHEET_CHROME_HEIGHT;
+  const estimatedSheetContentHeight = estimatedContentHeight + DEFAULT_TOUCH_SHEET_CHROME_HEIGHT;
+  if (typeof touchSheetMaxHeight === "number" && Number.isFinite(touchSheetMaxHeight)) {
+    const snapPoint = Math.max(1, Math.round(touchSheetMaxHeight));
+
+    return {
+      shouldEnableScroll: estimatedSheetContentHeight > snapPoint,
+      snapPoints: [snapPoint],
+      snapPointsMode: "constant",
+    };
+  }
+
+  const percentSnapPoint = parsePercentSnapPoint(touchSheetMaxHeight);
+
+  if (percentSnapPoint != null) {
+    return {
+      shouldEnableScroll: estimatedSheetContentHeight > estimatedVisibleHeight,
+      snapPoints: [percentSnapPoint],
+      snapPointsMode: "percent",
+    };
+  }
+
+  return {
+    ...(touchSheetMaxHeight != null ? { frameMaxHeight: touchSheetMaxHeight } : null),
+    shouldEnableScroll: estimatedSheetContentHeight > estimatedVisibleHeight,
+    snapPoints: [estimatedVisibleHeight],
+    snapPointsMode: "constant",
+  };
+}
+
+function SelectAdaptContents(props: SelectAdaptContentsProps) {
+  return <TamaguiSelect.Adapt.Contents {...props} />;
+}
+
+function SelectAdaptRoot(props: SelectAdaptProps) {
+  return <TamaguiSelect.Adapt {...props} />;
+}
+
+const SelectAdapt = Object.assign(SelectAdaptRoot, {
+  Contents: SelectAdaptContents,
+});
+
+function SelectCustomSheet({
+  initialScrollY,
+  sheetScrollRef,
+  shouldUseTouchSheetLayout,
+  touchSheetConfig,
+}: SelectSheetBaseProps) {
+  return (
+    <Sheet
+      modal
+      dismissOnSnapToBottom
+      snapPoints={touchSheetConfig.snapPoints}
+      snapPointsMode={touchSheetConfig.snapPointsMode}
+      transition={isWeb() ? "200ms" : undefined}
+      transitionConfig={{ type: "timing", duration: 150 }}
+    >
+      <SelectSheetFrame
+        initialScrollY={initialScrollY}
+        sheetScrollRef={sheetScrollRef}
+        shouldUseTouchSheetLayout={shouldUseTouchSheetLayout}
+        touchSheetConfig={touchSheetConfig}
+      />
+      <Sheet.Overlay
+        bg="$shadowColor"
+        transition="lazy"
+        enterStyle={{ opacity: 0 }}
+        exitStyle={{ opacity: 0 }}
+      />
+    </Sheet>
+  );
+}
+
+function SelectNativeSheet({
+  initialScrollY,
+  sheetScrollRef,
+  shouldUseTouchSheetLayout,
+  touchSheetConfig,
+}: SelectSheetBaseProps) {
+  const sheetControl = React.useContext(SelectSheetControlContext);
+  const appBackgroundColors = useAppBackgroundColors();
+  const platform = os();
+  const nativeSheetBackgroundColor = platform === "android" ? appBackgroundColors.sheet : undefined;
+
+  if (sheetControl == null) {
+    return null;
+  }
+
+  return (
+    <NativeSheet
+      backgroundColor={nativeSheetBackgroundColor}
+      content={
+        <SelectNativeSheetFrame
+          initialScrollY={initialScrollY}
+          sheetScrollRef={sheetScrollRef}
+          shouldUseTouchSheetLayout={shouldUseTouchSheetLayout}
+          touchSheetConfig={touchSheetConfig}
+        />
+      }
+      modal
+      onAnimationComplete={sheetControl.onAnimationComplete}
+      onOpenChange={sheetControl.onOpenChange}
+      open={sheetControl.open}
+      snapPoints={touchSheetConfig.snapPoints}
+      snapPointsMode={touchSheetConfig.snapPointsMode}
+    />
+  );
+}
+
+function SelectSheetFrame({
+  initialScrollY,
+  sheetScrollRef,
+  shouldUseTouchSheetLayout,
+  touchSheetConfig,
+}: SelectSheetBaseProps) {
+  const appBackgroundColors = useAppBackgroundColors();
+  const shouldUseWebSheetLayout = isWeb() && shouldUseTouchSheetLayout;
+  const shouldUseSheetScrollView = touchSheetConfig.shouldEnableScroll || shouldUseWebSheetLayout;
+  const touchSheetFrameBackground = appBackgroundColors.sheet;
+  const adaptContents = (
+    <SelectWebSheetLayoutContext.Provider value={shouldUseWebSheetLayout}>
+      <SelectAdapt.Contents />
+    </SelectWebSheetLayoutContext.Provider>
+  );
+
+  return (
+    <Sheet.Frame
+      {...(touchSheetConfig.frameMaxHeight != null
+        ? { maxHeight: touchSheetConfig.frameMaxHeight }
+        : null)}
+      {...(shouldUseTouchSheetLayout
+        ? {
+            backgroundColor: touchSheetFrameBackground,
+            borderTopLeftRadius: 36,
+            borderTopRightRadius: 36,
+            paddingTop: 12,
+            overflow: "hidden",
+          }
+        : null)}
+    >
+      {shouldUseTouchSheetLayout && (
+        <Sheet.Handle
+          alignSelf="center"
+          backgroundColor="$color8"
+          borderRadius={999}
+          height={5}
+          marginBottom={6}
+          opacity={0.65}
+          onPress={() => {}}
+          width={92}
+        />
+      )}
+      {shouldUseTouchSheetLayout ? (
+        shouldUseSheetScrollView ? (
+          <>
+            <Sheet.ScrollView
+              contentOffset={initialScrollY != null ? { x: 0, y: initialScrollY } : undefined}
+              ref={sheetScrollRef}
+              sheetDragDisabledScrollIndicatorWidth={shouldUseWebSheetLayout ? 0 : 44}
+              showsVerticalScrollIndicator
+              contentContainerStyle={
+                shouldUseWebSheetLayout ? ({ minHeight: "100%", width: "100%" } as any) : undefined
+              }
+              style={
+                shouldUseWebSheetLayout
+                  ? ({
+                      background: "transparent",
+                      backgroundColor: "transparent",
+                      flex: 1,
+                      minHeight: 0,
+                      overflowY: "auto",
+                      width: "100%",
+                    } as any)
+                  : undefined
+              }
+            >
+              <YStack
+                background={touchSheetFrameBackground}
+                style={{
+                  ...TOUCH_SHEET_SCROLL_CONTENT_STYLE,
+                }}
+              >
+                {adaptContents}
+              </YStack>
+            </Sheet.ScrollView>
+          </>
+        ) : (
+          <YStack
+            background={touchSheetFrameBackground}
+            style={{
+              ...TOUCH_SHEET_SCROLL_CONTENT_STYLE,
+            }}
+          >
+            {adaptContents}
+          </YStack>
+        )
+      ) : (
+        <Sheet.ScrollView>{adaptContents}</Sheet.ScrollView>
+      )}
+    </Sheet.Frame>
+  );
+}
+
+function SelectNativeSheetFrame({
+  initialScrollY,
+  sheetScrollRef,
+  shouldUseTouchSheetLayout,
+  touchSheetConfig,
+}: SelectSheetBaseProps) {
+  if (!shouldUseTouchSheetLayout) {
+    return (
+      <YStack style={IOS_NATIVE_SHEET_SCROLL_CONTENT_STYLE}>
+        <SelectAdapt.Contents />
+      </YStack>
+    );
+  }
+
+  if (os() === "android") {
+    return (
+      <YStack
+        {...(touchSheetConfig.frameMaxHeight != null
+          ? { maxHeight: touchSheetConfig.frameMaxHeight }
+          : null)}
+        borderTopLeftRadius={36}
+        borderTopRightRadius={36}
+        style={{ flex: 1, minHeight: 0, paddingTop: 12 }}
+      >
+        <YStack
+          style={{
+            alignSelf: "center",
+            backgroundColor: "#8e8e93",
+            borderRadius: 999,
+            height: 5,
+            marginBottom: 6,
+            opacity: 0.65,
+            width: 92,
+          }}
+        />
+        <NativeSheetScrollContent
+          ref={sheetScrollRef}
+          contentOffset={initialScrollY != null ? { x: 0, y: initialScrollY } : undefined}
+          contentContainerStyle={TOUCH_SHEET_SCROLL_CONTENT_STYLE}
+          style={{ flex: 1, minHeight: 0 }}
+        >
+          <SelectAdapt.Contents />
+        </NativeSheetScrollContent>
+      </YStack>
+    );
+  }
+
+  return (
+    <YStack
+      {...(touchSheetConfig.frameMaxHeight != null
+        ? { maxHeight: touchSheetConfig.frameMaxHeight }
+        : null)}
+      borderTopLeftRadius={36}
+      borderTopRightRadius={36}
+      style={{ flex: 1, minHeight: 0, paddingTop: 12 }}
+    >
+      <YStack
+        style={{
+          alignSelf: "center",
+          backgroundColor: "#8e8e93",
+          borderRadius: 999,
+          height: 5,
+          marginBottom: 6,
+          opacity: 0.65,
+          width: 92,
+        }}
+      />
+      <YStack style={{ ...IOS_NATIVE_SHEET_SCROLL_CONTENT_STYLE, flex: 1, minHeight: 0 }}>
+        <SelectAdapt.Contents />
+      </YStack>
+    </YStack>
+  );
+}
+
+function SelectSheetController(props: {
+  children: React.ReactNode;
+  onOpenAnimationComplete?: () => void;
+  shouldRunOpenAnimationComplete?: boolean;
+}) {
+  const context = useSelectContext();
+  const itemParentContext = useSelectItemParentContext();
+  const isAdapted = useAdaptIsActive(context.adaptScope);
+  const [isAdaptFullyHidden, setIsAdaptFullyHidden] = React.useState(!context.open);
+  const hasScrolledRef = useRef(false);
+
+  React.useEffect(() => {
+    if (context.open) {
+      setIsAdaptFullyHidden(false);
+    } else {
+      // Sheet 关闭时重置，下次打开可再次滚动。
+      hasScrolledRef.current = false;
+    }
+  }, [context.open]);
+
+  const handleSheetAnimationComplete = React.useCallback(
+    ({ open: sheetOpen }: { open: boolean }) => {
+      if (!sheetOpen) {
+        setIsAdaptFullyHidden(true);
+        hasScrolledRef.current = false;
+      } else if (!hasScrolledRef.current) {
+        // 仅首次打开动画完成时滚动到选中项，松手回弹等重新显示不再触发。
+        hasScrolledRef.current = true;
+        if (props.shouldRunOpenAnimationComplete !== false) {
+          props.onOpenAnimationComplete?.();
+        }
+      }
+    },
+    [props.onOpenAnimationComplete, props.shouldRunOpenAnimationComplete],
+  );
+
+  const handleSheetOpenChange = React.useCallback(
+    (nextOpen: boolean) => {
+      if (isAdapted) {
+        itemParentContext.setOpen(nextOpen);
+      }
+    },
+    [isAdapted, itemParentContext],
+  );
+
+  return (
+    <SelectSheetControlContext.Provider
+      value={{
+        onAnimationComplete: handleSheetAnimationComplete,
+        onOpenChange: handleSheetOpenChange,
+        open: context.open,
+      }}
+    >
+      <Sheet.Controller
+        hidden={!isAdapted}
+        onAnimationComplete={handleSheetAnimationComplete}
+        onOpenChange={handleSheetOpenChange}
+        open={context.open}
+      >
+        <SelectAdaptHiddenContext.Provider value={isAdaptFullyHidden}>
+          {props.children}
+        </SelectAdaptHiddenContext.Provider>
+      </Sheet.Controller>
+    </SelectSheetControlContext.Provider>
+  );
+}
+
+function SelectContent(props: SelectContentProps) {
+  const { children, scope, ...focusScopeProps } = props;
+  const context = useSelectContext(scope);
+  const itemParentContext = useSelectItemParentContext(scope);
+  const zIndex = React.useContext(SelectZIndexContext);
+  const isAdapted = useAdaptIsActive(context.adaptScope);
+  const isAdaptFullyHidden = React.useContext(SelectAdaptHiddenContext);
+
+  if (itemParentContext.shouldRenderWebNative) {
+    return <>{children}</>;
+  }
+
+  if (isAdapted) {
+    if (!context.open && isAdaptFullyHidden) {
+      return null;
+    }
+
+    return <>{children}</>;
+  }
+
+  return (
+    <Portal open={context.open} stackZIndex={100_000} zIndex={zIndex}>
+      <RemoveScroll enabled={context.open && !context.disablePreventBodyScroll}>
+        <Dismissable
+          asChild
+          forceUnmount={!context.open}
+          onDismiss={() => itemParentContext.setOpen(false)}
+          onFocusOutside={(event) => event.preventDefault()}
+          onPointerDownOutside={(event) => event.preventDefault()}
+        >
+          <FocusScope
+            {...focusScopeProps}
+            enabled={!!context.open}
+            trapped
+            onMountAutoFocus={(event) => {
+              event.preventDefault();
+            }}
+            onUnmountAutoFocus={(event) => {
+              event.preventDefault();
+              const trigger = context.floatingContext?.refs?.reference?.current;
+
+              if (trigger instanceof HTMLElement) {
+                trigger.focus();
+              }
+            }}
+          >
+            {isTamaguiWeb ? <div style={{ display: "contents" }}>{children}</div> : children}
+          </FocusScope>
+        </Dismissable>
+      </RemoveScroll>
+    </Portal>
+  );
+}
+
+function SelectGroup(props: SelectGroupProps) {
+  return <TamaguiSelect.Group {...props} />;
+}
+
+function SelectIcon(props: SelectIconProps) {
+  return <TamaguiSelect.Icon {...props} />;
+}
+
+function SelectItem(props: SelectItemProps) {
+  return <TamaguiSelect.Item {...props} />;
+}
+
+function SelectItemIndicator(props: SelectItemIndicatorProps) {
+  return (
+    <TamaguiSelect.ItemIndicator {...props}>
+      {props.children ?? <Check size={16} />}
+    </TamaguiSelect.ItemIndicator>
+  );
+}
+
+function SelectItemText(props: SelectItemTextProps) {
+  return <TamaguiSelect.ItemText {...props} />;
+}
+
+function SelectLabel(props: SelectLabelProps) {
+  return <TamaguiSelect.Label {...props} />;
+}
+
+function SelectScrollDownButton(props: SelectScrollDownButtonProps) {
+  return (
+    <TamaguiSelect.ScrollDownButton {...props}>
+      {props.children ?? <ChevronDown size={16} />}
+      <LinearGradient
+        start={[0, 0]}
+        end={[0, 1]}
+        fullscreen
+        colors={["transparent", "$background"]}
+        rounded="$4"
+      />
+    </TamaguiSelect.ScrollDownButton>
+  );
+}
+
+function SelectScrollUpButton(props: SelectScrollUpButtonProps) {
+  return (
+    <TamaguiSelect.ScrollUpButton {...props}>
+      {props.children ?? <ChevronUp size={16} />}
+      <LinearGradient
+        start={[0, 0]}
+        end={[0, 1]}
+        fullscreen
+        colors={["$background", "transparent"]}
+        rounded="$4"
+      />
+    </TamaguiSelect.ScrollUpButton>
+  );
+}
+
+const SelectTrigger = React.forwardRef<any, SelectTriggerProps>((props, forwardedRef) => {
+  const { hoverStyle, nativeHaptics, onPress, pressStyle, ...triggerProps } = props;
+  const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics);
+  const handlePress: NonNullable<SelectTriggerProps["onPress"]> = (event) => {
+    onPress?.(event);
+
+    if (event.defaultPrevented) {
+      return;
+    }
+
+    triggerNativeHaptics(resolvedNativeHaptics);
+  };
+
+  return (
+    <TamaguiSelect.Trigger
+      ref={forwardedRef}
+      {...triggerProps}
+      hoverStyle={hoverStyle ?? DEFAULT_SELECT_TRIGGER_HOVER_STYLE}
+      onPress={handlePress}
+      pressStyle={pressStyle ?? DEFAULT_SELECT_TRIGGER_PRESS_STYLE}
+    />
+  );
+});
+
+function SelectValue(props: SelectValueProps) {
+  return <TamaguiSelect.Value {...props} />;
+}
+
+function SelectViewport(props: SelectViewportProps) {
+  const {
+    children,
+    scope,
+    unstyled,
+    borderColor,
+    borderWidth,
+    outlineWidth,
+    disableScroll,
+    style,
+    ...viewportProps
+  } = props;
+  const isWebSheetLayout = React.useContext(SelectWebSheetLayoutContext);
+  const shouldUseHeadlessWebViewport = isWeb() && unstyled == null;
+  const effectiveDisableScroll = disableScroll || isWebSheetLayout;
+  const context = useSelectContext(scope);
+  const itemParentContext = useSelectItemParentContext(scope);
+  const adaptContext = useAdaptContext();
+  const isAdapted = useAdaptIsActive(context.adaptScope);
+  const isAdaptFullyHidden = React.useContext(SelectAdaptHiddenContext);
+  const themeName = useThemeName();
+  const viewportStyle = isWeb()
+    ? [
+        {
+          WebkitOverflowScrolling: "touch",
+          overscrollBehavior: "contain",
+          userSelect: "none",
+        } as React.CSSProperties,
+        isWebSheetLayout
+          ? ({
+              backgroundColor: "transparent",
+              boxSizing: "border-box",
+              maxWidth: "100%",
+              overflow: "visible",
+              width: "100%",
+            } as React.CSSProperties)
+          : null,
+        style,
+      ]
+    : style;
+
+  if (!isWeb() && isAdapted) {
+    const shouldWrapPortalContents = style != null;
+    const contents = (
+      <Theme name={themeName}>
+        <ForwardSelectContext context={context} itemContext={itemParentContext}>
+          <AdaptContext.Provider {...adaptContext}>
+            {shouldWrapPortalContents ? <YStack style={style}>{children}</YStack> : children}
+          </AdaptContext.Provider>
+        </ForwardSelectContext>
+      </Theme>
+    );
+
+    if (!context.open && isAdaptFullyHidden) {
+      if (context.lazyMount && context.renderValue) {
+        return null;
+      }
+
+      return <YStack display="none">{contents}</YStack>;
+    }
+
+    return <AdaptPortalContents scope={context.adaptScope}>{contents}</AdaptPortalContents>;
+  }
+
+  return (
+    <TamaguiSelect.Viewport
+      {...viewportProps}
+      background={isWebSheetLayout ? "transparent" : (viewportProps.background ?? "$background")}
+      borderColor={isWebSheetLayout ? "transparent" : (borderColor ?? "$borderColor")}
+      borderWidth={isWebSheetLayout ? 0 : (borderWidth ?? 1)}
+      disableScroll={effectiveDisableScroll}
+      outlineWidth={isWebSheetLayout ? 0 : (outlineWidth ?? 0)}
+      rounded={isWebSheetLayout ? 0 : viewportProps.rounded}
+      size={viewportProps.size ?? "$2"}
+      overflowX={isWeb() ? "hidden" : undefined}
+      overflowY={effectiveDisableScroll ? undefined : "auto"}
+      style={viewportStyle}
+      unstyled={shouldUseHeadlessWebViewport || isWebSheetLayout ? true : unstyled}
+    >
+      {children}
+    </TamaguiSelect.Viewport>
+  );
+}
+
+function SelectIndicator(props: SelectIndicatorProps) {
+  return <TamaguiSelect.Indicator {...props} />;
+}
+
+function SelectFocusScope(props: SelectFocusScopeProps) {
+  return <TamaguiSelect.FocusScope {...props} />;
+}
+
+function getNativeListModule() {
+  return require("../native_list") as typeof import("../native_list");
+}
+
+function IosNativeSheetSelectList({
+  initialScrollTarget,
+  itemGroups,
+  itemLabel,
+  nativeHaptics,
+  value,
+}: {
+  initialScrollTarget?: string | number;
+  itemGroups: ResolvedSelectItemGroupData[];
+  itemLabel?: React.ReactNode;
+  nativeHaptics?: SelectProps["nativeHaptics"];
+  value?: string | null;
+}) {
+  const { NativeList, NativeListItem, NativeListSection } = getNativeListModule();
+  const itemParentContext = useSelectItemParentContext();
+
+  return (
+    <NativeList
+      native
+      scrollable
+      contentMarginBottom={DEFAULT_IOS_NATIVE_LIST_CONTENT_MARGIN_BOTTOM}
+      contentMarginTop={DEFAULT_IOS_NATIVE_LIST_CONTENT_MARGIN_TOP}
+      initialScrollTarget={initialScrollTarget}
+      style={{ flex: 1, minHeight: 0, width: "100%" }}
+    >
+      {itemGroups.map((group, groupIndex) => {
+        const groupLabel = group.label ?? (groupIndex === 0 ? itemLabel : null);
+
+        return (
+          <NativeListSection key={group.key} title={groupLabel}>
+            {group.items.map((item) => {
+              const disabled = item.disabled ?? item.isDisabled;
+
+              return (
+                <NativeListItem
+                  chevron={false}
+                  disabled={disabled}
+                  key={item.value}
+                  nativeHaptics={nativeHaptics}
+                  nativeScrollId={item.value}
+                  onPress={
+                    disabled
+                      ? undefined
+                      : () => {
+                          itemParentContext.onChange(item.value);
+                          itemParentContext.setSelectedItem(item.label);
+                          itemParentContext.setOpen(false);
+                        }
+                  }
+                  selected={item.value === value}
+                  title={item.label}
+                />
+              );
+            })}
+          </NativeListSection>
+        );
+      })}
+    </NativeList>
+  );
+}
+
+const selectAdaptWhen = isWeb() ? "md" : true;
+
+const SelectRoot = forwardRef<any, SelectProps>(
+  (
+    {
+      "aria-label": ariaLabel,
+      children,
+      contentProps,
+      disabled,
+      isDisabled,
+      itemIndicatorProps,
+      itemGroups,
+      itemProps,
+      itemTextProps,
+      items,
+      itemLabel,
+      itemLabelProps,
+      nativeHaptics,
+      nativeDropdownAlign,
+      nativeDropdownAnchorWidth,
+      nativeDropdownEdgeOffset,
+      nativePickerMode,
+      onOpenChange,
+      onValueChange,
+      options,
+      placeholder,
+      placement,
+      touchSheetMaxHeight,
+      triggerProps,
+      viewportProps,
+      webMenuArrow,
+      native,
+      nativeTrigger,
+      nativeTriggerContainerStyle,
+      nativeTriggerContent,
+      nativeTriggerIcon,
+      nativeTriggerLabelProps,
+      ...props
+    },
+    ref,
+  ) => {
+    void ref;
+    const selectBehavior = resolveSelectBehavior(native);
+    const platform = os();
+    const [nativePickerVisible, setNativePickerVisible] = React.useState(false);
+    const [uncontrolledOpen, setUncontrolledOpen] = React.useState(Boolean(props.defaultOpen));
+    const [nativeTriggerOpening, setNativeTriggerOpening] = React.useState(false);
+    const [nativeTriggerPressed, setNativeTriggerPressed] = React.useState(false);
+    const [androidNativeDropdownAnchorSize, setAndroidNativeDropdownAnchorSize] = React.useState({
+      height: 1,
+      width: 1,
+    });
+    const [webMenuValue, setWebMenuValue] = React.useState<string | undefined>(
+      typeof props.defaultValue === "string" ? props.defaultValue : undefined,
+    );
+    const [webMenuOpen, setWebMenuOpen] = React.useState(Boolean(props.defaultOpen));
+    const sheetScrollRef = useRef<any>(null);
+    const nativeTriggerFaceRef = useRef<any>(null);
+    const androidNativeDropdownMenuRef = useRef<{ presentMenu: () => void } | null>(null);
+    const androidNativeDropdownLongPressedRef = useRef(false);
+    const androidNativeDropdownPressCommittedRef = useRef(false);
+    const androidNativeDropdownOpenRef = useRef(false);
+    const androidNativeDropdownHandoffTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const webMenuRootId = React.useId();
+    const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics);
+    const nativeMenuTheme = useTheme();
+    const nativeMenuSelectedItemBackgroundColor = nativeMenuTheme.color3?.val;
+    const shouldUseTouchSheetLayout = !isWeb() || selectBehavior.shouldUseWebSheet;
+    const resolvedPickerMode =
+      nativePickerMode ??
+      (platform === "android"
+        ? DEFAULT_ANDROID_NATIVE_PICKER_MODE
+        : DEFAULT_IOS_NATIVE_PICKER_MODE);
+    const resolvedItemGroups = resolveSelectItemGroups({ itemGroups, items, options });
+    const resolvedItems = resolvedItemGroups.flatMap((group) => group.items);
+    const getGroupLabel = (group: ResolvedSelectItemGroupData, groupIndex: number) =>
+      group.label ?? (groupIndex === 0 ? itemLabel : null);
+    const groupLabelCount = resolvedItemGroups.filter(
+      (group, groupIndex) => getGroupLabel(group, groupIndex) != null,
+    ).length;
+    const shouldUseIosNativeSheetList = platform === "ios" && selectBehavior.shouldUseNativeSheet;
+    const touchSheetConfig = resolveTouchSheetConfig({
+      groupCount: resolvedItemGroups.length,
+      groupLabelCount,
+      isNativeSheet: shouldUseIosNativeSheetList,
+      itemCount: resolvedItems.length,
+      touchSheetMaxHeight,
+    });
+    const shouldRenderNativeOptionText = selectBehavior.shouldRenderNativeOptionText;
+    const renderedItemGroups: ResolvedSelectItemGroupData[] = shouldRenderNativeOptionText
+      ? [{ key: "native", items: resolvedItems }]
+      : resolvedItemGroups;
+    const selectedValue = props.value !== undefined ? props.value : (webMenuValue ?? null);
+    const isSelectOpen = props.open ?? uncontrolledOpen;
+    androidNativeDropdownOpenRef.current = isSelectOpen;
+    const usesAndroidNativeTriggerOpacity = platform === "android";
+    const usesAndroidNativeTrigger = platform === "android" && !!nativeTrigger;
+    const usesAndroidDropdownOpenOpacity =
+      usesAndroidNativeTriggerOpacity &&
+      selectBehavior.shouldUseNativePicker &&
+      resolvedPickerMode === "dropdown";
+    const shouldRestoreNativeTriggerOnPressOut =
+      usesAndroidNativeTriggerOpacity ||
+      (platform === "ios" &&
+        (selectBehavior.shouldUseNativeSheet || selectBehavior.shouldUseCustomSheet));
+    const isNativeTriggerActive = usesAndroidNativeTriggerOpacity
+      ? nativeTriggerPressed ||
+        (usesAndroidDropdownOpenOpacity && (isSelectOpen || nativeTriggerOpening))
+      : shouldRestoreNativeTriggerOnPressOut
+        ? false
+        : isSelectOpen || nativeTriggerOpening;
+    const getItemLabelByValue = (value: string | null | undefined) =>
+      resolvedItems.find((item) => item.value === value)?.label ?? null;
+    const selectedItem = getItemLabelByValue(selectedValue);
+    const triggerLabel = selectedItem ?? placeholder ?? "";
+    const nativeTriggerLabel =
+      selectedValue == null || selectedValue === "" || props.renderValue == null
+        ? triggerLabel
+        : props.renderValue(selectedValue);
+    const defaultAndroidDropdownAlign =
+      platform === "android" && resolvedPickerMode === "dropdown" ? "center" : undefined;
+    const resolvedNativeDropdownAlign = nativeDropdownAlign ?? defaultAndroidDropdownAlign;
+    const shouldUseWebSheetItemHover = isWeb() && shouldUseTouchSheetLayout;
+    const renderItem = (item: ResolvedSelectItemData) => (
+      <SelectItem
+        {...(shouldUseTouchSheetLayout
+          ? {
+              background: "transparent",
+              borderRadius: 0,
+              height: DEFAULT_TOUCH_SHEET_ITEM_HEIGHT,
+              paddingHorizontal: 0,
+              paddingVertical: 0,
+            }
+          : null)}
+        {...itemProps}
+        aria-label={resolveAriaLabel(item["aria-label"] ?? itemProps?.["aria-label"], item.label)}
+        disabled={item.disabled ?? item.isDisabled ?? itemProps?.disabled}
+        index={item.index}
+        key={item.value}
+        textValue={item.label}
+        value={item.value}
+      >
+        {shouldRenderNativeOptionText ? (
+          item.label
+        ) : (
+          <YStack
+            background={shouldUseTouchSheetLayout ? TOUCH_SHEET_GROUP_BACKGROUND : undefined}
+            backgroundColor={shouldUseTouchSheetLayout ? TOUCH_SHEET_GROUP_BACKGROUND : undefined}
+            borderBottomColor={shouldUseTouchSheetLayout ? TOUCH_SHEET_SEPARATOR_COLOR : undefined}
+            borderBottomWidth={shouldUseTouchSheetLayout && !item.isLastInGroup ? 1 : 0}
+            hoverStyle={
+              shouldUseWebSheetItemHover
+                ? {
+                    background: SHEET_GROUP_HOVER,
+                  }
+                : undefined
+            }
+            pressStyle={{
+              background: SHEET_GROUP_PRESS,
+              // @ts-expect-error backgroundColor
+              backgroundColor: SHEET_GROUP_PRESS,
+            }}
+            style={
+              shouldUseTouchSheetLayout
+                ? TOUCH_SELECT_ITEM_CONTENT_STYLE
+                : DEFAULT_SELECT_ITEM_CONTENT_STYLE
+            }
+          >
+            {item.startContent}
+            <SelectItemText
+              fontSize={shouldUseTouchSheetLayout ? "$4" : undefined}
+              lineHeight={shouldUseTouchSheetLayout ? 22 : undefined}
+              {...itemTextProps}
+            >
+              {item.label}
+            </SelectItemText>
+            {item.description}
+            {item.endContent}
+            <SelectItemIndicator marginLeft="auto" {...itemIndicatorProps}>
+              {itemIndicatorProps?.children ??
+                (shouldUseTouchSheetLayout ? <Check size={22} /> : undefined)}
+            </SelectItemIndicator>
+          </YStack>
+        )}
+      </SelectItem>
+    );
+    const renderGroup = (group: ResolvedSelectItemGroupData, groupIndex: number) => {
+      const label = getGroupLabel(group, groupIndex);
+      const content = (
+        <SelectGroup>
+          {label && (
+            <Select.Label
+              fontWeight="700"
+              style={
+                shouldUseTouchSheetLayout
+                  ? { paddingHorizontal: 24, paddingVertical: 10 }
+                  : undefined
+              }
+              {...itemLabelProps}
+            >
+              {label}
+            </Select.Label>
+          )}
+          {group.items.map(renderItem)}
+        </SelectGroup>
+      );
+
+      if (!shouldUseTouchSheetLayout) {
+        return <React.Fragment key={group.key}>{content}</React.Fragment>;
+      }
+
+      return (
+        <YStack
+          key={group.key}
+          background={TOUCH_SHEET_GROUP_BACKGROUND}
+          style={{
+            borderRadius: TOUCH_SHEET_GROUP_RADIUS,
+            marginBottom:
+              groupIndex === resolvedItemGroups.length - 1 ? 0 : DEFAULT_TOUCH_SHEET_GROUP_GAP,
+            overflow: "hidden",
+            width: "100%",
+          }}
+        >
+          {content}
+        </YStack>
+      );
+    };
+
+    /** Android dropdown 改用 Zeego Menu；dialog 保留已有 RNPicker 实现。 */
+    const shouldRenderNativeDropdownMenu = usesAndroidDropdownOpenOpacity;
+    /**
+     * NativePickerDialog（隐藏渲染 + focus() 触发系统弹窗）仅在 Android 上可用。
+     * wheel 为 iOS 专用模式，Android 上不走此路径。
+     */
+    const shouldRenderNativePicker =
+      !isWeb() &&
+      selectBehavior.shouldUseNativePicker &&
+      resolvedPickerMode !== "wheel" &&
+      platform === "android" &&
+      !nativeTrigger &&
+      !shouldRenderNativeDropdownMenu;
+    /** iOS native 始终走平台 wrapper；Android nativeTrigger 保留原 wrapper。 */
+    const shouldRenderNativePlatformPicker =
+      !isWeb() &&
+      selectBehavior.shouldUseNativePicker &&
+      (platform === "ios" ||
+        (platform === "android" && !!nativeTrigger && !shouldRenderNativeDropdownMenu));
+
+    const handleTamaguiOpenChange = (nextOpen: boolean) => {
+      if (props.open === undefined) {
+        setUncontrolledOpen(nextOpen);
+      }
+      if (!nextOpen) {
+        setNativeTriggerOpening(false);
+      }
+
+      if (shouldRenderNativePicker && nextOpen) {
+        triggerNativeHaptics(resolvedNativeHaptics);
+        setNativePickerVisible((prev) => {
+          if (prev) {
+            requestAnimationFrame(() => setNativePickerVisible(true));
+            return false;
+          }
+
+          return true;
+        });
+        return;
+      }
+
+      if (shouldRenderNativeDropdownMenu) {
+        // Zeego 的原生 Menu 自己维护 open 状态并派发 onOpenChange。
+        return;
+      }
+
+      onOpenChange?.(nextOpen);
+      if (nextOpen) triggerNativeHaptics(resolvedNativeHaptics);
+    };
+
+    const handleNativeDropdownMenuOpenChange = (nextOpen: boolean) => {
+      clearAndroidNativeDropdownHandoffTimer();
+      androidNativeDropdownOpenRef.current = nextOpen;
+      if (props.open === undefined) {
+        setUncontrolledOpen(nextOpen);
+      }
+      if (!nextOpen) {
+        setNativeTriggerOpening(false);
+        setNativeTriggerPressed(false);
+      }
+
+      onOpenChange?.(nextOpen);
+    };
+
+    const nativePickerDialog = shouldRenderNativePicker ? (
+      <NativePickerDialog
+        anchorAlign={resolvedNativeDropdownAlign}
+        anchorWidth={nativeDropdownAnchorWidth}
+        anchorEdgeOffset={nativeDropdownEdgeOffset}
+        visible={nativePickerVisible}
+        value={(props.value as string | undefined) ?? ""}
+        items={resolvedItems}
+        mode={resolvedPickerMode as "dialog" | "dropdown"}
+        onValueChange={(itemValue: string) => {
+          onValueChange?.(itemValue || null);
+          triggerNativeHaptics(resolvedNativeHaptics);
+          setNativePickerVisible(false);
+        }}
+        onBlur={() => setNativePickerVisible(false)}
+      />
+    ) : null;
+
+    const handleTamaguiValueChange = (nextValue: string) => {
+      if (props.value === undefined) {
+        setWebMenuValue(nextValue ?? undefined);
+      }
+
+      onValueChange?.(nextValue ?? null);
+      triggerNativeHaptics(resolvedNativeHaptics);
+    };
+
+    // 平台 picker 不经过 Tamagui Select 的 onValueChange；同步内部值以支持
+    // defaultValue / 非受控使用方式，同时避免与 picker 自己的触感反馈重复触发。
+    const handleNativePickerValueChange = (nextValue: string | null) => {
+      if (props.value === undefined) {
+        setWebMenuValue(nextValue ?? undefined);
+      }
+
+      onValueChange?.(nextValue);
+    };
+
+    /** 打开 Sheet 时滚动到选中项位置。 */
+    const getSelectedItemScrollY = useCallback(() => {
+      if (!shouldUseTouchSheetLayout || resolvedItems.length === 0) {
+        return null;
+      }
+
+      if (!shouldUseIosNativeSheetList && !touchSheetConfig.shouldEnableScroll) {
+        return null;
+      }
+
+      const selectedValue = props.value ?? null;
+      if (resolvedItems[0]?.value === selectedValue) {
+        return null;
+      }
+
+      let accumY: number | null = null;
+      let currentY = shouldUseIosNativeSheetList
+        ? (IOS_NATIVE_SHEET_SCROLL_CONTENT_STYLE.paddingTop ?? 0)
+        : (TOUCH_SHEET_SCROLL_CONTENT_STYLE.paddingTop ?? 0);
+
+      for (const [groupIndex, group] of resolvedItemGroups.entries()) {
+        const label = getGroupLabel(group, groupIndex);
+        if (label != null) currentY += DEFAULT_TOUCH_SHEET_LABEL_HEIGHT;
+
+        for (const item of group.items) {
+          if (item.value === selectedValue) {
+            accumY = currentY;
+            break;
+          }
+          currentY += DEFAULT_TOUCH_SHEET_ITEM_HEIGHT;
+        }
+        if (accumY != null) break;
+      }
+
+      if (accumY == null || accumY <= 0) {
+        return null;
+      }
+
+      return accumY;
+    }, [
+      shouldUseIosNativeSheetList,
+      shouldUseTouchSheetLayout,
+      touchSheetConfig.shouldEnableScroll,
+      resolvedItems.length,
+      resolvedItemGroups,
+      props.value,
+      getGroupLabel,
+    ]);
+
+    const scrollToSelectedItem = useCallback(() => {
+      if (shouldUseIosNativeSheetList) {
+        return;
+      }
+
+      if (!sheetScrollRef.current) {
+        return;
+      }
+
+      const selectedScrollY = getSelectedItemScrollY();
+      if (selectedScrollY == null) {
+        return;
+      }
+
+      sheetScrollRef.current.scrollTo({ y: selectedScrollY, animated: false });
+    }, [getSelectedItemScrollY, shouldUseIosNativeSheetList]);
+    const initialScrollY = getSelectedItemScrollY();
+    const selectedNativeListInitialScrollTarget =
+      shouldUseIosNativeSheetList && props.value != null && resolvedItems[0]?.value !== props.value
+        ? props.value
+        : undefined;
+    const resolvedSelectAdaptWhen = selectBehavior.shouldUseWebSheet ? true : selectAdaptWhen;
+    const resolvedSelectAdaptPlatform = selectBehavior.shouldUseWebSheet ? "web" : "touch";
+    const shouldUseNativeSheetCompactNativeTrigger =
+      isWeb() &&
+      selectBehavior.shouldUseWebSheet &&
+      !!nativeTrigger &&
+      nativeTriggerContent == null;
+    const shouldRenderWebNativeTriggerSelect =
+      isWeb() && selectBehavior.shouldUseNativePicker && children == null;
+    const shouldRenderWebMenuSelect =
+      isWeb() &&
+      !selectBehavior.tamaguiNative &&
+      !selectBehavior.shouldUseWebSheet &&
+      children == null;
+    const selectDisabled = disabled ?? isDisabled ?? triggerProps?.disabled;
+    const {
+      hoverStyle: triggerHoverStyle,
+      nativeHaptics: _triggerNativeHaptics,
+      onLayout: triggerOnLayout,
+      onLongPress: triggerOnLongPress,
+      onPress: triggerOnPress,
+      onPressIn: triggerOnPressIn,
+      onPressOut: triggerOnPressOut,
+      onTouchCancel: triggerOnTouchCancel,
+      onTouchEnd: triggerOnTouchEnd,
+      pressStyle: triggerPressStyle,
+      ...webMenuTriggerProps
+    } = (triggerProps as any) ?? {};
+    void _triggerNativeHaptics;
+    const clearAndroidNativeDropdownHandoffTimer = () => {
+      if (androidNativeDropdownHandoffTimerRef.current != null) {
+        clearTimeout(androidNativeDropdownHandoffTimerRef.current);
+        androidNativeDropdownHandoffTimerRef.current = null;
+      }
+    };
+    React.useEffect(() => clearAndroidNativeDropdownHandoffTimer, []);
+    const restoreAndroidNativeTriggerOpacity = () => {
+      if (!usesAndroidNativeTriggerOpacity) {
+        return;
+      }
+
+      setNativeTriggerPressed(false);
+      if (usesAndroidDropdownOpenOpacity) {
+        // A normal release is immediately followed by onPress, which opens the
+        // dropdown and owns the active opacity. A long press does not open it and
+        // must return to the resting opacity as soon as the finger is released.
+        if (androidNativeDropdownLongPressedRef.current) {
+          clearAndroidNativeDropdownHandoffTimer();
+          setNativeTriggerOpening(false);
+          return;
+        }
+
+        // Preserve the pressed appearance across the press-out -> onPress handoff.
+        // If no onPress follows (for example the finger was dragged away), clean it
+        // up on the next task instead of leaving the trigger active indefinitely.
+        clearAndroidNativeDropdownHandoffTimer();
+        androidNativeDropdownHandoffTimerRef.current = setTimeout(() => {
+          if (
+            !androidNativeDropdownPressCommittedRef.current &&
+            !androidNativeDropdownOpenRef.current
+          ) {
+            setNativeTriggerOpening(false);
+          }
+          androidNativeDropdownHandoffTimerRef.current = null;
+        }, 0);
+        return;
+      }
+
+      setNativeTriggerOpening(false);
+    };
+    const handleNativeTriggerPressIn = (event: any) => {
+      if (usesAndroidNativeTriggerOpacity) {
+        clearAndroidNativeDropdownHandoffTimer();
+        androidNativeDropdownLongPressedRef.current = false;
+        androidNativeDropdownPressCommittedRef.current = false;
+        setNativeTriggerPressed(true);
+        if (usesAndroidDropdownOpenOpacity) {
+          setNativeTriggerOpening(true);
+        }
+      }
+      triggerOnPressIn?.(event);
+
+      if (nativeTrigger && !shouldRenderWebNativeTriggerSelect) {
+        if (!usesAndroidNativeTriggerOpacity) {
+          nativeTriggerFaceRef.current?.setNativeProps?.({ style: { opacity: 0.6 } });
+        }
+        if (!shouldRestoreNativeTriggerOnPressOut && !usesAndroidNativeTriggerOpacity) {
+          setNativeTriggerOpening(true);
+        }
+      }
+    };
+    const handleNativeTriggerPress = (event: any) => {
+      if (usesAndroidNativeTrigger && androidNativeDropdownLongPressedRef.current) {
+        androidNativeDropdownLongPressedRef.current = false;
+        androidNativeDropdownPressCommittedRef.current = false;
+        setNativeTriggerPressed(false);
+        setNativeTriggerOpening(false);
+        return;
+      }
+
+      if (usesAndroidDropdownOpenOpacity) {
+        clearAndroidNativeDropdownHandoffTimer();
+        androidNativeDropdownPressCommittedRef.current = true;
+        setNativeTriggerOpening(true);
+        androidNativeDropdownMenuRef.current?.presentMenu();
+        androidNativeDropdownHandoffTimerRef.current = setTimeout(() => {
+          if (!androidNativeDropdownOpenRef.current) {
+            androidNativeDropdownPressCommittedRef.current = false;
+            setNativeTriggerOpening(false);
+          }
+          androidNativeDropdownHandoffTimerRef.current = null;
+        }, 500);
+      }
+
+      if (
+        nativeTrigger &&
+        !shouldRenderWebNativeTriggerSelect &&
+        !usesAndroidNativeTriggerOpacity
+      ) {
+        nativeTriggerFaceRef.current?.setNativeProps?.({ style: { opacity: 0.6 } });
+        if (!shouldRestoreNativeTriggerOnPressOut) {
+          setNativeTriggerOpening(true);
+        }
+      }
+
+      triggerOnPress?.(event);
+    };
+    const handleNativeTriggerLongPress = (event: any) => {
+      if (usesAndroidNativeTrigger) {
+        androidNativeDropdownLongPressedRef.current = true;
+      }
+      triggerOnLongPress?.(event);
+    };
+    const handleAndroidNativeDropdownTriggerLayout = (event: any) => {
+      triggerOnLayout?.(event);
+      const { height, width } = event.nativeEvent.layout;
+      setAndroidNativeDropdownAnchorSize((current) =>
+        Math.abs(current.height - height) < 0.5 && Math.abs(current.width - width) < 0.5
+          ? current
+          : { height, width },
+      );
+    };
+    const handleNativeTriggerPressOut = (event: any) => {
+      triggerOnPressOut?.(event);
+
+      restoreAndroidNativeTriggerOpacity();
+      if (
+        nativeTrigger &&
+        shouldRestoreNativeTriggerOnPressOut &&
+        !usesAndroidNativeTriggerOpacity
+      ) {
+        nativeTriggerFaceRef.current?.setNativeProps?.({ style: { opacity: 1 } });
+      }
+    };
+    const handleNativeTriggerTouchCancel = (event: any) => {
+      triggerOnTouchCancel?.(event);
+      clearAndroidNativeDropdownHandoffTimer();
+      androidNativeDropdownLongPressedRef.current = false;
+      androidNativeDropdownPressCommittedRef.current = false;
+      setNativeTriggerPressed(false);
+      setNativeTriggerOpening(false);
+    };
+    const handleNativeTriggerTouchEnd = (event: any) => {
+      triggerOnTouchEnd?.(event);
+      restoreAndroidNativeTriggerOpacity();
+    };
+    const {
+      maxHeight: webMenuContentMaxHeight,
+      maxWidth: webMenuContentMaxWidth,
+      minWidth: webMenuContentMinWidth,
+      style: webMenuContentStyle,
+      width: webMenuContentWidth,
+      zIndex: webMenuContentZIndex,
+      ...webMenuContentProps
+    } = {
+      ...(contentProps as any),
+      ...(viewportProps as any),
+    };
+    const resolvedWebMenuOpen = props.open ?? webMenuOpen;
+    const resolvedWebMenuContentMaxHeight =
+      webMenuContentMaxHeight ?? WEB_MENU_SCROLL_VIEW_MAX_HEIGHT;
+    const resolvedWebMenuContentMinWidth =
+      webMenuContentMinWidth ?? WEB_MENU_CONTENT_MIN_WIDTH;
+
+    React.useEffect(() => {
+      if (
+        !shouldRenderWebMenuSelect ||
+        !resolvedWebMenuOpen ||
+        selectedValue == null ||
+        typeof window === "undefined"
+      ) {
+        return;
+      }
+
+      const focusSelectedItem = () => focusWebMenuItem(webMenuRootId, selectedValue);
+      const animationFrame = window.requestAnimationFrame(focusSelectedItem);
+      const fallbackTimer = window.setTimeout(focusSelectedItem, 80);
+
+      return () => {
+        window.cancelAnimationFrame(animationFrame);
+        window.clearTimeout(fallbackTimer);
+      };
+    }, [resolvedWebMenuOpen, selectedValue, shouldRenderWebMenuSelect, webMenuRootId]);
+
+    const handleWebMenuOpenChange = (nextOpen: boolean) => {
+      if (props.open === undefined) {
+        setWebMenuOpen(nextOpen);
+      }
+
+      onOpenChange?.(nextOpen);
+    };
+
+    const handleWebMenuValueChange = (nextValue: string) => {
+      if (props.value === undefined) {
+        setWebMenuValue(nextValue);
+      }
+
+      onValueChange?.(nextValue);
+      triggerNativeHaptics(resolvedNativeHaptics);
+    };
+
+    const resolvedWebMenuContentZIndex =
+      typeof webMenuContentZIndex === "number" ? webMenuContentZIndex : WEB_MENU_CONTENT_Z_INDEX;
+
+    const handleWebMenuOverlayPress = (event: any) => {
+      event?.preventDefault?.();
+      event?.stopPropagation?.();
+      handleWebMenuOpenChange(false);
+    };
+    const renderWebMenuItem = (item: ResolvedSelectItemData) => {
+      const itemDisabled = item.disabled ?? item.isDisabled ?? itemProps?.disabled;
+      const isSelected = item.value === selectedValue;
+
+      return (
+        <Menu.RadioItem
+          {...(itemProps as any)}
+          aria-label={resolveAriaLabel(item["aria-label"] ?? itemProps?.["aria-label"], item.label)}
+          disabled={itemDisabled}
+          key={item.value}
+          textValue={item.label}
+          value={item.value}
+          {...({ "data-rn-ui-kit-select-menu-item-value": item.value } as any)}
+        >
+          {item.startContent}
+          <YStack flex={1} style={{ minWidth: 0 }}>
+            <Menu.ItemTitle {...(itemTextProps as any)}>{item.label}</Menu.ItemTitle>
+            {item.description != null ? (
+              typeof item.description === "string" || typeof item.description === "number" ? (
+                <SizableText color="$color10" size="$2">
+                  {item.description}
+                </SizableText>
+              ) : (
+                item.description
+              )
+            ) : null}
+          </YStack>
+          {item.endContent}
+          <Menu.ItemIndicator marginLeft="auto" {...(itemIndicatorProps as any)}>
+            {itemIndicatorProps?.children ??
+              (isSelected ? <Check color="$color10" size={12} /> : null)}
+          </Menu.ItemIndicator>
+        </Menu.RadioItem>
+      );
+    };
+    const renderWebMenuGroup = (group: ResolvedSelectItemGroupData, groupIndex: number) => {
+      const label = getGroupLabel(group, groupIndex);
+
+      return (
+        <React.Fragment key={group.key}>
+          {groupIndex > 0 ? <Menu.Separator /> : null}
+          {label != null ? <Menu.Label {...(itemLabelProps as any)}>{label}</Menu.Label> : null}
+          {group.items.map(renderWebMenuItem)}
+        </React.Fragment>
+      );
+    };
+    const webMenuTrigger = (
+      <XStack
+        aria-label={resolveAriaLabel(
+          triggerProps?.["aria-label"] ?? ariaLabel,
+          selectedItem ?? placeholder,
+        )}
+        backgroundColor={nativeTrigger ? "transparent" : "$background"}
+        borderColor={nativeTrigger ? "transparent" : "$borderColor"}
+        borderRadius={nativeTrigger ? 0 : "$4"}
+        borderWidth={nativeTrigger ? 0 : 1}
+        cursor="default"
+        hoverStyle={
+          nativeTrigger
+            ? {
+                background: SELECT_TRIGGER_HOVER_COLOR,
+                borderColor: "transparent",
+                ...(triggerHoverStyle as any),
+              }
+            : {
+                background: SELECT_TRIGGER_HOVER_COLOR,
+                borderColor: "$borderColor",
+                ...(triggerHoverStyle as any),
+              }
+        }
+        items="center"
+        justify={nativeTrigger ? "center" : "space-between"}
+        minHeight={44}
+        opacity={selectDisabled ? 0.5 : 1}
+        paddingHorizontal={nativeTrigger ? 0 : "$3"}
+        paddingVertical={nativeTrigger ? 0 : "$2"}
+        pointerEvents={selectDisabled ? "none" : undefined}
+        pressStyle={
+          nativeTrigger
+            ? {
+                background: SELECT_TRIGGER_PRESS_COLOR,
+                borderColor: "transparent",
+                ...(triggerPressStyle as any),
+              }
+            : {
+                background: SELECT_TRIGGER_PRESS_COLOR,
+                ...(triggerPressStyle as any),
+              }
+        }
+        width="100%"
+        {...(webMenuTriggerProps as any)}
+        onLayout={triggerOnLayout as any}
+        onPress={triggerOnPress as any}
+      >
+        {nativeTrigger ? (
+          <NativeTriggerFace
+            content={nativeTriggerContent}
+            containerStyle={nativeTriggerContainerStyle}
+            icon={nativeTriggerIcon}
+            label={nativeTriggerLabel}
+            labelProps={nativeTriggerLabelProps}
+            opacity={resolvedWebMenuOpen ? 0.6 : 1}
+          />
+        ) : (
+          <>
+            {renderSelectWebMenuTriggerLabel(triggerLabel, selectedItem == null)}
+            <ChevronDown
+              color="$color10"
+              size={getFontSize((props.size as FontSizeTokens) ?? "$true")}
+            />
+          </>
+        )}
+      </XStack>
+    );
+
+    return (
+      <>
+        {shouldRenderWebMenuSelect ? (
+          resolvedItems.length === 0 ? null : (
+            <Menu
+              modal
+              nativeHaptics={resolvedNativeHaptics}
+              onOpenChange={handleWebMenuOpenChange}
+              open={resolvedWebMenuOpen}
+              offset={8}
+              placement={placement}
+            >
+              <Menu.Trigger asChild disabled={selectDisabled}>
+                {webMenuTrigger}
+              </Menu.Trigger>
+              <Menu.Portal zIndex={resolvedWebMenuContentZIndex}>
+                {resolvedWebMenuOpen ? (
+                  <YStack
+                    aria-hidden
+                    onClick={handleWebMenuOverlayPress as any}
+                    onMouseDown={handleWebMenuOverlayPress as any}
+                    onPointerDown={handleWebMenuOverlayPress as any}
+                    style={
+                      {
+                        ...WEB_MENU_BLOCKING_OVERLAY_STYLE,
+                        zIndex: 0,
+                      } as any
+                    }
+                  />
+                ) : null}
+                <Menu.Content
+                  {...webMenuContentProps}
+                  maxHeight={resolvedWebMenuContentMaxHeight}
+                  maxWidth={webMenuContentMaxWidth ?? WEB_MENU_CONTENT_MAX_WIDTH}
+                  minWidth={resolvedWebMenuContentMinWidth}
+                  overflow="hidden"
+                  width={webMenuContentWidth ?? "max-content"}
+                  style={
+                    [
+                      {
+                        maxHeight: resolvedWebMenuContentMaxHeight,
+                        maxWidth: webMenuContentMaxWidth ?? WEB_MENU_CONTENT_MAX_WIDTH,
+                        minWidth: resolvedWebMenuContentMinWidth,
+                        overflow: "hidden",
+                        width: webMenuContentWidth ?? "max-content",
+                      },
+                      webMenuContentStyle,
+                    ] as any
+                  }
+                  zIndex={1}
+                  {...({ "data-rn-ui-kit-select-menu-root": webMenuRootId } as any)}
+                >
+                  {webMenuArrow ? <Menu.Arrow /> : null}
+                  <YStack
+                    style={
+                      {
+                        ...WEB_MENU_SCROLL_VIEW_STYLE,
+                        maxHeight: resolvedWebMenuContentMaxHeight,
+                      } as any
+                    }
+                  >
+                    <YStack p={5}>
+                      <Menu.RadioGroup
+                        value={selectedValue ?? undefined}
+                        onValueChange={handleWebMenuValueChange}
+                      >
+                        {resolvedItemGroups.map(renderWebMenuGroup)}
+                      </Menu.RadioGroup>
+                    </YStack>
+                  </YStack>
+                </Menu.Content>
+              </Menu.Portal>
+            </Menu>
+          )
+        ) : shouldRenderWebNativeTriggerSelect ? (
+          <YStack
+            backgroundColor={nativeTrigger ? "transparent" : "$background"}
+            borderColor={nativeTrigger ? "transparent" : "$borderColor"}
+            borderRadius={nativeTrigger ? 0 : "$4"}
+            borderWidth={nativeTrigger ? 0 : 1}
+            hoverStyle={
+              nativeTrigger
+                ? {
+                    background: SELECT_TRIGGER_HOVER_COLOR,
+                    borderColor: "transparent",
+                    ...(triggerProps?.hoverStyle as any),
+                  }
+                : {
+                    background: SELECT_TRIGGER_HOVER_COLOR,
+                    borderColor: "$borderColor",
+                    ...(triggerProps?.hoverStyle as any),
+                  }
+            }
+            justifyContent={nativeTrigger ? "center" : "space-between"}
+            minHeight={44}
+            paddingHorizontal={nativeTrigger ? 0 : "$3"}
+            paddingVertical={nativeTrigger ? 0 : "$2"}
+            position="relative"
+            pressStyle={
+              nativeTrigger
+                ? {
+                    background: SELECT_TRIGGER_PRESS_COLOR,
+                    borderColor: "transparent",
+                    ...(triggerProps?.pressStyle as any),
+                  }
+                : {
+                    background: SELECT_TRIGGER_PRESS_COLOR,
+                    ...(triggerProps?.pressStyle as any),
+                  }
+            }
+            width="100%"
+            {...(triggerProps as any)}
+          >
+            {nativeTrigger ? (
+              <NativeTriggerFace
+                content={nativeTriggerContent}
+                containerStyle={nativeTriggerContainerStyle}
+                icon={nativeTriggerIcon}
+                label={nativeTriggerLabel}
+                labelProps={nativeTriggerLabelProps}
+                opacity={isSelectOpen ? 0.6 : 1}
+              />
+            ) : (
+              <>
+                {renderSelectWebMenuTriggerLabel(triggerLabel, selectedItem == null)}
+                <YStack
+                  position="absolute"
+                  r={0}
+                  t={16}
+                  items="center"
+                  justify="center"
+                  width={"$4"}
+                  pointerEvents="none"
+                >
+                  <ChevronDown size={getFontSize((props.size as FontSizeTokens) ?? "$true")} />
+                </YStack>
+              </>
+            )}
+            <YStack style={WEB_NATIVE_TRIGGER_SELECT_OVERLAY_STYLE as any}>
+              <TamaguiSelect
+                disablePreventBodyScroll
+                {...props}
+                native={selectBehavior.tamaguiNative}
+                onValueChange={handleTamaguiValueChange}
+                renderValue={props.renderValue ?? ((nextValue) => getItemLabelByValue(nextValue))}
+              >
+                <SelectContent {...contentProps}>
+                  <SelectViewport
+                    bg="$background"
+                    rounded="$4"
+                    borderWidth={1}
+                    borderColor="$borderColor"
+                    {...viewportProps}
+                  >
+                    {renderedItemGroups.map(renderGroup)}
+                  </SelectViewport>
+                </SelectContent>
+              </TamaguiSelect>
+            </YStack>
+          </YStack>
+        ) : shouldRenderNativePlatformPicker ? (
+          <NativePickerSwiftUI
+            items={resolvedItems}
+            value={selectedValue}
+            placeholder={placeholder}
+            nativeDropdownAlign={resolvedNativeDropdownAlign}
+            nativeDropdownAnchorWidth={nativeDropdownAnchorWidth}
+            nativeDropdownEdgeOffset={nativeDropdownEdgeOffset}
+            mode={resolvedPickerMode as "dropdown" | "wheel" | "dialog"}
+            nativeTrigger={nativeTrigger ?? false}
+            nativeTriggerContainerStyle={nativeTriggerContainerStyle}
+            nativeTriggerContent={nativeTriggerContent}
+            nativeTriggerIcon={nativeTriggerIcon}
+            nativeTriggerLabel={nativeTriggerLabel}
+            nativeTriggerLabelProps={nativeTriggerLabelProps}
+            nativeTriggerPressableProps={
+              platform === "android"
+                ? {
+                    disabled: selectDisabled,
+                    onLongPress: handleNativeTriggerLongPress,
+                    onPress: handleNativeTriggerPress,
+                    onPressIn: handleNativeTriggerPressIn,
+                    onPressOut: handleNativeTriggerPressOut,
+                    onTouchCancel: handleNativeTriggerTouchCancel,
+                    onTouchEnd: handleNativeTriggerTouchEnd,
+                  }
+                : undefined
+            }
+            onValueChange={handleNativePickerValueChange}
+            resolvedNativeHaptics={resolvedNativeHaptics}
+          />
+        ) : (
+          <TamaguiSelect
+            disablePreventBodyScroll
+            {...props}
+            {...(shouldRenderNativeDropdownMenu
+              ? { value: selectedValue ?? undefined }
+              : undefined)}
+            open={shouldRenderNativeDropdownMenu || shouldRenderNativePicker ? false : undefined}
+            native={selectBehavior.tamaguiNative}
+            onOpenChange={handleTamaguiOpenChange}
+            onValueChange={handleTamaguiValueChange}
+            renderValue={props.renderValue ?? ((nextValue) => getItemLabelByValue(nextValue))}
+          >
+            {children ??
+              (resolvedItems.length === 0 ? null : (
+                <>
+                  {shouldRenderNativeDropdownMenu ? (
+                    nativeTrigger ? (
+                      <YStack position="relative">
+                        <NativeTriggerPressable
+                          active={isSelectOpen || nativeTriggerOpening}
+                          accessibilityLabel={resolveAriaLabel(
+                            triggerProps?.["aria-label"] ?? ariaLabel,
+                            selectedItem ?? placeholder,
+                          )}
+                          content={nativeTriggerContent}
+                          containerStyle={nativeTriggerContainerStyle}
+                          disabled={disabled ?? isDisabled ?? triggerProps?.disabled}
+                          icon={nativeTriggerIcon}
+                          label={nativeTriggerLabel}
+                          labelProps={nativeTriggerLabelProps}
+                          onLayout={handleAndroidNativeDropdownTriggerLayout}
+                          onLongPress={handleNativeTriggerLongPress}
+                          onPress={handleNativeTriggerPress}
+                          onPressIn={handleNativeTriggerPressIn}
+                          onPressOut={handleNativeTriggerPressOut}
+                          onTouchCancel={handleNativeTriggerTouchCancel}
+                          onTouchEnd={handleNativeTriggerTouchEnd}
+                          style={(triggerProps as any)?.style}
+                        />
+                        <View
+                          collapsable={false}
+                          pointerEvents="none"
+                          style={{
+                            bottom: 0,
+                            left: 0,
+                            position: "absolute",
+                            right: 0,
+                            top: 0,
+                          }}
+                        >
+                          <Menu
+                            nativeAnchorAlignment={resolvedNativeDropdownAlign ?? "center"}
+                            nativeSelectedItemBackgroundColor={
+                              nativeMenuSelectedItemBackgroundColor
+                            }
+                            items={resolvedItems.map((item) => ({
+                              disabled: item.disabled ?? item.isDisabled,
+                              label: item.label,
+                              onSelect: () => handleTamaguiValueChange(item.value),
+                              selected: item.value === selectedValue,
+                              value: item.value,
+                            }))}
+                            nativeHaptics={resolvedNativeHaptics}
+                            onOpenChange={handleNativeDropdownMenuOpenChange}
+                            open={isSelectOpen}
+                            style={{
+                              height: androidNativeDropdownAnchorSize.height,
+                              width: androidNativeDropdownAnchorSize.width,
+                            }}
+                            trigger={
+                              <View
+                                collapsable={false}
+                                style={{
+                                  height: androidNativeDropdownAnchorSize.height,
+                                  opacity: 0,
+                                  width: androidNativeDropdownAnchorSize.width,
+                                }}
+                              />
+                            }
+                            triggerProps={{ asChild: true }}
+                            {...({ __menuRef: androidNativeDropdownMenuRef } as any)}
+                          />
+                        </View>
+                      </YStack>
+                    ) : (
+                      <Menu
+                        nativeAnchorAlignment={resolvedNativeDropdownAlign ?? "center"}
+                        nativeSelectedItemBackgroundColor={nativeMenuSelectedItemBackgroundColor}
+                        items={resolvedItems.map((item) => ({
+                          disabled: item.disabled ?? item.isDisabled,
+                          label: item.label,
+                          onSelect: () => handleTamaguiValueChange(item.value),
+                          selected: item.value === selectedValue,
+                          value: item.value,
+                        }))}
+                        nativeHaptics={resolvedNativeHaptics}
+                        onOpenChange={handleNativeDropdownMenuOpenChange}
+                        open={isSelectOpen}
+                        trigger={
+                          <SelectTrigger
+                            backgroundColor="$background"
+                            borderRadius="$4"
+                            disabled={disabled ?? isDisabled ?? triggerProps?.disabled}
+                            iconAfter={ChevronDown}
+                            {...triggerProps}
+                            aria-label={resolveAriaLabel(
+                              triggerProps?.["aria-label"] ?? ariaLabel,
+                              selectedItem ?? placeholder,
+                            )}
+                            nativeHaptics={triggerProps?.nativeHaptics ?? resolvedNativeHaptics}
+                          >
+                            <SelectValue placeholder={placeholder} />
+                          </SelectTrigger>
+                        }
+                        triggerProps={{ asChild: true }}
+                      />
+                    )
+                  ) : shouldRenderNativePicker ? (
+                    <YStack position="relative" width="100%">
+                      <SelectTrigger
+                        disabled={disabled ?? isDisabled ?? triggerProps?.disabled}
+                        {...(!nativeTrigger
+                          ? {
+                              backgroundColor: "$background",
+                              borderRadius: "$4",
+                              iconAfter: ChevronDown,
+                            }
+                          : {
+                              backgroundColor: "transparent",
+                              borderColor: "transparent",
+                              borderRadius: 0,
+                              borderWidth: 0,
+                              justifyContent: "center",
+                              minHeight: 44,
+                              paddingHorizontal: 0,
+                              paddingVertical: 0,
+                              pressStyle: {
+                                backgroundColor: shouldUseNativeSheetCompactNativeTrigger
+                                  ? SELECT_TRIGGER_PRESS_COLOR
+                                  : "transparent",
+                                borderColor: "transparent",
+                              },
+                            })}
+                        {...triggerProps}
+                        onLongPress={handleNativeTriggerLongPress}
+                        onPress={handleNativeTriggerPress}
+                        onPressIn={handleNativeTriggerPressIn}
+                        onPressOut={handleNativeTriggerPressOut}
+                        onTouchCancel={handleNativeTriggerTouchCancel}
+                        onTouchEnd={handleNativeTriggerTouchEnd}
+                        aria-label={resolveAriaLabel(
+                          triggerProps?.["aria-label"] ?? ariaLabel,
+                          selectedItem ?? placeholder,
+                        )}
+                        nativeHaptics={triggerProps?.nativeHaptics ?? resolvedNativeHaptics}
+                      >
+                        {nativeTrigger ? (
+                          <NativeTriggerFace
+                            ref={nativeTriggerFaceRef}
+                            content={nativeTriggerContent}
+                            containerStyle={nativeTriggerContainerStyle}
+                            icon={nativeTriggerIcon}
+                            label={nativeTriggerLabel}
+                            labelProps={nativeTriggerLabelProps}
+                            opacity={isNativeTriggerActive ? 0.6 : 1}
+                          />
+                        ) : (
+                          <SelectValue placeholder={placeholder} />
+                        )}
+                      </SelectTrigger>
+                      {nativePickerDialog}
+                    </YStack>
+                  ) : (
+                    <SelectTrigger
+                      disabled={disabled ?? isDisabled ?? triggerProps?.disabled}
+                      {...(!nativeTrigger
+                        ? {
+                            backgroundColor: "$background",
+                            borderRadius: "$4",
+                            iconAfter: ChevronDown,
+                          }
+                        : {
+                            backgroundColor: "transparent",
+                            borderColor: "transparent",
+                            borderRadius: 0,
+                            borderWidth: 0,
+                            justifyContent: "center",
+                            minHeight: 44,
+                            paddingHorizontal: 0,
+                            paddingVertical: 0,
+                            pressStyle: {
+                              backgroundColor: shouldUseNativeSheetCompactNativeTrigger
+                                ? SELECT_TRIGGER_PRESS_COLOR
+                                : "transparent",
+                              borderColor: "transparent",
+                            },
+                          })}
+                      {...triggerProps}
+                      onLongPress={handleNativeTriggerLongPress}
+                      onPress={handleNativeTriggerPress}
+                      onPressIn={handleNativeTriggerPressIn}
+                      onPressOut={handleNativeTriggerPressOut}
+                      onTouchCancel={handleNativeTriggerTouchCancel}
+                      onTouchEnd={handleNativeTriggerTouchEnd}
+                      aria-label={resolveAriaLabel(
+                        triggerProps?.["aria-label"] ?? ariaLabel,
+                        selectedItem ?? placeholder,
+                      )}
+                      nativeHaptics={triggerProps?.nativeHaptics ?? resolvedNativeHaptics}
+                    >
+                      {nativeTrigger ? (
+                        <NativeTriggerFace
+                          ref={nativeTriggerFaceRef}
+                          content={nativeTriggerContent}
+                          containerStyle={nativeTriggerContainerStyle}
+                          icon={nativeTriggerIcon}
+                          label={nativeTriggerLabel}
+                          labelProps={nativeTriggerLabelProps}
+                          opacity={isNativeTriggerActive ? 0.6 : 1}
+                        />
+                      ) : (
+                        <SelectValue placeholder={placeholder} />
+                      )}
+                    </SelectTrigger>
+                  )}
+
+                  <SelectSheetController
+                    onOpenAnimationComplete={scrollToSelectedItem}
+                    shouldRunOpenAnimationComplete={initialScrollY != null}
+                  >
+                    <SelectAdapt
+                      when={resolvedSelectAdaptWhen}
+                      platform={resolvedSelectAdaptPlatform}
+                    >
+                      {selectBehavior.shouldUseCustomSheet ? (
+                        <SelectCustomSheet
+                          initialScrollY={initialScrollY}
+                          sheetScrollRef={sheetScrollRef}
+                          shouldUseTouchSheetLayout={shouldUseTouchSheetLayout}
+                          touchSheetConfig={touchSheetConfig}
+                        />
+                      ) : selectBehavior.shouldUseNativeSheet ? (
+                        <SelectNativeSheet
+                          initialScrollY={initialScrollY}
+                          sheetScrollRef={sheetScrollRef}
+                          shouldUseTouchSheetLayout={shouldUseTouchSheetLayout}
+                          touchSheetConfig={touchSheetConfig}
+                        />
+                      ) : (
+                        <Sheet
+                          modal
+                          dismissOnSnapToBottom
+                          snapPoints={touchSheetConfig.snapPoints}
+                          snapPointsMode={touchSheetConfig.snapPointsMode}
+                          transitionConfig={{ type: "timing", duration: 150 }}
+                        >
+                          <SelectSheetFrame
+                            initialScrollY={initialScrollY}
+                            sheetScrollRef={sheetScrollRef}
+                            shouldUseTouchSheetLayout={shouldUseTouchSheetLayout}
+                            touchSheetConfig={touchSheetConfig}
+                          />
+                          <Sheet.Overlay
+                            bg="$shadowColor"
+                            transition="lazy"
+                            enterStyle={{ opacity: 0 }}
+                            exitStyle={{ opacity: 0 }}
+                          />
+                        </Sheet>
+                      )}
+                    </SelectAdapt>
+
+                    <SelectContent {...contentProps}>
+                      {!shouldUseTouchSheetLayout && (
+                        <SelectScrollUpButton
+                          items="center"
+                          justify="center"
+                          position="relative"
+                          width="100%"
+                          height="$3"
+                        />
+                      )}
+                      <SelectViewport
+                        bg="$background"
+                        rounded="$4"
+                        borderWidth={1}
+                        borderColor="$borderColor"
+                        {...viewportProps}
+                        style={
+                          shouldUseIosNativeSheetList
+                            ? [{ flex: 1, minHeight: 0, width: "100%" }, viewportProps?.style]
+                            : viewportProps?.style
+                        }
+                      >
+                        {shouldUseIosNativeSheetList ? (
+                          <IosNativeSheetSelectList
+                            initialScrollTarget={selectedNativeListInitialScrollTarget}
+                            itemGroups={resolvedItemGroups}
+                            itemLabel={itemLabel}
+                            nativeHaptics={resolvedNativeHaptics}
+                            value={props.value ?? null}
+                          />
+                        ) : (
+                          renderedItemGroups.map(renderGroup)
+                        )}
+                        {isWeb() && selectBehavior.tamaguiNative && !nativeTrigger && (
+                          <YStack
+                            position="absolute"
+                            r={0}
+                            t={16}
+                            items="center"
+                            justify="center"
+                            width={"$4"}
+                            pointerEvents="none"
+                          >
+                            <ChevronDown
+                              size={getFontSize((props.size as FontSizeTokens) ?? "$true")}
+                            />
+                          </YStack>
+                        )}
+                      </SelectViewport>
+                      {!shouldUseTouchSheetLayout && (
+                        <SelectScrollDownButton
+                          items="center"
+                          justify="center"
+                          position="relative"
+                          width="100%"
+                          height="$3"
+                        />
+                      )}
+                    </SelectContent>
+                  </SelectSheetController>
+                </>
+              ))}
+          </TamaguiSelect>
+        )}
+
+        {shouldRenderNativePicker && children != null ? nativePickerDialog : null}
+      </>
+    );
+  },
+);
+
+SelectRoot.displayName = "Select";
+
+export const Select = Object.assign(SelectRoot, {
+  Adapt: SelectAdapt,
+  Content: SelectContent,
+  Group: SelectGroup,
+  Icon: SelectIcon,
+  Item: SelectItem,
+  ItemIndicator: SelectItemIndicator,
+  ItemText: SelectItemText,
+  Label: SelectLabel,
+  ScrollDownButton: SelectScrollDownButton,
+  ScrollUpButton: SelectScrollUpButton,
+  Trigger: SelectTrigger,
+  Value: SelectValue,
+  Viewport: SelectViewport,
+  Indicator: SelectIndicator,
+  FocusScope: SelectFocusScope,
+  /** 可独立点击的 native trigger。 */
+  NativeTrigger: NativeTriggerPressable,
+  /** `NativeTrigger` 的兼容别名。 */
+  NativeTriggerPressable,
+});
