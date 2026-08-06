@@ -1,6 +1,6 @@
 import { Children, type ReactNode, isValidElement, useState } from "react";
 import { StyleSheet } from "react-native";
-import { SizableText, Menu as TamaguiMenu, YStack, useTheme } from "tamagui";
+import { SizableText, Menu as TamaguiMenu, YStack } from "tamagui";
 
 import { isWeb, os } from "../utils/platform";
 import { resolveAriaLabel, triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
@@ -101,9 +101,6 @@ function MenuRoot(props: MenuProps) {
       (resolvedNativeTriggerLabel != null || nativeTriggerContent != null));
   const hasDefaultStructure = shouldRenderTrigger || items != null || arrow != null;
   const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics);
-  const theme = useTheme();
-  const resolvedNativeSelectedItemBackgroundColor =
-    nativeSelectedItemBackgroundColor ?? theme.color3?.val;
   const ios = os() === "ios";
   const isNativeTriggerActive = ios ? (rootProps.open ?? uncontrolledWillOpen) : isOpen;
   const handleOpenChange: NonNullable<MenuProps["onOpenChange"]> = (nextOpen) => {
@@ -140,7 +137,9 @@ function MenuRoot(props: MenuProps) {
           ? ({ anchorAlignment: nativeAnchorAlignment } as any)
           : undefined)}
         {...({ isAnchoredToRight: nativeAnchorAlignment === "end" } as any)}
-        {...({ selectedItemBackgroundColor: resolvedNativeSelectedItemBackgroundColor } as any)}
+        {...(nativeSelectedItemBackgroundColor != null
+          ? ({ selectedItemBackgroundColor: nativeSelectedItemBackgroundColor } as any)
+          : undefined)}
         {...iosOpenWillChangeProps}
         offset={offset ?? 8}
         onOpenChange={handleOpenChange}
@@ -157,7 +156,9 @@ function MenuRoot(props: MenuProps) {
         ? ({ anchorAlignment: nativeAnchorAlignment } as any)
         : undefined)}
       {...({ isAnchoredToRight: nativeAnchorAlignment === "end" } as any)}
-      {...({ selectedItemBackgroundColor: resolvedNativeSelectedItemBackgroundColor } as any)}
+      {...(nativeSelectedItemBackgroundColor != null
+        ? ({ selectedItemBackgroundColor: nativeSelectedItemBackgroundColor } as any)
+        : undefined)}
       {...iosOpenWillChangeProps}
       offset={offset ?? 8}
       onOpenChange={handleOpenChange}

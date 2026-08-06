@@ -1,5 +1,5 @@
-# - 将 Android framework PopupMenu 替换为 AppCompat PopupMenu，以便修正菜单在 trigger
-#   上方或下方弹出时的位置和动画方向。
+# - Select 使用 AppCompat PopupMenu，以便修正菜单在 trigger 上方或下方弹出时的位置和
+#   动画方向；普通 Menu 保留 framework PopupMenu 的原生勾选和二级标题样式。
 # - 在原生实现、codegen、JavaScript 类型和颜色处理链路中增加 start/center/end 锚点对齐
 #   以及选中行背景色属性。
 # - ListView 复用行视图时重新应用选中样式，打开菜单时将选中项滚动到附近，并保护延迟布局
@@ -10,7 +10,7 @@ diff --git a/android/src/main/java/com/reactnativemenu/MenuView.kt b/android/src
 index c45f5cc..0000000 100644
 --- a/android/src/main/java/com/reactnativemenu/MenuView.kt
 +++ b/android/src/main/java/com/reactnativemenu/MenuView.kt
-@@ -1,320 +1,581 @@
+@@ -1,320 +1,649 @@
 -package com.reactnativemenu
 -
 -import android.content.res.ColorStateList
@@ -347,6 +347,7 @@ index c45f5cc..0000000 100644
 +import android.text.style.LineBackgroundSpan
 +import android.view.*
 +import android.widget.ListView
++import android.widget.PopupMenu as FrameworkPopupMenu
 +import androidx.appcompat.widget.PopupMenu
 +import com.facebook.react.bridge.*
 +import com.facebook.react.uimanager.UIManagerHelper
@@ -360,6 +361,8 @@ index c45f5cc..0000000 100644
 +  private var mIsAnchoredToRight = false
 +  private var mAnchorAlignment = "start"
 +  private val mPopupMenu: PopupMenu = PopupMenu(context, this)
++  private val mFrameworkPopupMenu: FrameworkPopupMenu = FrameworkPopupMenu(context, this)
++  private var mIsUsingFrameworkPopupMenu = false
 +  private var mIsMenuDisplayed = false
 +  private var mIsOnLongPress = false
 +  private val mSelectedActionOrders = mutableSetOf<Int>()
@@ -423,7 +426,11 @@ index c45f5cc..0000000 100644
 +    super.onDetachedFromWindow()
 +    detachPopupScrollObserver()
 +    if (mIsMenuDisplayed) {
-+      mPopupMenu.dismiss()
++      if (mIsUsingFrameworkPopupMenu) {
++        mFrameworkPopupMenu.dismiss()
++      } else {
++        mPopupMenu.dismiss()
++      }
 +    }
 +  }
 +
@@ -586,6 +593,14 @@ index c45f5cc..0000000 100644
 +
 +  private fun prepareMenu() {
 +    if (getActionsCount > 0) {
++      // Custom row backgrounds require access to AppCompat's popup ListView. Ordinary Menu
++      // instances must keep using the framework PopupMenu so OEM checkbox and submenu-header
++      // presentation is preserved.
++      if (mSelectedItemBackgroundColor == null && mAnchorAlignment != "center") {
++        prepareFrameworkMenu()
++        return
++      }
++      mIsUsingFrameworkPopupMenu = false
 +      mPopupMenu.menu.clear()
 +      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 +        mPopupMenu.gravity = when (mIsAnchoredToRight) {
@@ -639,6 +654,59 @@ index c45f5cc..0000000 100644
 +      mPopupMenu.show()
 +      applyPopupPresentation()
 +    }
++  }
++
++  private fun prepareFrameworkMenu() {
++    mIsUsingFrameworkPopupMenu = true
++    mFrameworkPopupMenu.menu.clear()
++    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
++      mFrameworkPopupMenu.gravity = when (mIsAnchoredToRight) {
++        true -> Gravity.RIGHT
++        false -> Gravity.LEFT
++      }
++    }
++    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
++      mFrameworkPopupMenu.setForceShowIcon(true)
++    }
++    var i = 0
++    while (i < getActionsCount) {
++      if (!mActions.isNull(i)) {
++        val item = mActions.getMap(i)
++        val menuItem = when (item != null && item.hasKey("subactions") && !item.isNull("subactions")) {
++          true -> mFrameworkPopupMenu.menu.addSubMenu(Menu.NONE, Menu.NONE, i, item.getString("title")).item
++          else -> mFrameworkPopupMenu.menu.add(Menu.NONE, Menu.NONE, i, item?.getString("title"))
++        }
++        prepareMenuItem(menuItem, item)
++        menuItem.setOnMenuItemClickListener {
++          if (!it.hasSubMenu()) {
++            mIsMenuDisplayed = false
++            if (!mActions.isNull(it.order)) {
++              val selectedItem = mActions.getMap(it.order)
++              val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(mContext, id)
++              val surfaceId: Int = UIManagerHelper.getSurfaceId(this)
++              dispatcher?.dispatchEvent(
++                MenuOnPressActionEvent(surfaceId, id, selectedItem?.getString("id"), id)
++              )
++            }
++            true
++          } else {
++            false
++          }
++        }
++      }
++      i++
++    }
++    mFrameworkPopupMenu.setOnDismissListener {
++      mIsMenuDisplayed = false
++      val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(mContext, id)
++      val surfaceId: Int = UIManagerHelper.getSurfaceId(this)
++      dispatcher?.dispatchEvent(MenuOnCloseEvent(surfaceId, id, id))
++    }
++    mIsMenuDisplayed = true
++    val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(mContext, id)
++    val surfaceId: Int = UIManagerHelper.getSurfaceId(this)
++    dispatcher?.dispatchEvent(MenuOnOpenEvent(surfaceId, id, id))
++    mFrameworkPopupMenu.show()
 +  }
 +
 +  private data class PopupPresentation(
@@ -740,7 +808,7 @@ index c45f5cc..0000000 100644
 +    if (!mIsMenuDisplayed) {
 +      return
 +    }
-+    val selectedBackgroundColor = mSelectedItemBackgroundColor ?: Color.argb(24, 0, 0, 0)
++    val selectedBackgroundColor = mSelectedItemBackgroundColor ?: return
 +    for (childIndex in 0 until listView.childCount) {
 +      val row = listView.getChildAt(childIndex)
 +      if (!mOriginalItemBackgrounds.containsKey(row)) {
