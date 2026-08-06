@@ -56,6 +56,17 @@ const nativeMenuProps = {
   nativeTrigger: true,
   nativeTriggerIcon: "chevrons-up-down",
   nativeTriggerLabel: "菜单操作",
+  items: [
+    {
+      label: "更多操作",
+      subMenu: [
+        { label: "编辑", value: "edit" },
+        { label: "分隔线", separator: true, value: "nested-separator" },
+        { destructive: true, label: "删除", value: "delete" },
+      ],
+      value: "more",
+    },
+  ],
 } satisfies MenuProps;
 
 const nativeTriggerProps = {

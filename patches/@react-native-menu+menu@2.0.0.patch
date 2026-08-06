@@ -10,7 +10,7 @@ diff --git a/android/src/main/java/com/reactnativemenu/MenuView.kt b/android/src
 index c45f5cc..0000000 100644
 --- a/android/src/main/java/com/reactnativemenu/MenuView.kt
 +++ b/android/src/main/java/com/reactnativemenu/MenuView.kt
-@@ -1,320 +1,649 @@
+@@ -1,320 +1,686 @@
 -package com.reactnativemenu
 -
 -import android.content.res.ColorStateList
@@ -345,6 +345,8 @@ index c45f5cc..0000000 100644
 +import android.text.SpannableStringBuilder
 +import android.text.style.ForegroundColorSpan
 +import android.text.style.LineBackgroundSpan
++import android.text.style.TextAppearanceSpan
++import android.util.TypedValue
 +import android.view.*
 +import android.widget.ListView
 +import android.widget.PopupMenu as FrameworkPopupMenu
@@ -359,7 +361,7 @@ index c45f5cc..0000000 100644
 +class MenuView(private val mContext: ReactContext) : ReactViewGroup(mContext) {
 +  private lateinit var mActions: ReadableArray
 +  private var mIsAnchoredToRight = false
-+  private var mAnchorAlignment = "start"
++  private var mAnchorAlignment = "center"
 +  private val mPopupMenu: PopupMenu = PopupMenu(context, this)
 +  private val mFrameworkPopupMenu: FrameworkPopupMenu = FrameworkPopupMenu(context, this)
 +  private var mIsUsingFrameworkPopupMenu = false
@@ -447,7 +449,7 @@ index c45f5cc..0000000 100644
 +  fun setAnchorAlignment(anchorAlignment: String?) {
 +    mAnchorAlignment = when (anchorAlignment) {
 +      "center", "end", "start" -> anchorAlignment
-+      else -> "start"
++      else -> "center"
 +    }
 +  }
 +
@@ -593,9 +595,8 @@ index c45f5cc..0000000 100644
 +
 +  private fun prepareMenu() {
 +    if (getActionsCount > 0) {
-+      // Custom row backgrounds require access to AppCompat's popup ListView. Ordinary Menu
-+      // instances must keep using the framework PopupMenu so OEM checkbox and submenu-header
-+      // presentation is preserved.
++      // Custom row backgrounds and reliable center alignment require AppCompat's popup ListView.
++      // Start/end ordinary menus can retain the framework PopupMenu presentation.
 +      if (mSelectedItemBackgroundColor == null && mAnchorAlignment != "center") {
 +        prepareFrameworkMenu()
 +        return
@@ -603,9 +604,10 @@ index c45f5cc..0000000 100644
 +      mIsUsingFrameworkPopupMenu = false
 +      mPopupMenu.menu.clear()
 +      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-+        mPopupMenu.gravity = when (mIsAnchoredToRight) {
-+          true -> Gravity.RIGHT
-+          false -> Gravity.LEFT
++        mPopupMenu.gravity = when {
++          mAnchorAlignment == "end" || mIsAnchoredToRight -> Gravity.RIGHT
++          mAnchorAlignment == "center" -> Gravity.CENTER_HORIZONTAL
++          else -> Gravity.LEFT
 +        }
 +      }
 +      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -634,6 +636,11 @@ index c45f5cc..0000000 100644
 +              }
 +              true
 +            } else {
++              // Change the title only after the submenu trigger is clicked: AppCompat copies this
++              // CharSequence into its header, while the trigger row keeps its ordinary item color.
++              resolveFrameworkPopupMenuHeaderColor()?.let { color ->
++                it.title = getMenuItemTextWithColor(it.title.toString(), color)
++              }
 +              false
 +            }
 +          }
@@ -874,13 +881,15 @@ index c45f5cc..0000000 100644
 +    mSelectedActionOrders.clear()
 +    mPopupLayoutListenerAttached = false
 +    mSelectedItemScrollApplied = false
-+    for (index in 0 until mPopupMenu.menu.size()) {
-+      val menuItem = mPopupMenu.menu.getItem(index)
-+      if (menuItem.isChecked) {
-+        mSelectedActionOrders.add(menuItem.order)
++    if (mSelectedItemBackgroundColor != null) {
++      for (index in 0 until mPopupMenu.menu.size()) {
++        val menuItem = mPopupMenu.menu.getItem(index)
++        if (menuItem.isChecked) {
++          mSelectedActionOrders.add(menuItem.order)
++        }
++        menuItem.isCheckable = false
++        menuItem.isChecked = false
 +      }
-+      menuItem.isCheckable = false
-+      menuItem.isChecked = false
 +    }
 +    longArrayOf(0L, 16L, 48L, 96L, 160L, 240L).forEach { delay ->
 +      postDelayed({
@@ -978,6 +987,34 @@ index c45f5cc..0000000 100644
 +    textWithColor.setSpan(ForegroundColorSpan(color),
 +      0, text.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
 +    return textWithColor
++  }
++
++  private fun resolveThemeColor(attribute: Int): Int? {
++    val typedValue = TypedValue()
++    if (!context.theme.resolveAttribute(attribute, typedValue, true)) {
++      return null
++    }
++    return when (typedValue.resourceId) {
++      0 -> typedValue.data
++      else -> context.getColor(typedValue.resourceId)
++    }
++  }
++
++  private fun resolveFrameworkPopupMenuHeaderColor(): Int? {
++    val typedValue = TypedValue()
++    if (!context.theme.resolveAttribute(
++        android.R.attr.textAppearancePopupMenuHeader,
++        typedValue,
++        true,
++      ) || typedValue.resourceId == 0) {
++      return resolveThemeColor(android.R.attr.textColorPrimary)
++    }
++    val textColors = TextAppearanceSpan(context, typedValue.resourceId).textColor
++      ?: return resolveThemeColor(android.R.attr.textColorPrimary)
++    return textColors.getColorForState(
++      intArrayOf(-android.R.attr.state_enabled),
++      textColors.defaultColor,
++    )
 +  }
 +}
 diff --git a/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt b/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt

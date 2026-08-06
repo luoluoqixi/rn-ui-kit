@@ -16,6 +16,11 @@ export interface MenuItemData {
   separator?: boolean;
   /** 原生 Menu 中标识当前项；Android 会应用选中状态。 */
   selected?: boolean;
+  /**
+   * 子菜单条目。存在非空数组时，当前项会作为子菜单入口。
+   * Android 原生 Menu 仅支持一级子菜单。
+   */
+  subMenu?: MenuItemData[];
   textValue?: string;
   value: string;
 }
@@ -27,7 +32,7 @@ export interface MenuProps extends ComponentProps<typeof TamaguiMenu> {
   itemProps?: Omit<MenuItemProps, "children" | "onPress" | "onSelect">;
   items?: MenuItemData[];
   nativeHaptics?: NativeHapticsSetting;
-  /** Android 原生 Menu 相对 trigger 的水平锚点对齐方式。 */
+  /** Android 原生 Menu 相对 trigger 的水平锚点对齐方式，默认 `center`。 */
   nativeAnchorAlignment?: "start" | "center" | "end";
   /** Android 原生 Menu 中已选项的自定义背景色。未传时保留平台原生选中样式。 */
   nativeSelectedItemBackgroundColor?: ColorValue;

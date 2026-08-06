@@ -133,8 +133,22 @@ function MenuExample() {
           trigger={<Button variant="outlined">打开 Menu</Button>}
           items={[
             { label: "新建文件", onSelect: () => setAction("新建文件"), value: "new" },
-            { label: "打开设置", onSelect: () => setAction("打开设置"), value: "settings" },
-            { label: "导出快照", onSelect: () => setAction("导出快照"), value: "export" },
+            {
+              label: "更多操作",
+              subMenu: [
+                {
+                  label: "打开设置",
+                  onSelect: () => setAction("打开设置"),
+                  value: "settings",
+                },
+                {
+                  label: "导出快照",
+                  onSelect: () => setAction("导出快照"),
+                  value: "export",
+                },
+              ],
+              value: "more",
+            },
             { label: "separator", separator: true, value: "separator" },
             {
               destructive: true,
@@ -150,8 +164,22 @@ function MenuExample() {
           nativeTriggerLabel="打开Menu"
           items={[
             { label: "新建文件", onSelect: () => setAction("新建文件"), value: "new" },
-            { label: "打开设置", onSelect: () => setAction("打开设置"), value: "settings" },
-            { label: "导出快照", onSelect: () => setAction("导出快照"), value: "export" },
+            {
+              label: "更多操作",
+              subMenu: [
+                {
+                  label: "打开设置",
+                  onSelect: () => setAction("打开设置"),
+                  value: "settings",
+                },
+                {
+                  label: "导出快照",
+                  onSelect: () => setAction("导出快照"),
+                  value: "export",
+                },
+              ],
+              value: "more",
+            },
             { label: "separator", separator: true, value: "separator" },
             {
               destructive: true,

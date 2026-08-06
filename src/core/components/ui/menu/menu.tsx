@@ -11,6 +11,7 @@ import type {
   MenuCheckboxItemProps,
   MenuContentProps,
   MenuGroupProps,
+  MenuItemData,
   MenuItemIconProps,
   MenuItemIndicatorProps,
   MenuItemProps,
@@ -92,6 +93,7 @@ function MenuRoot(props: MenuProps) {
     ...rootProps
   } = props;
   const resolvedNativeTriggerLabel = nativeTriggerLabel ?? trigger;
+  const resolvedNativeAnchorAlignment = nativeAnchorAlignment ?? "center";
   const [uncontrolledOpen, setUncontrolledOpen] = useState(Boolean(rootProps.defaultOpen));
   const [uncontrolledWillOpen, setUncontrolledWillOpen] = useState(Boolean(rootProps.defaultOpen));
   const isOpen = rootProps.open ?? uncontrolledOpen;
@@ -127,16 +129,67 @@ function MenuRoot(props: MenuProps) {
 
   // Menu 在 native 上浮动定位后视觉顺序反转，统一反转 children / items
   const resolvedChildren = Children.toArray(children).reverse();
-  const resolvedItems = ios && items ? [...items].reverse() : items;
+  const renderItems = (menuItems: MenuItemData[], depth = 0): ReactNode => {
+    const resolvedMenuItems = ios ? [...menuItems].reverse() : menuItems;
+
+    return resolvedMenuItems.map((item) => {
+      if (item.separator) {
+        return <MenuSeparator key={item.value} />;
+      }
+
+      const label = item.label ?? item.value;
+      const textValue = item.textValue ?? getMenuItemTextValue(label, item.value);
+      const accessibilityLabel = resolveAriaLabel(
+        item["aria-label"] ?? itemProps?.["aria-label"],
+        label,
+      );
+
+      if (item.subMenu?.length) {
+        return (
+          <MenuSub key={item.value}>
+            <MenuSubTrigger
+              {...(itemProps as MenuSubTriggerProps)}
+              aria-label={accessibilityLabel}
+              destructive={item.destructive ?? itemProps?.destructive}
+              disabled={item.disabled ?? itemProps?.disabled}
+              textValue={textValue}
+            >
+              <MenuItemTitle>{label}</MenuItemTitle>
+              {item.indicator}
+            </MenuSubTrigger>
+            <MenuPortal zIndex={200 + depth}>
+              <MenuSubContent>{renderItems(item.subMenu, depth + 1)}</MenuSubContent>
+            </MenuPortal>
+          </MenuSub>
+        );
+      }
+
+      return (
+        <MenuItem
+          {...itemProps}
+          aria-label={accessibilityLabel}
+          destructive={item.destructive ?? itemProps?.destructive}
+          disabled={item.disabled ?? itemProps?.disabled}
+          key={item.value}
+          onSelect={item.onSelect ?? item.onPress}
+          {...({ selected: item.selected } as any)}
+          textValue={textValue}
+        >
+          <MenuItemTitle>{label}</MenuItemTitle>
+          {item.indicator != null ? (
+            <MenuItemIndicator>{item.indicator}</MenuItemIndicator>
+          ) : null}
+        </MenuItem>
+      );
+    });
+  };
 
   if (!hasDefaultStructure) {
     return (
       <TamaguiMenu
         {...rootProps}
-        {...(nativeAnchorAlignment != null
-          ? ({ anchorAlignment: nativeAnchorAlignment } as any)
-          : undefined)}
-        {...({ isAnchoredToRight: nativeAnchorAlignment === "end" } as any)}
+        {...({ anchorAlignment: resolvedNativeAnchorAlignment } as any)}
+        {...({ isAnchoredToRight: resolvedNativeAnchorAlignment === "end" } as any)}
         {...(nativeSelectedItemBackgroundColor != null
           ? ({ selectedItemBackgroundColor: nativeSelectedItemBackgroundColor } as any)
           : undefined)}
@@ -152,10 +205,8 @@ function MenuRoot(props: MenuProps) {
   return (
     <TamaguiMenu
       {...rootProps}
-      {...(nativeAnchorAlignment != null
-        ? ({ anchorAlignment: nativeAnchorAlignment } as any)
-        : undefined)}
-      {...({ isAnchoredToRight: nativeAnchorAlignment === "end" } as any)}
+      {...({ anchorAlignment: resolvedNativeAnchorAlignment } as any)}
+      {...({ isAnchoredToRight: resolvedNativeAnchorAlignment === "end" } as any)}
       {...(nativeSelectedItemBackgroundColor != null
         ? ({ selectedItemBackgroundColor: nativeSelectedItemBackgroundColor } as any)
         : undefined)}
@@ -184,34 +235,7 @@ function MenuRoot(props: MenuProps) {
         <MenuContent {...contentProps}>
           {arrow ? <MenuArrow {...arrowProps} /> : null}
           <MenuScrollView>
-            {resolvedItems?.map((item) => {
-              if (item.separator) {
-                return <MenuSeparator key={item.value} />;
-              }
-
-              const label = item.label ?? item.value;
-
-              return (
-                <MenuItem
-                  {...itemProps}
-                  aria-label={resolveAriaLabel(
-                    item["aria-label"] ?? itemProps?.["aria-label"],
-                    label,
-                  )}
-                  destructive={item.destructive ?? itemProps?.destructive}
-                  disabled={item.disabled ?? itemProps?.disabled}
-                  key={item.value}
-                  onSelect={item.onSelect ?? item.onPress}
-                  {...({ selected: item.selected } as any)}
-                  textValue={item.textValue ?? getMenuItemTextValue(label, item.value)}
-                >
-                  <MenuItemTitle>{label}</MenuItemTitle>
-                  {item.indicator != null ? (
-                    <MenuItemIndicator>{item.indicator}</MenuItemIndicator>
-                  ) : null}
-                </MenuItem>
-              );
-            })}
+            {items ? renderItems(items) : null}
             {resolvedChildren}
           </MenuScrollView>
         </MenuContent>
