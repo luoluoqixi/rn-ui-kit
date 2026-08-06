@@ -10,6 +10,8 @@ import {
   RefreshCw,
   SlidersHorizontal,
   Smartphone,
+  Square,
+  SquareCheckBig,
   Timer,
   Users,
 } from "@tamagui/lucide-icons-2";
@@ -62,6 +64,7 @@ const NATIVE_LIST_SORT_LIST: SelectItemData[] = [
 
 function NativeListExample() {
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
+  const [customEditModeIcon, setCustomEditModeIcon] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [native, setNative] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Array<string | number>>([]);
@@ -111,10 +114,22 @@ function NativeListExample() {
             }
           }}
         />
+        <Switch
+          checked={customEditModeIcon}
+          label="自定义编辑模式图标"
+          labelPosition="end"
+          onCheckedChange={setCustomEditModeIcon}
+        />
         <View style={styles.nativeListFrame}>
           {native || fallbackMounted ? (
             <NativeList
               editMode={editMode}
+              editModeIcon={
+                customEditModeIcon ? <Square color="$color10" size={24} /> : undefined
+              }
+              editModeSelectedIcon={
+                customEditModeIcon ? <SquareCheckBig color="$color10" size={24} /> : undefined
+              }
               fixesIOS26NestedScrollIndicatorSafeArea
               key={native ? "native-list" : "fallback-list"}
               native={native}
@@ -382,9 +397,10 @@ function NativeListExample() {
           ) : null}
         </View>
         <Text opacity={0.6}>
-          编辑模式：{editMode ? `已选 ${selectedIds.length} 项` : "关闭"} · 最近动作：
-          {lastAction} · 自动同步：{autoSyncEnabled ? "开启" : "关闭"} · 主题：
-          {theme ?? "未选择"} · 频率：{syncInterval ?? "未选择"} · 备份：{backupInterval} · 名称：
+          编辑模式：{editMode ? `已选 ${selectedIds.length} 项` : "关闭"} · 编辑图标：
+          {customEditModeIcon ? "自定义" : "默认"} · 最近动作：{lastAction} · 自动同步：
+          {autoSyncEnabled ? "开启" : "关闭"} · 主题：{theme ?? "未选择"} · 频率：
+          {syncInterval ?? "未选择"} · 备份：{backupInterval} · 名称：
           {workspaceName || "未填写"} · 备注：{workspaceNote || "未填写"}
         </Text>
       </ExampleBlock>

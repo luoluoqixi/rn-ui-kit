@@ -169,11 +169,7 @@ function resolveTextAreaHeight(textAreaProps: NativeListTextAreaItemProps["textA
   );
 }
 
-function resolveEditingInputDisplay(
-  value: unknown,
-  defaultValue: unknown,
-  placeholder: unknown,
-) {
+function resolveEditingInputDisplay(value: unknown, defaultValue: unknown, placeholder: unknown) {
   const inputValue = value ?? defaultValue;
   const text =
     typeof inputValue === "string" || typeof inputValue === "number" ? String(inputValue) : "";
@@ -272,6 +268,7 @@ function NativeRowLabel({
   titleColor,
   titleFontSize,
   titleLineLimit,
+  layoutPriorityValue = 1,
   preserveLeadingAnchor = false,
 }: {
   subtitle?: ReactNode;
@@ -283,6 +280,7 @@ function NativeRowLabel({
   titleColor?: boolean | string | null;
   titleFontSize?: number;
   titleLineLimit?: number;
+  layoutPriorityValue?: number;
   preserveLeadingAnchor?: boolean;
 }) {
   const theme = useTheme();
@@ -336,7 +334,10 @@ function NativeRowLabel({
     return (
       <ZStack
         alignment="center"
-        modifiers={[layoutPriority(1), ...(expand ? [frame({ maxWidth: 99999 })] : [])]}
+        modifiers={[
+          layoutPriority(layoutPriorityValue),
+          ...(expand ? [frame({ maxWidth: 99999 })] : []),
+        ]}
       >
         <VStack
           alignment="leading"
@@ -365,7 +366,7 @@ function NativeRowLabel({
     );
   }
 
-  return <VStack modifiers={[layoutPriority(1)]}>{labelContent}</VStack>;
+  return <VStack modifiers={[layoutPriority(layoutPriorityValue)]}>{labelContent}</VStack>;
 }
 
 function NativeRowContainer({
@@ -399,9 +400,8 @@ function NativeRowContainer({
   const restoresIos15TopCorners = useContext(Ios15FirstVisibleRowContext);
   const primaryColor = toSwiftUIHexColor(theme.color.val) ?? theme.color.val;
   const selectedBackgroundColor =
-    toSwiftUIHexColor(
-      theme.color5?.val ?? theme.backgroundPress?.val ?? theme.background?.val,
-    ) ?? theme.color5?.val;
+    toSwiftUIHexColor(theme.color5?.val ?? theme.backgroundPress?.val ?? theme.background?.val) ??
+    theme.color5?.val;
   const resolvedTint = resolveNativeListBtnTintColor(btnTint, primaryColor);
   const baseModifiers = [
     ROW_INSETS,
@@ -486,12 +486,8 @@ function NativeRowContainer({
 
 function NativeEditingIndicator({ selected }: { selected: boolean }) {
   const theme = useTheme();
-  const {
-    editModeIcon,
-    editModeSelectedIcon,
-    editModeSelectedSfSymbol,
-    editModeSfSymbol,
-  } = useNativeListEditIcons();
+  const { editModeIcon, editModeSelectedIcon, editModeSelectedSfSymbol, editModeSfSymbol } =
+    useNativeListEditIcons();
   const customIcon = selected ? editModeSelectedIcon : editModeIcon;
   const configuredSfSymbol = selected ? editModeSelectedSfSymbol : editModeSfSymbol;
   const accentColor =
@@ -643,6 +639,7 @@ function NativePressRow({
   titleLineLimit,
   trailingControl,
   overlayTrailingControlOnValueSymbol = false,
+  preserveValueWidth = false,
   value,
   valueColor,
   valueFontSize,
@@ -655,6 +652,7 @@ function NativePressRow({
 }: NativeListItemBaseProps & {
   trailingControl?: ReactNode;
   overlayTrailingControlOnValueSymbol?: boolean;
+  preserveValueWidth?: boolean;
   btnStyle?: SwiftUIButtonStyle;
   preserveLeadingAnchor?: boolean;
   rowAlignment?: "center" | "top";
@@ -736,19 +734,28 @@ function NativePressRow({
         titleColor={titleColor ?? btnTint}
         titleFontSize={titleFontSize}
         titleLineLimit={titleLineLimit}
+        layoutPriorityValue={preserveValueWidth ? 0 : 1}
         preserveLeadingAnchor={preserveLeadingAnchor}
       />
       {showTrailingSpacer ? <Spacer key="trailing-spacer" minLength={12} /> : null}
       {valueText != null ? (
         <SwiftText
           key="row-value"
-          modifiers={[...valueModifiers(valueFontSize), foregroundStyle(resolvedValueColor)]}
+          modifiers={[
+            ...valueModifiers(valueFontSize),
+            foregroundStyle(resolvedValueColor),
+            ...(preserveValueWidth ? [layoutPriority(2)] : []),
+          ]}
         >
           {valueText}
         </SwiftText>
       ) : null}
       {valueSfSymbol != null ? (
-        <ZStack key="row-value-symbol" alignment="center">
+        <ZStack
+          key="row-value-symbol"
+          alignment="center"
+          modifiers={preserveValueWidth ? [layoutPriority(2)] : undefined}
+        >
           <Image color={resolvedValueColor} size={13} systemName={valueSfSymbol} />
           {overlayTrailingControlOnValueSymbol && trailingControl != null ? (
             <Fragment key="trailing-control-overlay">{trailingControl}</Fragment>
@@ -880,61 +887,44 @@ function NativeListRoot({
       <NativeListContext.Provider value={{ native: true }}>
         <Host style={[styles.nativeRoot, style]}>
           <List
-          // Native-stack 已将普通页面放在 header 下方，UIKit 再自动避让会让 indicator 重复下移。
-          // TrueSheet 仍需要系统根据 Sheet viewport 处理 indicator，因此保持开启。
-          automaticallyAdjustsScrollIndicatorInsets={
-            manuallyAdjustNormalPageIndicator ? false : automaticallyAdjustsScrollIndicatorInsets
-          }
-          contentInsetAdjustmentBehavior={resolvedContentInsetAdjustmentBehavior}
-          tracksNavigationBarScrollEdge={
-            (!insideTrueSheet || trueSheetPresentationActive) &&
-            (tracksNavigationBarScrollEdge ??
-              (!insideTrueSheet && resolvedContentInsetAdjustmentBehavior === "automatic"))
-          }
-          // 只有页面级根列表才需要按 TrueSheet 的可见 viewport 裁剪；
-          // 内嵌列表保留自身完整高度，由外层 ScrollView 决定何时进入可见区域。
-          compensatesForViewportClipping={compensatesForTrueSheetViewportClipping}
-          correctsNestedScrollIndicatorFrame={
-            isIos26Plus() && fixesIOS26NestedScrollIndicatorSafeArea === true
-          }
-          initialScrollAnchor="center"
-          initialScrollTarget={initialScrollTarget}
-          modifiers={[
-            listStyle("insetGrouped"),
-            listSectionSpacing("compact"),
-            /**
-             * iOS 15 的 SwiftUI List 不支持 `scrollContentBackground(.hidden)`，
-             * 因此即使这里传入自定义 `backgroundColor`，系统列表内容背景仍可能覆盖它。
-             */
-            scrollContentBackground("hidden"),
-            ...(resolvedBackgroundColor != null ? [background(resolvedBackgroundColor)] : []),
-            ...(contentMarginTop != null
-              ? [
-                  contentMargins({
-                    edges: "top",
-                    length: contentMarginTop,
-                    placement: "scrollContent",
-                  }),
-                ]
-              : []),
-            ...(!insideTrueSheet && contentMarginBottom != null
-              ? [
-                  contentMargins({
-                    edges: "bottom",
-                    length: contentMarginBottom,
-                    placement: "scrollContent",
-                  }),
-                ]
-              : []),
-            ...(insideTrueSheet && bottomPadding > 0
-              ? [
-                  contentMargins({
-                    edges: "bottom",
-                    length: bottomPadding + (contentMarginBottom ?? 0),
-                    placement: "scrollContent",
-                  }),
-                ]
-              : insideTrueSheet && contentMarginBottom != null
+            // Native-stack 已将普通页面放在 header 下方，UIKit 再自动避让会让 indicator 重复下移。
+            // TrueSheet 仍需要系统根据 Sheet viewport 处理 indicator，因此保持开启。
+            automaticallyAdjustsScrollIndicatorInsets={
+              manuallyAdjustNormalPageIndicator ? false : automaticallyAdjustsScrollIndicatorInsets
+            }
+            contentInsetAdjustmentBehavior={resolvedContentInsetAdjustmentBehavior}
+            tracksNavigationBarScrollEdge={
+              (!insideTrueSheet || trueSheetPresentationActive) &&
+              (tracksNavigationBarScrollEdge ??
+                (!insideTrueSheet && resolvedContentInsetAdjustmentBehavior === "automatic"))
+            }
+            // 只有页面级根列表才需要按 TrueSheet 的可见 viewport 裁剪；
+            // 内嵌列表保留自身完整高度，由外层 ScrollView 决定何时进入可见区域。
+            compensatesForViewportClipping={compensatesForTrueSheetViewportClipping}
+            correctsNestedScrollIndicatorFrame={
+              isIos26Plus() && fixesIOS26NestedScrollIndicatorSafeArea === true
+            }
+            initialScrollAnchor="center"
+            initialScrollTarget={initialScrollTarget}
+            modifiers={[
+              listStyle("insetGrouped"),
+              listSectionSpacing("compact"),
+              /**
+               * iOS 15 的 SwiftUI List 不支持 `scrollContentBackground(.hidden)`，
+               * 因此即使这里传入自定义 `backgroundColor`，系统列表内容背景仍可能覆盖它。
+               */
+              scrollContentBackground("hidden"),
+              ...(resolvedBackgroundColor != null ? [background(resolvedBackgroundColor)] : []),
+              ...(contentMarginTop != null
+                ? [
+                    contentMargins({
+                      edges: "top",
+                      length: contentMarginTop,
+                      placement: "scrollContent",
+                    }),
+                  ]
+                : []),
+              ...(!insideTrueSheet && contentMarginBottom != null
                 ? [
                     contentMargins({
                       edges: "bottom",
@@ -943,15 +933,32 @@ function NativeListRoot({
                     }),
                   ]
                 : []),
-            ...(onRefresh != null
-              ? [
-                  refreshable(async () => {
-                    await onRefresh();
-                  }),
-                ]
-              : []),
-            scrollDisabled(!scrollable),
-          ]}
+              ...(insideTrueSheet && bottomPadding > 0
+                ? [
+                    contentMargins({
+                      edges: "bottom",
+                      length: bottomPadding + (contentMarginBottom ?? 0),
+                      placement: "scrollContent",
+                    }),
+                  ]
+                : insideTrueSheet && contentMarginBottom != null
+                  ? [
+                      contentMargins({
+                        edges: "bottom",
+                        length: contentMarginBottom,
+                        placement: "scrollContent",
+                      }),
+                    ]
+                  : []),
+              ...(onRefresh != null
+                ? [
+                    refreshable(async () => {
+                      await onRefresh();
+                    }),
+                  ]
+                : []),
+              scrollDisabled(!scrollable),
+            ]}
           >
             {children}
           </List>
@@ -1391,7 +1398,7 @@ export function NativeListSwitchItem({ switchProps, ...itemProps }: NativeListSw
   return (
     <NativePressRow
       {...itemProps}
-      nativeHaptics={itemProps.nativeHaptics ?? true}
+      nativeHaptics={itemProps.nativeHaptics ?? !editMode}
       disabled={disabled}
       onPress={() => {
         handleCheckedChange(!checked);
@@ -1469,17 +1476,13 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
             nativeDropdownEdgeOffset={selectProps.nativeDropdownEdgeOffset}
             nativeTrigger
             nativeTriggerContainerStyle={[
-              usesStableNativeValue
-                ? styles.invisibleTrailingTrigger
-                : styles.selectInlineTrigger,
+              usesStableNativeValue ? styles.invisibleTrailingTrigger : styles.selectInlineTrigger,
               disabled ? styles.disabledContent : null,
               selectProps.nativeTriggerContainerStyle,
             ]}
             nativeTriggerContent={selectProps.nativeTriggerContent}
             nativeTriggerIcon={
-              usesStableNativeValue
-                ? "none"
-                : (selectProps.nativeTriggerIcon ?? "chevrons-up-down")
+              usesStableNativeValue ? "none" : (selectProps.nativeTriggerIcon ?? "chevrons-up-down")
             }
             nativeTriggerLabel={usesStableNativeValue ? "" : nativeTriggerLabel}
             nativeTriggerLabelProps={{
@@ -1512,6 +1515,7 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
       overlayTrailingControlOnValueSymbol={
         usesStableNativeValue && selectProps.nativeTriggerIcon !== "none"
       }
+      preserveValueWidth={usesStableNativeValue}
     />
   );
 }
@@ -1547,9 +1551,7 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
             nativeHaptics={menuProps.nativeHaptics ?? itemProps.nativeHaptics ?? false}
             nativeTrigger
             nativeTriggerContainerStyle={[
-              usesStableNativeValue
-                ? styles.invisibleTrailingTrigger
-                : styles.selectInlineTrigger,
+              usesStableNativeValue ? styles.invisibleTrailingTrigger : styles.selectInlineTrigger,
               disabled ? styles.disabledContent : null,
             ]}
             nativeTriggerIcon={usesStableNativeValue ? "none" : "chevrons-up-down"}
@@ -1578,6 +1580,7 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
       }
       valueSfSymbol={usesStableNativeValue ? "chevron.up.chevron.down" : undefined}
       overlayTrailingControlOnValueSymbol={usesStableNativeValue}
+      preserveValueWidth={usesStableNativeValue}
     />
   );
 }
