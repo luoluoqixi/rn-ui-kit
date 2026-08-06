@@ -62,7 +62,9 @@ const NATIVE_LIST_SORT_LIST: SelectItemData[] = [
 
 function NativeListExample() {
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
+  const [editMode, setEditMode] = useState(false);
   const [native, setNative] = useState(true);
+  const [selectedIds, setSelectedIds] = useState<Array<string | number>>([]);
   const [fallbackMounted, setFallbackMounted] = useState(true);
   const [theme, setTheme] = useState<string | null>("system");
   const [syncInterval, setSyncInterval] = useState<string | null>("hourly");
@@ -98,19 +100,33 @@ function NativeListExample() {
             setNative(nextNative);
           }}
         />
+        <Switch
+          checked={editMode}
+          label={`备忘录式编辑模式（已选 ${selectedIds.length} 项）`}
+          labelPosition="end"
+          onCheckedChange={(nextEditMode) => {
+            setEditMode(nextEditMode);
+            if (!nextEditMode) {
+              setSelectedIds([]);
+            }
+          }}
+        />
         <View style={styles.nativeListFrame}>
           {native || fallbackMounted ? (
             <NativeList
+              editMode={editMode}
               fixesIOS26NestedScrollIndicatorSafeArea
               key={native ? "native-list" : "fallback-list"}
               native={native}
               nestedScrollEnabled
+              onSelectedIdsChange={setSelectedIds}
               onRefresh={async () => {
                 await new Promise<void>((resolve) => {
                   setTimeout(resolve, 1200);
                 });
                 setLastAction("下拉刷新完成");
               }}
+              selectedIds={selectedIds}
             >
               <NativeListSection
                 footer="输入框占满一行；iOS 聚焦编辑时会显示系统清除按钮。"
@@ -167,6 +183,7 @@ function NativeListExample() {
                   icon={<Info color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
                   sfSymbol="info.circle"
                   onPress={() => setLastAction("打开详情")}
+                  selectionId="workspace-details"
                   subtitle="带有 chevron 的导航行"
                   subtitleColor="#64748b"
                   subtitleFontSize={12}
@@ -199,6 +216,7 @@ function NativeListExample() {
                 <NativeListSwitchItem
                   icon={<RefreshCw color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
                   sfSymbol="arrow.clockwise"
+                  selectionId="auto-sync"
                   switchProps={{ checked: autoSyncEnabled, onCheckedChange: setAutoSyncEnabled }}
                   title="自动同步"
                 />
@@ -291,6 +309,7 @@ function NativeListExample() {
                     icon={<Icon color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
                     key={value}
                     onPress={() => setBackupInterval(value)}
+                    selectionId={`backup-${value}`}
                     selected={backupInterval === value}
                     sfSymbol={sfSymbol}
                     title={title}
@@ -363,7 +382,8 @@ function NativeListExample() {
           ) : null}
         </View>
         <Text opacity={0.6}>
-          最近动作：{lastAction} · 自动同步：{autoSyncEnabled ? "开启" : "关闭"} · 主题：
+          编辑模式：{editMode ? `已选 ${selectedIds.length} 项` : "关闭"} · 最近动作：
+          {lastAction} · 自动同步：{autoSyncEnabled ? "开启" : "关闭"} · 主题：
           {theme ?? "未选择"} · 频率：{syncInterval ?? "未选择"} · 备份：{backupInterval} · 名称：
           {workspaceName || "未填写"} · 备注：{workspaceNote || "未填写"}
         </Text>

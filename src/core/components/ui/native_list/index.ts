@@ -16,5 +16,7 @@ export {
 export type {
   NativeListInputItemProps,
   NativeListMenuItemProps,
+  NativeListRootProps,
+  NativeListSelectionId,
   NativeListTextAreaItemProps,
 } from "./types";

@@ -50,6 +50,12 @@ import {
   useNavigationBarScrollEdge,
   useResolvedNativeHaptics,
 } from "../utils";
+import {
+  NativeListEditModeProvider,
+  NativeListEditRowIdProvider,
+  useNativeListEditMode,
+  useNativeListEditRow,
+} from "./edit_mode";
 import type {
   NativeListActionItemProps,
   NativeListButtonItemProps,
@@ -71,6 +77,7 @@ type RowContainerProps = NativeListItemPaddingProps & {
   backgroundColor?: ViewStyle["backgroundColor"];
   children: ReactNode;
   disabled?: boolean;
+  editingSelected?: boolean;
   hoverBackgroundColor?: ViewStyle["backgroundColor"];
   nativeHaptics?: NativeListItemBaseProps["nativeHaptics"];
   onPress?: () => void;
@@ -226,6 +233,7 @@ function FallbackRowContainer({
   backgroundColor,
   children,
   disabled,
+  editingSelected,
   hoverBackgroundColor,
   nativeHaptics,
   onPress,
@@ -276,8 +284,9 @@ function FallbackRowContainer({
     theme.background?.val;
 
   const getRowBackground = (pressed = false) => ({
-    backgroundColor:
-      pressed && !disabled
+    backgroundColor: editingSelected
+      ? pressedRowBackground
+      : pressed && !disabled
         ? pressedRowBackground
         : hovered && !disabled
           ? hoveredRowBackground
@@ -326,6 +335,26 @@ function FallbackRowContainer({
         </View>
       )}
     </Pressable>
+  );
+}
+
+function FallbackEditingIndicator({ selected }: { selected: boolean }) {
+  const theme = useTheme();
+  const accentColor = theme.accent10?.val ?? theme.color10?.val ?? theme.color?.val;
+  const borderColor = theme.gray8?.val ?? theme.color7?.val ?? theme.borderColor?.val;
+
+  return (
+    <View
+      style={[
+        styles.editingIndicator,
+        {
+          backgroundColor: selected ? accentColor : "transparent",
+          borderColor: selected ? accentColor : borderColor,
+        },
+      ]}
+    >
+      {selected ? <Check color="white" size={15} strokeWidth={3} /> : null}
+    </View>
   );
 }
 
@@ -417,6 +446,7 @@ function NativeListRow({
   iconAfter,
   iconSlotWidth,
   nativeHaptics,
+  nativeScrollId,
   onPress,
   paddingBottom,
   paddingHorizontal,
@@ -426,6 +456,7 @@ function NativeListRow({
   paddingVertical,
   pressResetToken,
   pressBackgroundColor,
+  selectionId,
   selected = false,
   subtitle,
   subtitleColor,
@@ -439,6 +470,7 @@ function NativeListRow({
   valueColor,
   valueFontSize,
 }: NativeListRowProps) {
+  const editRow = useNativeListEditRow({ disabled, nativeScrollId, onPress, selectionId });
   const titleAlignment =
     titleAlign === "center" ? "center" : titleAlign === "right" ? "flex-end" : "flex-start";
   const textAlign = titleAlign === "center" ? "center" : titleAlign === "right" ? "right" : "left";
@@ -452,9 +484,10 @@ function NativeListRow({
     <FallbackRowContainer
       backgroundColor={backgroundColor}
       disabled={disabled}
+      editingSelected={editRow.editingSelected}
       hoverBackgroundColor={hoverBackgroundColor}
       nativeHaptics={nativeHaptics}
-      onPress={onPress}
+      onPress={editRow.onPress}
       paddingBottom={paddingBottom}
       paddingHorizontal={paddingHorizontal}
       paddingLeft={paddingLeft}
@@ -464,7 +497,8 @@ function NativeListRow({
       pressResetToken={pressResetToken}
       pressBackgroundColor={pressBackgroundColor}
     >
-      <View style={styles.rowContent}>
+      <View pointerEvents={editRow.editMode ? "none" : "auto"} style={styles.rowContent}>
+        {editRow.editMode ? <FallbackEditingIndicator selected={editRow.editingSelected} /> : null}
         {customIcon != null ? (
           <View
             style={[
@@ -481,10 +515,10 @@ function NativeListRow({
         </View>
         <View style={styles.iconAfterRow}>
           {valueNode}
-          {selected ? <Check color="$accent10" size={18} /> : null}
+          {!editRow.editMode && selected ? <Check color="$accent10" size={18} /> : null}
           {trailingNode}
           {iconAfter}
-          {chevron ? (
+          {!editRow.editMode && chevron ? (
             <ChevronRight
               color={(chevronColor ?? "$color") as ComponentProps<typeof ChevronRight>["color"]}
               opacity={chevronColor == null ? 0.58 : 1}
@@ -786,7 +820,11 @@ function renderFallbackListEntry({
         </View>
       );
     case "row":
-      return <FallbackListRowFrame>{item.renderRow()}</FallbackListRowFrame>;
+      return (
+        <NativeListEditRowIdProvider selectionId={item.nativeScrollId ?? item.key}>
+          <FallbackListRowFrame>{item.renderRow()}</FallbackListRowFrame>
+        </NativeListEditRowIdProvider>
+      );
     case "sectionFooter":
       return (
         <View style={styles.sectionFooter}>
@@ -889,12 +927,13 @@ export function NativeListSwitchItem({ switchProps, ...itemProps }: NativeListSw
       setPressResetToken((token) => token + 1);
     }
   };
+  const editMode = useNativeListEditMode();
 
   return (
     <NativeListRow
       {...itemProps}
       disabled={disabled}
-      nativeHaptics={itemProps.nativeHaptics ?? true}
+      nativeHaptics={itemProps.nativeHaptics ?? !editMode}
       onPress={() => switchProps.onCheckedChange?.(!checked)}
       pressResetToken={isIos ? pressResetToken : undefined}
       iconAfter={
@@ -967,6 +1006,8 @@ export function NativeListInputItem({ inputProps, ...itemProps }: NativeListInpu
     unstyled,
     ...nativeInputProps
   } = inputProps;
+  const resolvedInputBackground =
+    (StyleSheet.flatten(inputStyle) as ViewStyle | undefined)?.backgroundColor ?? "transparent";
   const inputStyleWithLayout = StyleSheet.flatten([
     styles.input,
     !hasLeadingLabel ? styles.fullWidthInput : null,
@@ -993,6 +1034,7 @@ export function NativeListInputItem({ inputProps, ...itemProps }: NativeListInpu
     <Input
       {...(nativeInputProps as any)}
       autoFocus={autoFocusNative ?? inputProps.autoFocus ?? false}
+      backgroundColor={resolvedInputBackground as any}
       borderWidth={0}
       disabled={disabled}
       focusStyle={inputFocusStyle as any}
@@ -1056,6 +1098,8 @@ export function NativeListTextAreaItem({
     unstyled,
     ...nativeTextAreaProps
   } = textAreaProps;
+  const resolvedTextAreaBackground =
+    (StyleSheet.flatten(inputStyle) as ViewStyle | undefined)?.backgroundColor ?? "transparent";
   const textAreaStyle = StyleSheet.flatten([
     styles.textArea,
     {
@@ -1089,6 +1133,7 @@ export function NativeListTextAreaItem({
         {isWeb() ? (
           <TextArea
             {...(nativeTextAreaProps as any)}
+            backgroundColor={resolvedTextAreaBackground as any}
             borderWidth={0}
             disabled={disabled}
             focusStyle={textAreaFocusStyle as any}
@@ -1141,8 +1186,13 @@ export function NativeListItem({
 export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSelectItemProps) {
   const disabled = itemProps.disabled || selectProps.disabled || selectProps.isDisabled;
   const selectedLabel = getSelectedLabel(selectProps);
+  const editMode = useNativeListEditMode();
   const { defaultRowBackground } = useFallbackRowThemeColors();
   const normalRowBackground = itemProps.backgroundColor ?? defaultRowBackground;
+
+  if (editMode) {
+    return <NativeListRow {...itemProps} disabled={disabled} value={selectedLabel} />;
+  }
 
   return (
     <Select
@@ -1241,11 +1291,9 @@ function NativeListMenuTrigger({
 }
 
 /** 以整行 NativeList 样式作为 `Menu` 的 native trigger，不维护选中状态。 */
-export function NativeListMenuItem({
-  menuProps,
-  ...itemProps
-}: NativeListMenuItemProps) {
+export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuItemProps) {
   const disabled = itemProps.disabled || menuProps.triggerProps?.disabled;
+  const editMode = useNativeListEditMode();
   const [hovered, setHovered] = useState(false);
   const { defaultRowBackground, theme } = useFallbackRowThemeColors();
   const normalRowBackground = itemProps.backgroundColor ?? defaultRowBackground;
@@ -1257,16 +1305,16 @@ export function NativeListMenuItem({
   const trigger = (
     <NativeListMenuTrigger
       backgroundColor={
-        isWeb()
-          ? hovered && !disabled
-            ? hoveredRowBackground
-            : normalRowBackground
-          : undefined
+        isWeb() ? (hovered && !disabled ? hoveredRowBackground : normalRowBackground) : undefined
       }
       disabled={disabled}
       itemProps={itemProps}
     />
   );
+
+  if (editMode) {
+    return <NativeListRow {...itemProps} disabled={disabled} />;
+  }
 
   return (
     <Menu
@@ -1300,6 +1348,7 @@ export function NativeListCustomItem({
   disabled,
   hoverBackgroundColor,
   nativeHaptics,
+  nativeScrollId,
   onPress,
   paddingBottom,
   paddingHorizontal,
@@ -1308,14 +1357,18 @@ export function NativeListCustomItem({
   paddingTop,
   paddingVertical,
   pressBackgroundColor,
+  selectionId,
 }: NativeListCustomItemProps) {
+  const editRow = useNativeListEditRow({ disabled, nativeScrollId, onPress, selectionId });
+
   return (
     <FallbackRowContainer
       backgroundColor={backgroundColor}
       disabled={disabled}
+      editingSelected={editRow.editingSelected}
       hoverBackgroundColor={hoverBackgroundColor}
       nativeHaptics={nativeHaptics}
-      onPress={onPress}
+      onPress={editRow.onPress}
       paddingBottom={paddingBottom}
       paddingHorizontal={paddingHorizontal}
       paddingLeft={paddingLeft}
@@ -1324,7 +1377,13 @@ export function NativeListCustomItem({
       paddingVertical={paddingVertical}
       pressBackgroundColor={pressBackgroundColor}
     >
-      <View style={styles.customRowContent}>{children}</View>
+      <View
+        pointerEvents={editRow.editMode ? "none" : "auto"}
+        style={editRow.editMode ? styles.editingCustomRowContent : styles.customRowContent}
+      >
+        {editRow.editMode ? <FallbackEditingIndicator selected={editRow.editingSelected} /> : null}
+        <View style={styles.customRowContent}>{children}</View>
+      </View>
     </FallbackRowContainer>
   );
 }
@@ -1358,12 +1417,16 @@ export function NativeListRoot({
   contentContainerStyle,
   contentMarginBottom,
   contentMarginTop,
+  defaultSelectedIds,
+  editMode,
   fixesIOS26NestedScrollIndicatorSafeArea: _fixesIOS26NestedScrollIndicatorSafeArea,
   initialScrollTarget,
   native: _native,
   navigationBarScrollEdgeOptions,
   onRefresh,
+  onSelectedIdsChange,
   scrollable = true,
+  selectedIds,
   style,
   tracksNavigationBarScrollEdge = false,
   ...rest
@@ -1592,76 +1655,90 @@ export function NativeListRoot({
 
   if (shouldUseTrueSheetScrollView) {
     return (
-      <ScrollView
-        alwaysBounceVertical={alwaysBounceVertical}
-        contentContainerStyle={[
-          styles.rootContent,
-          styles.scrollViewportFill,
-          rootBackground,
-          contentSpacingStyle,
-          contentContainerStyle,
-        ]}
-        keyboardShouldPersistTaps={keyboardShouldPersistTaps ?? "handled"}
-        nestedScrollEnabled={nestedScrollEnabled ?? true}
-        onLayout={onLayout}
-        onScroll={trackedOnScroll}
-        scrollEnabled={scrollable}
-        scrollEventThrottle={resolvedScrollEventThrottle}
-        showsVerticalScrollIndicator={showsVerticalScrollIndicator ?? true}
-        style={[styles.root, rootBackground, style]}
-        {...scrollViewProps}
+      <NativeListEditModeProvider
+        defaultSelectedIds={defaultSelectedIds}
+        editMode={editMode}
+        onSelectedIdsChange={onSelectedIdsChange}
+        selectedIds={selectedIds}
       >
-        {renderStaticEntries(entries)}
-      </ScrollView>
+        <ScrollView
+          alwaysBounceVertical={alwaysBounceVertical}
+          contentContainerStyle={[
+            styles.rootContent,
+            styles.scrollViewportFill,
+            rootBackground,
+            contentSpacingStyle,
+            contentContainerStyle,
+          ]}
+          keyboardShouldPersistTaps={keyboardShouldPersistTaps ?? "handled"}
+          nestedScrollEnabled={nestedScrollEnabled ?? true}
+          onLayout={onLayout}
+          onScroll={trackedOnScroll}
+          scrollEnabled={scrollable}
+          scrollEventThrottle={resolvedScrollEventThrottle}
+          showsVerticalScrollIndicator={showsVerticalScrollIndicator ?? true}
+          style={[styles.root, rootBackground, style]}
+          {...scrollViewProps}
+        >
+          {renderStaticEntries(entries)}
+        </ScrollView>
+      </NativeListEditModeProvider>
     );
   }
 
   return (
-    <FallbackListScrollCaptureContext.Provider value={captureWebScrollPosition}>
-      <FlashList
-        automaticallyAdjustsScrollIndicatorInsets={
-          manuallyAdjustNormalPageIndicator ? false : automaticallyAdjustsScrollIndicatorInsets
-        }
-        alwaysBounceVertical={alwaysBounceVertical ?? (!insideTrueSheet && os() === "ios")}
-        contentInset={contentInset}
-        contentContainerStyle={[
-          insideTrueSheet ? styles.rootContent : styles.scrollRootContent,
-          styles.scrollViewportFill,
-          rootBackground,
-          contentSpacingStyle,
-          contentContainerStyle,
-        ]}
-        contentInsetAdjustmentBehavior={resolvedContentInsetAdjustmentBehavior}
-        contentOffset={contentOffset}
-        data={entries}
-        extraData={entries}
-        getItemType={getEntryType}
-        initialScrollIndex={initialScrollIndex}
-        ItemSeparatorComponent={FallbackListItemSeparator}
-        keyboardShouldPersistTaps={keyboardShouldPersistTaps ?? "handled"}
-        keyExtractor={getEntryKey}
-        nestedScrollEnabled={nestedScrollEnabled ?? true}
-        onLayout={handleFlashListLayout}
-        onRefresh={handleRefresh}
-        onScroll={handleFlashListScroll}
-        ref={flashListRef}
-        refreshing={onRefresh != null ? refreshing : undefined}
-        renderItem={renderFallbackListEntry}
-        scrollEnabled={scrollable}
-        scrollEventThrottle={scrollEventThrottle ?? 16}
-        showsVerticalScrollIndicator={showsVerticalScrollIndicator ?? true}
-        scrollIndicatorInsets={
-          indicatorBottomInset != null
-            ? {
-                ...scrollIndicatorInsets,
-                bottom: indicatorBottomInset,
-              }
-            : scrollIndicatorInsets
-        }
-        style={[styles.root, rootBackground, style]}
-        {...scrollViewProps}
-      />
-    </FallbackListScrollCaptureContext.Provider>
+    <NativeListEditModeProvider
+      defaultSelectedIds={defaultSelectedIds}
+      editMode={editMode}
+      onSelectedIdsChange={onSelectedIdsChange}
+      selectedIds={selectedIds}
+    >
+      <FallbackListScrollCaptureContext.Provider value={captureWebScrollPosition}>
+        <FlashList
+          automaticallyAdjustsScrollIndicatorInsets={
+            manuallyAdjustNormalPageIndicator ? false : automaticallyAdjustsScrollIndicatorInsets
+          }
+          alwaysBounceVertical={alwaysBounceVertical ?? (!insideTrueSheet && os() === "ios")}
+          contentInset={contentInset}
+          contentContainerStyle={[
+            insideTrueSheet ? styles.rootContent : styles.scrollRootContent,
+            styles.scrollViewportFill,
+            rootBackground,
+            contentSpacingStyle,
+            contentContainerStyle,
+          ]}
+          contentInsetAdjustmentBehavior={resolvedContentInsetAdjustmentBehavior}
+          contentOffset={contentOffset}
+          data={entries}
+          extraData={entries}
+          getItemType={getEntryType}
+          initialScrollIndex={initialScrollIndex}
+          ItemSeparatorComponent={FallbackListItemSeparator}
+          keyboardShouldPersistTaps={keyboardShouldPersistTaps ?? "handled"}
+          keyExtractor={getEntryKey}
+          nestedScrollEnabled={nestedScrollEnabled ?? true}
+          onLayout={handleFlashListLayout}
+          onRefresh={handleRefresh}
+          onScroll={handleFlashListScroll}
+          ref={flashListRef}
+          refreshing={onRefresh != null ? refreshing : undefined}
+          renderItem={renderFallbackListEntry}
+          scrollEnabled={scrollable}
+          scrollEventThrottle={scrollEventThrottle ?? 16}
+          showsVerticalScrollIndicator={showsVerticalScrollIndicator ?? true}
+          scrollIndicatorInsets={
+            indicatorBottomInset != null
+              ? {
+                  ...scrollIndicatorInsets,
+                  bottom: indicatorBottomInset,
+                }
+              : scrollIndicatorInsets
+          }
+          style={[styles.root, rootBackground, style]}
+          {...scrollViewProps}
+        />
+      </FallbackListScrollCaptureContext.Provider>
+    </NativeListEditModeProvider>
   );
 }
 
@@ -1671,6 +1748,21 @@ const styles = StyleSheet.create({
   },
   disabledContent: {
     opacity: 0.5,
+  },
+  editingCustomRowContent: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 12,
+    width: "100%",
+  },
+  editingIndicator: {
+    alignItems: "center",
+    borderRadius: 12,
+    borderWidth: 1.5,
+    flexShrink: 0,
+    height: 24,
+    justifyContent: "center",
+    width: 24,
   },
   iconAfterRow: {
     alignItems: "center",

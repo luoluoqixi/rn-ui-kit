@@ -10,6 +10,8 @@ import type { TextAreaProps } from "../text_area";
 import type { NativeHapticsSetting } from "../utils";
 import type { NavigationBarScrollEdgeTrackingProps } from "../utils/navigation";
 
+export type NativeListSelectionId = string | number;
+
 export type NativeListItemPaddingProps = {
   paddingBottom?: number;
   paddingHorizontal?: number;
@@ -58,6 +60,8 @@ export type NativeListItemBaseProps = NativeListItemPaddingProps &
     onPress?: () => void;
     /** fallback 行的按下背景色；iOS 原生 List 会忽略。 */
     pressBackgroundColor?: ViewStyle["backgroundColor"];
+    /** 编辑模式中用于标识这一行；未传时会在当前挂载周期内自动生成。 */
+    selectionId?: NativeListSelectionId;
     selected?: boolean;
     subtitle?: ReactNode;
     subtitleColor?: string;
@@ -124,9 +128,13 @@ export type NativeListCustomItemProps = NativeListItemPaddingProps & {
   /** fallback 行的 hover 背景色；iOS 原生 List 会忽略。 */
   hoverBackgroundColor?: ViewStyle["backgroundColor"];
   nativeHaptics?: NativeHapticsSetting;
+  /** iOS 原生 List 用于滚动定位的稳定 id。 */
+  nativeScrollId?: string | number;
   onPress?: () => void;
   /** fallback 行的按下背景色；iOS 原生 List 会忽略。 */
   pressBackgroundColor?: ViewStyle["backgroundColor"];
+  /** 编辑模式中用于标识这一行；未传时会在当前挂载周期内自动生成。 */
+  selectionId?: NativeListSelectionId;
 };
 
 /** 一个占满列表行的多行文本输入框。 */
@@ -162,6 +170,10 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
     contentMarginTop?: number;
     /** 原生 List 内容底部内边距。 */
     contentMarginBottom?: number;
+    /** 非受控编辑模式初次挂载时默认选中的行。 */
+    defaultSelectedIds?: readonly NativeListSelectionId[];
+    /** 开启后，所有 NativeList 行显示左侧选择图标并拦截原点击行为。 */
+    editMode?: boolean;
     /**
      * 修正 iOS 26+ 在外层 ScrollView 中嵌套原生 List 时错误缓存窗口底部安全区，
      * 导致内部滚动条提前结束的问题。默认关闭；非 iOS 26+ 平台会被忽略。
@@ -176,8 +188,12 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
      * TrueSheet Android 的静态 ScrollView 回退分支不支持此参数。
      */
     onRefresh?: () => Promise<void> | void;
+    /** 编辑模式选中项变化时触发。 */
+    onSelectedIdsChange?: (selectedIds: NativeListSelectionId[]) => void;
     /** 设为 false 时不创建内部 ScrollView，由外层宿主负责滚动。 */
     scrollable?: boolean;
+    /** 受控的编辑模式选中项。 */
+    selectedIds?: readonly NativeListSelectionId[];
     /** web 自动还原 scroll */
     webAutoRestoreScroll?: boolean | undefined;
   };

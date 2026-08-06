@@ -53,6 +53,10 @@ import { Switch } from "../switch";
 import { isIos15, isIos26Plus } from "../utils/platform";
 import { toSwiftUIHexColor, triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
 import {
+  NativeListEditModeProvider,
+  useNativeListEditRow,
+} from "./edit_mode";
+import {
   NativeListActionItem as FallbackActionItem,
   NativeListCustomItem as FallbackCustomItem,
   NativeListInputItem as FallbackInputItem,
@@ -323,6 +327,7 @@ function NativeRowLabel({
 function NativeRowContainer({
   children,
   disabled,
+  editingSelected,
   nativeScrollId,
   onPress,
   paddingBottom,
@@ -336,6 +341,7 @@ function NativeRowContainer({
 }: {
   children: ReactNode;
   disabled?: boolean;
+  editingSelected?: boolean;
   nativeScrollId?: string | number;
   onPress?: () => void;
   btnStyle?: SwiftUIButtonStyle;
@@ -344,6 +350,10 @@ function NativeRowContainer({
   const theme = useTheme();
   const restoresIos15TopCorners = useContext(Ios15FirstVisibleRowContext);
   const primaryColor = toSwiftUIHexColor(theme.color.val) ?? theme.color.val;
+  const selectedBackgroundColor =
+    toSwiftUIHexColor(
+      theme.color5?.val ?? theme.backgroundPress?.val ?? theme.background?.val,
+    ) ?? theme.color5?.val;
   const resolvedTint = resolveNativeListBtnTintColor(btnTint, primaryColor);
   const baseModifiers = [
     ROW_INSETS,
@@ -366,6 +376,9 @@ function NativeRowContainer({
           disabledModifier(disabled ?? false),
           buttonStyle(btnStyle ?? "automatic"),
           ...(nativeScrollId != null ? [viewID(nativeScrollId)] : []),
+          ...(editingSelected && selectedBackgroundColor != null
+            ? [listRowBackground(selectedBackgroundColor)]
+            : []),
         ]}
         onPress={onPress}
       >
@@ -402,6 +415,9 @@ function NativeRowContainer({
         ...baseModifiers,
         disabledModifier(disabled ?? false),
         ...(nativeScrollId != null ? [viewID(nativeScrollId)] : []),
+        ...(editingSelected && selectedBackgroundColor != null
+          ? [listRowBackground(selectedBackgroundColor)]
+          : []),
         ...(restoresIos15TopCorners ? [frame({ maxWidth: 99999, alignment: "leading" })] : []),
         ...(restoresIos15TopCorners ? [ios15ListRowTopRoundedBackground()] : []),
       ]}
@@ -409,6 +425,24 @@ function NativeRowContainer({
     >
       {children}
     </HStack>
+  );
+}
+
+function NativeEditingIndicator({ selected }: { selected: boolean }) {
+  const theme = useTheme();
+  const accentColor =
+    toSwiftUIHexColor(theme.accent10?.val ?? theme.color10?.val ?? theme.color.val) ??
+    theme.accent10?.val ??
+    theme.color10?.val ??
+    theme.color.val;
+  const borderColor = resolveNativeListAssistColor(theme);
+
+  return (
+    <Image
+      color={selected ? accentColor : borderColor}
+      size={24}
+      systemName={selected ? "checkmark.circle.fill" : "circle"}
+    />
   );
 }
 
@@ -457,10 +491,20 @@ function NativeTrailingContent({ children }: { children: ReactNode }) {
   return <NativeHostedTrailingControl>{children}</NativeHostedTrailingControl>;
 }
 
-function NativeHostedCustomRow({ children }: { children: ReactNode }) {
+function NativeHostedCustomRow({
+  children,
+  disableInteractions = false,
+}: {
+  children: ReactNode;
+  disableInteractions?: boolean;
+}) {
   return (
     <RNHostView matchContents={{ vertical: true } as unknown as boolean}>
-      <View collapsable={false} style={styles.customRowShell}>
+      <View
+        collapsable={false}
+        pointerEvents={disableInteractions ? "none" : "auto"}
+        style={styles.customRowShell}
+      >
         {children}
       </View>
     </RNHostView>
@@ -486,6 +530,7 @@ function NativePressRow({
   paddingTop,
   paddingVertical,
   selected = false,
+  selectionId,
   subtitle,
   subtitleColor,
   subtitleFontSize,
@@ -507,6 +552,7 @@ function NativePressRow({
   preserveLeadingAnchor?: boolean;
 }) {
   const theme = useTheme();
+  const editRow = useNativeListEditRow({ disabled, nativeScrollId, onPress, selectionId });
   const resolvedHaptics = useResolvedNativeHaptics(nativeHaptics);
   const accentColor = toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;
   const assistColor = resolveNativeListAssistColor(theme);
@@ -521,13 +567,18 @@ function NativePressRow({
   const titleText = toPlainText(title);
   const subtitleText = toPlainText(subtitle);
   const valueText = toPlainText(value);
+  const visibleTrailingControl = editRow.editMode ? null : trailingControl;
   const hasTrailingContent =
-    valueText != null || selected || trailing != null || trailingControl != null || chevron;
+    valueText != null ||
+    (!editRow.editMode && selected) ||
+    trailing != null ||
+    visibleTrailingControl != null ||
+    (!editRow.editMode && chevron);
   const showTrailingSpacer = hasTrailingContent && (titleText != null || subtitleText != null);
 
-  const handlePress = onPress
+  const handlePress = editRow.onPress
     ? () => {
-        onPress();
+        editRow.onPress?.();
         triggerNativeHaptics(resolvedHaptics);
       }
     : undefined;
@@ -535,6 +586,7 @@ function NativePressRow({
   return (
     <NativeRowContainer
       disabled={disabled}
+      editingSelected={editRow.editingSelected}
       onPress={handlePress}
       btnStyle={btnStyle}
       btnTint={btnTint}
@@ -546,6 +598,7 @@ function NativePressRow({
       paddingTop={paddingTop}
       paddingVertical={paddingVertical}
     >
+      {editRow.editMode ? <NativeEditingIndicator selected={editRow.editingSelected} /> : null}
       {sfSymbol != null ? (
         <ZStack
           alignment="center"
@@ -575,10 +628,14 @@ function NativePressRow({
           {valueText}
         </SwiftText>
       ) : null}
-      {selected ? <Image color={accentColor} size={18} systemName="checkmark" /> : null}
+      {!editRow.editMode && selected ? (
+        <Image color={accentColor} size={18} systemName="checkmark" />
+      ) : null}
       {trailing != null ? <NativeTrailingContent>{trailing}</NativeTrailingContent> : null}
-      {trailingControl}
-      {chevron ? <Image color={resolvedChevronColor} size={13} systemName="chevron.right" /> : null}
+      {visibleTrailingControl}
+      {!editRow.editMode && chevron ? (
+        <Image color={resolvedChevronColor} size={13} systemName="chevron.right" />
+      ) : null}
     </NativeRowContainer>
   );
 }
@@ -590,15 +647,19 @@ function NativeListRoot({
   contentInsetAdjustmentBehavior,
   contentMarginBottom,
   contentMarginTop,
+  defaultSelectedIds,
+  editMode,
   fixesIOS26NestedScrollIndicatorSafeArea,
   initialScrollTarget,
   native = true,
   nestedScrollEnabled,
   navigationBarScrollEdgeOptions,
   onRefresh,
+  onSelectedIdsChange,
   scrollIndicatorInsets,
   style,
   scrollable = true,
+  selectedIds,
   tracksNavigationBarScrollEdge,
   webAutoRestoreScroll: _webAutoRestoreScroll,
   ...fallbackProps
@@ -624,12 +685,16 @@ function NativeListRoot({
           automaticallyAdjustsScrollIndicatorInsets={automaticallyAdjustsScrollIndicatorInsets}
           backgroundColor={backgroundColor}
           contentInsetAdjustmentBehavior={contentInsetAdjustmentBehavior}
+          defaultSelectedIds={defaultSelectedIds}
+          editMode={editMode}
           nestedScrollEnabled={nestedScrollEnabled}
           navigationBarScrollEdgeOptions={navigationBarScrollEdgeOptions}
           onRefresh={onRefresh}
+          onSelectedIdsChange={onSelectedIdsChange}
           scrollIndicatorInsets={scrollIndicatorInsets}
           style={style}
           scrollable={scrollable}
+          selectedIds={selectedIds}
           tracksNavigationBarScrollEdge={tracksNavigationBarScrollEdge}
         >
           {children}
@@ -663,9 +728,15 @@ function NativeListRoot({
         ? "automatic"
         : undefined);
   return (
-    <NativeListContext.Provider value={{ native: true }}>
-      <Host style={[styles.nativeRoot, style]}>
-        <List
+    <NativeListEditModeProvider
+      defaultSelectedIds={defaultSelectedIds}
+      editMode={editMode}
+      onSelectedIdsChange={onSelectedIdsChange}
+      selectedIds={selectedIds}
+    >
+      <NativeListContext.Provider value={{ native: true }}>
+        <Host style={[styles.nativeRoot, style]}>
+          <List
           // Native-stack 已将普通页面放在 header 下方，UIKit 再自动避让会让 indicator 重复下移。
           // TrueSheet 仍需要系统根据 Sheet viewport 处理 indicator，因此保持开启。
           automaticallyAdjustsScrollIndicatorInsets={
@@ -738,11 +809,12 @@ function NativeListRoot({
               : []),
             scrollDisabled(!scrollable),
           ]}
-        >
-          {children}
-        </List>
-      </Host>
-    </NativeListContext.Provider>
+          >
+            {children}
+          </List>
+        </Host>
+      </NativeListContext.Provider>
+    </NativeListEditModeProvider>
   );
 }
 
@@ -1223,6 +1295,7 @@ export function NativeListCustomItem({
   disabled,
   hoverBackgroundColor,
   nativeHaptics,
+  nativeScrollId,
   onPress,
   paddingBottom,
   paddingHorizontal,
@@ -1231,8 +1304,10 @@ export function NativeListCustomItem({
   paddingTop,
   paddingVertical,
   pressBackgroundColor,
+  selectionId,
 }: NativeListCustomItemProps) {
   const restoresIos15TopCorners = useContext(Ios15FirstVisibleRowContext);
+  const editRow = useNativeListEditRow({ disabled, nativeScrollId, onPress, selectionId });
   const rowPaddingProps = {
     paddingBottom,
     paddingHorizontal,
@@ -1249,12 +1324,30 @@ export function NativeListCustomItem({
         disabled={disabled}
         hoverBackgroundColor={hoverBackgroundColor}
         nativeHaptics={nativeHaptics}
+        nativeScrollId={nativeScrollId}
         onPress={onPress}
         {...rowPaddingProps}
         pressBackgroundColor={pressBackgroundColor}
+        selectionId={selectionId}
       >
         {children}
       </FallbackCustomItem>
+    );
+  }
+
+  if (editRow.editMode) {
+    return (
+      <NativeRowContainer
+        {...rowPaddingProps}
+        btnStyle="plain"
+        disabled={disabled}
+        editingSelected={editRow.editingSelected}
+        nativeScrollId={nativeScrollId}
+        onPress={editRow.onPress}
+      >
+        <NativeEditingIndicator selected={editRow.editingSelected} />
+        <NativeHostedCustomRow disableInteractions>{children}</NativeHostedCustomRow>
+      </NativeRowContainer>
     );
   }
 

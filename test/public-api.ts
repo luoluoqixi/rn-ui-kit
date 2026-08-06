@@ -3,6 +3,8 @@ import {
   Button,
   Menu,
   NativeListMenuItem,
+  type NativeListRootProps,
+  type NativeListSelectionId,
   NativeTrigger,
   NativeTriggerPressable,
   Select,
@@ -35,6 +37,8 @@ type PublicCoreProps = ButtonProps;
 type PublicNativeTriggerProps = NativeTriggerProps;
 type PublicNativeTriggerPressableProps = NativeTriggerPressableProps;
 type PublicNativeListMenuItemProps = NativeListMenuItemProps;
+type PublicNativeListRootProps = NativeListRootProps;
+type PublicNativeListSelectionId = NativeListSelectionId;
 type PublicSelectNativeTriggerProps = SelectNativeTriggerProps;
 type PublicSelectNativeTriggerPressableProps = SelectNativeTriggerPressableProps;
 type PublicDebugProps = RnUiKitDebugPanelProps;
@@ -91,6 +95,14 @@ const nativeListMenuItemProps = {
 
 void nativeListMenuItemProps;
 
+const nativeListEditModeProps = {
+  editMode: true,
+  onSelectedIdsChange: (_selectedIds: NativeListSelectionId[]) => {},
+  selectedIds: ["first-row"],
+} satisfies NativeListRootProps;
+
+void nativeListEditModeProps;
+
 export type {
   PublicCoreProps,
   PublicDebugNativeSheetScreenOptions,
@@ -100,6 +112,8 @@ export type {
   PublicNativeTriggerPressableProps,
   PublicNativeTriggerProps,
   PublicNativeListMenuItemProps,
+  PublicNativeListRootProps,
+  PublicNativeListSelectionId,
   PublicSelectNativeTriggerPressableProps,
   PublicSelectNativeTriggerProps,
 };
