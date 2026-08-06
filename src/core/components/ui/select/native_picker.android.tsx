@@ -5,6 +5,7 @@ import { useTheme } from "@tamagui/core";
 import React, { useEffect, useImperativeHandle, useRef } from "react";
 import {
   type LayoutChangeEvent,
+  type PressableProps,
   type StyleProp,
   View,
   type ViewStyle,
@@ -146,6 +147,16 @@ export const NativePickerSwiftUI = React.forwardRef<
     nativeTriggerIcon?: SelectNativeTriggerIcon;
     nativeTriggerLabel: React.ReactNode;
     nativeTriggerLabelProps?: TextProps;
+    nativeTriggerPressableProps?: Pick<
+      PressableProps,
+      | "disabled"
+      | "onLongPress"
+      | "onPress"
+      | "onPressIn"
+      | "onPressOut"
+      | "onTouchCancel"
+      | "onTouchEnd"
+    >;
     onValueChange?: (value: string | null) => void;
     resolvedNativeHaptics: ReturnType<typeof useResolvedNativeHaptics>;
   }
@@ -162,10 +173,12 @@ export const NativePickerSwiftUI = React.forwardRef<
     nativeTriggerIcon,
     nativeTriggerLabel,
     nativeTriggerLabelProps,
+    nativeTriggerPressableProps,
     onValueChange,
     resolvedNativeHaptics,
   } = props;
   const [openSignal, setOpenSignal] = React.useState(0);
+  const longPressedRef = useRef(false);
 
   useImperativeHandle(ref, () => ({
     open() {
@@ -211,12 +224,33 @@ export const NativePickerSwiftUI = React.forwardRef<
         active={false}
         content={nativeTriggerContent}
         containerStyle={nativeTriggerContainerStyle}
+        disabled={nativeTriggerPressableProps?.disabled}
         icon={nativeTriggerIcon}
         label={nativeTriggerLabel}
         labelProps={nativeTriggerLabelProps}
-        onPress={() => {
+        onLongPress={(event) => {
+          longPressedRef.current = true;
+          nativeTriggerPressableProps?.onLongPress?.(event);
+        }}
+        onPress={(event) => {
+          if (longPressedRef.current) {
+            longPressedRef.current = false;
+            return;
+          }
+
+          nativeTriggerPressableProps?.onPress?.(event);
           openPicker(true);
         }}
+        onPressIn={(event) => {
+          longPressedRef.current = false;
+          nativeTriggerPressableProps?.onPressIn?.(event);
+        }}
+        onPressOut={(event) => nativeTriggerPressableProps?.onPressOut?.(event)}
+        onTouchCancel={(event) => {
+          longPressedRef.current = false;
+          nativeTriggerPressableProps?.onTouchCancel?.(event);
+        }}
+        onTouchEnd={(event) => nativeTriggerPressableProps?.onTouchEnd?.(event)}
       />
       <NativePickerDialog
         anchorAlign={nativeDropdownAlign}

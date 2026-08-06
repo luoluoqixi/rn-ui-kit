@@ -11,6 +11,7 @@ import {
   type ComponentType,
   type ReactElement,
   type ReactNode,
+  type RefObject,
   isValidElement,
   useContext,
   useEffect,
@@ -39,6 +40,7 @@ import { FlashList, type FlashListRef, type ListRenderItemInfo } from "../flash_
 import { Input } from "../input";
 import { ContextMenu } from "../context_menu";
 import { Menu } from "../menu";
+import { NativeTriggerPressable } from "../native_trigger";
 import { Select } from "../select";
 import {
   getTrueSheetScrollBottomPadding,
@@ -99,6 +101,10 @@ type RowContainerProps = NativeListItemPaddingProps & {
 type PressableHoverEvent = Parameters<
   NonNullable<ComponentProps<typeof Pressable>["onHoverIn"]>
 >[0];
+
+type NativeMenuHandle = {
+  presentMenu: () => void;
+};
 
 type FallbackListEntry =
   | {
@@ -262,7 +268,7 @@ function FallbackRowContainer({
   const captureListScrollPosition = useContext(FallbackListScrollCaptureContext);
   const editMode = useNativeListEditMode();
   const resolvedContextMenuProps = useResolvedNativeListContextMenu(contextMenuProps);
-  const contextMenuRef = useRef<{ presentMenu: () => void } | null>(null);
+  const contextMenuRef = useRef<NativeMenuHandle | null>(null);
   const activeNativeContextMenuProps =
     !isWeb() &&
     !editMode &&
@@ -316,22 +322,12 @@ function FallbackRowContainer({
           : normalRowBackground,
   });
 
-  const contextMenuAnchor =
-    activeNativeContextMenuProps != null ? (
-      <View
-        pointerEvents="none"
-        style={[
-          styles.contextMenuAnchor,
-          os() === "android" ? styles.contextMenuAnchorCenter : styles.contextMenuAnchorEnd,
-        ]}
-      >
-        <ContextMenu
-          {...activeNativeContextMenuProps}
-          trigger={<View collapsable={false} style={styles.contextMenuAnchorTrigger} />}
-          {...({ __menuRef: contextMenuRef } as any)}
-        />
-      </View>
-    ) : null;
+  const contextMenuAnchor = activeNativeContextMenuProps != null ? (
+    <FallbackNativeContextMenuAnchor
+      contextMenuProps={activeNativeContextMenuProps}
+      menuRef={contextMenuRef}
+    />
+  ) : null;
 
   if (onPress == null && activeNativeContextMenuProps == null) {
     return (
@@ -394,6 +390,51 @@ function FallbackRowContainer({
     <View collapsable={false} style={styles.contextMenuRow}>
       {row}
       {contextMenuAnchor}
+    </View>
+  );
+}
+
+function FallbackNativeContextMenuAnchor({
+  contextMenuProps,
+  menuRef,
+}: {
+  contextMenuProps: NativeListContextMenuProps;
+  menuRef: RefObject<NativeMenuHandle | null>;
+}) {
+  return (
+    <View
+      pointerEvents="none"
+      style={[
+        styles.contextMenuAnchor,
+        os() === "android" ? styles.contextMenuAnchorCenter : styles.contextMenuAnchorEnd,
+      ]}
+    >
+      <ContextMenu
+        {...contextMenuProps}
+        trigger={<View collapsable={false} style={styles.contextMenuAnchorTrigger} />}
+        {...({ __menuRef: menuRef } as any)}
+      />
+    </View>
+  );
+}
+
+function FallbackNativeContextMenuHost({
+  children,
+  contextMenuProps,
+  menuRef,
+}: {
+  children: ReactElement;
+  contextMenuProps?: NativeListContextMenuProps;
+  menuRef: RefObject<NativeMenuHandle | null>;
+}) {
+  if (contextMenuProps == null) {
+    return children;
+  }
+
+  return (
+    <View collapsable={false} style={styles.contextMenuRow}>
+      {children}
+      <FallbackNativeContextMenuAnchor contextMenuProps={contextMenuProps} menuRef={menuRef} />
     </View>
   );
 }
@@ -1329,6 +1370,16 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
   const disabled = itemProps.disabled || selectProps.disabled || selectProps.isDisabled;
   const selectedLabel = getSelectedLabel(selectProps);
   const editMode = useNativeListEditMode();
+  const resolvedContextMenuProps = useResolvedNativeListContextMenu(itemProps.contextMenuProps);
+  const contextMenuRef = useRef<NativeMenuHandle | null>(null);
+  const activeAndroidContextMenuProps =
+    os() === "android" &&
+    !editMode &&
+    !disabled &&
+    resolvedContextMenuProps != null &&
+    !resolvedContextMenuProps.triggerProps?.disabled
+      ? resolvedContextMenuProps
+      : undefined;
   const { defaultRowBackground } = useFallbackRowThemeColors();
   const normalRowBackground = itemProps.backgroundColor ?? defaultRowBackground;
 
@@ -1336,7 +1387,7 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
     return <NativeListRow {...itemProps} disabled={disabled} value={selectedLabel} />;
   }
 
-  return (
+  const select = (
     <Select
       {...selectProps}
       disabled={disabled}
@@ -1349,6 +1400,9 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
         <NativeListRow
           {...itemProps}
           backgroundColor={itemProps.backgroundColor ?? (isWeb() ? "transparent" : undefined)}
+          contextMenuProps={
+            activeAndroidContextMenuProps != null ? false : itemProps.contextMenuProps
+          }
           disabled={disabled}
           iconAfter={
             <View style={styles.selectValue}>
@@ -1380,6 +1434,13 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
       triggerProps={{
         backgroundColor: isWeb() ? (normalRowBackground as any) : undefined,
         ...selectProps.triggerProps,
+        onLongPress:
+          activeAndroidContextMenuProps != null
+            ? (event: any) => {
+                (selectProps.triggerProps as any)?.onLongPress?.(event);
+                contextMenuRef.current?.presentMenu();
+              }
+            : (selectProps.triggerProps as any)?.onLongPress,
         hoverStyle:
           selectProps.triggerProps?.hoverStyle ??
           ({
@@ -1396,6 +1457,15 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
           } as any),
       }}
     />
+  );
+
+  return (
+    <FallbackNativeContextMenuHost
+      contextMenuProps={activeAndroidContextMenuProps}
+      menuRef={contextMenuRef}
+    >
+      {select}
+    </FallbackNativeContextMenuHost>
   );
 }
 
@@ -1435,10 +1505,128 @@ function NativeListMenuTrigger({
   );
 }
 
+function AndroidNativeListMenuItem({
+  contextMenuProps,
+  disabled,
+  itemProps,
+  menuProps,
+}: {
+  contextMenuProps: NativeListContextMenuProps;
+  disabled?: boolean;
+  itemProps: NativeListItemBaseProps;
+  menuProps: NativeListMenuItemProps["menuProps"];
+}) {
+  const contextMenuRef = useRef<NativeMenuHandle | null>(null);
+  const menuRef = useRef<NativeMenuHandle | null>(null);
+  const longPressedRef = useRef(false);
+  const [anchorSize, setAnchorSize] = useState({ height: 1, width: 1 });
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(Boolean(menuProps.defaultOpen));
+  const triggerProps = menuProps.triggerProps as any;
+  const resolvedOpen = menuProps.open ?? uncontrolledOpen;
+  const trigger = (
+    <NativeListMenuTrigger
+      disabled={disabled}
+      itemProps={{
+        ...itemProps,
+        contextMenuProps: false,
+        onPress: undefined,
+      }}
+    />
+  );
+
+  return (
+    <View collapsable={false} style={styles.contextMenuRow}>
+      <NativeTriggerPressable
+        accessibilityLabel={triggerProps?.["aria-label"]}
+        active={resolvedOpen}
+        content={trigger}
+        delayLongPress={triggerProps?.delayLongPress}
+        disabled={disabled}
+        hitSlop={triggerProps?.hitSlop}
+        label={itemProps.value ?? "更多"}
+        onLayout={(event) => {
+          triggerProps?.onLayout?.(event);
+          const { height, width } = event.nativeEvent.layout;
+          setAnchorSize((current) =>
+            Math.abs(current.height - height) < 0.5 && Math.abs(current.width - width) < 0.5
+              ? current
+              : { height, width },
+          );
+        }}
+        onLongPress={(event) => {
+          longPressedRef.current = true;
+          triggerProps?.onLongPress?.(event);
+          contextMenuRef.current?.presentMenu();
+        }}
+        onPress={(event) => {
+          if (longPressedRef.current) {
+            longPressedRef.current = false;
+            return;
+          }
+
+          triggerProps?.onPress?.(event);
+          menuRef.current?.presentMenu();
+        }}
+        onPressIn={(event) => {
+          longPressedRef.current = false;
+          triggerProps?.onPressIn?.(event);
+        }}
+        onPressOut={(event) => triggerProps?.onPressOut?.(event)}
+        onTouchCancel={(event) => {
+          longPressedRef.current = false;
+          triggerProps?.onTouchCancel?.(event);
+        }}
+        onTouchEnd={(event) => triggerProps?.onTouchEnd?.(event)}
+        style={triggerProps?.style}
+        testID={triggerProps?.testID}
+      />
+      <View pointerEvents="none" style={styles.nativeMenuAnchorFill}>
+        <Menu
+          {...menuProps}
+          nativeAnchorAlignment={menuProps.nativeAnchorAlignment ?? "end"}
+          nativeHaptics={menuProps.nativeHaptics ?? itemProps.nativeHaptics ?? false}
+          onOpenChange={(nextOpen) => {
+            if (menuProps.open === undefined) {
+              setUncontrolledOpen(nextOpen);
+            }
+            menuProps.onOpenChange?.(nextOpen);
+          }}
+          style={anchorSize as any}
+          trigger={
+            <View
+              collapsable={false}
+              style={{
+                height: anchorSize.height,
+                opacity: 0,
+                width: anchorSize.width,
+              }}
+            />
+          }
+          triggerProps={{ asChild: true }}
+          {...({ __menuRef: menuRef } as any)}
+        />
+      </View>
+      <FallbackNativeContextMenuAnchor
+        contextMenuProps={contextMenuProps}
+        menuRef={contextMenuRef}
+      />
+    </View>
+  );
+}
+
 /** 以整行 NativeList 样式作为 `Menu` 的 native trigger，不维护选中状态。 */
 export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuItemProps) {
   const disabled = itemProps.disabled || menuProps.triggerProps?.disabled;
   const editMode = useNativeListEditMode();
+  const resolvedContextMenuProps = useResolvedNativeListContextMenu(itemProps.contextMenuProps);
+  const activeAndroidContextMenuProps =
+    os() === "android" &&
+    !editMode &&
+    !disabled &&
+    resolvedContextMenuProps != null &&
+    !resolvedContextMenuProps.triggerProps?.disabled
+      ? resolvedContextMenuProps
+      : undefined;
   const [hovered, setHovered] = useState(false);
   const { defaultRowBackground, theme } = useFallbackRowThemeColors();
   const normalRowBackground = itemProps.backgroundColor ?? defaultRowBackground;
@@ -1459,6 +1647,17 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
 
   if (editMode) {
     return <NativeListRow {...itemProps} disabled={disabled} />;
+  }
+
+  if (activeAndroidContextMenuProps != null) {
+    return (
+      <AndroidNativeListMenuItem
+        contextMenuProps={activeAndroidContextMenuProps}
+        disabled={disabled}
+        itemProps={itemProps}
+        menuProps={menuProps}
+      />
+    );
   }
 
   return (
@@ -1994,6 +2193,13 @@ const styles = StyleSheet.create({
   contextMenuRow: {
     position: "relative",
     width: "100%",
+  },
+  nativeMenuAnchorFill: {
+    bottom: 0,
+    left: 0,
+    position: "absolute",
+    right: 0,
+    top: 0,
   },
   pressable: {
     width: "100%",

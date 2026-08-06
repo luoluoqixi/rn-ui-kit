@@ -1083,6 +1083,7 @@ const SelectRoot = forwardRef<any, SelectProps>(
     const isSelectOpen = props.open ?? uncontrolledOpen;
     androidNativeDropdownOpenRef.current = isSelectOpen;
     const usesAndroidNativeTriggerOpacity = platform === "android";
+    const usesAndroidNativeTrigger = platform === "android" && !!nativeTrigger;
     const usesAndroidDropdownOpenOpacity =
       usesAndroidNativeTriggerOpacity &&
       selectBehavior.shouldUseNativePicker &&
@@ -1477,14 +1478,15 @@ const SelectRoot = forwardRef<any, SelectProps>(
       }
     };
     const handleNativeTriggerPress = (event: any) => {
-      if (usesAndroidDropdownOpenOpacity) {
-        if (androidNativeDropdownLongPressedRef.current) {
-          androidNativeDropdownLongPressedRef.current = false;
-          androidNativeDropdownPressCommittedRef.current = false;
-          setNativeTriggerOpening(false);
-          return;
-        }
+      if (usesAndroidNativeTrigger && androidNativeDropdownLongPressedRef.current) {
+        androidNativeDropdownLongPressedRef.current = false;
+        androidNativeDropdownPressCommittedRef.current = false;
+        setNativeTriggerPressed(false);
+        setNativeTriggerOpening(false);
+        return;
+      }
 
+      if (usesAndroidDropdownOpenOpacity) {
         clearAndroidNativeDropdownHandoffTimer();
         androidNativeDropdownPressCommittedRef.current = true;
         setNativeTriggerOpening(true);
@@ -1512,7 +1514,7 @@ const SelectRoot = forwardRef<any, SelectProps>(
       triggerOnPress?.(event);
     };
     const handleNativeTriggerLongPress = (event: any) => {
-      if (usesAndroidDropdownOpenOpacity) {
+      if (usesAndroidNativeTrigger) {
         androidNativeDropdownLongPressedRef.current = true;
       }
       triggerOnLongPress?.(event);
@@ -1903,6 +1905,19 @@ const SelectRoot = forwardRef<any, SelectProps>(
             nativeTriggerIcon={nativeTriggerIcon}
             nativeTriggerLabel={nativeTriggerLabel}
             nativeTriggerLabelProps={nativeTriggerLabelProps}
+            nativeTriggerPressableProps={
+              platform === "android"
+                ? {
+                    disabled: selectDisabled,
+                    onLongPress: handleNativeTriggerLongPress,
+                    onPress: handleNativeTriggerPress,
+                    onPressIn: handleNativeTriggerPressIn,
+                    onPressOut: handleNativeTriggerPressOut,
+                    onTouchCancel: handleNativeTriggerTouchCancel,
+                    onTouchEnd: handleNativeTriggerTouchEnd,
+                  }
+                : undefined
+            }
             onValueChange={handleNativePickerValueChange}
             resolvedNativeHaptics={resolvedNativeHaptics}
           />
