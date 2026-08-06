@@ -69,10 +69,7 @@ import { getTrueSheetScrollBottomPadding } from "../sheet/native_sheet/true_shee
 import { useTrueSheetScrollLayout } from "../sheet/native_sheet/true_sheet/true_sheet_scroll_context";
 import { isIos15, isIos26Plus } from "../utils/platform";
 import { toSwiftUIHexColor, triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
-import {
-  NativeListContextMenuProvider,
-  useResolvedNativeListContextMenu,
-} from "./context_menu";
+import { NativeListContextMenuProvider, useResolvedNativeListContextMenu } from "./context_menu";
 import {
   NativeListEditModeProvider,
   useNativeListEditIcons,
@@ -263,6 +260,11 @@ const DEFAULT_SECTION_TITLE_FONT_SIZE = 13;
 const DEFAULT_TEXT_AREA_LINES = 4;
 const TEXT_AREA_LINE_HEIGHT = 24;
 const TEXT_AREA_VERTICAL_PADDING = 20;
+// iOS 15 indents native multi-select content farther than the grouped cell
+// background. Extend only the helper-row corner overlay back to the cell edge.
+const IOS15_NATIVE_EDIT_ROW_LEADING_INSET = 64;
+const IOS15_NATIVE_EDIT_ROW_TRAILING_INSET = 20;
+const IOS15_NATIVE_EDIT_ROW_TOP_INSET = 6;
 
 function resolveRowPadding({
   paddingBottom,
@@ -641,12 +643,19 @@ function NativeRowContainer({
       ? [listRowBackground(selectedBackgroundColor)]
       : []),
     ...(restoresIos15TopCorners || contextMenuProps != null
+      ? [frame({ maxWidth: 99999, alignment: "leading" }), contentShape(shapes.rectangle())]
+      : []),
+    ...(restoresIos15TopCorners
       ? [
-          frame({ maxWidth: 99999, alignment: "leading" }),
-          contentShape(shapes.rectangle()),
+          nativeSelectionId != null
+            ? ios15ListRowTopRoundedBackground(12, {
+                leading: IOS15_NATIVE_EDIT_ROW_LEADING_INSET,
+                trailing: IOS15_NATIVE_EDIT_ROW_TRAILING_INSET,
+                top: IOS15_NATIVE_EDIT_ROW_TOP_INSET,
+              })
+            : ios15ListRowTopRoundedBackground(),
         ]
       : []),
-    ...(restoresIos15TopCorners ? [ios15ListRowTopRoundedBackground()] : []),
   ];
 
   if (usesSwiftUIContextMenu && contextMenuProps != null) {
@@ -1066,9 +1075,9 @@ function NativeListRoot({
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const nativeEditTint = toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;
-  const [uncontrolledSelectedIds, setUncontrolledSelectedIds] = useState<
-    NativeListSelectionId[]
-  >(() => [...(defaultSelectedIds ?? [])]);
+  const [uncontrolledSelectedIds, setUncontrolledSelectedIds] = useState<NativeListSelectionId[]>(
+    () => [...(defaultSelectedIds ?? [])],
+  );
   const resolvedSelectedIds = selectedIds ?? uncontrolledSelectedIds;
   const handleSelectedIdsChange = (nextSelectedIds: NativeListSelectionId[]) => {
     if (selectedIds == null) {
