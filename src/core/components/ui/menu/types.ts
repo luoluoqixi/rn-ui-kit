@@ -9,6 +9,8 @@ export interface MenuItemData {
   "aria-label"?: string;
   destructive?: boolean;
   disabled?: boolean;
+  /** 菜单项右侧的自定义图标。 */
+  icon?: ReactNode;
   indicator?: ReactNode;
   label?: ReactNode;
   onPress?: MenuItemProps["onSelect"];
@@ -21,6 +23,8 @@ export interface MenuItemData {
    * Android 原生 Menu 仅支持一级子菜单。
    */
   subMenu?: MenuItemData[];
+  /** Web 子菜单标题。默认使用当前项名称；传 `false` 可隐藏标题。 */
+  subMenuTitle?: ReactNode | false;
   textValue?: string;
   value: string;
 }

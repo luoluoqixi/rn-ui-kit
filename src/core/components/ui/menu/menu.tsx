@@ -1,3 +1,4 @@
+import { ChevronRight } from "@tamagui/lucide-icons-2";
 import { Children, type ReactNode, isValidElement, useState } from "react";
 import { StyleSheet } from "react-native";
 import { SizableText, Menu as TamaguiMenu, YStack } from "tamagui";
@@ -94,7 +95,8 @@ function MenuRoot(props: MenuProps) {
   } = props;
   const resolvedNativeTriggerLabel = nativeTriggerLabel ?? trigger;
   const resolvedNativeAnchorAlignment = nativeAnchorAlignment ?? "center";
-  const resolvedPlacement = rootProps.placement ?? (isWeb() ? "bottom" : undefined);
+  const web = isWeb();
+  const resolvedPlacement = rootProps.placement ?? (web ? "bottom" : undefined);
   const [uncontrolledOpen, setUncontrolledOpen] = useState(Boolean(rootProps.defaultOpen));
   const [uncontrolledWillOpen, setUncontrolledWillOpen] = useState(Boolean(rootProps.defaultOpen));
   const isOpen = rootProps.open ?? uncontrolledOpen;
@@ -144,8 +146,11 @@ function MenuRoot(props: MenuProps) {
         item["aria-label"] ?? itemProps?.["aria-label"],
         label,
       );
+      const hasTrailingContent = item.icon != null || item.indicator != null;
 
       if (item.subMenu?.length) {
+        const subMenuTitle = item.subMenuTitle === false ? null : (item.subMenuTitle ?? label);
+
         return (
           <MenuSub key={item.value}>
             <MenuSubTrigger
@@ -153,13 +158,23 @@ function MenuRoot(props: MenuProps) {
               aria-label={accessibilityLabel}
               destructive={item.destructive ?? itemProps?.destructive}
               disabled={item.disabled ?? itemProps?.disabled}
+              justify={itemProps?.justify ?? "space-between"}
               textValue={textValue}
             >
               <MenuItemTitle>{label}</MenuItemTitle>
+              {item.icon != null ? <MenuItemIcon>{item.icon}</MenuItemIcon> : null}
               {item.indicator}
+              {web ? (
+                <MenuItemIcon>
+                  <ChevronRight color="$color10" size={16} />
+                </MenuItemIcon>
+              ) : null}
             </MenuSubTrigger>
             <MenuPortal zIndex={200 + depth}>
-              <MenuSubContent>{renderItems(item.subMenu, depth + 1)}</MenuSubContent>
+              <MenuSubContent>
+                {web && subMenuTitle != null ? <MenuLabel>{subMenuTitle}</MenuLabel> : null}
+                {renderItems(item.subMenu, depth + 1)}
+              </MenuSubContent>
             </MenuPortal>
           </MenuSub>
         );
@@ -171,12 +186,14 @@ function MenuRoot(props: MenuProps) {
           aria-label={accessibilityLabel}
           destructive={item.destructive ?? itemProps?.destructive}
           disabled={item.disabled ?? itemProps?.disabled}
+          justify={itemProps?.justify ?? (hasTrailingContent ? "space-between" : undefined)}
           key={item.value}
           onSelect={item.onSelect ?? item.onPress}
           {...({ selected: item.selected } as any)}
           textValue={textValue}
         >
           <MenuItemTitle>{label}</MenuItemTitle>
+          {item.icon != null ? <MenuItemIcon>{item.icon}</MenuItemIcon> : null}
           {item.indicator != null ? (
             <MenuItemIndicator>{item.indicator}</MenuItemIndicator>
           ) : null}

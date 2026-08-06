@@ -1,3 +1,4 @@
+import { Download, FilePlus, Settings } from "@tamagui/lucide-icons-2";
 import { useState, type ReactNode } from "react";
 import { StyleSheet, useWindowDimensions, View } from "react-native";
 import {
@@ -132,16 +133,23 @@ function MenuExample() {
           arrow
           trigger={<Button variant="outlined">打开 Menu</Button>}
           items={[
-            { label: "新建文件", onSelect: () => setAction("新建文件"), value: "new" },
+            {
+              icon: <FilePlus color="$color10" size={14} />,
+              label: "新建文件",
+              onSelect: () => setAction("新建文件"),
+              value: "new",
+            },
             {
               label: "更多操作",
               subMenu: [
                 {
+                  icon: <Settings color="$color10" size={14} />,
                   label: "打开设置",
                   onSelect: () => setAction("打开设置"),
                   value: "settings",
                 },
                 {
+                  icon: <Download color="$color10" size={14} />,
                   label: "导出快照",
                   onSelect: () => setAction("导出快照"),
                   value: "export",
@@ -163,21 +171,29 @@ function MenuExample() {
           nativeTrigger
           nativeTriggerLabel="打开Menu"
           items={[
-            { label: "新建文件", onSelect: () => setAction("新建文件"), value: "new" },
+            {
+              icon: <FilePlus color="$color10" size={14} />,
+              label: "新建文件",
+              onSelect: () => setAction("新建文件"),
+              value: "new",
+            },
             {
               label: "更多操作",
               subMenu: [
                 {
+                  icon: <Settings color="$color10" size={14} />,
                   label: "打开设置",
                   onSelect: () => setAction("打开设置"),
                   value: "settings",
                 },
                 {
+                  icon: <Download color="$color10" size={14} />,
                   label: "导出快照",
                   onSelect: () => setAction("导出快照"),
                   value: "export",
                 },
               ],
+              subMenuTitle: false,
               value: "more",
             },
             { label: "separator", separator: true, value: "separator" },
