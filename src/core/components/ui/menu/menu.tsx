@@ -94,6 +94,7 @@ function MenuRoot(props: MenuProps) {
   } = props;
   const resolvedNativeTriggerLabel = nativeTriggerLabel ?? trigger;
   const resolvedNativeAnchorAlignment = nativeAnchorAlignment ?? "center";
+  const resolvedPlacement = rootProps.placement ?? (isWeb() ? "bottom" : undefined);
   const [uncontrolledOpen, setUncontrolledOpen] = useState(Boolean(rootProps.defaultOpen));
   const [uncontrolledWillOpen, setUncontrolledWillOpen] = useState(Boolean(rootProps.defaultOpen));
   const isOpen = rootProps.open ?? uncontrolledOpen;
@@ -196,6 +197,7 @@ function MenuRoot(props: MenuProps) {
         {...iosOpenWillChangeProps}
         offset={offset ?? 8}
         onOpenChange={handleOpenChange}
+        placement={resolvedPlacement}
       >
         {resolvedChildren}
       </TamaguiMenu>
@@ -213,6 +215,7 @@ function MenuRoot(props: MenuProps) {
       {...iosOpenWillChangeProps}
       offset={offset ?? 8}
       onOpenChange={handleOpenChange}
+      placement={resolvedPlacement}
     >
       {shouldRenderTrigger ? (
         <MenuTrigger {...triggerProps} asChild={nativeTrigger ? true : triggerProps?.asChild}>

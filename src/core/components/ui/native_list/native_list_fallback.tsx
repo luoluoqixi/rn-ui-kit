@@ -1178,7 +1178,6 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
         style: [
           isWeb()
             ? {
-                maxWidth: 360,
                 minWidth: 220,
               }
             : null,

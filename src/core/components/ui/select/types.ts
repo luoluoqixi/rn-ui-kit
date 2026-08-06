@@ -102,7 +102,7 @@ export interface SelectProps extends Omit<
   options?: SelectItemData[];
   placeholder?: ReactNode;
   touchSheetMaxHeight?: ViewStyle["maxHeight"];
-  /** Web 非 native Menu 弹层的 placement。默认沿用底层 Menu 行为。 */
+  /** Web 非 native Menu 弹层的 placement。默认在 trigger 下方居中。 */
   placement?: SelectWebMenuPlacement;
   triggerProps?: SelectTriggerProps;
   viewportProps?: ComponentProps<typeof TamaguiSelect.Viewport>;

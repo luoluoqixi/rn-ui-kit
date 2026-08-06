@@ -198,6 +198,8 @@ const WEB_NATIVE_TRIGGER_SELECT_OVERLAY_STYLE = {
 } as const;
 
 const WEB_MENU_CONTENT_Z_INDEX = 2_147_483_647;
+const WEB_MENU_CONTENT_MAX_WIDTH = "calc(100vw - 32px)";
+const WEB_MENU_CONTENT_MIN_WIDTH = 220;
 const WEB_MENU_SCROLL_VIEW_MAX_HEIGHT =
   "min(360px, var(--tamagui-menu-content-available-height, 360px))";
 const WEB_MENU_SCROLL_VIEW_STYLE = {
@@ -1035,7 +1037,6 @@ const SelectRoot = forwardRef<any, SelectProps>(
       typeof props.defaultValue === "string" ? props.defaultValue : undefined,
     );
     const [webMenuOpen, setWebMenuOpen] = React.useState(Boolean(props.defaultOpen));
-    const [webMenuTriggerWidth, setWebMenuTriggerWidth] = React.useState<number | undefined>();
     const sheetScrollRef = useRef<any>(null);
     const nativeTriggerFaceRef = useRef<any>(null);
     const webMenuRootId = React.useId();
@@ -1421,6 +1422,7 @@ const SelectRoot = forwardRef<any, SelectProps>(
       maxWidth: webMenuContentMaxWidth,
       minWidth: webMenuContentMinWidth,
       style: webMenuContentStyle,
+      width: webMenuContentWidth,
       zIndex: webMenuContentZIndex,
       ...webMenuContentProps
     } = {
@@ -1430,6 +1432,8 @@ const SelectRoot = forwardRef<any, SelectProps>(
     const resolvedWebMenuOpen = props.open ?? webMenuOpen;
     const resolvedWebMenuContentMaxHeight =
       webMenuContentMaxHeight ?? WEB_MENU_SCROLL_VIEW_MAX_HEIGHT;
+    const resolvedWebMenuContentMinWidth =
+      webMenuContentMinWidth ?? WEB_MENU_CONTENT_MIN_WIDTH;
 
     React.useEffect(() => {
       if (
@@ -1466,15 +1470,6 @@ const SelectRoot = forwardRef<any, SelectProps>(
 
       onValueChange?.(nextValue);
       triggerNativeHaptics(resolvedNativeHaptics);
-    };
-
-    const handleWebMenuTriggerLayout = (event: any) => {
-      triggerOnLayout?.(event);
-
-      const nextWidth = event?.nativeEvent?.layout?.width;
-      if (typeof nextWidth === "number" && Number.isFinite(nextWidth) && nextWidth > 0) {
-        setWebMenuTriggerWidth(nextWidth);
-      }
     };
 
     const resolvedWebMenuContentZIndex =
@@ -1576,7 +1571,7 @@ const SelectRoot = forwardRef<any, SelectProps>(
         }
         width="100%"
         {...(webMenuTriggerProps as any)}
-        onLayout={handleWebMenuTriggerLayout as any}
+        onLayout={triggerOnLayout as any}
         onPress={triggerOnPress as any}
       >
         {nativeTrigger ? (
@@ -1633,17 +1628,18 @@ const SelectRoot = forwardRef<any, SelectProps>(
                 <Menu.Content
                   {...webMenuContentProps}
                   maxHeight={resolvedWebMenuContentMaxHeight}
-                  maxWidth={webMenuContentMaxWidth}
-                  minWidth={webMenuContentMinWidth ?? webMenuTriggerWidth}
+                  maxWidth={webMenuContentMaxWidth ?? WEB_MENU_CONTENT_MAX_WIDTH}
+                  minWidth={resolvedWebMenuContentMinWidth}
                   overflow="hidden"
+                  width={webMenuContentWidth ?? "max-content"}
                   style={
                     [
                       {
                         maxHeight: resolvedWebMenuContentMaxHeight,
-                        ...(webMenuContentMaxWidth != null
-                          ? { maxWidth: webMenuContentMaxWidth }
-                          : null),
+                        maxWidth: webMenuContentMaxWidth ?? WEB_MENU_CONTENT_MAX_WIDTH,
+                        minWidth: resolvedWebMenuContentMinWidth,
                         overflow: "hidden",
+                        width: webMenuContentWidth ?? "max-content",
                       },
                       webMenuContentStyle,
                     ] as any
