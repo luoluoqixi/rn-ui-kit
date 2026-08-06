@@ -34,6 +34,7 @@ import { isWeb, os } from "../utils/platform";
 import { useAppBackgroundColors, useUiPreferences } from "../utils/theme";
 
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from "../flash_list";
+import { Input } from "../input";
 import { Menu } from "../menu";
 import { Select } from "../select";
 import {
@@ -43,6 +44,7 @@ import {
 import { useTrueSheetScrollLayout } from "../sheet/native_sheet/true_sheet/true_sheet_scroll_context";
 import { Switch } from "../switch";
 import { SizableText, Text } from "../text";
+import { TextArea } from "../text_area";
 import {
   triggerNativeHaptics,
   useNavigationBarScrollEdge,
@@ -962,10 +964,47 @@ export function NativeListInputItem({ inputProps, ...itemProps }: NativeListInpu
     autoFocusNative,
     disabled: _inputDisabled,
     style: inputStyle,
-    unstyled: _unstyled,
+    unstyled,
     ...nativeInputProps
   } = inputProps;
-  const resolvedInput = (
+  const inputStyleWithLayout = StyleSheet.flatten([
+    styles.input,
+    !hasLeadingLabel ? styles.fullWidthInput : null,
+    { color: theme.gray12?.val ?? theme.color.val },
+    inputStyle,
+  ]);
+  const inputFocusStyle = {
+    borderColor: "transparent",
+    borderWidth: 0,
+    outlineColor: "transparent",
+    outlineStyle: "none",
+    outlineWidth: 0,
+    ...(inputProps.focusStyle as object),
+  };
+  const inputFocusVisibleStyle = {
+    borderColor: "transparent",
+    borderWidth: 0,
+    outlineColor: "transparent",
+    outlineStyle: "none",
+    outlineWidth: 0,
+    ...(inputProps.focusVisibleStyle as object),
+  };
+  const resolvedInput = isWeb() ? (
+    <Input
+      {...(nativeInputProps as any)}
+      autoFocus={autoFocusNative ?? inputProps.autoFocus ?? false}
+      borderWidth={0}
+      disabled={disabled}
+      focusStyle={inputFocusStyle as any}
+      focusVisibleStyle={inputFocusVisibleStyle as any}
+      placeholderTextColor={
+        inputProps.placeholderTextColor ?? theme.gray9?.val ?? theme.color10.val
+      }
+      style={inputStyleWithLayout as any}
+      textAlign={inputProps.textAlign ?? (hasLeadingLabel ? "right" : undefined)}
+      unstyled={unstyled}
+    />
+  ) : (
     <TextInput
       {...(nativeInputProps as any)}
       autoFocus={autoFocusNative ?? inputProps.autoFocus ?? false}
@@ -976,12 +1015,7 @@ export function NativeListInputItem({ inputProps, ...itemProps }: NativeListInpu
       placeholderTextColor={
         inputProps.placeholderTextColor ?? theme.gray9?.val ?? theme.color10.val
       }
-      style={[
-        styles.input,
-        !hasLeadingLabel ? styles.fullWidthInput : null,
-        { color: theme.gray12?.val ?? theme.color.val },
-        inputStyle,
-      ]}
+      style={inputStyleWithLayout}
     />
   );
 
@@ -1019,31 +1053,65 @@ export function NativeListTextAreaItem({
     disabled: _inputDisabled,
     scrollEnabled,
     style: inputStyle,
-    unstyled: _unstyled,
+    unstyled,
     ...nativeTextAreaProps
   } = textAreaProps;
+  const textAreaStyle = StyleSheet.flatten([
+    styles.textArea,
+    {
+      color: theme.gray12?.val ?? theme.color.val,
+      height: textAreaHeight,
+      minHeight: textAreaHeight,
+    },
+    isWeb() ? ({ resize: "none" } as any) : null,
+    inputStyle,
+  ]);
+  const textAreaFocusStyle = {
+    borderColor: "transparent",
+    borderWidth: 0,
+    outlineColor: "transparent",
+    outlineStyle: "none",
+    outlineWidth: 0,
+    ...(textAreaProps.focusStyle as object),
+  };
+  const textAreaFocusVisibleStyle = {
+    borderColor: "transparent",
+    borderWidth: 0,
+    outlineColor: "transparent",
+    outlineStyle: "none",
+    outlineWidth: 0,
+    ...(textAreaProps.focusVisibleStyle as object),
+  };
 
   return (
     <NativeListCustomItem {...itemProps} disabled={disabled}>
       <View collapsable={false} style={[styles.textAreaRow, { height: textAreaHeight }]}>
-        <TextInput
-          {...(nativeTextAreaProps as any)}
-          editable={!disabled}
-          multiline
-          placeholderTextColor={
-            textAreaProps.placeholderTextColor ?? theme.gray9?.val ?? theme.color10.val
-          }
-          scrollEnabled={scrollEnabled ?? true}
-          style={[
-            styles.textArea,
-            {
-              color: theme.gray12?.val ?? theme.color.val,
-              height: textAreaHeight,
-              minHeight: textAreaHeight,
-            },
-            inputStyle,
-          ]}
-        />
+        {isWeb() ? (
+          <TextArea
+            {...(nativeTextAreaProps as any)}
+            borderWidth={0}
+            disabled={disabled}
+            focusStyle={textAreaFocusStyle as any}
+            focusVisibleStyle={textAreaFocusVisibleStyle as any}
+            placeholderTextColor={
+              textAreaProps.placeholderTextColor ?? theme.gray9?.val ?? theme.color10.val
+            }
+            scrollEnabled={scrollEnabled ?? true}
+            style={textAreaStyle as any}
+            unstyled={unstyled}
+          />
+        ) : (
+          <TextInput
+            {...(nativeTextAreaProps as any)}
+            editable={!disabled}
+            multiline
+            placeholderTextColor={
+              textAreaProps.placeholderTextColor ?? theme.gray9?.val ?? theme.color10.val
+            }
+            scrollEnabled={scrollEnabled ?? true}
+            style={textAreaStyle}
+          />
+        )}
       </View>
     </NativeListCustomItem>
   );
@@ -1621,6 +1689,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   input: {
+    borderWidth: 0,
     fontSize: 17,
     height: 44,
     includeFontPadding: false,
@@ -1727,6 +1796,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   textArea: {
+    borderWidth: 0,
     fontSize: 17,
     minHeight: 100,
     paddingHorizontal: 0,
