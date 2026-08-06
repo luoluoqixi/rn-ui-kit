@@ -1725,8 +1725,12 @@ const styles = StyleSheet.create({
   },
   hostedEditingIcon: {
     alignItems: "center",
+    alignSelf: "center",
     flexDirection: "row",
+    flexShrink: 0,
+    height: 24,
     justifyContent: "center",
+    width: 24,
   },
   hostedIcon: {
     alignItems: "center",
