@@ -97,6 +97,8 @@ void nativeListMenuItemProps;
 
 const nativeListEditModeProps = {
   editMode: true,
+  editModeSelectedSfSymbol: "checkmark.square.fill",
+  editModeSfSymbol: "square",
   onSelectedIdsChange: (_selectedIds: NativeListSelectionId[]) => {},
   selectedIds: ["first-row"],
 } satisfies NativeListRootProps;

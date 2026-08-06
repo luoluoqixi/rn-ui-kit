@@ -354,7 +354,9 @@ export function SettingsList() {
 - 向 `NativeList` 传入 `editMode` 可在 iOS、Android 与 Web 开启备忘录式多选：每行左侧
   显示主题色勾选圆标，点击会改为选择/取消选择且不会触发原行操作，选中行会持续使用
   按下背景色。列表可通过 `selectedIds` / `onSelectedIdsChange` 受控，也可仅传
-  `defaultSelectedIds` 使用内部状态；行可传 `selectionId` 提供稳定标识。
+  `defaultSelectedIds` 使用内部状态；行可传 `selectionId` 提供稳定标识。左侧图标可通过
+  `editModeIcon` / `editModeSelectedIcon` 自定义；iOS 原生模式还支持优先使用
+  `editModeSfSymbol` / `editModeSelectedSfSymbol`，未传时会回退到自定义图标或默认圆形勾选。
 - 原生文本行的 `title`、`subtitle` 和 `value` 适合传入字符串或数字；无法直接映射到
   SwiftUI 的复杂 ReactNode 会按行降级渲染。
 - 所有基础 Item 都支持 `titleColor` / `titleFontSize`、`subtitleColor` /
@@ -386,7 +388,8 @@ export function SettingsList() {
   `value`、`onChangeText`、`placeholder`、`autoFocus` 等属性；传入 `title` 或 `subtitle`
   时，文本显示在左侧、输入框显示在右侧。默认在 iOS 编辑时显示清除按钮；传入
   `inputProps.clearButtonMode` 可以覆盖该行为。Web fallback 的输入框背景默认透明，可通过
-  `inputProps.style.backgroundColor` 显式覆盖。
+  `inputProps.style.backgroundColor` 显式覆盖。NativeList 编辑模式会将 iOS 单行与多行输入框
+  显示为只读的 SwiftUI 文本快照，保留当前值或占位文字，同时将整行点击交给多选行为。
 - `NativeListItem.trailing` 可渲染自定义行尾内容；`NativeListSection.trailing` 可渲染分组
   标题右侧内容，例如“全部显示”。iOS 15 会将包含复杂 React Native trailing 的 header
   放入 Section 的透明首行，并为首个内容行恢复顶部圆角，以绕开系统 section header 的复用问题。

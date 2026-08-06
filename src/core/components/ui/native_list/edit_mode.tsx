@@ -12,12 +12,20 @@ import type { NativeListRootProps, NativeListSelectionId } from "./types";
 
 type NativeListEditModeContextValue = {
   editMode: boolean;
+  editModeIcon: NativeListRootProps["editModeIcon"];
+  editModeSelectedIcon: NativeListRootProps["editModeSelectedIcon"];
+  editModeSelectedSfSymbol: NativeListRootProps["editModeSelectedSfSymbol"];
+  editModeSfSymbol: NativeListRootProps["editModeSfSymbol"];
   isSelected: (selectionId: NativeListSelectionId) => boolean;
   toggleSelection: (selectionId: NativeListSelectionId) => void;
 };
 
 const NativeListEditModeContext = createContext<NativeListEditModeContextValue>({
   editMode: false,
+  editModeIcon: undefined,
+  editModeSelectedIcon: undefined,
+  editModeSelectedSfSymbol: undefined,
+  editModeSfSymbol: undefined,
   isSelected: () => false,
   toggleSelection: () => {},
 });
@@ -39,7 +47,14 @@ export function NativeListEditRowIdProvider({
 
 type NativeListEditModeProviderProps = Pick<
   NativeListRootProps,
-  "defaultSelectedIds" | "editMode" | "onSelectedIdsChange" | "selectedIds"
+  | "defaultSelectedIds"
+  | "editMode"
+  | "editModeIcon"
+  | "editModeSelectedIcon"
+  | "editModeSelectedSfSymbol"
+  | "editModeSfSymbol"
+  | "onSelectedIdsChange"
+  | "selectedIds"
 > & {
   children: ReactNode;
 };
@@ -48,6 +63,10 @@ export function NativeListEditModeProvider({
   children,
   defaultSelectedIds,
   editMode = false,
+  editModeIcon,
+  editModeSelectedIcon,
+  editModeSelectedSfSymbol,
+  editModeSfSymbol,
   onSelectedIdsChange,
   selectedIds,
 }: NativeListEditModeProviderProps) {
@@ -76,8 +95,24 @@ export function NativeListEditModeProvider({
     [isControlled, onSelectedIdsChange, resolvedSelectedIds, selectedIdSet],
   );
   const value = useMemo(
-    () => ({ editMode, isSelected, toggleSelection }),
-    [editMode, isSelected, toggleSelection],
+    () => ({
+      editMode,
+      editModeIcon,
+      editModeSelectedIcon,
+      editModeSelectedSfSymbol,
+      editModeSfSymbol,
+      isSelected,
+      toggleSelection,
+    }),
+    [
+      editMode,
+      editModeIcon,
+      editModeSelectedIcon,
+      editModeSelectedSfSymbol,
+      editModeSfSymbol,
+      isSelected,
+      toggleSelection,
+    ],
   );
 
   return (
@@ -89,6 +124,22 @@ export function NativeListEditModeProvider({
 
 export function useNativeListEditMode() {
   return useContext(NativeListEditModeContext).editMode;
+}
+
+export function useNativeListEditIcons() {
+  const {
+    editModeIcon,
+    editModeSelectedIcon,
+    editModeSelectedSfSymbol,
+    editModeSfSymbol,
+  } = useContext(NativeListEditModeContext);
+
+  return {
+    editModeIcon,
+    editModeSelectedIcon,
+    editModeSelectedSfSymbol,
+    editModeSfSymbol,
+  };
 }
 
 export function useNativeListEditRow({

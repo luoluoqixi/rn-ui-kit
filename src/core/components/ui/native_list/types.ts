@@ -175,6 +175,17 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
     /** 开启后，所有 NativeList 行显示左侧选择图标并拦截原点击行为。 */
     editMode?: boolean;
     /**
+     * 编辑模式未选中时的自定义 React Native 图标；Android、Web 与 fallback 使用。
+     * iOS 原生模式未传 `editModeSfSymbol` 时也会使用。
+     */
+    editModeIcon?: ReactElement;
+    /** 编辑模式已选中时的自定义 React Native 图标。 */
+    editModeSelectedIcon?: ReactElement;
+    /** iOS 原生编辑模式未选中时优先使用的 SF Symbol。 */
+    editModeSfSymbol?: SFSymbol;
+    /** iOS 原生编辑模式已选中时优先使用的 SF Symbol。 */
+    editModeSelectedSfSymbol?: SFSymbol;
+    /**
      * 修正 iOS 26+ 在外层 ScrollView 中嵌套原生 List 时错误缓存窗口底部安全区，
      * 导致内部滚动条提前结束的问题。默认关闭；非 iOS 26+ 平台会被忽略。
      */

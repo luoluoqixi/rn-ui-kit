@@ -8,6 +8,7 @@ import {
   Button as SwiftButton,
   Text as SwiftText,
   Section as SwiftUISection,
+  Toggle as SwiftToggle,
   VStack,
   ZStack,
 } from "@expo/ui/swift-ui";
@@ -36,11 +37,21 @@ import {
   scrollDisabled,
   shapes,
   tint,
+  toggleStyle,
   viewID,
 } from "@expo/ui/swift-ui/modifiers";
-import { Children, type ReactNode, createContext, useContext, useRef } from "react";
+import {
+  Children,
+  Fragment,
+  type ReactNode,
+  createContext,
+  useContext,
+  useRef,
+  useState,
+} from "react";
 import { StyleSheet, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import type { SFSymbol } from "sf-symbols-typescript";
 import { useTheme } from "tamagui";
 
 import { NativePickerSwiftUI } from "../select/native_picker";
@@ -49,11 +60,12 @@ import { resolveSelectItemGroups } from "../select/select_grouping";
 import { Menu } from "../menu";
 import { getTrueSheetScrollBottomPadding } from "../sheet/native_sheet/true_sheet/sheet_scroll_layout";
 import { useTrueSheetScrollLayout } from "../sheet/native_sheet/true_sheet/true_sheet_scroll_context";
-import { Switch } from "../switch";
 import { isIos15, isIos26Plus } from "../utils/platform";
 import { toSwiftUIHexColor, triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
 import {
   NativeListEditModeProvider,
+  useNativeListEditIcons,
+  useNativeListEditMode,
   useNativeListEditRow,
 } from "./edit_mode";
 import {
@@ -157,6 +169,25 @@ function resolveTextAreaHeight(textAreaProps: NativeListTextAreaItemProps["textA
   );
 }
 
+function resolveEditingInputDisplay(
+  value: unknown,
+  defaultValue: unknown,
+  placeholder: unknown,
+) {
+  const inputValue = value ?? defaultValue;
+  const text =
+    typeof inputValue === "string" || typeof inputValue === "number" ? String(inputValue) : "";
+
+  if (text.length > 0) {
+    return { placeholder: false, text };
+  }
+
+  return {
+    placeholder: true,
+    text: typeof placeholder === "string" ? placeholder : "",
+  };
+}
+
 function titleModifiers(fontSize?: number) {
   return [font({ size: fontSize ?? DEFAULT_TITLE_FONT_SIZE, weight: "regular" })];
 }
@@ -220,6 +251,17 @@ function resolveNativeListAssistColor(theme: ReturnType<typeof useTheme>) {
   );
 }
 
+function resolveNativeListEditIndicatorBorderColor(theme: ReturnType<typeof useTheme>) {
+  return (
+    toSwiftUIHexColor(theme.gray8?.val) ??
+    toSwiftUIHexColor(theme.color7?.val) ??
+    toSwiftUIHexColor(theme.borderColor?.val) ??
+    theme.gray8?.val ??
+    theme.color7?.val ??
+    theme.borderColor?.val
+  );
+}
+
 function NativeRowLabel({
   subtitle,
   subtitleColor,
@@ -229,6 +271,7 @@ function NativeRowLabel({
   expand = false,
   titleColor,
   titleFontSize,
+  titleLineLimit,
   preserveLeadingAnchor = false,
 }: {
   subtitle?: ReactNode;
@@ -239,6 +282,7 @@ function NativeRowLabel({
   expand?: boolean;
   titleColor?: boolean | string | null;
   titleFontSize?: number;
+  titleLineLimit?: number;
   preserveLeadingAnchor?: boolean;
 }) {
   const theme = useTheme();
@@ -268,7 +312,7 @@ function NativeRowLabel({
           modifiers={[
             ...titleModifiers(titleFontSize),
             ...(resolvedTitleColor != null ? [foregroundStyle(resolvedTitleColor)] : []),
-            lineLimit(subtitleText != null ? 2 : 1),
+            lineLimit(titleLineLimit ?? (subtitleText != null ? 2 : 1)),
             multilineTextAlignment(resolvedTextAlignment),
           ]}
         >
@@ -306,7 +350,7 @@ function NativeRowLabel({
             <SwiftText
               modifiers={[
                 ...titleModifiers(titleFontSize),
-                lineLimit(subtitleText != null ? 2 : 1),
+                lineLimit(titleLineLimit ?? (subtitleText != null ? 2 : 1)),
               ]}
             >
               {titleText}
@@ -338,6 +382,8 @@ function NativeRowContainer({
   paddingVertical,
   btnStyle,
   btnTint,
+  rowAlignment = "center",
+  rowMinHeight,
 }: {
   children: ReactNode;
   disabled?: boolean;
@@ -346,6 +392,8 @@ function NativeRowContainer({
   onPress?: () => void;
   btnStyle?: SwiftUIButtonStyle;
   btnTint?: boolean | string;
+  rowAlignment?: "center" | "top";
+  rowMinHeight?: number;
 } & NativeListItemPaddingProps) {
   const theme = useTheme();
   const restoresIos15TopCorners = useContext(Ios15FirstVisibleRowContext);
@@ -367,6 +415,14 @@ function NativeRowContainer({
         paddingVertical,
       }),
     ),
+    ...(rowMinHeight != null
+      ? [
+          frame({
+            minHeight: rowMinHeight,
+            alignment: rowAlignment === "top" ? "topLeading" : "leading",
+          }),
+        ]
+      : []),
   ];
 
   if (onPress != null) {
@@ -383,7 +439,7 @@ function NativeRowContainer({
         onPress={onPress}
       >
         <HStack
-          alignment="center"
+          alignment={rowAlignment}
           modifiers={[
             ...baseModifiers,
             ...(btnStyle === "plain" || restoresIos15TopCorners
@@ -410,7 +466,7 @@ function NativeRowContainer({
 
   return (
     <HStack
-      alignment="center"
+      alignment={rowAlignment}
       modifiers={[
         ...baseModifiers,
         disabledModifier(disabled ?? false),
@@ -430,12 +486,34 @@ function NativeRowContainer({
 
 function NativeEditingIndicator({ selected }: { selected: boolean }) {
   const theme = useTheme();
+  const {
+    editModeIcon,
+    editModeSelectedIcon,
+    editModeSelectedSfSymbol,
+    editModeSfSymbol,
+  } = useNativeListEditIcons();
+  const customIcon = selected ? editModeSelectedIcon : editModeIcon;
+  const configuredSfSymbol = selected ? editModeSelectedSfSymbol : editModeSfSymbol;
   const accentColor =
     toSwiftUIHexColor(theme.accent10?.val ?? theme.color10?.val ?? theme.color.val) ??
     theme.accent10?.val ??
     theme.color10?.val ??
     theme.color.val;
-  const borderColor = resolveNativeListAssistColor(theme);
+  const borderColor = resolveNativeListEditIndicatorBorderColor(theme);
+
+  if (configuredSfSymbol != null) {
+    return (
+      <Image
+        color={selected ? accentColor : borderColor}
+        size={24}
+        systemName={configuredSfSymbol}
+      />
+    );
+  }
+
+  if (customIcon != null) {
+    return <NativeHostedEditingIcon>{customIcon}</NativeHostedEditingIcon>;
+  }
 
   return (
     <Image
@@ -461,6 +539,16 @@ function NativeHostedIcon({ children }: { children: ReactNode }) {
   );
 }
 
+function NativeHostedEditingIcon({ children }: { children: ReactNode }) {
+  return (
+    <RNHostView matchContents>
+      <View collapsable={false} style={styles.hostedEditingIcon}>
+        {children}
+      </View>
+    </RNHostView>
+  );
+}
+
 function NativeHostedContent({ children }: { children: ReactNode }) {
   return (
     <RNHostView matchContents>
@@ -471,10 +559,23 @@ function NativeHostedContent({ children }: { children: ReactNode }) {
   );
 }
 
-function NativeHostedTrailingControl({ children }: { children: ReactNode }) {
+function NativeHostedTrailingControl({
+  children,
+  disableInEditMode = false,
+}: {
+  children: ReactNode;
+  disableInEditMode?: boolean;
+}) {
+  const editMode = useNativeListEditMode();
+  const interactionsDisabled = editMode && disableInEditMode;
+
   return (
     <RNHostView matchContents>
-      <View collapsable={false} style={styles.trailingHostedContent}>
+      <View
+        collapsable={false}
+        pointerEvents={interactionsDisabled ? "none" : "auto"}
+        style={styles.trailingHostedContent}
+      >
         {children}
       </View>
     </RNHostView>
@@ -539,17 +640,27 @@ function NativePressRow({
   titleAlign,
   titleColor,
   titleFontSize,
+  titleLineLimit,
   trailingControl,
+  overlayTrailingControlOnValueSymbol = false,
   value,
   valueColor,
   valueFontSize,
+  valueSfSymbol,
   btnStyle,
   btnTint,
   preserveLeadingAnchor = false,
+  rowAlignment = "center",
+  rowMinHeight,
 }: NativeListItemBaseProps & {
   trailingControl?: ReactNode;
+  overlayTrailingControlOnValueSymbol?: boolean;
   btnStyle?: SwiftUIButtonStyle;
   preserveLeadingAnchor?: boolean;
+  rowAlignment?: "center" | "top";
+  rowMinHeight?: number;
+  titleLineLimit?: number;
+  valueSfSymbol?: SFSymbol;
 }) {
   const theme = useTheme();
   const editRow = useNativeListEditRow({ disabled, nativeScrollId, onPress, selectionId });
@@ -567,12 +678,12 @@ function NativePressRow({
   const titleText = toPlainText(title);
   const subtitleText = toPlainText(subtitle);
   const valueText = toPlainText(value);
-  const visibleTrailingControl = editRow.editMode ? null : trailingControl;
   const hasTrailingContent =
     valueText != null ||
+    valueSfSymbol != null ||
     (!editRow.editMode && selected) ||
     trailing != null ||
-    visibleTrailingControl != null ||
+    trailingControl != null ||
     (!editRow.editMode && chevron);
   const showTrailingSpacer = hasTrailingContent && (titleText != null || subtitleText != null);
 
@@ -597,19 +708,25 @@ function NativePressRow({
       paddingRight={paddingRight}
       paddingTop={paddingTop}
       paddingVertical={paddingVertical}
+      rowAlignment={rowAlignment}
+      rowMinHeight={rowMinHeight}
     >
-      {editRow.editMode ? <NativeEditingIndicator selected={editRow.editingSelected} /> : null}
+      {editRow.editMode ? (
+        <NativeEditingIndicator key="edit-mode-indicator" selected={editRow.editingSelected} />
+      ) : null}
       {sfSymbol != null ? (
         <ZStack
+          key="leading-icon"
           alignment="center"
           modifiers={[frame({ width: resolvedIconSlotWidth, alignment: "center" })]}
         >
           <Image color={resolvedIconColor} size={resolvedIconSize} systemName={sfSymbol} />
         </ZStack>
       ) : icon != null ? (
-        <NativeHostedIcon>{icon}</NativeHostedIcon>
+        <NativeHostedIcon key="leading-icon">{icon}</NativeHostedIcon>
       ) : null}
       <NativeRowLabel
+        key="row-label"
         subtitle={subtitleText ?? undefined}
         subtitleColor={subtitleColor}
         subtitleFontSize={subtitleFontSize}
@@ -618,23 +735,37 @@ function NativePressRow({
         expand={titleAlign != null}
         titleColor={titleColor ?? btnTint}
         titleFontSize={titleFontSize}
+        titleLineLimit={titleLineLimit}
         preserveLeadingAnchor={preserveLeadingAnchor}
       />
-      {showTrailingSpacer ? <Spacer minLength={12} /> : null}
+      {showTrailingSpacer ? <Spacer key="trailing-spacer" minLength={12} /> : null}
       {valueText != null ? (
         <SwiftText
+          key="row-value"
           modifiers={[...valueModifiers(valueFontSize), foregroundStyle(resolvedValueColor)]}
         >
           {valueText}
         </SwiftText>
       ) : null}
-      {!editRow.editMode && selected ? (
-        <Image color={accentColor} size={18} systemName="checkmark" />
+      {valueSfSymbol != null ? (
+        <ZStack key="row-value-symbol" alignment="center">
+          <Image color={resolvedValueColor} size={13} systemName={valueSfSymbol} />
+          {overlayTrailingControlOnValueSymbol && trailingControl != null ? (
+            <Fragment key="trailing-control-overlay">{trailingControl}</Fragment>
+          ) : null}
+        </ZStack>
       ) : null}
-      {trailing != null ? <NativeTrailingContent>{trailing}</NativeTrailingContent> : null}
-      {visibleTrailingControl}
+      {!editRow.editMode && selected ? (
+        <Image key="selected-checkmark" color={accentColor} size={18} systemName="checkmark" />
+      ) : null}
+      {trailing != null ? (
+        <NativeTrailingContent key="custom-trailing">{trailing}</NativeTrailingContent>
+      ) : null}
+      {trailingControl != null && !overlayTrailingControlOnValueSymbol ? (
+        <Fragment key="trailing-control">{trailingControl}</Fragment>
+      ) : null}
       {!editRow.editMode && chevron ? (
-        <Image color={resolvedChevronColor} size={13} systemName="chevron.right" />
+        <Image key="chevron" color={resolvedChevronColor} size={13} systemName="chevron.right" />
       ) : null}
     </NativeRowContainer>
   );
@@ -649,6 +780,10 @@ function NativeListRoot({
   contentMarginTop,
   defaultSelectedIds,
   editMode,
+  editModeIcon,
+  editModeSelectedIcon,
+  editModeSelectedSfSymbol,
+  editModeSfSymbol,
   fixesIOS26NestedScrollIndicatorSafeArea,
   initialScrollTarget,
   native = true,
@@ -687,6 +822,10 @@ function NativeListRoot({
           contentInsetAdjustmentBehavior={contentInsetAdjustmentBehavior}
           defaultSelectedIds={defaultSelectedIds}
           editMode={editMode}
+          editModeIcon={editModeIcon}
+          editModeSelectedIcon={editModeSelectedIcon}
+          editModeSelectedSfSymbol={editModeSelectedSfSymbol}
+          editModeSfSymbol={editModeSfSymbol}
           nestedScrollEnabled={nestedScrollEnabled}
           navigationBarScrollEdgeOptions={navigationBarScrollEdgeOptions}
           onRefresh={onRefresh}
@@ -731,6 +870,10 @@ function NativeListRoot({
     <NativeListEditModeProvider
       defaultSelectedIds={defaultSelectedIds}
       editMode={editMode}
+      editModeIcon={editModeIcon}
+      editModeSelectedIcon={editModeSelectedIcon}
+      editModeSelectedSfSymbol={editModeSelectedSfSymbol}
+      editModeSfSymbol={editModeSfSymbol}
       onSelectedIdsChange={onSelectedIdsChange}
       selectedIds={selectedIds}
     >
@@ -989,16 +1132,34 @@ export function NativeListButtonItem({
  */
 export function NativeListInputItem({ inputProps, ...itemProps }: NativeListInputItemProps) {
   const nativeListEnabled = useNativeListEnabled();
+  const editMode = useNativeListEditMode();
   const theme = useTheme();
+  const [uncontrolledEditingValue, setUncontrolledEditingValue] = useState(() =>
+    typeof inputProps.defaultValue === "string" ? inputProps.defaultValue : "",
+  );
   const disabled = itemProps.disabled || inputProps.disabled;
   const hasLeadingLabel = itemProps.title != null || itemProps.subtitle != null;
   const {
     autoFocusNative,
     disabled: _inputDisabled,
+    onChangeText,
     style: inputStyle,
     unstyled: _unstyled,
     ...nativeInputProps
   } = inputProps;
+  const editingDisplay = resolveEditingInputDisplay(
+    inputProps.value ?? uncontrolledEditingValue,
+    inputProps.defaultValue,
+    inputProps.placeholder,
+  );
+  const flattenedInputStyle = StyleSheet.flatten(inputStyle) as { color?: unknown } | undefined;
+  const editingTextColor = editingDisplay.placeholder
+    ? typeof inputProps.placeholderTextColor === "string"
+      ? inputProps.placeholderTextColor
+      : (theme.gray9?.val ?? theme.color10.val)
+    : typeof flattenedInputStyle?.color === "string"
+      ? flattenedInputStyle.color
+      : (theme.gray12?.val ?? theme.color.val);
   const resolvedInput = (
     <TextInput
       {...(nativeInputProps as any)}
@@ -1007,6 +1168,10 @@ export function NativeListInputItem({ inputProps, ...itemProps }: NativeListInpu
       clearButtonMode={inputProps.clearButtonMode ?? "while-editing"}
       editable={!disabled}
       multiline={inputProps.multiline ?? false}
+      onChangeText={(nextValue) => {
+        setUncontrolledEditingValue(nextValue);
+        onChangeText?.(nextValue);
+      }}
       placeholderTextColor={
         inputProps.placeholderTextColor ?? theme.gray9?.val ?? theme.color10.val
       }
@@ -1024,6 +1189,17 @@ export function NativeListInputItem({ inputProps, ...itemProps }: NativeListInpu
       return <FallbackInputItem inputProps={inputProps} {...itemProps} />;
     }
 
+    if (editMode) {
+      return (
+        <NativePressRow
+          {...itemProps}
+          disabled={disabled}
+          value={editingDisplay.text}
+          valueColor={editingTextColor}
+        />
+      );
+    }
+
     return (
       <NativePressRow
         {...itemProps}
@@ -1035,6 +1211,17 @@ export function NativeListInputItem({ inputProps, ...itemProps }: NativeListInpu
             </View>
           </NativeHostedTrailingControl>
         }
+      />
+    );
+  }
+
+  if (nativeListEnabled && editMode) {
+    return (
+      <NativePressRow
+        {...itemProps}
+        disabled={disabled}
+        title={editingDisplay.text}
+        titleColor={editingTextColor}
       />
     );
   }
@@ -1056,16 +1243,55 @@ export function NativeListTextAreaItem({
   textAreaProps,
   ...itemProps
 }: NativeListTextAreaItemProps) {
+  const nativeListEnabled = useNativeListEnabled();
+  const editMode = useNativeListEditMode();
   const theme = useTheme();
+  const [uncontrolledEditingValue, setUncontrolledEditingValue] = useState(() =>
+    typeof textAreaProps.defaultValue === "string" ? textAreaProps.defaultValue : "",
+  );
   const disabled = itemProps.disabled || textAreaProps.disabled;
   const textAreaHeight = resolveTextAreaHeight(textAreaProps);
   const {
     disabled: _inputDisabled,
+    onChangeText,
     scrollEnabled,
     style: inputStyle,
     unstyled: _unstyled,
     ...nativeTextAreaProps
   } = textAreaProps;
+  const editingDisplay = resolveEditingInputDisplay(
+    textAreaProps.value ?? uncontrolledEditingValue,
+    textAreaProps.defaultValue,
+    textAreaProps.placeholder,
+  );
+  const flattenedInputStyle = StyleSheet.flatten(inputStyle) as { color?: unknown } | undefined;
+  const editingLineLimit =
+    typeof textAreaProps.numberOfLines === "number"
+      ? textAreaProps.numberOfLines
+      : DEFAULT_TEXT_AREA_LINES;
+  const editingTextColor = editingDisplay.placeholder
+    ? typeof textAreaProps.placeholderTextColor === "string"
+      ? textAreaProps.placeholderTextColor
+      : (theme.gray9?.val ?? theme.color10.val)
+    : typeof flattenedInputStyle?.color === "string"
+      ? flattenedInputStyle.color
+      : (theme.gray12?.val ?? theme.color.val);
+
+  if (nativeListEnabled && editMode) {
+    return (
+      <NativePressRow
+        {...itemProps}
+        disabled={disabled}
+        paddingBottom={itemProps.paddingBottom ?? itemProps.paddingVertical ?? 10}
+        paddingTop={itemProps.paddingTop ?? itemProps.paddingVertical ?? 10}
+        rowAlignment="top"
+        rowMinHeight={textAreaHeight}
+        title={editingDisplay.text}
+        titleColor={editingTextColor}
+        titleLineLimit={editingLineLimit}
+      />
+    );
+  }
 
   return (
     <NativeListCustomItem {...itemProps} disabled={disabled}>
@@ -1074,6 +1300,10 @@ export function NativeListTextAreaItem({
           {...(nativeTextAreaProps as any)}
           editable={!disabled}
           multiline
+          onChangeText={(nextValue) => {
+            setUncontrolledEditingValue(nextValue);
+            onChangeText?.(nextValue);
+          }}
           placeholderTextColor={
             textAreaProps.placeholderTextColor ?? theme.gray9?.val ?? theme.color10.val
           }
@@ -1136,20 +1366,46 @@ export function NativeListSwitchItem({ switchProps, ...itemProps }: NativeListSw
     return <FallbackSwitchItem switchProps={switchProps} {...itemProps} />;
   }
 
-  const checked = switchProps.checked ?? switchProps.defaultChecked ?? false;
+  const editMode = useNativeListEditMode();
+  const theme = useTheme();
+  const [uncontrolledChecked, setUncontrolledChecked] = useState(
+    switchProps.defaultChecked ?? false,
+  );
+  const checked = switchProps.checked ?? uncontrolledChecked;
+  const disabled = Boolean(itemProps.disabled || switchProps.disabled);
+  const themeSwitchTint = toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;
+  const switchTint =
+    itemProps.btnTint === false
+      ? null
+      : typeof itemProps.btnTint === "string"
+        ? (toSwiftUIHexColor(itemProps.btnTint) ?? itemProps.btnTint)
+        : themeSwitchTint;
+
+  const handleCheckedChange = (nextChecked: boolean) => {
+    if (switchProps.checked == null) {
+      setUncontrolledChecked(nextChecked);
+    }
+    switchProps.onCheckedChange?.(nextChecked);
+  };
 
   return (
     <NativePressRow
       {...itemProps}
       nativeHaptics={itemProps.nativeHaptics ?? true}
-      disabled={itemProps.disabled || switchProps.disabled}
+      disabled={disabled}
       onPress={() => {
-        switchProps.onCheckedChange?.(!checked);
+        handleCheckedChange(!checked);
       }}
       trailingControl={
-        <NativeHostedTrailingControl>
-          <Switch {...switchProps} native />
-        </NativeHostedTrailingControl>
+        <SwiftToggle
+          isOn={checked}
+          modifiers={[
+            toggleStyle("switch"),
+            ...(switchTint != null ? [tint(switchTint)] : []),
+            disabledModifier(editMode || disabled),
+          ]}
+          onIsOnChange={handleCheckedChange}
+        />
       }
       value={undefined}
     />
@@ -1168,6 +1424,8 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
   const resolvedHaptics = useResolvedNativeHaptics(
     selectProps.nativeHaptics ?? itemProps.nativeHaptics ?? false,
   );
+  const theme = useTheme();
+  const nativeValueColor = toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;
   const resolvedPickerMode = (selectProps.nativePickerMode ?? "dropdown") as "dropdown" | "wheel";
   const resolvedItemGroups = resolveSelectItemGroups({
     itemGroups: selectProps.itemGroups,
@@ -1182,6 +1440,12 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
     selectedValue == null || selectedValue === "" || selectProps.renderValue == null
       ? defaultTriggerLabel
       : selectProps.renderValue(selectedValue);
+  const nativeTriggerText = toPlainText(nativeTriggerLabel);
+  const usesStableNativeValue =
+    nativeTriggerText != null &&
+    selectProps.nativeTriggerContainerStyle == null &&
+    selectProps.nativeTriggerContent == null &&
+    selectProps.nativeTriggerLabelProps == null;
   const disabled = itemProps.disabled || selectProps.disabled || selectProps.isDisabled;
   const pickerRef = useRef<NativePickerSwiftUIHandle>(null);
 
@@ -1195,7 +1459,7 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
       }}
       btnStyle={resolvedPickerMode === "wheel" ? "plain" : undefined}
       trailingControl={
-        <NativeHostedTrailingControl>
+        <NativeHostedTrailingControl disableInEditMode>
           <NativePickerSwiftUI
             ref={pickerRef}
             items={selectItems}
@@ -1205,13 +1469,19 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
             nativeDropdownEdgeOffset={selectProps.nativeDropdownEdgeOffset}
             nativeTrigger
             nativeTriggerContainerStyle={[
-              styles.selectInlineTrigger,
+              usesStableNativeValue
+                ? styles.invisibleTrailingTrigger
+                : styles.selectInlineTrigger,
               disabled ? styles.disabledContent : null,
               selectProps.nativeTriggerContainerStyle,
             ]}
             nativeTriggerContent={selectProps.nativeTriggerContent}
-            nativeTriggerIcon={selectProps.nativeTriggerIcon ?? "chevrons-up-down"}
-            nativeTriggerLabel={nativeTriggerLabel}
+            nativeTriggerIcon={
+              usesStableNativeValue
+                ? "none"
+                : (selectProps.nativeTriggerIcon ?? "chevrons-up-down")
+            }
+            nativeTriggerLabel={usesStableNativeValue ? "" : nativeTriggerLabel}
             nativeTriggerLabelProps={{
               color: itemProps.valueColor ?? "$color10",
               fontSize: itemProps.valueFontSize ?? "$4",
@@ -1230,7 +1500,18 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
           />
         </NativeHostedTrailingControl>
       }
-      value={undefined}
+      value={usesStableNativeValue ? nativeTriggerText : undefined}
+      valueColor={
+        usesStableNativeValue ? (itemProps.valueColor ?? nativeValueColor) : itemProps.valueColor
+      }
+      valueSfSymbol={
+        usesStableNativeValue && selectProps.nativeTriggerIcon !== "none"
+          ? "chevron.up.chevron.down"
+          : undefined
+      }
+      overlayTrailingControlOnValueSymbol={
+        usesStableNativeValue && selectProps.nativeTriggerIcon !== "none"
+      }
     />
   );
 }
@@ -1246,7 +1527,12 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
   }
 
   const disabled = itemProps.disabled || menuProps.triggerProps?.disabled;
+  const theme = useTheme();
+  const nativeValueColor = toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;
   const menuRef = useRef<{ presentMenu: () => void } | null>(null);
+  const menuValue = itemProps.value ?? "更多";
+  const menuValueText = toPlainText(menuValue);
+  const usesStableNativeValue = menuValueText != null;
 
   return (
     <NativePressRow
@@ -1255,17 +1541,19 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
       nativeHaptics={false}
       onPress={() => menuRef.current?.presentMenu()}
       trailingControl={
-        <NativeHostedTrailingControl>
+        <NativeHostedTrailingControl disableInEditMode>
           <Menu
             {...menuProps}
             nativeHaptics={menuProps.nativeHaptics ?? itemProps.nativeHaptics ?? false}
             nativeTrigger
             nativeTriggerContainerStyle={[
-              styles.selectInlineTrigger,
+              usesStableNativeValue
+                ? styles.invisibleTrailingTrigger
+                : styles.selectInlineTrigger,
               disabled ? styles.disabledContent : null,
             ]}
-            nativeTriggerIcon="chevrons-up-down"
-            nativeTriggerLabel={itemProps.value ?? "更多"}
+            nativeTriggerIcon={usesStableNativeValue ? "none" : "chevrons-up-down"}
+            nativeTriggerLabel={usesStableNativeValue ? "" : menuValue}
             nativeTriggerLabelProps={
               {
                 color: itemProps.valueColor ?? "$color10",
@@ -1284,7 +1572,12 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
           />
         </NativeHostedTrailingControl>
       }
-      value={undefined}
+      value={usesStableNativeValue ? menuValueText : menuValue}
+      valueColor={
+        usesStableNativeValue ? (itemProps.valueColor ?? nativeValueColor) : itemProps.valueColor
+      }
+      valueSfSymbol={usesStableNativeValue ? "chevron.up.chevron.down" : undefined}
+      overlayTrailingControlOnValueSymbol={usesStableNativeValue}
     />
   );
 }
@@ -1427,6 +1720,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
+  hostedEditingIcon: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+  },
   hostedIcon: {
     alignItems: "center",
     alignSelf: "flex-start",
@@ -1451,6 +1749,16 @@ const styles = StyleSheet.create({
   },
   inputTrailing: {
     width: 160,
+  },
+  invisibleTrailingTrigger: {
+    height: 1,
+    maxHeight: 1,
+    maxWidth: 1,
+    minHeight: 1,
+    minWidth: 1,
+    opacity: 0,
+    overflow: "hidden",
+    width: 1,
   },
   nativeRoot: {
     flex: 1,

@@ -53,6 +53,7 @@ import {
 import {
   NativeListEditModeProvider,
   NativeListEditRowIdProvider,
+  useNativeListEditIcons,
   useNativeListEditMode,
   useNativeListEditRow,
 } from "./edit_mode";
@@ -340,8 +341,14 @@ function FallbackRowContainer({
 
 function FallbackEditingIndicator({ selected }: { selected: boolean }) {
   const theme = useTheme();
+  const { editModeIcon, editModeSelectedIcon } = useNativeListEditIcons();
+  const customIcon = selected ? editModeSelectedIcon : editModeIcon;
   const accentColor = theme.accent10?.val ?? theme.color10?.val ?? theme.color?.val;
   const borderColor = theme.gray8?.val ?? theme.color7?.val ?? theme.borderColor?.val;
+
+  if (customIcon != null) {
+    return <View style={styles.editingIndicatorSlot}>{customIcon}</View>;
+  }
 
   return (
     <View
@@ -1419,6 +1426,10 @@ export function NativeListRoot({
   contentMarginTop,
   defaultSelectedIds,
   editMode,
+  editModeIcon,
+  editModeSelectedIcon,
+  editModeSelectedSfSymbol,
+  editModeSfSymbol,
   fixesIOS26NestedScrollIndicatorSafeArea: _fixesIOS26NestedScrollIndicatorSafeArea,
   initialScrollTarget,
   native: _native,
@@ -1658,6 +1669,10 @@ export function NativeListRoot({
       <NativeListEditModeProvider
         defaultSelectedIds={defaultSelectedIds}
         editMode={editMode}
+        editModeIcon={editModeIcon}
+        editModeSelectedIcon={editModeSelectedIcon}
+        editModeSelectedSfSymbol={editModeSelectedSfSymbol}
+        editModeSfSymbol={editModeSfSymbol}
         onSelectedIdsChange={onSelectedIdsChange}
         selectedIds={selectedIds}
       >
@@ -1690,6 +1705,10 @@ export function NativeListRoot({
     <NativeListEditModeProvider
       defaultSelectedIds={defaultSelectedIds}
       editMode={editMode}
+      editModeIcon={editModeIcon}
+      editModeSelectedIcon={editModeSelectedIcon}
+      editModeSelectedSfSymbol={editModeSelectedSfSymbol}
+      editModeSfSymbol={editModeSfSymbol}
       onSelectedIdsChange={onSelectedIdsChange}
       selectedIds={selectedIds}
     >
@@ -1763,6 +1782,12 @@ const styles = StyleSheet.create({
     height: 24,
     justifyContent: "center",
     width: 24,
+  },
+  editingIndicatorSlot: {
+    alignItems: "center",
+    flexShrink: 0,
+    justifyContent: "center",
+    minWidth: 24,
   },
   iconAfterRow: {
     alignItems: "center",

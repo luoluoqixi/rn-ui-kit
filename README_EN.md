@@ -369,7 +369,9 @@ Notes:
   row actions are intercepted, and selected rows retain their pressed background.
   Use `selectedIds` / `onSelectedIdsChange` for controlled state,
   `defaultSelectedIds` for uncontrolled state, and a row `selectionId` for a
-  stable identifier.
+  stable identifier. Customize the leading icons with `editModeIcon` and
+  `editModeSelectedIcon`. Native iOS can prefer `editModeSfSymbol` and
+  `editModeSelectedSfSymbol`, falling back to the custom or default icons.
 - Plain strings or numbers are recommended for a native row's `title`,
   `subtitle`, and `value`. Complex React nodes that cannot map directly to
   SwiftUI fall back to the cross-platform row implementation.
@@ -409,7 +411,9 @@ Notes:
   on the leading edge and the input on the trailing edge. On iOS it shows a clear
   button while editing by default; use `inputProps.clearButtonMode` to override it.
   The Web fallback input background is transparent by default and can be overridden
-  with `inputProps.style.backgroundColor`.
+  with `inputProps.style.backgroundColor`. In NativeList edit mode, native iOS
+  single-line and multiline inputs render as read-only SwiftUI text snapshots,
+  preserving the current value or placeholder while row taps remain dedicated to selection.
 - `NativeListItem.trailing` renders custom row-end content, while
   `NativeListSection.trailing` renders content on the right of a section header,
   such as a “Show all” action. On iOS 15, headers containing complex React Native
