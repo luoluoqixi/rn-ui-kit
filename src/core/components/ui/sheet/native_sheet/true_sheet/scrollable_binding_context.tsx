@@ -14,11 +14,15 @@ const TrueSheetScrollableBindingContext =
 
 function applyScrollableView(sheet: TrueSheet | null, scrollView: ScrollView | null) {
   if (Platform.OS !== "ios" || sheet == null) return;
-  void sheet.setScrollableView(scrollView).catch((error: unknown) => {
-    if (__DEV__) {
-      console.warn("[rn-ui-kit] Failed to bind TrueSheet ScrollView", error);
-    }
-  });
+  // 该方法会应用到 truesheet 补丁, 但 TS 检查会误报
+  const setScrollableView = (sheet as any).setScrollableView;
+  if (setScrollableView) {
+    void setScrollableView(scrollView).catch((error: unknown) => {
+      if (__DEV__) {
+        console.warn("[rn-ui-kit] Failed to bind TrueSheet ScrollView", error);
+      }
+    });
+  }
 }
 
 export function useTrueSheetScrollableBindingController(): {

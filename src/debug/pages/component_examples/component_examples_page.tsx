@@ -157,6 +157,7 @@ export function RnUiKitComponentExampleDetailPage({
     return (
       <NativeSheetScrollContent
         bindToNativeSheet={isFocused}
+        // @ts-ignore
         iosEmptyViewportScrollEnabled={Platform.OS === "ios" ? true : undefined}
         nestedScrollEnabled
         showsVerticalScrollIndicator
