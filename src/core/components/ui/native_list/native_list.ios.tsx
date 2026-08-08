@@ -1710,6 +1710,8 @@ export function NativeListSwitchItem({ switchProps, ...itemProps }: NativeListSw
   );
   const checked = switchProps.checked ?? uncontrolledChecked;
   const disabled = Boolean(itemProps.disabled || switchProps.disabled);
+  const nativeHaptics = itemProps.nativeHaptics ?? !editMode;
+  const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics);
   const themeSwitchTint = toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;
   const switchTint =
     itemProps.btnTint === false
@@ -1725,10 +1727,20 @@ export function NativeListSwitchItem({ switchProps, ...itemProps }: NativeListSw
     switchProps.onCheckedChange?.(nextChecked);
   };
 
+  const handleSwiftToggleChange = (nextChecked: boolean) => {
+    handleCheckedChange(nextChecked);
+
+    // SwiftUI Toggle does not provide the system switch haptic feedback on iOS 15 and below.
+    // Row presses already trigger haptics in NativePressRow, so limit this to direct Toggle changes.
+    if (isIos15()) {
+      triggerNativeHaptics(resolvedNativeHaptics);
+    }
+  };
+
   return (
     <NativePressRow
       {...itemProps}
-      nativeHaptics={itemProps.nativeHaptics ?? !editMode}
+      nativeHaptics={nativeHaptics}
       disabled={disabled}
       onPress={() => {
         handleCheckedChange(!checked);
@@ -1741,7 +1753,7 @@ export function NativeListSwitchItem({ switchProps, ...itemProps }: NativeListSw
             ...(switchTint != null ? [tint(switchTint)] : []),
             disabledModifier(editMode || disabled),
           ]}
-          onIsOnChange={handleCheckedChange}
+          onIsOnChange={handleSwiftToggleChange}
         />
       }
       value={undefined}
