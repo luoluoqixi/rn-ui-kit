@@ -1,257 +1,10 @@
-import { Download, FilePlus, Settings } from "@tamagui/lucide-icons-2";
 import { useState, type ReactNode } from "react";
+
 import { StyleSheet, useWindowDimensions, View } from "react-native";
-import {
-  AlertDialog,
-  Button,
-  ContextMenu,
-  Dialog,
-  Input,
-  Menu,
-  NativeSheet,
-  Popover,
-  Sheet,
-  Switch,
-  Text,
-  Tooltip,
-} from "rn-ui-kit/core";
+
+import { Button, NativeSheet, Sheet, Switch, Text } from "rn-ui-kit/core";
 
 import { ExampleBlock, ExampleRow, ExampleStack } from "../shared";
-import type { ComponentExampleDefinition } from "../types";
-
-function DialogExample() {
-  const [open, setOpen] = useState(false);
-  const [draftName, setDraftName] = useState("组件实验室");
-  const [savedName, setSavedName] = useState("尚未保存");
-
-  return (
-    <ExampleStack>
-      <ExampleBlock description={`已保存名称：${savedName}`} title="编辑工作区">
-        <Dialog
-          actions={
-            <ExampleRow>
-              <Button onPress={() => setOpen(false)} variant="outlined">
-                取消
-              </Button>
-              <Button
-                onPress={() => {
-                  setSavedName(draftName || "未命名工作区");
-                  setOpen(false);
-                }}
-                theme="accent"
-              >
-                保存
-              </Button>
-            </ExampleRow>
-          }
-          description="受控 Dialog 可承载一个小型编辑流程，并在关闭前提交结果。"
-          onOpenChange={setOpen}
-          open={open}
-          title="重命名工作区"
-          trigger={<Button onPress={() => setOpen(true)}>编辑名称</Button>}
-        >
-          <View style={styles.dialogContent}>
-            <Text opacity={0.6}>新名称</Text>
-            <Input onChangeText={setDraftName} value={draftName} />
-          </View>
-        </Dialog>
-      </ExampleBlock>
-    </ExampleStack>
-  );
-}
-
-function AlertDialogExample() {
-  const [open, setOpen] = useState(false);
-  const [result, setResult] = useState("尚未操作");
-
-  return (
-    <ExampleStack>
-      <ExampleBlock description={`最近结果：${result}`} title="危险操作确认">
-        <AlertDialog
-          cancelLabel="取消"
-          contentProps={{ style: { width: "90%", maxWidth: 420 } }}
-          destructiveLabel="删除"
-          description="先在弹窗中做最后确认；此操作仅用于演示，不会删除真实数据。"
-          onOpenChange={setOpen}
-          open={open}
-          title="删除 3 个草稿？"
-          trigger={<Button onPress={() => setOpen(true)}>打开 AlertDialog</Button>}
-          actions={
-            <Button
-              onPress={() => {
-                setResult("确认删除");
-                setOpen(false);
-              }}
-              theme="red"
-            >
-              自定义动作
-            </Button>
-          }
-        />
-      </ExampleBlock>
-    </ExampleStack>
-  );
-}
-
-function ContextMenuExample() {
-  const [action, setAction] = useState("尚未选择");
-
-  return (
-    <ExampleStack>
-      <ExampleBlock
-        description="在桌面端右键、在触控设备长按，均会打开同一组操作。"
-        title="文件操作"
-      >
-        <ContextMenu
-          arrow
-          items={[
-            { label: "重命名", onSelect: () => setAction("重命名"), value: "rename" },
-            { label: "复制链接", onSelect: () => setAction("复制链接"), value: "copy-link" },
-            {
-              label: "更多操作",
-              subMenu: [
-                {
-                  icon: <Settings color="$color10" size={14} />,
-                  label: "设置",
-                  onSelect: () => setAction("设置"),
-                  subtitle: "嵌套 ContextMenu",
-                  value: "settings",
-                },
-                {
-                  label: "下载",
-                  onSelect: () => setAction("下载"),
-                  value: "download",
-                },
-              ],
-              value: "more",
-            },
-            { label: "separator", separator: true, value: "separator" },
-            {
-              destructive: true,
-              label: "删除",
-              onSelect: () => setAction("删除"),
-              value: "delete",
-            },
-          ]}
-          trigger={<Button variant="outlined">右键或长按</Button>}
-        />
-        <Text opacity={0.6}>最近动作：{action}</Text>
-      </ExampleBlock>
-    </ExampleStack>
-  );
-}
-
-function MenuExample() {
-  const [action, setAction] = useState("尚未选择");
-
-  return (
-    <ExampleStack>
-      <ExampleBlock description="Menu 适合由普通按钮触发的一组轻量操作。" title="项目菜单">
-        <Menu
-          arrow
-          trigger={<Button variant="outlined">打开 Menu</Button>}
-          items={[
-            {
-              icon: <FilePlus color="$color10" size={14} />,
-              label: "新建文件",
-              onSelect: () => setAction("新建文件"),
-              value: "new",
-            },
-            {
-              label: "更多操作",
-              subMenu: [
-                {
-                  icon: <Settings color="$color10" size={14} />,
-                  label: "打开设置",
-                  onSelect: () => setAction("打开设置"),
-                  value: "settings",
-                },
-                {
-                  icon: <Download color="$color10" size={14} />,
-                  label: "导出快照",
-                  onSelect: () => setAction("导出快照"),
-                  value: "export",
-                },
-              ],
-              value: "more",
-            },
-            { label: "separator", separator: true, value: "separator" },
-            {
-              destructive: true,
-              label: "清空记录",
-              onSelect: () => setAction("清空记录"),
-              value: "clear",
-            },
-          ]}
-        />
-        <Menu
-          arrow
-          nativeTrigger
-          nativeTriggerLabel="打开Menu"
-          items={[
-            {
-              icon: <FilePlus color="$color10" size={14} />,
-              label: "新建文件",
-              onSelect: () => setAction("新建文件"),
-              value: "new",
-            },
-            {
-              label: "更多操作",
-              subMenu: [
-                {
-                  icon: <Settings color="$color10" size={14} />,
-                  label: "打开设置",
-                  onSelect: () => setAction("打开设置"),
-                  value: "settings",
-                },
-                {
-                  icon: <Download color="$color10" size={14} />,
-                  label: "导出快照",
-                  onSelect: () => setAction("导出快照"),
-                  value: "export",
-                },
-              ],
-              subMenuTitle: false,
-              value: "more",
-            },
-            { label: "separator", separator: true, value: "separator" },
-            {
-              destructive: true,
-              label: "清空记录",
-              onSelect: () => setAction("清空记录"),
-              value: "clear",
-            },
-          ]}
-        />
-        <Text opacity={0.6}>最近动作：{action}</Text>
-      </ExampleBlock>
-    </ExampleStack>
-  );
-}
-
-function PopoverExample() {
-  const [name, setName] = useState("rn-ui-kit");
-
-  return (
-    <ExampleStack>
-      <ExampleBlock
-        description="Popover 更适合锚定在触发元素旁的小范围编辑。"
-        title={`当前名称：${name}`}
-      >
-        <Popover
-          arrow
-          content={
-            <View style={styles.popoverContent}>
-              <Text fontWeight="600">编辑名称</Text>
-              <Input onChangeText={setName} value={name} />
-            </View>
-          }
-          trigger={<Button variant="outlined">打开 Popover</Button>}
-        />
-      </ExampleBlock>
-    </ExampleStack>
-  );
-}
 
 type ExampleModalSheetProps = {
   children?: ReactNode;
@@ -342,7 +95,21 @@ function SheetContent({
   );
 }
 
-function SheetExample() {
+const styles = StyleSheet.create({
+  dialogContent: { gap: 8 },
+  nativeSheetHost: { left: 0, position: "absolute", top: 0 },
+  popoverContent: { gap: 12, minWidth: 240, padding: 12 },
+  sheetContent: { gap: 16, padding: 24 },
+  sheetItem: {
+    borderColor: "rgba(128, 128, 128, 0.28)",
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+});
+
+export function SheetExample() {
   const [native, setNative] = useState(true);
   const [inlineOpen, setInlineOpen] = useState(false);
   const [inlinePosition, setInlinePosition] = useState(0);
@@ -555,79 +322,3 @@ function SheetExample() {
     </ExampleStack>
   );
 }
-
-function TooltipExample() {
-  return (
-    <ExampleStack>
-      <ExampleBlock description="Web 悬停显示；Native 主要提供可访问性语义。" title="补充说明">
-        <ExampleRow>
-          <Tooltip arrow content="这会把当前版本发布到预览环境。">
-            <Button variant="outlined">发布说明</Button>
-          </Tooltip>
-          <Tooltip arrow content="删除后将无法恢复。">
-            <Button theme="red">危险操作</Button>
-          </Tooltip>
-        </ExampleRow>
-      </ExampleBlock>
-    </ExampleStack>
-  );
-}
-
-export const overlayExamples = [
-  {
-    Component: DialogExample,
-    group: "浮层与菜单",
-    key: "dialog",
-    label: "Dialog",
-  },
-  {
-    Component: AlertDialogExample,
-    group: "浮层与菜单",
-    key: "alert-dialog",
-    label: "AlertDialog",
-  },
-  {
-    Component: ContextMenuExample,
-    group: "浮层与菜单",
-    key: "context-menu",
-    label: "ContextMenu",
-  },
-  {
-    Component: MenuExample,
-    group: "浮层与菜单",
-    key: "menu",
-    label: "Menu",
-  },
-  {
-    Component: PopoverExample,
-    group: "浮层与菜单",
-    key: "popover",
-    label: "Popover",
-  },
-  {
-    Component: SheetExample,
-    group: "浮层与菜单",
-    key: "sheet",
-    label: "Sheet",
-  },
-  {
-    Component: TooltipExample,
-    group: "浮层与菜单",
-    key: "tooltip",
-    label: "Tooltip",
-  },
-] satisfies ComponentExampleDefinition[];
-
-const styles = StyleSheet.create({
-  dialogContent: { gap: 8 },
-  nativeSheetHost: { left: 0, position: "absolute", top: 0 },
-  popoverContent: { gap: 12, minWidth: 240, padding: 12 },
-  sheetContent: { gap: 16, padding: 24 },
-  sheetItem: {
-    borderColor: "rgba(128, 128, 128, 0.28)",
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-});

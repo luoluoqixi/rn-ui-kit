@@ -15,12 +15,12 @@ import {
   Timer,
   Users,
 } from "@tamagui/lucide-icons-2";
+
 import { useEffect, useState } from "react";
+
 import { StyleSheet, View } from "react-native";
+
 import {
-  FlashList,
-  ListGroup,
-  ListItem,
   NativeList,
   NativeListInputItem,
   NativeListItem,
@@ -30,7 +30,6 @@ import {
   NativeListSelectItem,
   NativeListSwitchItem,
   NativeListTextAreaItem,
-  ScrollView,
   Select,
   SelectItemData,
   Switch,
@@ -40,10 +39,11 @@ import {
 } from "rn-ui-kit/core";
 
 import { ExampleBlock, ExampleStack } from "../shared";
-import type { ComponentExampleDefinition } from "../types";
 
 const NATIVE_LIST_ICON_COLOR = "#7c3aed";
+
 const NATIVE_LIST_ICON_SIZE = 20;
+
 const NATIVE_LIST_BACKUP_OPTIONS = [
   { Icon: Timer, sfSymbol: "timer", title: "30 分钟", value: "thirty-minutes" },
   { Icon: Clock, sfSymbol: "clock", title: "1 小时", value: "one-hour" },
@@ -62,7 +62,22 @@ const NATIVE_LIST_SORT_LIST: SelectItemData[] = [
   { value: "timeSort", label: "时间排序" },
 ];
 
-function NativeListExample() {
+const styles = StyleSheet.create({
+  listFrame: { height: 320, minHeight: 0 },
+  listItem: { borderRadius: 12, borderWidth: StyleSheet.hairlineWidth },
+  listRow: {
+    borderBottomColor: "rgba(128, 128, 128, 0.22)",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    minHeight: 48,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+  },
+  nativeListFrame: { height: 620, minHeight: 0 },
+  scrollFrame: { height: 260, minHeight: 0 },
+  scrollView: { flex: 1 },
+});
+
+export function NativeListExample() {
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
   const [customEditModeIcon, setCustomEditModeIcon] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -466,165 +481,3 @@ function NativeListExample() {
     </ExampleStack>
   );
 }
-
-function ListGroupExample() {
-  const [lastAction, setLastAction] = useState("尚未点击");
-
-  return (
-    <ExampleStack>
-      <ExampleBlock
-        description="ListGroup 适合承载一组带标题、说明和连续分隔线的入口。"
-        title="内容库"
-      >
-        <ListGroup
-          items={[
-            {
-              onPress: () => setLastAction("最近文件"),
-              subTitle: "显示最近访问的文件",
-              title: "最近文件",
-            },
-            {
-              onPress: () => setLastAction("收藏夹"),
-              subTitle: "显示收藏内容",
-              title: "收藏夹",
-            },
-            {
-              onPress: () => setLastAction("共享给团队"),
-              subTitle: "管理外部协作者可以访问的内容",
-              title: "共享与权限",
-            },
-          ]}
-          rounded="$4"
-          separator
-          size="$4"
-        />
-        <Text opacity={0.6}>最近动作：{lastAction}</Text>
-      </ExampleBlock>
-    </ExampleStack>
-  );
-}
-
-function ListItemExample() {
-  const [pressed, setPressed] = useState(0);
-  const [archived, setArchived] = useState(false);
-
-  return (
-    <ExampleStack>
-      <ExampleBlock
-        description="独立 ListItem 可以脱离 ListGroup 用于局部的可点击信息卡。"
-        title="单条记录"
-      >
-        <ListItem
-          onPress={() => setPressed((current) => current + 1)}
-          style={styles.listItem}
-          subTitle="ListItem 可以独立使用"
-          title="单个列表项"
-        />
-        <ListItem
-          onPress={() => setArchived((current) => !current)}
-          style={styles.listItem}
-          subTitle={archived ? "已归档，点击恢复" : "点击后归档该条记录"}
-          title={archived ? "归档记录" : "当前记录"}
-        />
-        <Text opacity={0.6}>已点击 {pressed} 次</Text>
-      </ExampleBlock>
-    </ExampleStack>
-  );
-}
-
-const flashListData = Array.from({ length: 40 }, (_, index) => ({
-  id: `flash-row-${index}`,
-  label: `FlashList row ${index + 1}`,
-}));
-
-function FlashListExample() {
-  return (
-    <ExampleStack>
-      <ExampleBlock
-        description="固定高度中渲染 40 条数据，适合作为长列表的性能基线。"
-        title="虚拟化列表"
-      >
-        <View style={styles.listFrame}>
-          <FlashList
-            data={flashListData}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <View style={styles.listRow}>
-                <Text>{item.label}</Text>
-              </View>
-            )}
-          />
-        </View>
-      </ExampleBlock>
-    </ExampleStack>
-  );
-}
-
-function ScrollViewExample() {
-  return (
-    <ExampleStack>
-      <ExampleBlock
-        description="嵌套容器保持自己的滚动位置，不影响示例详情页。"
-        title="独立滚动区域"
-      >
-        <View style={styles.scrollFrame}>
-          <ScrollView nestedScrollEnabled showsVerticalScrollIndicator style={styles.scrollView}>
-            {Array.from({ length: 20 }, (_, index) => (
-              <View key={index} style={styles.listRow}>
-                <Text>ScrollView row {index + 1}</Text>
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-      </ExampleBlock>
-    </ExampleStack>
-  );
-}
-
-export const collectionExamples = [
-  {
-    Component: NativeListExample,
-    group: "列表与滚动",
-    key: "native-list",
-    label: "NativeList",
-  },
-  {
-    Component: ListGroupExample,
-    group: "列表与滚动",
-    key: "list-group",
-    label: "ListGroup",
-  },
-  {
-    Component: ListItemExample,
-    group: "列表与滚动",
-    key: "list-item",
-    label: "ListItem",
-  },
-  {
-    Component: FlashListExample,
-    group: "列表与滚动",
-    key: "flash-list",
-    label: "FlashList",
-  },
-  {
-    Component: ScrollViewExample,
-    group: "列表与滚动",
-    key: "scroll-view",
-    label: "ScrollView",
-  },
-] satisfies ComponentExampleDefinition[];
-
-const styles = StyleSheet.create({
-  listFrame: { height: 320, minHeight: 0 },
-  listItem: { borderRadius: 12, borderWidth: StyleSheet.hairlineWidth },
-  listRow: {
-    borderBottomColor: "rgba(128, 128, 128, 0.22)",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    minHeight: 48,
-    paddingHorizontal: 12,
-    paddingVertical: 14,
-  },
-  nativeListFrame: { height: 620, minHeight: 0 },
-  scrollFrame: { height: 260, minHeight: 0 },
-  scrollView: { flex: 1 },
-});
