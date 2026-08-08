@@ -258,6 +258,7 @@ const DEFAULT_TITLE_FONT_SIZE = 17;
 const DEFAULT_SUBTITLE_FONT_SIZE = 13;
 const DEFAULT_VALUE_FONT_SIZE = 17;
 const DEFAULT_SECTION_TITLE_FONT_SIZE = 13;
+const DEFAULT_IOS15_NATIVE_SELECT_TRIGGER_WIDTH = 180;
 const DEFAULT_TEXT_AREA_LINES = 4;
 const TEXT_AREA_LINE_HEIGHT = 24;
 const TEXT_AREA_VERTICAL_PADDING = 20;
@@ -1746,7 +1747,11 @@ export function NativeListSwitchItem({ switchProps, ...itemProps }: NativeListSw
   );
 }
 
-export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSelectItemProps) {
+export function NativeListSelectItem({
+  ios15NativeTriggerWidth,
+  selectProps,
+  ...itemProps
+}: NativeListSelectItemProps) {
   if (!useNativeListEnabled()) {
     return <FallbackSelectItem selectProps={selectProps} {...itemProps} />;
   }
@@ -1777,6 +1782,12 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
       ? defaultTriggerLabel
       : selectProps.renderValue(selectedValue);
   const disabled = itemProps.disabled || selectProps.disabled || selectProps.isDisabled;
+  const resolvedIos15NativeTriggerWidth =
+    typeof ios15NativeTriggerWidth === "number" &&
+    Number.isFinite(ios15NativeTriggerWidth) &&
+    ios15NativeTriggerWidth > 0
+      ? ios15NativeTriggerWidth
+      : DEFAULT_IOS15_NATIVE_SELECT_TRIGGER_WIDTH;
   const pickerRef = useRef<NativePickerSwiftUIHandle>(null);
 
   return (
@@ -1802,6 +1813,17 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
               styles.selectInlineTrigger,
               disabled ? styles.disabledContent : null,
               selectProps.nativeTriggerContainerStyle,
+              // iOS 15 不会稳定地在 hosted trigger 宽度变化后重新计算 List 行尾。
+              // 固定承载宽度并右对齐内容，避免短标签落在旧的左侧坐标。
+              isIos15()
+                ? [
+                    styles.ios15SelectInlineTrigger,
+                    {
+                      maxWidth: resolvedIos15NativeTriggerWidth,
+                      width: resolvedIos15NativeTriggerWidth,
+                    },
+                  ]
+                : null,
             ]}
             nativeTriggerContent={selectProps.nativeTriggerContent}
             nativeTriggerIcon={selectProps.nativeTriggerIcon ?? "chevrons-up-down"}
@@ -2166,6 +2188,9 @@ const styles = StyleSheet.create({
   },
   inputTrailing: {
     width: 160,
+  },
+  ios15SelectInlineTrigger: {
+    justifyContent: "flex-end",
   },
   nativeRoot: {
     flex: 1,
