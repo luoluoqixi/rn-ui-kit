@@ -132,7 +132,7 @@ export function NativeListExample() {
             }
           }}
         />
-        {os() === "ios" && (
+        {os() === "ios" && native && (
           <Switch
             checked={iosCustomEditMode}
             disabled={os() !== "ios"}
@@ -143,7 +143,7 @@ export function NativeListExample() {
         )}
         <Switch
           checked={customEditModeIcon}
-          disabled={os() === "ios" && !iosCustomEditMode}
+          disabled={os() === "ios" && !iosCustomEditMode && native}
           label="自定义编辑模式图标"
           labelPosition="end"
           onCheckedChange={setCustomEditModeIcon}
