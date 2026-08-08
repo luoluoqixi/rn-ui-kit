@@ -25,6 +25,7 @@ import {
   foregroundStyle,
   frame,
   ios15ListRowTopRoundedBackground,
+  ios15ListRowSeparatorHidden,
   layoutPriority,
   lineLimit,
   listRowBackground,
@@ -251,7 +252,7 @@ const IOS15_SECTION_HEADER_ROW_INSETS = listRowInsets({
   trailing: 20,
 });
 const IOS15_SECTION_HEADER_ROW_BACKGROUND = listRowBackground("clear");
-const IOS15_SECTION_HEADER_ROW_SEPARATOR = listRowSeparator("hidden");
+const IOS15_SECTION_HEADER_ROW_SEPARATOR = ios15ListRowSeparatorHidden();
 const ROW_PADDING = { top: 0, bottom: 0, leading: 0, trailing: 0 } as const;
 const DEFAULT_TITLE_FONT_SIZE = 17;
 const DEFAULT_SUBTITLE_FONT_SIZE = 13;

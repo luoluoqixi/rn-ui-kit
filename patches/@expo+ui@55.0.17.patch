@@ -6,6 +6,7 @@
 # - SwiftUI List: iOS 15 大标题滚动时补齐导航栏布局失效通知，保留 UIKit 原生过渡与回弹动画。
 # - SwiftUI List: 提供通用 indicator frame 校正开关；具体系统版本由调用方决定。
 # - SwiftUI modifier: iOS 15 可为透明辅助行后的首个内容行恢复顶部圆角。
+# - SwiftUI modifier: iOS 15 隐藏辅助行 separator 时直接隔离 UIKit cell，并在复用时恢复。
 diff --git a/ios/SliderView.swift b/ios/SliderView.swift
 index 1ffa70e..488c98b 100644
 --- a/ios/SliderView.swift
@@ -601,7 +602,7 @@ index d64100e..6a3440a 100644
  type UnitPointValue =
    | 'zero'
    | 'topLeading'
-@@ -773,3 +795,21 @@ export const scrollContentBackground = (visible: 'automatic' | 'hidden' | 'visib
+@@ -773,3 +795,29 @@ export const scrollContentBackground = (visible: 'automatic' | 'hidden' | 'visib
  export const listRowBackground = (color: Color) => createModifier('listRowBackground', { color });
 -
 +
@@ -623,6 +624,14 @@ index d64100e..6a3440a 100644
 +    topInset: insets.top ?? 0,
 +  });
 +
++/**
++ * Hides only the enclosing UITableViewCell separator on iOS 15 and restores
++ * the original inset when the row is removed or reused.
++ * @platform ios 15
++ */
++export const ios15ListRowSeparatorHidden = () =>
++  createModifier('ios15ListRowSeparatorHidden', {});
++
  /**
 @@ -1267,6 +1307,8 @@ export type BuiltInModifier =
    | ReturnType<typeof containerShape>
@@ -633,11 +642,12 @@ index d64100e..6a3440a 100644
    | ReturnType<typeof scrollContentBackground>
    | ReturnType<typeof scrollDisabled>
    | ReturnType<typeof defaultScrollAnchor>
-@@ -1277,6 +1319,7 @@ export type BuiltInModifier =
+@@ -1277,6 +1319,8 @@ export type BuiltInModifier =
    | ReturnType<typeof deleteDisabled>
    | ReturnType<typeof environment>
    | ReturnType<typeof listRowBackground>
 +  | ReturnType<typeof ios15ListRowTopRoundedBackground>
++  | ReturnType<typeof ios15ListRowSeparatorHidden>
    | ReturnType<typeof listRowSeparator>
    | ReturnType<typeof truncationMode>
    | ReturnType<typeof allowsTightening>
@@ -672,7 +682,7 @@ index 1e0d2ba..d0d1a5d 100644
  type UnitPointValue = 'zero' | 'topLeading' | 'top' | 'topTrailing' | 'leading' | 'center' | 'trailing' | 'bottomLeading' | 'bottom' | 'bottomTrailing';
  /**
   * Sets the default anchor point for a scroll view's content.
-@@ -611,6 +631,18 @@ export declare const scrollContentBackground: (visible: "automatic" | "visible"
+@@ -611,6 +631,24 @@ export declare const scrollContentBackground: (visible: "automatic" | "visible"
   * @see Official [SwiftUI documentation](https://developer.apple.com/documentation/swiftui/view/listrowbackground(_:)).
   */
  export declare const listRowBackground: (color: Color) => ModifierConfig;
@@ -688,15 +698,21 @@ index 1e0d2ba..d0d1a5d 100644
 +    trailing?: number;
 +    top?: number;
 +}) => ModifierConfig;
++/**
++ * Hides only the enclosing UITableViewCell separator on iOS 15 and restores
++ * the original inset when the row is removed or reused.
++ * @platform ios 15
++ */
++export declare const ios15ListRowSeparatorHidden: () => ModifierConfig;
  /**
   * Controls the visibility of the separator for a list row.
   * @param visibility - The visibility to apply.
-@@ -925,7 +957,7 @@ export declare const resizable: (capInsets?: {
+@@ -925,7 +963,7 @@ export declare const resizable: (capInsets?: {
   * This provides type safety for the modifiers array.
   * @hidden
   */
 -export type BuiltInModifier = ReturnType<typeof listSectionSpacing> | ReturnType<typeof background> | ReturnType<typeof cornerRadius> | ReturnType<typeof shadow> | ReturnType<typeof frame> | ReturnType<typeof padding> | ReturnType<typeof fixedSize> | ReturnType<typeof ignoreSafeArea> | ReturnType<typeof onTapGesture> | ReturnType<typeof onLongPressGesture> | ReturnType<typeof onAppear> | ReturnType<typeof luminanceToAlpha> | ReturnType<typeof onDisappear> | ReturnType<typeof opacity> | ReturnType<typeof clipShape> | ReturnType<typeof border> | ReturnType<typeof scaleEffect> | ReturnType<typeof rotationEffect> | ReturnType<typeof rotation3DEffect> | ReturnType<typeof offset> | ReturnType<typeof foregroundColor> | ReturnType<typeof foregroundStyle> | ReturnType<typeof bold> | ReturnType<typeof italic> | ReturnType<typeof monospacedDigit> | ReturnType<typeof tint> | ReturnType<typeof hidden> | ReturnType<typeof disabled> | ReturnType<typeof zIndex> | ReturnType<typeof blur> | ReturnType<typeof brightness> | ReturnType<typeof contrast> | ReturnType<typeof saturation> | ReturnType<typeof hueRotation> | ReturnType<typeof colorInvert> | ReturnType<typeof grayscale> | ReturnType<typeof buttonStyle> | ReturnType<typeof toggleStyle> | ReturnType<typeof controlSize> | ReturnType<typeof labelStyle> | ReturnType<typeof labelsHidden> | ReturnType<typeof textFieldStyle> | ReturnType<typeof menuActionDismissBehavior> | ReturnType<typeof accessibilityLabel> | ReturnType<typeof accessibilityHint> | ReturnType<typeof accessibilityValue> | ReturnType<typeof layoutPriority> | ReturnType<typeof mask> | ReturnType<typeof overlay> | ReturnType<typeof backgroundOverlay> | ReturnType<typeof aspectRatio> | ReturnType<typeof clipped> | ReturnType<typeof glassEffect> | ReturnType<typeof glassEffectId> | ReturnType<typeof animation> | ReturnType<typeof containerShape> | ReturnType<typeof contentShape> | ReturnType<typeof containerRelativeFrame> | ReturnType<typeof scrollContentBackground> | ReturnType<typeof scrollDisabled> | ReturnType<typeof defaultScrollAnchor> | ReturnType<typeof defaultScrollAnchorForRole> | ReturnType<typeof scrollTargetBehavior> | ReturnType<typeof scrollTargetLayout> | ReturnType<typeof moveDisabled> | ReturnType<typeof deleteDisabled> | ReturnType<typeof environment> | ReturnType<typeof listRowBackground> | ReturnType<typeof listRowSeparator> | ReturnType<typeof truncationMode> | ReturnType<typeof allowsTightening> | ReturnType<typeof kerning> | ReturnType<typeof textCase> | ReturnType<typeof underline> | ReturnType<typeof strikethrough> | ReturnType<typeof multilineTextAlignment> | ReturnType<typeof textSelection> | ReturnType<typeof lineSpacing> | ReturnType<typeof lineLimit> | ReturnType<typeof headerProminence> | ReturnType<typeof listRowInsets> | ReturnType<typeof badgeProminence> | ReturnType<typeof badge> | ReturnType<typeof listSectionMargins> | ReturnType<typeof font> | ReturnType<typeof gridCellUnsizedAxes> | ReturnType<typeof gridCellColumns> | ReturnType<typeof gridColumnAlignment> | ReturnType<typeof gridCellAnchor> | ReturnType<typeof submitLabel> | ReturnType<typeof keyboardType> | ReturnType<typeof autocorrectionDisabled> | ReturnType<typeof onSubmit> | ReturnType<typeof textInputAutocapitalization> | ReturnType<typeof textContentType> | ReturnType<typeof datePickerStyle> | ReturnType<typeof progressViewStyle> | ReturnType<typeof gaugeStyle> | ReturnType<typeof listStyle> | ReturnType<typeof contentTransition> | ReturnType<typeof resizable> | ReturnType<typeof widgetAccentedRenderingMode> | ReturnType<typeof widgetURL>;
-+export type BuiltInModifier = ReturnType<typeof listSectionSpacing> | ReturnType<typeof background> | ReturnType<typeof cornerRadius> | ReturnType<typeof shadow> | ReturnType<typeof frame> | ReturnType<typeof padding> | ReturnType<typeof fixedSize> | ReturnType<typeof ignoreSafeArea> | ReturnType<typeof onTapGesture> | ReturnType<typeof onLongPressGesture> | ReturnType<typeof onAppear> | ReturnType<typeof luminanceToAlpha> | ReturnType<typeof onDisappear> | ReturnType<typeof opacity> | ReturnType<typeof clipShape> | ReturnType<typeof border> | ReturnType<typeof scaleEffect> | ReturnType<typeof rotationEffect> | ReturnType<typeof rotation3DEffect> | ReturnType<typeof offset> | ReturnType<typeof foregroundColor> | ReturnType<typeof foregroundStyle> | ReturnType<typeof bold> | ReturnType<typeof italic> | ReturnType<typeof monospacedDigit> | ReturnType<typeof tint> | ReturnType<typeof hidden> | ReturnType<typeof disabled> | ReturnType<typeof zIndex> | ReturnType<typeof blur> | ReturnType<typeof brightness> | ReturnType<typeof contrast> | ReturnType<typeof saturation> | ReturnType<typeof hueRotation> | ReturnType<typeof colorInvert> | ReturnType<typeof grayscale> | ReturnType<typeof buttonStyle> | ReturnType<typeof toggleStyle> | ReturnType<typeof controlSize> | ReturnType<typeof labelStyle> | ReturnType<typeof labelsHidden> | ReturnType<typeof textFieldStyle> | ReturnType<typeof menuActionDismissBehavior> | ReturnType<typeof accessibilityLabel> | ReturnType<typeof accessibilityHint> | ReturnType<typeof accessibilityValue> | ReturnType<typeof layoutPriority> | ReturnType<typeof mask> | ReturnType<typeof overlay> | ReturnType<typeof backgroundOverlay> | ReturnType<typeof aspectRatio> | ReturnType<typeof clipped> | ReturnType<typeof glassEffect> | ReturnType<typeof glassEffectId> | ReturnType<typeof animation> | ReturnType<typeof containerShape> | ReturnType<typeof contentShape> | ReturnType<typeof containerRelativeFrame> | ReturnType<typeof contentMargins> | ReturnType<typeof viewID> | ReturnType<typeof scrollContentBackground> | ReturnType<typeof scrollDisabled> | ReturnType<typeof defaultScrollAnchor> | ReturnType<typeof defaultScrollAnchorForRole> | ReturnType<typeof scrollTargetBehavior> | ReturnType<typeof scrollTargetLayout> | ReturnType<typeof moveDisabled> | ReturnType<typeof deleteDisabled> | ReturnType<typeof environment> | ReturnType<typeof listRowBackground> | ReturnType<typeof ios15ListRowTopRoundedBackground> | ReturnType<typeof listRowSeparator> | ReturnType<typeof truncationMode> | ReturnType<typeof allowsTightening> | ReturnType<typeof kerning> | ReturnType<typeof textCase> | ReturnType<typeof underline> | ReturnType<typeof strikethrough> | ReturnType<typeof multilineTextAlignment> | ReturnType<typeof textSelection> | ReturnType<typeof lineSpacing> | ReturnType<typeof lineLimit> | ReturnType<typeof headerProminence> | ReturnType<typeof listRowInsets> | ReturnType<typeof badgeProminence> | ReturnType<typeof badge> | ReturnType<typeof listSectionMargins> | ReturnType<typeof font> | ReturnType<typeof gridCellUnsizedAxes> | ReturnType<typeof gridCellColumns> | ReturnType<typeof gridColumnAlignment> | ReturnType<typeof gridCellAnchor> | ReturnType<typeof submitLabel> | ReturnType<typeof keyboardType> | ReturnType<typeof autocorrectionDisabled> | ReturnType<typeof onSubmit> | ReturnType<typeof textInputAutocapitalization> | ReturnType<typeof textContentType> | ReturnType<typeof datePickerStyle> | ReturnType<typeof progressViewStyle> | ReturnType<typeof gaugeStyle> | ReturnType<typeof listStyle> | ReturnType<typeof contentTransition> | ReturnType<typeof resizable> | ReturnType<typeof widgetAccentedRenderingMode> | ReturnType<typeof widgetURL>;
++export type BuiltInModifier = ReturnType<typeof listSectionSpacing> | ReturnType<typeof background> | ReturnType<typeof cornerRadius> | ReturnType<typeof shadow> | ReturnType<typeof frame> | ReturnType<typeof padding> | ReturnType<typeof fixedSize> | ReturnType<typeof ignoreSafeArea> | ReturnType<typeof onTapGesture> | ReturnType<typeof onLongPressGesture> | ReturnType<typeof onAppear> | ReturnType<typeof luminanceToAlpha> | ReturnType<typeof onDisappear> | ReturnType<typeof opacity> | ReturnType<typeof clipShape> | ReturnType<typeof border> | ReturnType<typeof scaleEffect> | ReturnType<typeof rotationEffect> | ReturnType<typeof rotation3DEffect> | ReturnType<typeof offset> | ReturnType<typeof foregroundColor> | ReturnType<typeof foregroundStyle> | ReturnType<typeof bold> | ReturnType<typeof italic> | ReturnType<typeof monospacedDigit> | ReturnType<typeof tint> | ReturnType<typeof hidden> | ReturnType<typeof disabled> | ReturnType<typeof zIndex> | ReturnType<typeof blur> | ReturnType<typeof brightness> | ReturnType<typeof contrast> | ReturnType<typeof saturation> | ReturnType<typeof hueRotation> | ReturnType<typeof colorInvert> | ReturnType<typeof grayscale> | ReturnType<typeof buttonStyle> | ReturnType<typeof toggleStyle> | ReturnType<typeof controlSize> | ReturnType<typeof labelStyle> | ReturnType<typeof labelsHidden> | ReturnType<typeof textFieldStyle> | ReturnType<typeof menuActionDismissBehavior> | ReturnType<typeof accessibilityLabel> | ReturnType<typeof accessibilityHint> | ReturnType<typeof accessibilityValue> | ReturnType<typeof layoutPriority> | ReturnType<typeof mask> | ReturnType<typeof overlay> | ReturnType<typeof backgroundOverlay> | ReturnType<typeof aspectRatio> | ReturnType<typeof clipped> | ReturnType<typeof glassEffect> | ReturnType<typeof glassEffectId> | ReturnType<typeof animation> | ReturnType<typeof containerShape> | ReturnType<typeof contentShape> | ReturnType<typeof containerRelativeFrame> | ReturnType<typeof contentMargins> | ReturnType<typeof viewID> | ReturnType<typeof scrollContentBackground> | ReturnType<typeof scrollDisabled> | ReturnType<typeof defaultScrollAnchor> | ReturnType<typeof defaultScrollAnchorForRole> | ReturnType<typeof scrollTargetBehavior> | ReturnType<typeof scrollTargetLayout> | ReturnType<typeof moveDisabled> | ReturnType<typeof deleteDisabled> | ReturnType<typeof environment> | ReturnType<typeof listRowBackground> | ReturnType<typeof ios15ListRowTopRoundedBackground> | ReturnType<typeof ios15ListRowSeparatorHidden> | ReturnType<typeof listRowSeparator> | ReturnType<typeof truncationMode> | ReturnType<typeof allowsTightening> | ReturnType<typeof kerning> | ReturnType<typeof textCase> | ReturnType<typeof underline> | ReturnType<typeof strikethrough> | ReturnType<typeof multilineTextAlignment> | ReturnType<typeof textSelection> | ReturnType<typeof lineSpacing> | ReturnType<typeof lineLimit> | ReturnType<typeof headerProminence> | ReturnType<typeof listRowInsets> | ReturnType<typeof badgeProminence> | ReturnType<typeof badge> | ReturnType<typeof listSectionMargins> | ReturnType<typeof font> | ReturnType<typeof gridCellUnsizedAxes> | ReturnType<typeof gridCellColumns> | ReturnType<typeof gridColumnAlignment> | ReturnType<typeof gridCellAnchor> | ReturnType<typeof submitLabel> | ReturnType<typeof keyboardType> | ReturnType<typeof autocorrectionDisabled> | ReturnType<typeof onSubmit> | ReturnType<typeof textInputAutocapitalization> | ReturnType<typeof textContentType> | ReturnType<typeof datePickerStyle> | ReturnType<typeof progressViewStyle> | ReturnType<typeof gaugeStyle> | ReturnType<typeof listStyle> | ReturnType<typeof contentTransition> | ReturnType<typeof resizable> | ReturnType<typeof widgetAccentedRenderingMode> | ReturnType<typeof widgetURL>;
  /**
   * Main ViewModifier type that supports both built-in and 3rd party modifiers.
   * 3rd party modifiers should return ModifierConfig objects with their own type strings.
@@ -737,7 +753,7 @@ index 552adc5..3a44a62 100644
  internal struct ScaleEffectModifier: ViewModifier, Record {
    @Field var x: CGFloat = 1.0
    @Field var y: CGFloat = 1.0
-@@ -786,3 +805,240 @@ internal struct ListRowBackground: ViewModifier, Record {
+@@ -786,3 +805,373 @@ internal struct ListRowBackground: ViewModifier, Record {
  }
 -
 +
@@ -907,6 +923,124 @@ index 552adc5..3a44a62 100644
 +    uiView.scheduleUpdates()
 +  }
 +}
++
++private final class Ios15ListRowSeparatorHiddenView: UIView {
++  private weak var decoratedCell: UITableViewCell?
++  private var originalSeparatorInset: UIEdgeInsets?
++  private var updateScheduled = false
++
++  override init(frame: CGRect) {
++    super.init(frame: frame)
++    isUserInteractionEnabled = false
++    isHidden = true
++  }
++
++  required init?(coder: NSCoder) {
++    fatalError("init(coder:) has not been implemented")
++  }
++
++  override func didMoveToSuperview() {
++    super.didMoveToSuperview()
++    scheduleUpdates()
++  }
++
++  override func didMoveToWindow() {
++    super.didMoveToWindow()
++    if window == nil {
++      restoreSeparatorInset()
++    } else {
++      scheduleUpdates()
++    }
++  }
++
++  override func willMove(toSuperview newSuperview: UIView?) {
++    if newSuperview == nil {
++      restoreSeparatorInset()
++    }
++    super.willMove(toSuperview: newSuperview)
++  }
++
++  override func layoutSubviews() {
++    super.layoutSubviews()
++    scheduleUpdate()
++  }
++
++  func scheduleUpdates() {
++    scheduleUpdate()
++    scheduleUpdate(after: 0.05)
++    scheduleUpdate(after: 0.2)
++  }
++
++  func restoreSeparatorInset() {
++    guard let decoratedCell, let originalSeparatorInset else {
++      self.decoratedCell = nil
++      self.originalSeparatorInset = nil
++      return
++    }
++    decoratedCell.separatorInset = originalSeparatorInset
++    self.decoratedCell = nil
++    self.originalSeparatorInset = nil
++  }
++
++  private func scheduleUpdate(after delay: TimeInterval = 0) {
++    if delay == 0 {
++      guard !updateScheduled else { return }
++      updateScheduled = true
++    }
++
++    DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
++      guard let self else { return }
++      if delay == 0 {
++        self.updateScheduled = false
++      }
++      self.hideSeparator()
++    }
++  }
++
++  private func hideSeparator() {
++    guard superview != nil, window != nil else { return }
++    let cell = enclosingTableViewCell()
++
++    if decoratedCell !== cell {
++      restoreSeparatorInset()
++      decoratedCell = cell
++      originalSeparatorInset = cell?.separatorInset
++    }
++
++    guard let cell, let originalSeparatorInset, cell.bounds.width > 0 else { return }
++    var hiddenInset = originalSeparatorInset
++    hiddenInset.left = max(hiddenInset.left, cell.bounds.width)
++    cell.separatorInset = hiddenInset
++  }
++
++  private func enclosingTableViewCell() -> UITableViewCell? {
++    var ancestor = superview
++    while let view = ancestor {
++      if let cell = view as? UITableViewCell {
++        return cell
++      }
++      ancestor = view.superview
++    }
++    return nil
++  }
++}
++
++private struct Ios15ListRowSeparatorHiddenProbe: UIViewRepresentable {
++  func makeUIView(context: Context) -> Ios15ListRowSeparatorHiddenView {
++    Ios15ListRowSeparatorHiddenView()
++  }
++
++  func updateUIView(_ uiView: Ios15ListRowSeparatorHiddenView, context: Context) {
++    uiView.scheduleUpdates()
++  }
++
++  static func dismantleUIView(
++    _ uiView: Ios15ListRowSeparatorHiddenView,
++    coordinator: Void
++  ) {
++    uiView.restoreSeparatorInset()
++  }
++}
 +#endif
 +
 +private struct Ios15TopCornerCutouts: Shape {
@@ -978,8 +1112,23 @@ index 552adc5..3a44a62 100644
 +  }
 +}
 +
++internal struct Ios15ListRowSeparatorHidden: ViewModifier, Record {
++  @ViewBuilder
++  func body(content: Content) -> some View {
++#if os(tvOS)
++    content
++#else
++    if #available(iOS 16.0, *) {
++      content
++    } else {
++      content.background(Ios15ListRowSeparatorHiddenProbe())
++    }
++#endif
++  }
++}
++
  internal enum VerticalEdgeOptions: String, Enumerable {
-@@ -1699,6 +1955,10 @@ extension ViewModifierRegistry {
+@@ -1699,6 +2088,10 @@ extension ViewModifierRegistry {
        return try ContainerRelativeFrameModifier(from: params, appContext: appContext)
      }
  
@@ -990,7 +1139,7 @@ index 552adc5..3a44a62 100644
      register("buttonStyle") { params, appContext, _ in
        return try ButtonStyleModifier(from: params, appContext: appContext)
      }
-@@ -1728,3 +1988,7 @@ extension ViewModifierRegistry {
+@@ -1728,3 +2121,11 @@ extension ViewModifierRegistry {
      }
 -
 +
@@ -998,8 +1147,12 @@ index 552adc5..3a44a62 100644
 +      return try Ios15ListRowTopRoundedBackground(from: params, appContext: appContext)
 +    }
 +
++    register("ios15ListRowSeparatorHidden") { params, appContext, _ in
++      return try Ios15ListRowSeparatorHidden(from: params, appContext: appContext)
++    }
++
      register("listRowSeparator") { params, appContext, _ in
-@@ -1823,6 +2087,10 @@ extension ViewModifierRegistry {
+@@ -1823,6 +2224,10 @@ extension ViewModifierRegistry {
        return try TagModifier(from: params, appContext: appContext)
      }
  
