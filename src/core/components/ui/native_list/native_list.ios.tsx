@@ -20,7 +20,6 @@ import {
   contentMargins,
   contentShape,
   disabled as disabledModifier,
-  environment,
   font,
   foregroundStyle,
   frame,
@@ -1097,6 +1096,7 @@ function NativeListRoot({
   const resolvedBackgroundColor =
     backgroundColor != null ? (toSwiftUIHexColor(backgroundColor) ?? undefined) : undefined;
   const isNestedNativeList = nestedScrollEnabled === true;
+  const usesNativeEditMode = editMode === true && iosEditModeVariant === "native";
 
   if (!native) {
     return (
@@ -1154,7 +1154,6 @@ function NativeListRoot({
       : insideTrueSheet && automaticContentInsetAdjustment
         ? "automatic"
         : undefined);
-  const usesNativeEditMode = editMode === true && iosEditModeVariant === "native";
   return (
     <NativeListEditModeProvider
       defaultSelectedIds={defaultSelectedIds}
@@ -1191,16 +1190,19 @@ function NativeListRoot({
             }
             initialScrollAnchor="center"
             initialScrollTarget={initialScrollTarget}
+            nativeEditMode={
+              iosEditModeVariant === "native"
+                ? usesNativeEditMode
+                  ? "active"
+                  : "inactive"
+                : undefined
+            }
+            nativeEditTint={iosEditModeVariant === "native" ? nativeEditTint : undefined}
             onSelectionChange={usesNativeEditMode ? handleSelectedIdsChange : undefined}
             selection={usesNativeEditMode ? [...resolvedSelectedIds] : undefined}
             modifiers={[
               listStyle("insetGrouped"),
               listSectionSpacing("compact"),
-              environment({
-                key: "editMode",
-                value: usesNativeEditMode ? "active" : "inactive",
-              }),
-              ...(usesNativeEditMode ? [tint(nativeEditTint)] : []),
               /**
                * iOS 15 的 SwiftUI List 不支持 `scrollContentBackground(.hidden)`，
                * 因此即使这里传入自定义 `backgroundColor`，系统列表内容背景仍可能覆盖它。

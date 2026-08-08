@@ -5,8 +5,9 @@
 # - SwiftUI List: 补充 viewport clipping、content margins、初始滚动目标、原生 inset 调整，以及 UIKit 顶部 content scroll view 注册。
 # - SwiftUI List: iOS 15 大标题滚动时补齐导航栏布局失效通知，保留 UIKit 原生过渡与回弹动画。
 # - SwiftUI List: 提供通用 indicator frame 校正开关；具体系统版本由调用方决定。
+# - SwiftUI List: 提供 `nativeEditMode` / `nativeEditTint` 原生属性；编辑态由宿主 binding 驱动，避免动态 modifier 更新重建 List、丢失滚动位置。
 # - SwiftUI modifier: iOS 15 可为透明辅助行后的首个内容行恢复顶部圆角。
-# - SwiftUI modifier: iOS 15 隐藏辅助行 separator 时直接隔离 UIKit cell，并在复用时恢复。
+# - SwiftUI modifier: iOS 15 隐藏辅助行 separator 时直接隔离 UIKit cell，并在复用、编辑态切换导致系统复位 inset 后持续重新隐藏。
 diff --git a/ios/SliderView.swift b/ios/SliderView.swift
 index 1ffa70e..488c98b 100644
 --- a/ios/SliderView.swift
@@ -753,7 +754,7 @@ index 552adc5..3a44a62 100644
  internal struct ScaleEffectModifier: ViewModifier, Record {
    @Field var x: CGFloat = 1.0
    @Field var y: CGFloat = 1.0
-@@ -786,3 +805,373 @@ internal struct ListRowBackground: ViewModifier, Record {
+@@ -786,3 +805,383 @@ internal struct ListRowBackground: ViewModifier, Record {
  }
 -
 +
@@ -927,6 +928,7 @@ index 552adc5..3a44a62 100644
 +private final class Ios15ListRowSeparatorHiddenView: UIView {
 +  private weak var decoratedCell: UITableViewCell?
 +  private var originalSeparatorInset: UIEdgeInsets?
++  private var separatorInsetObservation: NSKeyValueObservation?
 +  private var updateScheduled = false
 +
 +  override init(frame: CGRect) {
@@ -972,6 +974,8 @@ index 552adc5..3a44a62 100644
 +  }
 +
 +  func restoreSeparatorInset() {
++    separatorInsetObservation?.invalidate()
++    separatorInsetObservation = nil
 +    guard let decoratedCell, let originalSeparatorInset else {
 +      self.decoratedCell = nil
 +      self.originalSeparatorInset = nil
@@ -1005,12 +1009,19 @@ index 552adc5..3a44a62 100644
 +      restoreSeparatorInset()
 +      decoratedCell = cell
 +      originalSeparatorInset = cell?.separatorInset
++      if let cell {
++        separatorInsetObservation = cell.observe(\.separatorInset, options: [.new]) { [weak self] _, _ in
++          self?.scheduleUpdate()
++        }
++      }
 +    }
 +
 +    guard let cell, let originalSeparatorInset, cell.bounds.width > 0 else { return }
 +    var hiddenInset = originalSeparatorInset
 +    hiddenInset.left = max(hiddenInset.left, cell.bounds.width)
-+    cell.separatorInset = hiddenInset
++    if cell.separatorInset != hiddenInset {
++      cell.separatorInset = hiddenInset
++    }
 +  }
 +
 +  private func enclosingTableViewCell() -> UITableViewCell? {
@@ -1208,7 +1219,7 @@ diff --git a/ios/ListView.swift b/ios/ListView.swift
 index a7ca51d..ba4896d 100644
 --- a/ios/ListView.swift
 +++ b/ios/ListView.swift
-@@ -3,27 +3,115 @@
+@@ -3,27 +3,126 @@
  import ExpoModulesCore
  import SwiftUI
  
@@ -1239,12 +1250,21 @@ index a7ca51d..ba4896d 100644
 +  @Field var correctsNestedScrollIndicatorFrame = false
 +  @Field var initialScrollAnchor: UnitPointOptions = .center
 +  @Field var initialScrollTarget: Either<String, Double>?
++  @Field var nativeEditMode: EditModeType = .inactive
++  @Field var nativeEditTint: Color?
++  @Field var scrollPositionRestoreToken = 0
    @Field var selection: [Either<String, Double>]?
 +  @Field var tracksNavigationBarScrollEdge = false
++  fileprivate let scrollPositionStore = ListScrollPositionStore()
    var onSelectionChange = EventDispatcher()
  }
 -
 +
++private final class ListScrollPositionStore {
++  weak var scrollView: UIScrollView?
++  var hasObservedScrollView = false
++  var offset: CGPoint?
++}
  struct ListView: ExpoSwiftUI.View {
    @ObservedObject var props: ListProps
    @State private var selection = Set<AnyHashable>()
@@ -1293,6 +1313,8 @@ index a7ca51d..ba4896d 100644
 +          automaticallyAdjustsScrollIndicatorInsets: props.automaticallyAdjustsScrollIndicatorInsets ?? true,
 +          contentInsetAdjustmentBehavior: props.contentInsetAdjustmentBehavior,
 +          correctsNestedScrollIndicatorFrame: props.correctsNestedScrollIndicatorFrame,
++          scrollPositionRestoreToken: props.scrollPositionRestoreToken,
++          scrollPositionStore: props.scrollPositionStore,
 +          tracksNavigationBarScrollEdge: props.tracksNavigationBarScrollEdge
 +        )
 +      }
@@ -1333,7 +1355,7 @@ index a7ca51d..ba4896d 100644
      }
    }
  
-@@ -55,3 +143,547 @@ struct ListView: ExpoSwiftUI.View {
+@@ -55,3 +154,624 @@ struct ListView: ExpoSwiftUI.View {
      return result
    }
  }
@@ -1342,6 +1364,8 @@ index a7ca51d..ba4896d 100644
 +  let automaticallyAdjustsScrollIndicatorInsets: Bool
 +  let contentInsetAdjustmentBehavior: ListContentInsetAdjustmentBehavior?
 +  let correctsNestedScrollIndicatorFrame: Bool
++  let scrollPositionRestoreToken: Int
++  let scrollPositionStore: ListScrollPositionStore
 +  let tracksNavigationBarScrollEdge: Bool
 +
 +  func makeUIViewController(context: Context) -> ScrollInsetAdjustmentViewController {
@@ -1350,6 +1374,8 @@ index a7ca51d..ba4896d 100644
 +    view.automaticallyAdjustsScrollIndicatorInsets = automaticallyAdjustsScrollIndicatorInsets
 +    view.contentInsetAdjustmentBehavior = contentInsetAdjustmentBehavior
 +    view.correctsNestedScrollIndicatorFrame = correctsNestedScrollIndicatorFrame
++    view.scrollPositionRestoreToken = scrollPositionRestoreToken
++    view.scrollPositionStore = scrollPositionStore
 +    view.tracksNavigationBarScrollEdge = tracksNavigationBarScrollEdge
 +    return viewController
 +  }
@@ -1359,6 +1385,8 @@ index a7ca51d..ba4896d 100644
 +    view.automaticallyAdjustsScrollIndicatorInsets = automaticallyAdjustsScrollIndicatorInsets
 +    view.contentInsetAdjustmentBehavior = contentInsetAdjustmentBehavior
 +    view.correctsNestedScrollIndicatorFrame = correctsNestedScrollIndicatorFrame
++    view.scrollPositionRestoreToken = scrollPositionRestoreToken
++    view.scrollPositionStore = scrollPositionStore
 +    view.tracksNavigationBarScrollEdge = tracksNavigationBarScrollEdge
 +  }
 +}
@@ -1433,6 +1461,20 @@ index a7ca51d..ba4896d 100644
 +    }
 +  }
 +
++  var scrollPositionRestoreToken = 0 {
++    didSet {
++      guard oldValue != scrollPositionRestoreToken else { return }
++      pendingScrollPositionRestore = true
++      scheduleUpdate()
++    }
++  }
++
++  var scrollPositionStore: ListScrollPositionStore? {
++    didSet {
++      scheduleUpdate()
++    }
++  }
++
 +  var tracksNavigationBarScrollEdge = false {
 +    didSet {
 +      guard oldValue != tracksNavigationBarScrollEdge else { return }
@@ -1453,6 +1495,8 @@ index a7ca51d..ba4896d 100644
 +  private var indicatorBoundsObservation: NSKeyValueObservation?
 +  private var indicatorContentOffsetObservation: NSKeyValueObservation?
 +  private var indicatorContentSizeObservation: NSKeyValueObservation?
++  private var scrollPositionObservation: NSKeyValueObservation?
++  private var pendingScrollPositionRestore = false
 +  private var ios15ContentOffsetObservation: NSKeyValueObservation?
 +  private weak var ios15ObservedContentScrollView: UIScrollView?
 +  private var indicatorFrameCorrectionScheduled = false
@@ -1509,9 +1553,15 @@ index a7ca51d..ba4896d 100644
 +    guard window != nil else { return }
 +    guard let scrollView = configuredScrollView ?? findListScrollView() else { return }
 +
++    let replacesPreviousScrollView =
++      scrollPositionStore?.hasObservedScrollView == true &&
++      scrollPositionStore?.scrollView !== scrollView
++
 +    configuredScrollView = scrollView
 +    let forceRegistration = forceContentScrollViewRegistration
 +    forceContentScrollViewRegistration = false
++    let shouldRestoreScrollPosition = replacesPreviousScrollView || pendingScrollPositionRestore
++    pendingScrollPositionRestore = false
 +    var needsLayout = false
 +
 +    if scrollView.automaticallyAdjustsScrollIndicatorInsets != automaticallyAdjustsScrollIndicatorInsets {
@@ -1529,8 +1579,57 @@ index a7ca51d..ba4896d 100644
 +      scrollView.setNeedsLayout()
 +    }
 +
++    observeScrollPosition(of: scrollView, restore: shouldRestoreScrollPosition)
++
 +    updateNestedScrollIndicatorFrameCorrection(for: scrollView)
 +    updateContentScrollViewRegistration(scrollView, force: forceRegistration)
++  }
++
++  private func observeScrollPosition(of scrollView: UIScrollView, restore: Bool) {
++    guard let scrollPositionStore else { return }
++    if scrollPositionStore.scrollView === scrollView, restore,
++      let savedOffset = scrollPositionStore.offset {
++      restoreScrollPosition(savedOffset, in: scrollView, attemptsRemaining: 8)
++      return
++    }
++    guard scrollPositionStore.scrollView !== scrollView else { return }
++
++    scrollPositionObservation = nil
++    let savedOffset = scrollPositionStore.offset
++    scrollPositionStore.scrollView = scrollView
++    scrollPositionStore.hasObservedScrollView = true
++
++    if restore, let savedOffset {
++      restoreScrollPosition(savedOffset, in: scrollView, attemptsRemaining: 8)
++    }
++
++    scrollPositionObservation = scrollView.observe(\.contentOffset, options: [.new]) {
++      [weak scrollPositionStore, weak scrollView] _, _ in
++      guard let scrollPositionStore, let scrollView else { return }
++      let offset = scrollView.contentOffset
++      let topOffset = -scrollView.adjustedContentInset.top
++      if scrollView.isTracking || scrollView.isDragging || scrollView.isDecelerating ||
++        abs(offset.y - topOffset) >= 0.5 {
++        scrollPositionStore.offset = offset
++      }
++    }
++  }
++
++  private func restoreScrollPosition(
++    _ offset: CGPoint,
++    in scrollView: UIScrollView,
++    attemptsRemaining: Int
++  ) {
++    guard attemptsRemaining > 0 else { return }
++
++    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self, weak scrollView] in
++      guard let self, let scrollView,
++        self.scrollPositionStore?.scrollView === scrollView else {
++        return
++      }
++      scrollView.setContentOffset(offset, animated: false)
++      self.restoreScrollPosition(offset, in: scrollView, attemptsRemaining: attemptsRemaining - 1)
++    }
 +  }
 +
 +  private func updateNestedScrollIndicatorFrameCorrection(for scrollView: UIScrollView) {
@@ -1885,7 +1984,7 @@ diff --git a/src/swift-ui/List/index.tsx b/src/swift-ui/List/index.tsx
 index 73c2193..2f1471d 100644
 --- a/src/swift-ui/List/index.tsx
 +++ b/src/swift-ui/List/index.tsx
-@@ -21,6 +21,61 @@ function transformListProps(props: Omit<ListProps, 'children'>): Omit<NativeList
+@@ -21,6 +21,78 @@ function transformListProps(props: Omit<ListProps, 'children'>): Omit<NativeList
  }
  
  export interface ListProps extends CommonViewModifierProps {
@@ -1938,6 +2037,23 @@ index 73c2193..2f1471d 100644
 +  initialScrollTarget?: string | number;
 +
 +  /**
++   * The native edit state used by List selection controls.
++   * @default 'inactive'
++   */
++  nativeEditMode?: 'active' | 'inactive' | 'transient';
++
++  /**
++   * Tint used by native List selection controls while editing.
++   */
++  nativeEditTint?: string;
++
++  /**
++   * Requests restoration of the native list's last recorded scroll offset.
++   * Increment this after a state transition that causes SwiftUI List to reset its offset.
++   */
++  scrollPositionRestoreToken?: number;
++
++  /**
 +   * Registers the backing native list as the current view controller's top content scroll view.
 +   * This lets UIKit drive navigation-bar scroll-edge appearance changes without JS scroll events.
 +   * @default false
@@ -1951,7 +2067,7 @@ diff --git a/build/swift-ui/List/index.d.ts b/build/swift-ui/List/index.d.ts
 index 02e9345..64ae4e1 100644
 --- a/build/swift-ui/List/index.d.ts
 +++ b/build/swift-ui/List/index.d.ts
-@@ -1,6 +1,44 @@
+@@ -1,6 +1,58 @@
  import { ListForEach, type ListForEachProps } from './ListForEach';
  import { type CommonViewModifierProps } from '../types';
  export interface ListProps extends CommonViewModifierProps {
@@ -1988,6 +2104,20 @@ index 02e9345..64ae4e1 100644
 +     */
 +    initialScrollTarget?: string | number;
 +    /**
++     * The native edit state used by List selection controls.
++     * @default 'inactive'
++     */
++    nativeEditMode?: 'active' | 'inactive' | 'transient';
++    /**
++     * Tint used by native List selection controls while editing.
++     */
++    nativeEditTint?: string;
++    /**
++     * Requests restoration of the native list's last recorded scroll offset.
++     * Increment this after a state transition that causes SwiftUI List to reset its offset.
++     */
++    scrollPositionRestoreToken?: number;
++    /**
 +     * Registers the backing native list as the current view controller's top content scroll view.
 +     * This lets UIKit drive navigation-bar scroll-edge appearance changes without JS scroll events.
 +     * @default false
@@ -1996,10 +2126,46 @@ index 02e9345..64ae4e1 100644
      /**
       * The children elements to be rendered inside the list.
       */
-@@ -23,4 +61,4 @@ export declare namespace List {
+@@ -23,4 +70,4 @@ export declare namespace List {
      var ForEach: typeof ListForEach;
  }
  export { ListForEach, ListForEachProps };
 -//# sourceMappingURL=index.d.ts.map
 \ No newline at end of file
 +//# sourceMappingURL=index.d.ts.map
+diff --git a/ios/UIBaseView.swift b/ios/UIBaseView.swift
+index a451a01..5f8f15c 100644
+--- a/ios/UIBaseView.swift
++++ b/ios/UIBaseView.swift
+@@ -8,16 +8,28 @@ import SwiftUI
+  */
+ public struct UIBaseView<Props: UIBaseViewProps, Content: ExpoSwiftUI.View<Props>>: ExpoSwiftUI.View {
+   @ObservedObject public var props: Props
+   let innerView: Content
+ 
+   public init(props: Props) {
+     self.props = props
+     self.innerView = Content(props: props)
+   }
+ 
+   public var body: some View {
+-    innerView
+-      .applyAccessibilityIdentifier(props.testID)
+-      .applyModifiers(props.modifiers, appContext: props.appContext, globalEventDispatcher: props.globalEventDispatcher)
++    if let listProps = props as? ListProps {
++      let editMode = Binding<EditMode>(
++        get: { listProps.nativeEditMode.toNativeEditMode() },
++        set: { _ in }
++      )
++      innerView
++        .applyAccessibilityIdentifier(props.testID)
++        .applyModifiers(props.modifiers, appContext: props.appContext, globalEventDispatcher: props.globalEventDispatcher)
++        .environment(\.editMode, editMode)
++        .tint(listProps.nativeEditMode == .active ? listProps.nativeEditTint : nil)
++    } else {
++      innerView
++        .applyAccessibilityIdentifier(props.testID)
++        .applyModifiers(props.modifiers, appContext: props.appContext, globalEventDispatcher: props.globalEventDispatcher)
++    }
+  }
+ }
