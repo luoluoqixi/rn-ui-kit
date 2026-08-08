@@ -94,11 +94,6 @@ export type NativeListSwitchItemProps = NativeListItemBaseProps & {
 };
 
 export type NativeListSelectItemProps = NativeListItemBaseProps & {
-  /**
-   * iOS 15 原生 List 中行尾 Select trigger 的固定宽度，默认 `180`。
-   * 仅 iOS 15 原生列表生效；可增大以容纳较长的已选值。
-   */
-  ios15NativeTriggerWidth?: number;
   selectProps: Omit<SelectProps, "nativeTrigger">;
 };
 

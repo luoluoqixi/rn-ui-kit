@@ -367,7 +367,6 @@ function NativePickerDropdownCustom({
   placeholder,
   onValueChange,
   onOpenChange,
-  open,
   resolvedNativeHaptics,
   nativeTrigger,
   nativeTriggerContainerStyle,
@@ -382,7 +381,6 @@ function NativePickerDropdownCustom({
   placeholder?: React.ReactNode;
   onValueChange?: (value: string | null) => void;
   onOpenChange?: (open: boolean) => void;
-  open?: boolean;
   resolvedNativeHaptics: ReturnType<typeof useResolvedNativeHaptics>;
   nativeTrigger: boolean | undefined;
   nativeTriggerContainerStyle?: StyleProp<ViewStyle>;
@@ -392,13 +390,8 @@ function NativePickerDropdownCustom({
   nativeTriggerLabelProps?: TextProps;
   __menuRef?: React.MutableRefObject<{ presentMenu: () => void } | null>;
 }) {
-  const [internalOpen, setInternalOpen] = React.useState(false);
-  const [willOpen, setWillOpen] = React.useState<boolean | null>(null);
   const selectedLabel = items.find((item) => item.value === value)?.label ?? null;
 
-  const resolvedOpen = open ?? internalOpen;
-  // iOS 的 willHide 早于 onOpenChange(false)：一旦收到 will 事件，以它作为视觉状态的准确信号。
-  const isNativeTriggerActive = willOpen ?? resolvedOpen;
   const handleSelect = useCallback(
     (itemValue: string) => {
       onValueChange?.(itemValue || null);
@@ -407,30 +400,10 @@ function NativePickerDropdownCustom({
     [onValueChange, resolvedNativeHaptics],
   );
   const handleOpenChange = useCallback(
-    (nextOpen: boolean) => {
-      if (open == null) {
-        setInternalOpen(nextOpen);
-      }
-
-      onOpenChange?.(nextOpen);
-    },
-    [onOpenChange, open],
+    (nextOpen: boolean) => onOpenChange?.(nextOpen),
+    [onOpenChange],
   );
-  const handleOpenWillChange = useCallback((nextOpen: boolean) => {
-    setWillOpen(nextOpen);
-  }, []);
-
-  const trigger = nativeTrigger ? (
-    <NativePickerSwiftUIMenuTrigger
-      active={isNativeTriggerActive}
-      containerStyle={nativeTriggerContainerStyle}
-      content={nativeTriggerContent}
-      icon={nativeTriggerIcon}
-      keepPressedOpacity
-      label={nativeTriggerLabel}
-      labelProps={nativeTriggerLabelProps}
-    />
-  ) : (
+  const trigger = nativeTrigger ? undefined : (
     <NativePickerDefaultTrigger
       label={selectedLabel ?? (typeof placeholder === "string" ? placeholder : "选择")}
       placeholder={selectedLabel == null}
@@ -440,11 +413,14 @@ function NativePickerDropdownCustom({
   return (
     <Menu
       nativeHaptics={resolvedNativeHaptics}
+      nativeTrigger={nativeTrigger}
+      nativeTriggerContainerStyle={nativeTriggerContainerStyle}
+      nativeTriggerContent={nativeTriggerContent}
+      nativeTriggerIcon={nativeTriggerIcon}
+      nativeTriggerLabel={nativeTriggerLabel}
+      nativeTriggerLabelProps={nativeTriggerLabelProps}
       onOpenChange={handleOpenChange}
-      onOpenWillChange={handleOpenWillChange}
-      open={resolvedOpen}
       trigger={trigger}
-      triggerProps={nativeTrigger ? { asChild: true } : undefined}
       // @ts-expect-error patch
       __menuRef={__menuRef}
     >

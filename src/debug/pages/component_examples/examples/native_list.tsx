@@ -123,7 +123,7 @@ export function NativeListExample() {
         />
         <Switch
           checked={editMode}
-          label={`备忘录式编辑模式（已选 ${selectedIds.length} 项）`}
+          label={`编辑模式（已选 ${selectedIds.length} 项）`}
           labelPosition="end"
           onCheckedChange={(nextEditMode) => {
             setEditMode(nextEditMode);

@@ -1366,11 +1366,7 @@ export function NativeListItem({
   );
 }
 
-export function NativeListSelectItem({
-  ios15NativeTriggerWidth: _ios15NativeTriggerWidth,
-  selectProps,
-  ...itemProps
-}: NativeListSelectItemProps) {
+export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSelectItemProps) {
   const disabled = itemProps.disabled || selectProps.disabled || selectProps.isDisabled;
   const selectedLabel = getSelectedLabel(selectProps);
   const editMode = useNativeListEditMode();
