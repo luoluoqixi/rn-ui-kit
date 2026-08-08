@@ -1761,8 +1761,6 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
   const resolvedHaptics = useResolvedNativeHaptics(
     selectProps.nativeHaptics ?? itemProps.nativeHaptics ?? false,
   );
-  const theme = useTheme();
-  const nativeValueColor = toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;
   const resolvedPickerMode = (selectProps.nativePickerMode ?? "dropdown") as "dropdown" | "wheel";
   const resolvedItemGroups = resolveSelectItemGroups({
     itemGroups: selectProps.itemGroups,
@@ -1777,12 +1775,6 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
     selectedValue == null || selectedValue === "" || selectProps.renderValue == null
       ? defaultTriggerLabel
       : selectProps.renderValue(selectedValue);
-  const nativeTriggerText = toPlainText(nativeTriggerLabel);
-  const usesStableNativeValue =
-    nativeTriggerText != null &&
-    selectProps.nativeTriggerContainerStyle == null &&
-    selectProps.nativeTriggerContent == null &&
-    selectProps.nativeTriggerLabelProps == null;
   const disabled = itemProps.disabled || selectProps.disabled || selectProps.isDisabled;
   const pickerRef = useRef<NativePickerSwiftUIHandle>(null);
 
@@ -1806,15 +1798,13 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
             nativeDropdownEdgeOffset={selectProps.nativeDropdownEdgeOffset}
             nativeTrigger
             nativeTriggerContainerStyle={[
-              usesStableNativeValue ? styles.invisibleTrailingTrigger : styles.selectInlineTrigger,
+              styles.selectInlineTrigger,
               disabled ? styles.disabledContent : null,
               selectProps.nativeTriggerContainerStyle,
             ]}
             nativeTriggerContent={selectProps.nativeTriggerContent}
-            nativeTriggerIcon={
-              usesStableNativeValue ? "none" : (selectProps.nativeTriggerIcon ?? "chevrons-up-down")
-            }
-            nativeTriggerLabel={usesStableNativeValue ? "" : nativeTriggerLabel}
+            nativeTriggerIcon={selectProps.nativeTriggerIcon ?? "chevrons-up-down"}
+            nativeTriggerLabel={nativeTriggerLabel}
             nativeTriggerLabelProps={{
               color: itemProps.valueColor ?? "$color10",
               fontSize: itemProps.valueFontSize ?? "$4",
@@ -1833,19 +1823,7 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
           />
         </NativeHostedTrailingControl>
       }
-      value={usesStableNativeValue ? nativeTriggerText : undefined}
-      valueColor={
-        usesStableNativeValue ? (itemProps.valueColor ?? nativeValueColor) : itemProps.valueColor
-      }
-      valueSfSymbol={
-        usesStableNativeValue && selectProps.nativeTriggerIcon !== "none"
-          ? "chevron.up.chevron.down"
-          : undefined
-      }
-      overlayTrailingControlOnValueSymbol={
-        usesStableNativeValue && selectProps.nativeTriggerIcon !== "none"
-      }
-      preserveValueWidth={usesStableNativeValue}
+      value={undefined}
     />
   );
 }
@@ -1865,12 +1843,8 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
   }
 
   const disabled = itemProps.disabled || menuProps.triggerProps?.disabled;
-  const theme = useTheme();
-  const nativeValueColor = toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;
   const menuRef = useRef<{ presentMenu: () => void } | null>(null);
   const menuValue = itemProps.value ?? "更多";
-  const menuValueText = toPlainText(menuValue);
-  const usesStableNativeValue = menuValueText != null;
 
   return (
     <NativePressRow
@@ -1885,11 +1859,11 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
             nativeHaptics={menuProps.nativeHaptics ?? itemProps.nativeHaptics ?? false}
             nativeTrigger
             nativeTriggerContainerStyle={[
-              usesStableNativeValue ? styles.invisibleTrailingTrigger : styles.selectInlineTrigger,
+              styles.selectInlineTrigger,
               disabled ? styles.disabledContent : null,
             ]}
-            nativeTriggerIcon={usesStableNativeValue ? "none" : "chevrons-up-down"}
-            nativeTriggerLabel={usesStableNativeValue ? "" : menuValue}
+            nativeTriggerIcon="chevrons-up-down"
+            nativeTriggerLabel={menuValue}
             nativeTriggerLabelProps={
               {
                 color: itemProps.valueColor ?? "$color10",
@@ -1908,13 +1882,7 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
           />
         </NativeHostedTrailingControl>
       }
-      value={usesStableNativeValue ? menuValueText : menuValue}
-      valueColor={
-        usesStableNativeValue ? (itemProps.valueColor ?? nativeValueColor) : itemProps.valueColor
-      }
-      valueSfSymbol={usesStableNativeValue ? "chevron.up.chevron.down" : undefined}
-      overlayTrailingControlOnValueSymbol={usesStableNativeValue}
-      preserveValueWidth={usesStableNativeValue}
+      value={undefined}
     />
   );
 }
@@ -2197,16 +2165,6 @@ const styles = StyleSheet.create({
   },
   inputTrailing: {
     width: 160,
-  },
-  invisibleTrailingTrigger: {
-    height: 1,
-    maxHeight: 1,
-    maxWidth: 1,
-    minHeight: 1,
-    minWidth: 1,
-    opacity: 0,
-    overflow: "hidden",
-    width: 1,
   },
   nativeRoot: {
     flex: 1,
