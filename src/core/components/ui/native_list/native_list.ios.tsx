@@ -401,6 +401,7 @@ function NativeRowLabel({
   titleFontSize,
   titleLineLimit,
   layoutPriorityValue = 1,
+  opacityValue = 1,
   preserveLeadingAnchor = false,
 }: {
   subtitle?: ReactNode;
@@ -413,6 +414,7 @@ function NativeRowLabel({
   titleFontSize?: number;
   titleLineLimit?: number;
   layoutPriorityValue?: number;
+  opacityValue?: number;
   preserveLeadingAnchor?: boolean;
 }) {
   const theme = useTheme();
@@ -433,6 +435,7 @@ function NativeRowLabel({
     <VStack
       alignment={resolvedTextAlignment}
       modifiers={[
+        ...(opacityValue !== 1 ? [opacity(opacityValue)] : []),
         ...(expand ? [frame({ maxWidth: 99999, alignment: resolvedTextAlignment })] : []),
       ]}
       spacing={subtitleText != null ? 4 : 0}
@@ -782,6 +785,7 @@ function NativePressRow({
   trailingControl,
   overlayTrailingControlOnValueSymbol = false,
   preserveValueWidth = false,
+  labelOpacity = 1,
   value,
   valueColor,
   valueFontSize,
@@ -795,6 +799,7 @@ function NativePressRow({
   trailingControl?: ReactNode;
   overlayTrailingControlOnValueSymbol?: boolean;
   preserveValueWidth?: boolean;
+  labelOpacity?: number;
   btnStyle?: SwiftUIButtonStyle;
   preserveLeadingAnchor?: boolean;
   rowAlignment?: "center" | "top";
@@ -886,6 +891,7 @@ function NativePressRow({
         titleFontSize={titleFontSize}
         titleLineLimit={titleLineLimit}
         layoutPriorityValue={preserveValueWidth ? 0 : 1}
+        opacityValue={labelOpacity}
         preserveLeadingAnchor={preserveLeadingAnchor}
       />
       {showTrailingSpacer ? <Spacer key="trailing-spacer" minLength={12} /> : null}
@@ -1676,6 +1682,7 @@ function NativeIos15MenuSelectRow({
   const placeholder = toPlainText(selectProps.placeholder) ?? "请选择";
   const selectedItem = selectItems.find((item) => item.value === selectedValue);
   const selectedLabel = selectedItem?.label ?? placeholder;
+  const fadeTitleOnOpen = itemProps.fadeTitleOnOpen !== false;
 
   const handleSelection = (nextValue: string) => {
     if (nextValue === selectedValue) {
@@ -1684,6 +1691,113 @@ function NativeIos15MenuSelectRow({
     triggerNativeHaptics(resolvedHaptics);
     selectProps.onValueChange?.(nextValue);
   };
+
+  if (!fadeTitleOnOpen) {
+    const leadingContent = (
+      <HStack spacing={12}>
+        {itemProps.sfSymbol != null ? (
+          <ZStack
+            alignment="center"
+            modifiers={[frame({ width: resolvedIconSlotWidth, alignment: "center" })]}
+          >
+            <Image
+              color={resolvedIconColor}
+              size={resolvedIconSize}
+              systemName={itemProps.sfSymbol}
+            />
+          </ZStack>
+        ) : null}
+        <NativeRowLabel
+          subtitle={itemProps.subtitle}
+          subtitleColor={itemProps.subtitleColor}
+          subtitleFontSize={itemProps.subtitleFontSize}
+          title={itemProps.title}
+          titleAlign={itemProps.titleAlign}
+          titleColor={itemProps.titleColor ?? itemProps.btnTint}
+          titleFontSize={itemProps.titleFontSize}
+        />
+      </HStack>
+    );
+
+    return (
+      <NativeRowContainer
+        contextMenuProps={
+          editRow.editMode || resolvedContextMenuProps?.triggerProps?.disabled
+            ? undefined
+            : resolvedContextMenuProps
+        }
+        disabled={disabled}
+        nativeScrollId={itemProps.nativeScrollId}
+        nativeSelectionId={editRow.editMode ? editRow.selectionId : undefined}
+        paddingBottom={itemProps.paddingBottom}
+        paddingHorizontal={itemProps.paddingHorizontal}
+        paddingLeft={itemProps.paddingLeft}
+        paddingRight={itemProps.paddingRight}
+        paddingTop={itemProps.paddingTop}
+        paddingVertical={itemProps.paddingVertical}
+      >
+        <ZStack
+          alignment="center"
+          modifiers={[frame({ maxWidth: 99999, alignment: "leading" })]}
+        >
+          <HStack
+            modifiers={[frame({ maxWidth: 99999, alignment: "leading" })]}
+            spacing={12}
+          >
+            {leadingContent}
+            <Spacer minLength={12} />
+          </HStack>
+          <SwiftMenu
+            label={
+              <HStack
+                modifiers={[
+                  frame({ maxWidth: 99999, alignment: "leading" }),
+                  contentShape(shapes.rectangle()),
+                ]}
+                spacing={12}
+              >
+                <HStack modifiers={[opacity(0)]} spacing={12}>
+                  {leadingContent}
+                </HStack>
+                <Spacer minLength={12} />
+                <HStack modifiers={[opacity(editMode || disabled ? 0.5 : 1)]} spacing={4}>
+                  <SwiftText
+                    modifiers={[
+                      ...valueModifiers(itemProps.valueFontSize),
+                      foregroundStyle(resolvedValueColor),
+                    ]}
+                  >
+                    {selectedLabel}
+                  </SwiftText>
+                  <Image
+                    color={resolvedValueColor}
+                    size={13}
+                    systemName="chevron.up.chevron.down"
+                  />
+                </HStack>
+              </HStack>
+            }
+            modifiers={[
+              buttonStyle("plain"),
+              frame({ maxWidth: 99999, alignment: "leading" }),
+              contentShape(shapes.rectangle()),
+              disabledModifier(editMode || disabled),
+            ]}
+          >
+            {selectItems.map((item) => (
+              <SwiftButton
+                key={`${item.groupKey}:${item.value}`}
+                label={item.label}
+                modifiers={[disabledModifier(Boolean(item.disabled || item.isDisabled))]}
+                onPress={() => handleSelection(item.value)}
+                systemImage={item.value === selectedValue ? "checkmark" : undefined}
+              />
+            ))}
+          </SwiftMenu>
+        </ZStack>
+      </NativeRowContainer>
+    );
+  }
 
   return (
     <NativeRowContainer
@@ -1806,6 +1920,8 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
       : selectProps.renderValue(selectedValue);
   const disabled = itemProps.disabled || selectProps.disabled || selectProps.isDisabled;
   const pickerRef = useRef<NativePickerSwiftUIHandle>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const fadeTitleOnOpen = itemProps.fadeTitleOnOpen !== false;
   const usesIos15NativeMenu =
     isIos15() &&
     resolvedPickerMode === "dropdown" &&
@@ -1860,13 +1976,31 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
     );
   }
 
+  const handleDropdownOpenWillChange = (nextOpen: boolean) => {
+    setDropdownOpen(nextOpen);
+  };
+  const handlePickerOpenChange = (nextOpen: boolean) => {
+    selectProps.onOpenChange?.(nextOpen);
+  };
+
   return (
     <NativePressRow
       {...itemProps}
       disabled={disabled}
+      labelOpacity={
+        resolvedPickerMode === "dropdown" && fadeTitleOnOpen && dropdownOpen ? 0.6 : 1
+      }
       nativeHaptics={resolvedHaptics}
       onPress={() => {
-        pickerRef.current?.open();
+        const picker = pickerRef.current;
+        if (picker == null) {
+          return;
+        }
+        // 在行的按压反馈结束前接管标题透明度，避免等待原生菜单回调时闪回一帧。
+        if (resolvedPickerMode === "dropdown" && fadeTitleOnOpen) {
+          setDropdownOpen(true);
+        }
+        picker.open();
       }}
       btnStyle={resolvedPickerMode === "wheel" ? "plain" : undefined}
       trailingControl={
@@ -1897,7 +2031,10 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
             // wheel 行使用 SwiftUI plain Button；整行已经提供按压透明度，
             // 禁用内部 trigger 的反馈，避免行尾内容被重复降低透明度。
             nativeTriggerPressedOpacity={resolvedPickerMode === "wheel" ? false : undefined}
-            onOpenChange={selectProps.onOpenChange}
+            onOpenChange={handlePickerOpenChange}
+            onOpenWillChange={
+              resolvedPickerMode === "dropdown" ? handleDropdownOpenWillChange : undefined
+            }
             onValueChange={selectProps.onValueChange}
             placeholder={selectProps.placeholder}
             resolvedNativeHaptics={resolvedHaptics}
@@ -1926,14 +2063,39 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
 
   const disabled = itemProps.disabled || menuProps.triggerProps?.disabled;
   const menuRef = useRef<{ presentMenu: () => void } | null>(null);
+  const [uncontrolledWillOpen, setUncontrolledWillOpen] = useState(
+    Boolean(menuProps.defaultOpen),
+  );
+  const menuOpen = menuProps.open ?? uncontrolledWillOpen;
+  const fadeTitleOnOpen = itemProps.fadeTitleOnOpen !== false;
   const menuValue = itemProps.value ?? "更多";
+  const handleMenuOpenChange = (nextOpen: boolean) => {
+    menuProps.onOpenChange?.(nextOpen);
+  };
+  const handleMenuOpenWillChange = (nextOpen: boolean) => {
+    if (menuProps.open === undefined) {
+      setUncontrolledWillOpen(nextOpen);
+    }
+    menuProps.onOpenWillChange?.(nextOpen);
+  };
 
   return (
     <NativePressRow
       {...itemProps}
       disabled={disabled}
+      labelOpacity={fadeTitleOnOpen && menuOpen ? 0.6 : 1}
       nativeHaptics={false}
-      onPress={() => menuRef.current?.presentMenu()}
+      onPress={() => {
+        const menu = menuRef.current;
+        if (menu == null) {
+          return;
+        }
+        // 与 trigger 同步进入打开态，消除整行按压反馈结束到菜单回调之间的透明度空档。
+        if (fadeTitleOnOpen && menuProps.open === undefined) {
+          setUncontrolledWillOpen(true);
+        }
+        menu.presentMenu();
+      }}
       trailingControl={
         <NativeHostedTrailingControl disableInEditMode>
           <Menu
@@ -1954,6 +2116,8 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
                 opacity: 1,
               } as any
             }
+            onOpenChange={handleMenuOpenChange}
+            onOpenWillChange={handleMenuOpenWillChange}
             triggerProps={{
               ...menuProps.triggerProps,
               disabled,

@@ -384,6 +384,7 @@ function NativePickerDropdownCustom({
   placeholder,
   onValueChange,
   onOpenChange,
+  onOpenWillChange,
   resolvedNativeHaptics,
   nativeTrigger,
   nativeTriggerContainerStyle,
@@ -399,6 +400,7 @@ function NativePickerDropdownCustom({
   placeholder?: React.ReactNode;
   onValueChange?: (value: string | null) => void;
   onOpenChange?: (open: boolean) => void;
+  onOpenWillChange?: (open: boolean) => void;
   resolvedNativeHaptics: ReturnType<typeof useResolvedNativeHaptics>;
   nativeTrigger: boolean | undefined;
   nativeTriggerContainerStyle?: StyleProp<ViewStyle>;
@@ -457,6 +459,7 @@ function NativePickerDropdownCustom({
       nativeTriggerLabel={nativeTriggerLabel}
       nativeTriggerLabelProps={nativeTriggerLabelProps}
       onOpenChange={handleOpenChange}
+      onOpenWillChange={onOpenWillChange}
       trigger={trigger}
       // @ts-expect-error patch
       __menuRef={__menuRef}
@@ -512,6 +515,7 @@ export const NativePickerSwiftUI = React.forwardRef<
     nativeTriggerPressedOpacity?: boolean;
     onValueChange?: (value: string | null) => void;
     onOpenChange?: (open: boolean) => void;
+    onOpenWillChange?: (open: boolean) => void;
     resolvedNativeHaptics: ReturnType<typeof useResolvedNativeHaptics>;
   }
 >((props, ref) => {
@@ -548,6 +552,7 @@ export const NativePickerSwiftUI = React.forwardRef<
     nativeTriggerPressedOpacity,
     onValueChange,
     onOpenChange,
+    onOpenWillChange,
     resolvedNativeHaptics,
   } = props;
 
@@ -563,6 +568,7 @@ export const NativePickerSwiftUI = React.forwardRef<
         onOpenChange={(next) => {
           onOpenChange?.(next);
         }}
+        onOpenWillChange={onOpenWillChange}
         resolvedNativeHaptics={resolvedNativeHaptics}
         nativeTrigger={nativeTrigger}
         nativeTriggerContainerStyle={nativeTriggerContainerStyle}

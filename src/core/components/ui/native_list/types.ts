@@ -97,11 +97,15 @@ export type NativeListSwitchItemProps = NativeListItemBaseProps & {
 };
 
 export type NativeListSelectItemProps = NativeListItemBaseProps & {
+  /** iOS dropdown 打开时是否让 title/subtitle 跟随 trigger 降低透明度；默认开启，wheel 模式忽略。 */
+  fadeTitleOnOpen?: boolean;
   selectProps: Omit<SelectProps, "nativeTrigger">;
 };
 
 /** 使用 `Menu` + native trigger 的列表行；Menu 本身不维护选中值。 */
 export type NativeListMenuItemProps = NativeListItemBaseProps & {
+  /** iOS Menu 打开时是否让 title/subtitle 跟随 trigger 降低透明度；默认开启。 */
+  fadeTitleOnOpen?: boolean;
   menuProps: Omit<
     MenuProps,
     | "nativeTrigger"
