@@ -1791,6 +1791,20 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
       ? defaultTriggerLabel
       : selectProps.renderValue(selectedValue);
   const disabled = itemProps.disabled || selectProps.disabled || selectProps.isDisabled;
+  const editMode = useNativeListEditMode();
+  const theme = useTheme();
+  // iOS 15 不会在 hosted trigger 的值或主题改变后稳定地刷新其固有宽度。仅重建当前
+  // Select 的 Host，保留原始的紧凑行尾布局；不能让 Host 占满剩余宽度，否则 UITableView
+  // 复用单元格时会把该测量结果带入后续 Menu 行。
+  const ios15TriggerHostKey = isIos15()
+    ? [
+        "ios15-select",
+        editMode ? "editing" : "default",
+        String(selectedValue ?? ""),
+        theme.color.val,
+        theme.color10.val,
+      ].join(":")
+    : undefined;
   const pickerRef = useRef<NativePickerSwiftUIHandle>(null);
 
   return (
@@ -1803,7 +1817,7 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
       }}
       btnStyle={resolvedPickerMode === "wheel" ? "plain" : undefined}
       trailingControl={
-        <NativeHostedTrailingControl disableInEditMode>
+        <NativeHostedTrailingControl key={ios15TriggerHostKey} disableInEditMode>
           <NativePickerSwiftUI
             ref={pickerRef}
             items={selectItems}
