@@ -543,6 +543,7 @@ function FallbackEditingIndicator({ selected }: { selected: boolean }) {
 type NativeListRowProps = NativeListItemBaseProps & {
   iconAfter?: ReactNode;
   pressResetToken?: number;
+  valueOpacity?: number;
 };
 
 function renderTitleNode(
@@ -597,7 +598,12 @@ function renderSubtitleNode(
   return subtitle;
 }
 
-function renderValueNode(value: ReactNode, valueColor?: string, valueFontSize?: number) {
+function renderValueNode(
+  value: ReactNode,
+  valueColor?: string,
+  valueFontSize?: number,
+  valueOpacity?: number,
+) {
   if (value == null || typeof value === "boolean") {
     return null;
   }
@@ -608,14 +614,14 @@ function renderValueNode(value: ReactNode, valueColor?: string, valueFontSize?: 
         color={(valueColor ?? "$color") as any}
         fontSize={valueFontSize ?? "$4"}
         numberOfLines={1}
-        opacity={valueColor == null ? 0.58 : 1}
+        opacity={valueOpacity ?? (valueColor == null ? 0.58 : 1)}
       >
         {value}
       </Text>
     );
   }
 
-  return value;
+  return valueOpacity == null ? value : <View style={{ opacity: valueOpacity }}>{value}</View>;
 }
 
 function NativeListRow({
@@ -652,6 +658,7 @@ function NativeListRow({
   value,
   valueColor,
   valueFontSize,
+  valueOpacity,
 }: NativeListRowProps) {
   const editRow = useNativeListEditRow({ disabled, nativeScrollId, onPress, selectionId });
   const titleAlignment =
@@ -659,7 +666,7 @@ function NativeListRow({
   const textAlign = titleAlign === "center" ? "center" : titleAlign === "right" ? "right" : "left";
   const titleNode = renderTitleNode(title, titleColor, titleFontSize, textAlign);
   const subtitleNode = renderSubtitleNode(subtitle, subtitleColor, subtitleFontSize);
-  const valueNode = renderValueNode(value, valueColor, valueFontSize);
+  const valueNode = renderValueNode(value, valueColor, valueFontSize, valueOpacity);
   const trailingNode = renderValueNode(trailing);
   const customIcon = icon;
 
@@ -1458,7 +1465,15 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
   const normalRowBackground = itemProps.backgroundColor ?? defaultRowBackground;
 
   if (editMode) {
-    return <NativeListRow {...itemProps} disabled={disabled} value={selectedLabel} />;
+    return (
+      <NativeListRow
+        {...itemProps}
+        disabled={disabled}
+        value={selectedLabel}
+        valueColor={itemProps.valueColor ?? "$color10"}
+        valueOpacity={0.5}
+      />
+    );
   }
 
   const select = (
@@ -1720,7 +1735,14 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
   );
 
   if (editMode) {
-    return <NativeListRow {...itemProps} disabled={disabled} />;
+    return (
+      <NativeListRow
+        {...itemProps}
+        disabled={disabled}
+        valueColor={itemProps.valueColor ?? "$color10"}
+        valueOpacity={0.5}
+      />
+    );
   }
 
   if (activeAndroidContextMenuProps != null) {
