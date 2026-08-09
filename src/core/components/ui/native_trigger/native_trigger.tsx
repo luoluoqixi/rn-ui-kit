@@ -112,6 +112,7 @@ export const NativeTrigger = React.forwardRef<View, NativeTriggerProps>(
       active = false,
       content,
       containerStyle,
+      disabled,
       icon,
       keepPressedOpacity = false,
       labelProps,
@@ -154,6 +155,7 @@ export const NativeTrigger = React.forwardRef<View, NativeTriggerProps>(
       <Pressable
         ref={forwardedRef}
         {...pressableProps}
+        disabled={disabled}
         onPressIn={(event) => {
           if (keepPressedOpacity) {
             clearHandoffTimeout();
@@ -180,7 +182,13 @@ export const NativeTrigger = React.forwardRef<View, NativeTriggerProps>(
         }}
         style={(state) => [
           content != null ? styles.customTrigger : undefined,
-          { opacity: active || stickyPressed || (pressedOpacity && state.pressed) ? 0.6 : 1 },
+          {
+            opacity: disabled
+              ? 0.5
+              : active || stickyPressed || (pressedOpacity && state.pressed)
+                ? 0.6
+                : 1,
+          },
           typeof style === "function" ? style(state) : style,
         ]}
       >
