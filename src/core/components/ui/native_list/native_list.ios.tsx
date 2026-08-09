@@ -4,6 +4,7 @@ import {
   HStack,
   Host,
   Image,
+  Label as SwiftLabel,
   List,
   RNHostView,
   Spacer,
@@ -35,7 +36,6 @@ import {
   listSectionSpacing,
   listStyle,
   multilineTextAlignment,
-  onLongPressGesture,
   opacity,
   padding,
   refreshable,
@@ -65,7 +65,7 @@ import { useTheme } from "tamagui";
 import { NativePickerSwiftUI } from "../select/native_picker";
 import type { NativePickerSwiftUIHandle } from "../select/native_picker";
 import { resolveSelectItemGroups } from "../select/select_grouping";
-import { ContextMenu, type ContextMenuItemData } from "../context_menu";
+import type { ContextMenuItemData } from "../context_menu";
 import { Menu } from "../menu";
 import { getTrueSheetScrollBottomPadding } from "../sheet/native_sheet/true_sheet/sheet_scroll_layout";
 import { useTrueSheetScrollLayout } from "../sheet/native_sheet/true_sheet/true_sheet_scroll_context";
@@ -116,41 +116,48 @@ function getNativeContextMenuLabel(item: ContextMenuItemData) {
   return item.textValue ?? item.value;
 }
 
-function supportsSwiftUIContextMenuItems(items: ContextMenuItemData[]): boolean {
-  return items.every(
-    (item) =>
-      item["aria-label"] == null &&
-      item.icon == null &&
-      item.indicator == null &&
-      item.subtitle == null &&
-      (item.label == null || typeof item.label === "string" || typeof item.label === "number") &&
-      (item.subMenu == null || supportsSwiftUIContextMenuItems(item.subMenu)),
-  );
+function hasSwiftUIContextMenu(contextMenuProps?: NativeListContextMenuProps) {
+  return (contextMenuProps?.items?.length ?? 0) > 0;
 }
 
-function canUseSwiftUIContextMenu(contextMenuProps?: NativeListContextMenuProps) {
-  if (contextMenuProps == null) {
-    return false;
+function NativeSwiftUIContextMenuButton({
+  disabled,
+  item,
+  label,
+  onPress,
+}: {
+  disabled: boolean;
+  item: ContextMenuItemData;
+  label: string;
+  onPress?: () => void;
+}) {
+  const destructive = item.destructive ?? false;
+
+  if (item.subtitle != null) {
+    return (
+      <SwiftButton
+        modifiers={[disabledModifier(disabled)]}
+        onPress={onPress}
+        role={destructive ? "destructive" : "default"}
+      >
+        {item.selected ? (
+          <SwiftLabel systemImage="checkmark" title={label} />
+        ) : (
+          <SwiftText>{label}</SwiftText>
+        )}
+        <SwiftText>{item.subtitle}</SwiftText>
+      </SwiftButton>
+    );
   }
 
-  const supportedRootProps = new Set(["itemProps", "items", "nativeHaptics", "triggerProps"]);
-  const hasUnsupportedRootProps = Object.entries(contextMenuProps).some(
-    ([key, value]) => value !== undefined && !supportedRootProps.has(key),
-  );
-  const hasUnsupportedItemProps = Object.entries(contextMenuProps.itemProps ?? {}).some(
-    ([key, value]) => value !== undefined && key !== "destructive" && key !== "disabled",
-  );
-  const hasUnsupportedTriggerProps = Object.entries(contextMenuProps.triggerProps ?? {}).some(
-    ([key, value]) => value !== undefined && key !== "disabled",
-  );
-
   return (
-    !hasUnsupportedRootProps &&
-    !hasUnsupportedItemProps &&
-    !hasUnsupportedTriggerProps &&
-    contextMenuProps.items != null &&
-    contextMenuProps.items.length > 0 &&
-    supportsSwiftUIContextMenuItems(contextMenuProps.items)
+    <SwiftButton
+      label={label}
+      modifiers={[disabledModifier(disabled)]}
+      onPress={onPress}
+      role={destructive ? "destructive" : "default"}
+      systemImage={item.selected ? "checkmark" : undefined}
+    />
   );
 }
 
@@ -168,17 +175,19 @@ function NativeSwiftUIContextMenuItems({
 
     const label = getNativeContextMenuLabel(item);
     const disabled = item.disabled ?? itemProps?.disabled ?? false;
-    const destructive = item.destructive ?? itemProps?.destructive ?? false;
+    const resolvedItem = {
+      ...item,
+      destructive: item.destructive ?? itemProps?.destructive ?? false,
+    };
 
     if (item.subMenu?.length) {
       return (
         <SwiftContextMenu key={item.value}>
           <SwiftContextMenu.Trigger>
-            <SwiftButton
+            <NativeSwiftUIContextMenuButton
+              disabled={disabled}
+              item={resolvedItem}
               label={label}
-              modifiers={[disabledModifier(disabled)]}
-              role={destructive ? "destructive" : "default"}
-              systemImage={item.selected ? "checkmark" : undefined}
             />
           </SwiftContextMenu.Trigger>
           <SwiftContextMenu.Items>
@@ -189,16 +198,15 @@ function NativeSwiftUIContextMenuItems({
     }
 
     return (
-      <SwiftButton
+      <NativeSwiftUIContextMenuButton
+        disabled={disabled}
+        item={resolvedItem}
         key={item.value}
         label={label}
-        modifiers={[disabledModifier(disabled)]}
         onPress={() => {
           const handler = item.onSelect ?? item.onPress;
           (handler as (() => void) | undefined)?.();
         }}
-        role={destructive ? "destructive" : "default"}
-        systemImage={item.selected ? "checkmark" : undefined}
       />
     );
   });
@@ -236,10 +244,6 @@ type SwiftUIButtonStyle =
   | "glass"
   | "glassProminent"
   | "plain";
-
-type NativeContextMenuHandle = {
-  presentMenu: () => void;
-};
 
 const NativeListContext = createContext<NativeListContextValue>({ native: true });
 const Ios15FirstVisibleRowContext = createContext(false);
@@ -527,15 +531,9 @@ function NativeRowContainer({
   const restoresIos15TopCorners = useContext(Ios15FirstVisibleRowContext);
   const primaryColor = toSwiftUIHexColor(theme.color.val) ?? theme.color.val;
   const resolvedTint = resolveNativeListBtnTintColor(btnTint, primaryColor);
-  const usesSwiftUIContextMenu = canUseSwiftUIContextMenu(contextMenuProps);
-  const hostedContextMenuProps = usesSwiftUIContextMenu ? undefined : contextMenuProps;
-  const contextMenuRef = useRef<NativeContextMenuHandle | null>(null);
-  const handleLongPress =
-    hostedContextMenuProps != null ? () => contextMenuRef.current?.presentMenu() : undefined;
-  const contextMenuAnchor =
-    hostedContextMenuProps != null ? (
-      <NativeHostedContextMenu contextMenuProps={hostedContextMenuProps} menuRef={contextMenuRef} />
-    ) : null;
+  const swiftUIContextMenuProps = hasSwiftUIContextMenu(contextMenuProps)
+    ? contextMenuProps
+    : undefined;
   const baseModifiers = [
     ROW_INSETS,
     padding(
@@ -592,23 +590,15 @@ function NativeRowContainer({
           buttonStyle(btnStyle ?? "automatic"),
           ...(nativeScrollId != null ? [viewID(nativeScrollId)] : []),
           ...(nativeSelectionId != null ? [tag(nativeSelectionId)] : []),
-          ...(handleLongPress != null ? [onLongPressGesture(handleLongPress)] : []),
         ]}
         onPress={onPress}
       >
-        {hostedContextMenuProps != null ? (
-          <ZStack alignment="center">
-            {contextMenuAnchor}
-            {buttonContent}
-          </ZStack>
-        ) : (
-          buttonContent
-        )}
+        {buttonContent}
       </SwiftButton>
     );
 
-    return usesSwiftUIContextMenu && contextMenuProps != null ? (
-      <NativeSwiftUIContextMenu contextMenuProps={contextMenuProps}>
+    return swiftUIContextMenuProps != null ? (
+      <NativeSwiftUIContextMenu contextMenuProps={swiftUIContextMenuProps}>
         {button}
       </NativeSwiftUIContextMenu>
     ) : (
@@ -637,30 +627,13 @@ function NativeRowContainer({
       : []),
   ];
 
-  if (usesSwiftUIContextMenu && contextMenuProps != null) {
+  if (swiftUIContextMenuProps != null) {
     return (
-      <NativeSwiftUIContextMenu contextMenuProps={contextMenuProps}>
+      <NativeSwiftUIContextMenu contextMenuProps={swiftUIContextMenuProps}>
         <HStack alignment={rowAlignment} modifiers={rowModifiers} spacing={12}>
           {children}
         </HStack>
       </NativeSwiftUIContextMenu>
-    );
-  }
-
-  if (hostedContextMenuProps != null) {
-    return (
-      <ZStack
-        alignment="leading"
-        modifiers={[
-          ...rowModifiers,
-          ...(handleLongPress != null ? [onLongPressGesture(handleLongPress)] : []),
-        ]}
-      >
-        {contextMenuAnchor}
-        <HStack alignment={rowAlignment} modifiers={[frame({ maxWidth: 99999 })]} spacing={12}>
-          {children}
-        </HStack>
-      </ZStack>
     );
   }
 
@@ -681,27 +654,6 @@ function NativeHostedIcon({ children }: { children: ReactNode }) {
        */}
       <View collapsable={false} style={styles.hostedIcon}>
         {children}
-      </View>
-    </RNHostView>
-  );
-}
-
-function NativeHostedContextMenu({
-  contextMenuProps,
-  menuRef,
-}: {
-  contextMenuProps: NativeListContextMenuProps;
-  menuRef: { current: NativeContextMenuHandle | null };
-}) {
-  return (
-    <RNHostView matchContents>
-      <View collapsable={false} pointerEvents="none" style={styles.contextMenuAnchor}>
-        <ContextMenu
-          {...contextMenuProps}
-          trigger={<View collapsable={false} style={styles.contextMenuAnchor} />}
-          // Zeego exposes this native handle internally; SwiftUI owns the long-press gesture.
-          {...({ __menuRef: menuRef } as any)}
-        />
       </View>
     </RNHostView>
   );
@@ -1853,7 +1805,6 @@ export function NativeListCustomItem({
 }: NativeListCustomItemProps) {
   const restoresIos15TopCorners = useContext(Ios15FirstVisibleRowContext);
   const resolvedContextMenuProps = useResolvedNativeListContextMenu(contextMenuProps);
-  const contextMenuRef = useRef<NativeContextMenuHandle | null>(null);
   const editRow = useNativeListEditRow({
     disabled,
     nativeScrollId,
@@ -1873,12 +1824,9 @@ export function NativeListCustomItem({
     editRow.editMode || resolvedContextMenuProps?.triggerProps?.disabled
       ? undefined
       : resolvedContextMenuProps;
-  const usesSwiftUIContextMenu = canUseSwiftUIContextMenu(activeContextMenuProps);
-  const hostedContextMenuProps = usesSwiftUIContextMenu ? undefined : activeContextMenuProps;
-  const contextMenuAnchor =
-    hostedContextMenuProps != null ? (
-      <NativeHostedContextMenu contextMenuProps={hostedContextMenuProps} menuRef={contextMenuRef} />
-    ) : null;
+  const swiftUIContextMenuProps = hasSwiftUIContextMenu(activeContextMenuProps)
+    ? activeContextMenuProps
+    : undefined;
 
   if (!useNativeListEnabled()) {
     return (
@@ -1929,26 +1877,11 @@ export function NativeListCustomItem({
       </VStack>
     );
 
-    if (usesSwiftUIContextMenu && activeContextMenuProps != null) {
+    if (swiftUIContextMenuProps != null) {
       return (
-        <NativeSwiftUIContextMenu contextMenuProps={activeContextMenuProps}>
+        <NativeSwiftUIContextMenu contextMenuProps={swiftUIContextMenuProps}>
           {customRow}
         </NativeSwiftUIContextMenu>
-      );
-    }
-
-    if (hostedContextMenuProps != null) {
-      return (
-        <ZStack
-          alignment="leading"
-          modifiers={[
-            ...rowModifiers,
-            onLongPressGesture(() => contextMenuRef.current?.presentMenu()),
-          ]}
-        >
-          {contextMenuAnchor}
-          <NativeHostedCustomRow>{children}</NativeHostedCustomRow>
-        </ZStack>
       );
     }
 
@@ -1960,53 +1893,30 @@ export function NativeListCustomItem({
   if (restoresIos15TopCorners) {
     const button = (
       <SwiftButton
-        modifiers={[
-          disabledModifier(disabled ?? false),
-          ...(hostedContextMenuProps != null
-            ? [onLongPressGesture(() => contextMenuRef.current?.presentMenu())]
-            : []),
-        ]}
+        modifiers={[disabledModifier(disabled ?? false)]}
         onPress={() => {
           onPress();
           triggerNativeHaptics(resolvedHaptics);
         }}
       >
-        {hostedContextMenuProps != null ? (
-          <ZStack
-            alignment="center"
-            modifiers={[
-              ROW_INSETS,
-              padding(resolveRowPadding(rowPaddingProps)),
-              frame({ maxWidth: 99999, alignment: "leading" }),
-              ios15ListRowTopRoundedBackground(12, {
-                horizontal: 20,
-                top: 8,
-              }),
-            ]}
-          >
-            {contextMenuAnchor}
-            <NativeHostedCustomRow>{children}</NativeHostedCustomRow>
-          </ZStack>
-        ) : (
-          <VStack
-            modifiers={[
-              ROW_INSETS,
-              padding(resolveRowPadding(rowPaddingProps)),
-              frame({ maxWidth: 99999, alignment: "leading" }),
-              ios15ListRowTopRoundedBackground(12, {
-                horizontal: 20,
-                top: 8,
-              }),
-            ]}
-          >
-            <NativeHostedCustomRow>{children}</NativeHostedCustomRow>
-          </VStack>
-        )}
+        <VStack
+          modifiers={[
+            ROW_INSETS,
+            padding(resolveRowPadding(rowPaddingProps)),
+            frame({ maxWidth: 99999, alignment: "leading" }),
+            ios15ListRowTopRoundedBackground(12, {
+              horizontal: 20,
+              top: 8,
+            }),
+          ]}
+        >
+          <NativeHostedCustomRow>{children}</NativeHostedCustomRow>
+        </VStack>
       </SwiftButton>
     );
 
-    return usesSwiftUIContextMenu && activeContextMenuProps != null ? (
-      <NativeSwiftUIContextMenu contextMenuProps={activeContextMenuProps}>
+    return swiftUIContextMenuProps != null ? (
+      <NativeSwiftUIContextMenu contextMenuProps={swiftUIContextMenuProps}>
         {button}
       </NativeSwiftUIContextMenu>
     ) : (
@@ -2020,28 +1930,18 @@ export function NativeListCustomItem({
         disabledModifier(disabled ?? false),
         ROW_INSETS,
         padding(resolveRowPadding(rowPaddingProps)),
-        ...(hostedContextMenuProps != null
-          ? [onLongPressGesture(() => contextMenuRef.current?.presentMenu())]
-          : []),
       ]}
       onPress={() => {
         onPress();
         triggerNativeHaptics(resolvedHaptics);
       }}
     >
-      {hostedContextMenuProps != null ? (
-        <ZStack alignment="center">
-          {contextMenuAnchor}
-          <NativeHostedCustomRow>{children}</NativeHostedCustomRow>
-        </ZStack>
-      ) : (
-        <NativeHostedCustomRow>{children}</NativeHostedCustomRow>
-      )}
+      <NativeHostedCustomRow>{children}</NativeHostedCustomRow>
     </SwiftButton>
   );
 
-  return usesSwiftUIContextMenu && activeContextMenuProps != null ? (
-    <NativeSwiftUIContextMenu contextMenuProps={activeContextMenuProps}>
+  return swiftUIContextMenuProps != null ? (
+    <NativeSwiftUIContextMenu contextMenuProps={swiftUIContextMenuProps}>
       {button}
     </NativeSwiftUIContextMenu>
   ) : (
@@ -2050,16 +1950,6 @@ export function NativeListCustomItem({
 }
 
 const styles = StyleSheet.create({
-  contextMenuAnchor: {
-    height: 1,
-    maxHeight: 1,
-    maxWidth: 1,
-    minHeight: 1,
-    minWidth: 1,
-    opacity: 0,
-    overflow: "hidden",
-    width: 1,
-  },
   customRowShell: {
     alignSelf: "stretch",
     maxWidth: "100%",
