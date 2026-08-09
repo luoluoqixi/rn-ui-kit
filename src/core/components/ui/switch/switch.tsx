@@ -19,6 +19,7 @@ import type { SwitchProps, SwitchThumbProps } from "./types";
 const platform = os();
 const web = isWeb();
 const ios = platform === "ios";
+const DISABLED_OPACITY = 0.5;
 
 type ThemeRecord = Record<string, unknown>;
 
@@ -73,11 +74,16 @@ function SwitchRoot(props: SwitchProps) {
     ? colorBackground
     : resolveThemeColor([switchTheme?.color6, theme.color6]);
   const nativeThumbColor = ios ? undefined : colorBackground;
+  const disabled = rootProps.disabled ?? nativeProps?.disabled;
   const nativeSwitchProps: NativeSwitchProps | undefined = native
     ? {
         ...nativeProps,
-        disabled: rootProps.disabled ?? nativeProps?.disabled,
+        disabled,
         ios_backgroundColor: nativeProps?.ios_backgroundColor,
+        style:
+          platform === "android" && disabled
+            ? [nativeProps?.style, { opacity: DISABLED_OPACITY }]
+            : nativeProps?.style,
         thumbColor: nativeProps?.thumbColor ?? nativeThumbColor,
         trackColor: {
           false: nativeTrackOffColor,
@@ -115,9 +121,11 @@ function SwitchRoot(props: SwitchProps) {
       borderWidth={rootProps.borderWidth ?? 0}
       checked={checked}
       cursor={rootProps.cursor ?? "pointer"}
+      disabled={disabled}
       id={controlId}
       onCheckedChange={handleCheckedChange}
       nativeProps={nativeSwitchProps}
+      opacity={!native && disabled ? DISABLED_OPACITY : rootProps.opacity}
       overflow={overflow ?? "hidden"}
       padding={rootProps.padding ?? 0}
       size={size}
@@ -139,7 +147,7 @@ function SwitchRoot(props: SwitchProps) {
       onPress={(event) => {
         labelProps?.onPress?.(event);
 
-        if (rootProps.disabled || event.defaultPrevented) {
+        if (disabled || event.defaultPrevented) {
           return;
         }
 
