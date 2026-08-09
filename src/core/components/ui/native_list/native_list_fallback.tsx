@@ -1135,6 +1135,7 @@ export function NativeListSwitchItem({ switchProps, ...itemProps }: NativeListSw
     }
   };
   const editMode = useNativeListEditMode();
+  const switchDisabled = disabled || editMode;
 
   return (
     <NativeListRow
@@ -1147,6 +1148,7 @@ export function NativeListSwitchItem({ switchProps, ...itemProps }: NativeListSw
         <View style={styles.trailingControl}>
           <Switch
             {...switchProps}
+            disabled={switchDisabled}
             native
             onPress={(event) => {
               switchProps.onPress?.(event);
