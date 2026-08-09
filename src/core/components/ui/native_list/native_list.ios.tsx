@@ -6,6 +6,7 @@ import {
   Image,
   Label as SwiftLabel,
   List,
+  Menu as SwiftMenu,
   RNHostView,
   Spacer,
   Button as SwiftButton,
@@ -65,6 +66,7 @@ import { useTheme } from "tamagui";
 import { NativePickerSwiftUI } from "../select/native_picker";
 import type { NativePickerSwiftUIHandle } from "../select/native_picker";
 import { resolveSelectItemGroups } from "../select/select_grouping";
+import type { ResolvedSelectItemData } from "../select/select_grouping";
 import type { ContextMenuItemData } from "../context_menu";
 import { Menu } from "../menu";
 import { getTrueSheetScrollBottomPadding } from "../sheet/native_sheet/true_sheet/sheet_scroll_layout";
@@ -1636,6 +1638,135 @@ export function NativeListSwitchItem({ switchProps, ...itemProps }: NativeListSw
   );
 }
 
+function NativeIos15MenuSelectRow({
+  itemProps,
+  selectItems,
+  selectProps,
+}: {
+  itemProps: Omit<NativeListSelectItemProps, "selectProps">;
+  selectItems: ResolvedSelectItemData[];
+  selectProps: NativeListSelectItemProps["selectProps"];
+}) {
+  const editMode = useNativeListEditMode();
+  const theme = useTheme();
+  const disabled = Boolean(itemProps.disabled || selectProps.disabled || selectProps.isDisabled);
+  const resolvedContextMenuProps = useResolvedNativeListContextMenu(itemProps.contextMenuProps);
+  const editRow = useNativeListEditRow({
+    disabled,
+    nativeScrollId: itemProps.nativeScrollId,
+    nativeSelection: true,
+    selectionId: itemProps.selectionId,
+  });
+  const resolvedHaptics = useResolvedNativeHaptics(
+    selectProps.nativeHaptics ?? itemProps.nativeHaptics ?? false,
+  );
+  const accentColor = toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;
+  const resolvedIconColor =
+    (itemProps.iconColor != null ? toSwiftUIHexColor(itemProps.iconColor) : undefined) ??
+    accentColor;
+  const resolvedValueColor =
+    (itemProps.valueColor != null ? toSwiftUIHexColor(itemProps.valueColor) : undefined) ??
+    accentColor;
+  const resolvedIconSize = itemProps.iconSize ?? 20;
+  const resolvedIconSlotWidth = itemProps.iconSlotWidth ?? Math.max(24, resolvedIconSize);
+  const selectedValue = selectProps.value ?? selectProps.defaultValue;
+  const placeholder = toPlainText(selectProps.placeholder) ?? "请选择";
+  const selectedItem = selectItems.find((item) => item.value === selectedValue);
+  const selectedLabel = selectedItem?.label ?? placeholder;
+
+  const handleSelection = (nextValue: string) => {
+    if (nextValue === selectedValue) {
+      return;
+    }
+    triggerNativeHaptics(resolvedHaptics);
+    selectProps.onValueChange?.(nextValue);
+  };
+
+  return (
+    <NativeRowContainer
+      contextMenuProps={
+        editRow.editMode || resolvedContextMenuProps?.triggerProps?.disabled
+          ? undefined
+          : resolvedContextMenuProps
+      }
+      disabled={disabled}
+      nativeScrollId={itemProps.nativeScrollId}
+      nativeSelectionId={editRow.editMode ? editRow.selectionId : undefined}
+      paddingBottom={itemProps.paddingBottom}
+      paddingHorizontal={itemProps.paddingHorizontal}
+      paddingLeft={itemProps.paddingLeft}
+      paddingRight={itemProps.paddingRight}
+      paddingTop={itemProps.paddingTop}
+      paddingVertical={itemProps.paddingVertical}
+    >
+      <SwiftMenu
+        label={
+          <HStack
+            modifiers={[
+              frame({ maxWidth: 99999, alignment: "leading" }),
+              contentShape(shapes.rectangle()),
+              opacity(editMode || disabled ? 0.5 : 1),
+            ]}
+            spacing={12}
+          >
+            {itemProps.sfSymbol != null ? (
+              <ZStack
+                alignment="center"
+                modifiers={[frame({ width: resolvedIconSlotWidth, alignment: "center" })]}
+              >
+                <Image
+                  color={resolvedIconColor}
+                  size={resolvedIconSize}
+                  systemName={itemProps.sfSymbol}
+                />
+              </ZStack>
+            ) : null}
+            <NativeRowLabel
+              subtitle={itemProps.subtitle}
+              subtitleColor={itemProps.subtitleColor}
+              subtitleFontSize={itemProps.subtitleFontSize}
+              title={itemProps.title}
+              titleAlign={itemProps.titleAlign}
+              titleColor={itemProps.titleColor ?? itemProps.btnTint}
+              titleFontSize={itemProps.titleFontSize}
+            />
+            <Spacer minLength={12} />
+            <SwiftText
+              modifiers={[
+                ...valueModifiers(itemProps.valueFontSize),
+                foregroundStyle(resolvedValueColor),
+              ]}
+            >
+              {selectedLabel}
+            </SwiftText>
+            <Image
+              color={resolvedValueColor}
+              size={13}
+              systemName="chevron.up.chevron.down"
+            />
+          </HStack>
+        }
+        modifiers={[
+          buttonStyle("plain"),
+          frame({ maxWidth: 99999, alignment: "leading" }),
+          contentShape(shapes.rectangle()),
+          disabledModifier(editMode || disabled),
+        ]}
+      >
+        {selectItems.map((item) => (
+          <SwiftButton
+            key={`${item.groupKey}:${item.value}`}
+            label={item.label}
+            modifiers={[disabledModifier(Boolean(item.disabled || item.isDisabled))]}
+            onPress={() => handleSelection(item.value)}
+            systemImage={item.value === selectedValue ? "checkmark" : undefined}
+          />
+        ))}
+      </SwiftMenu>
+    </NativeRowContainer>
+  );
+}
+
 export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSelectItemProps) {
   if (!useNativeListEnabled()) {
     return <FallbackSelectItem selectProps={selectProps} {...itemProps} />;
@@ -1667,21 +1798,60 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
       ? defaultTriggerLabel
       : selectProps.renderValue(selectedValue);
   const disabled = itemProps.disabled || selectProps.disabled || selectProps.isDisabled;
-  const editMode = useNativeListEditMode();
-  const theme = useTheme();
-  // iOS 15 不会在 hosted trigger 的值或主题改变后稳定地刷新其固有宽度。仅重建当前
-  // Select 的 Host，保留原始的紧凑行尾布局；不能让 Host 占满剩余宽度，否则 UITableView
-  // 复用单元格时会把该测量结果带入后续 Menu 行。
-  const ios15TriggerHostKey = isIos15()
-    ? [
-        "ios15-select",
-        editMode ? "editing" : "default",
-        String(selectedValue ?? ""),
-        theme.color.val,
-        theme.color10.val,
-      ].join(":")
-    : undefined;
   const pickerRef = useRef<NativePickerSwiftUIHandle>(null);
+  const usesIos15NativeMenu =
+    isIos15() &&
+    resolvedPickerMode === "dropdown" &&
+    resolvedItemGroups.length === 1 &&
+    resolvedItemGroups[0]?.label == null &&
+    selectItems.length > 0 &&
+    !selectItems.some(
+      (item) =>
+        item.description != null ||
+        item.startContent != null ||
+        item.endContent != null,
+    ) &&
+    (itemProps.icon == null || itemProps.sfSymbol != null) &&
+    itemProps.btnTint == null &&
+    itemProps.iconColor == null &&
+    itemProps.iconSize == null &&
+    itemProps.iconSlotWidth == null &&
+    itemProps.subtitle == null &&
+    itemProps.trailing == null &&
+    itemProps.titleAlign == null &&
+    itemProps.titleColor == null &&
+    itemProps.titleFontSize == null &&
+    itemProps.value == null &&
+    itemProps.chevron !== true &&
+    itemProps.selected !== true &&
+    selectProps.nativeDropdownAlign == null &&
+    selectProps.nativeDropdownAnchorWidth == null &&
+    selectProps.nativeDropdownEdgeOffset == null &&
+    selectProps.nativeTriggerContainerStyle == null &&
+    selectProps.nativeTriggerContent == null &&
+    selectProps.nativeTriggerLabelProps == null &&
+    (selectProps.nativeTriggerIcon == null ||
+      selectProps.nativeTriggerIcon === "chevrons-up-down") &&
+    selectProps.onOpenChange == null &&
+    selectProps.renderValue == null &&
+    selectProps.contentProps == null &&
+    selectProps.itemIndicatorProps == null &&
+    selectProps.itemLabel == null &&
+    selectProps.itemLabelProps == null &&
+    selectProps.itemProps == null &&
+    selectProps.itemTextProps == null &&
+    selectProps.viewportProps == null &&
+    (selectProps.placeholder == null || toPlainText(selectProps.placeholder) != null);
+
+  if (usesIos15NativeMenu) {
+    return (
+      <NativeIos15MenuSelectRow
+        itemProps={itemProps}
+        selectItems={selectItems}
+        selectProps={selectProps}
+      />
+    );
+  }
 
   return (
     <NativePressRow
@@ -1693,7 +1863,7 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
       }}
       btnStyle={resolvedPickerMode === "wheel" ? "plain" : undefined}
       trailingControl={
-        <NativeHostedTrailingControl key={ios15TriggerHostKey} disableInEditMode>
+        <NativeHostedTrailingControl disableInEditMode>
           <NativePickerSwiftUI
             ref={pickerRef}
             items={selectItems}
