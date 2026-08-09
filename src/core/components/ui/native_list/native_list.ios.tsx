@@ -185,18 +185,14 @@ function NativeSwiftUIContextMenuItems({
 
     if (item.subMenu?.length) {
       return (
-        <SwiftContextMenu key={item.value}>
-          <SwiftContextMenu.Trigger>
-            <NativeSwiftUIContextMenuButton
-              disabled={disabled}
-              item={resolvedItem}
-              label={label}
-            />
-          </SwiftContextMenu.Trigger>
-          <SwiftContextMenu.Items>
-            <NativeSwiftUIContextMenuItems itemProps={itemProps} items={item.subMenu} />
-          </SwiftContextMenu.Items>
-        </SwiftContextMenu>
+        <SwiftMenu
+          key={item.value}
+          label={label}
+          modifiers={[disabledModifier(disabled)]}
+          systemImage={item.selected ? "checkmark" : undefined}
+        >
+          <NativeSwiftUIContextMenuItems itemProps={itemProps} items={item.subMenu} />
+        </SwiftMenu>
       );
     }
 
