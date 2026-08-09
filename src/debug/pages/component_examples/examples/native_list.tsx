@@ -131,14 +131,13 @@ export function NativeListExample() {
             }
           }}
         />
-        {!(os() === "ios" && native) ? (
-          <Switch
-            checked={customEditModeIcon}
-            label="自定义编辑模式图标"
-            labelPosition="end"
-            onCheckedChange={setCustomEditModeIcon}
-          />
-        ) : null}
+        <Switch
+          checked={customEditModeIcon}
+          disabled={os() === "ios" && native}
+          label="自定义编辑模式图标"
+          labelPosition="end"
+          onCheckedChange={setCustomEditModeIcon}
+        />
         <View style={styles.nativeListFrame}>
           {native || fallbackMounted ? (
             <NativeList
