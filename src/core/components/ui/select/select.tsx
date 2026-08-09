@@ -1892,6 +1892,7 @@ const SelectRoot = forwardRef<any, SelectProps>(
           </YStack>
         ) : shouldRenderNativePlatformPicker ? (
           <NativePickerSwiftUI
+            disabled={selectDisabled}
             items={resolvedItems}
             value={selectedValue}
             placeholder={placeholder}

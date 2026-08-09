@@ -65,9 +65,6 @@ const NATIVE_LIST_SORT_LIST: SelectItemData[] = [
 
 function NativeListSortTrailing() {
   const editMode = useNativeListEditMode();
-
-  console.log(editMode);
-
   return (
     <Select
       disabled={editMode}

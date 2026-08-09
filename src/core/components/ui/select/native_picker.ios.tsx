@@ -123,10 +123,12 @@ function WheelTrueSheet({
  * 使用 Tamagui Select.Trigger 相同的 ListItem componentName，确保组件主题色、尺寸和边框一致。
  */
 function NativePickerDefaultTrigger({
+  disabled,
   label,
   placeholder,
   onPress,
 }: {
+  disabled?: boolean;
   label: React.ReactNode;
   placeholder: boolean;
   onPress?: () => void;
@@ -137,6 +139,7 @@ function NativePickerDefaultTrigger({
       background="$background"
       rounded="$4"
       borderWidth={1}
+      disabled={disabled}
       hoverStyle={DEFAULT_TRIGGER_HOVER_STYLE}
       iconAfter={ChevronDown}
       onPress={onPress}
@@ -154,13 +157,14 @@ function NativePickerDefaultTrigger({
 const NativePickerWheelSheet = React.forwardRef<
   NativePickerSwiftUIHandle,
   {
+    disabled?: boolean;
     items: ResolvedSelectItemData[];
     value: string | null | undefined;
     placeholder?: React.ReactNode;
     onValueChange?: (value: string | null) => void;
     resolvedNativeHaptics: ReturnType<typeof useResolvedNativeHaptics>;
   }
->(({ items, value, placeholder, onValueChange, resolvedNativeHaptics }, ref) => {
+>(({ disabled, items, value, placeholder, onValueChange, resolvedNativeHaptics }, ref) => {
   const [pendingValue, setPendingValue] = React.useState<string>(
     (value as string) ?? items[0]?.value ?? "",
   );
@@ -169,6 +173,8 @@ const NativePickerWheelSheet = React.forwardRef<
 
   const openSheet = useCallback(
     (shouldTriggerHaptics: boolean) => {
+      if (disabled) return;
+
       if (shouldTriggerHaptics) {
         triggerNativeHaptics(resolvedNativeHaptics);
       }
@@ -176,7 +182,7 @@ const NativePickerWheelSheet = React.forwardRef<
       setPendingValue((value as string) ?? items[0]?.value ?? "");
       presentTrueSheet(sheetName);
     },
-    [resolvedNativeHaptics, value, items, sheetName],
+    [disabled, resolvedNativeHaptics, value, items, sheetName],
   );
 
   React.useImperativeHandle(ref, () => ({
@@ -201,6 +207,7 @@ const NativePickerWheelSheet = React.forwardRef<
   return (
     <>
       <NativePickerDefaultTrigger
+        disabled={disabled}
         label={selectedLabel ?? (typeof placeholder === "string" ? placeholder : "选择")}
         onPress={() => openSheet(true)}
         placeholder={selectedLabel == null}
@@ -227,6 +234,7 @@ type NativePickerSwiftUIMenuTriggerProps = {
   active?: boolean;
   containerStyle?: StyleProp<ViewStyle>;
   content?: React.ReactNode;
+  disabled?: boolean;
   icon?: SelectNativeTriggerIcon;
   label: React.ReactNode;
   labelProps?: TextProps;
@@ -240,6 +248,7 @@ const NativePickerSwiftUIMenuTrigger = React.forwardRef<View, NativePickerSwiftU
     active,
     containerStyle,
     content,
+    disabled,
     icon,
     keepPressedOpacity,
     label,
@@ -252,12 +261,14 @@ const NativePickerSwiftUIMenuTrigger = React.forwardRef<View, NativePickerSwiftU
       active={active}
       content={content}
       containerStyle={containerStyle}
+      disabled={disabled}
       icon={icon}
       keepPressedOpacity={keepPressedOpacity}
       label={label}
       labelProps={labelProps}
       onPress={onPress}
       pressedOpacity={pressedOpacity}
+      style={disabled ? { opacity: 0.5 } : undefined}
     />
   ),
 );
@@ -266,6 +277,7 @@ const NativePickerSwiftUIMenuTrigger = React.forwardRef<View, NativePickerSwiftU
 const NativePickerWheelNativeTriggerSheet = React.forwardRef<
   NativePickerSwiftUIHandle,
   {
+    disabled?: boolean;
     nativeTriggerContainerStyle?: StyleProp<ViewStyle>;
     nativeTriggerContent?: React.ReactNode;
     nativeTriggerIcon?: SelectNativeTriggerIcon;
@@ -281,6 +293,7 @@ const NativePickerWheelNativeTriggerSheet = React.forwardRef<
 >(
   (
     {
+      disabled,
       nativeTriggerContainerStyle,
       nativeTriggerContent,
       nativeTriggerIcon,
@@ -302,6 +315,8 @@ const NativePickerWheelNativeTriggerSheet = React.forwardRef<
 
     const openSheet = useCallback(
       (shouldTriggerHaptics: boolean) => {
+        if (disabled) return;
+
         if (shouldTriggerHaptics) {
           triggerNativeHaptics(resolvedNativeHaptics);
         }
@@ -309,7 +324,7 @@ const NativePickerWheelNativeTriggerSheet = React.forwardRef<
         setPendingValue((value as string) ?? items[0]?.value ?? "");
         presentTrueSheet(sheetName);
       },
-      [resolvedNativeHaptics, value, items, sheetName],
+      [disabled, resolvedNativeHaptics, value, items, sheetName],
     );
 
     React.useImperativeHandle(ref, () => ({
@@ -336,6 +351,7 @@ const NativePickerWheelNativeTriggerSheet = React.forwardRef<
         <NativePickerSwiftUIMenuTrigger
           containerStyle={nativeTriggerContainerStyle}
           content={nativeTriggerContent}
+          disabled={disabled}
           icon={nativeTriggerIcon}
           label={nativeTriggerLabel}
           labelProps={nativeTriggerLabelProps}
@@ -362,6 +378,7 @@ const NativePickerWheelNativeTriggerSheet = React.forwardRef<
  * Menu 的 MenuTrigger 包装自定义 YStack，点击时显示选项列表。
  */
 function NativePickerDropdownCustom({
+  disabled,
   items,
   value,
   placeholder,
@@ -376,6 +393,7 @@ function NativePickerDropdownCustom({
   nativeTriggerLabelProps,
   __menuRef,
 }: {
+  disabled?: boolean;
   items: ResolvedSelectItemData[];
   value: string | null | undefined;
   placeholder?: React.ReactNode;
@@ -394,10 +412,12 @@ function NativePickerDropdownCustom({
 
   const handleSelect = useCallback(
     (itemValue: string) => {
+      if (disabled) return;
+
       onValueChange?.(itemValue || null);
       triggerNativeHaptics(resolvedNativeHaptics);
     },
-    [onValueChange, resolvedNativeHaptics],
+    [disabled, onValueChange, resolvedNativeHaptics],
   );
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => onOpenChange?.(nextOpen),
@@ -405,10 +425,27 @@ function NativePickerDropdownCustom({
   );
   const trigger = nativeTrigger ? undefined : (
     <NativePickerDefaultTrigger
+      disabled={disabled}
       label={selectedLabel ?? (typeof placeholder === "string" ? placeholder : "选择")}
       placeholder={selectedLabel == null}
     />
   );
+
+  // iOS 原生菜单的容器本身仍会接收点击；禁用时不挂载菜单，只保留静态 trigger。
+  if (disabled) {
+    return nativeTrigger ? (
+      <NativePickerSwiftUIMenuTrigger
+        containerStyle={nativeTriggerContainerStyle}
+        content={nativeTriggerContent}
+        disabled
+        icon={nativeTriggerIcon}
+        label={nativeTriggerLabel}
+        labelProps={nativeTriggerLabelProps}
+      />
+    ) : (
+      trigger
+    );
+  }
 
   return (
     <Menu
@@ -458,6 +495,7 @@ export type NativePickerSwiftUIHandle = {
 export const NativePickerSwiftUI = React.forwardRef<
   NativePickerSwiftUIHandle,
   {
+    disabled?: boolean;
     items: ResolvedSelectItemData[];
     value: string | null | undefined;
     placeholder?: React.ReactNode;
@@ -483,6 +521,8 @@ export const NativePickerSwiftUI = React.forwardRef<
 
   React.useImperativeHandle(ref, () => ({
     open() {
+      if (props.disabled) return;
+
       if (props.mode === "dropdown") {
         menuControlRef.current?.presentMenu();
       } else if (props.mode === "wheel" && props.nativeTrigger) {
@@ -494,6 +534,7 @@ export const NativePickerSwiftUI = React.forwardRef<
   }));
 
   const {
+    disabled,
     items,
     value,
     placeholder,
@@ -514,6 +555,7 @@ export const NativePickerSwiftUI = React.forwardRef<
   if (mode === "dropdown") {
     return (
       <NativePickerDropdownCustom
+        disabled={disabled}
         items={items}
         value={value}
         placeholder={placeholder}
@@ -538,6 +580,7 @@ export const NativePickerSwiftUI = React.forwardRef<
     return (
       <NativePickerWheelNativeTriggerSheet
         ref={wheelNativeRef}
+        disabled={disabled}
         items={items}
         nativeTriggerContainerStyle={nativeTriggerContainerStyle}
         nativeTriggerContent={nativeTriggerContent}
@@ -557,6 +600,7 @@ export const NativePickerSwiftUI = React.forwardRef<
   return (
     <NativePickerWheelSheet
       ref={wheelCustomRef}
+      disabled={disabled}
       items={items}
       value={value}
       placeholder={placeholder}
