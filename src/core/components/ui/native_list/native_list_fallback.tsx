@@ -25,6 +25,7 @@ import {
   StyleSheet,
   TextInput,
   View,
+  type GestureResponderEvent,
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
@@ -33,7 +34,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "tamagui";
 
-import { isWeb, os } from "../utils/platform";
+import { isIos15, isWeb, os } from "../utils/platform";
 import { useAppBackgroundColors, useUiPreferences } from "../utils/theme";
 
 import { FlashList, type FlashListRef, type ListRenderItemInfo } from "../flash_list";
@@ -162,7 +163,10 @@ const DEFAULT_TEXT_AREA_LINES = 4;
 const TEXT_AREA_LINE_HEIGHT = 24;
 const TEXT_AREA_VERTICAL_PADDING = 20;
 
-const FallbackListScrollCaptureContext = createContext<(() => void) | null>(null);
+const FallbackListInteractionContext = createContext<{
+  captureScrollPosition: () => void;
+  scrollGenerationRef: RefObject<number>;
+} | null>(null);
 
 function getWebScrollableNode(
   list: FlashListRef<FallbackListEntry> | null,
@@ -266,7 +270,9 @@ function FallbackRowContainer({
   pressResetToken,
   pressBackgroundColor,
 }: RowContainerProps) {
-  const captureListScrollPosition = useContext(FallbackListScrollCaptureContext);
+  const listInteraction = useContext(FallbackListInteractionContext);
+  const captureListScrollPosition = listInteraction?.captureScrollPosition;
+  const listScrollGenerationRef = listInteraction?.scrollGenerationRef;
   const editMode = useNativeListEditMode();
   const resolvedContextMenuProps = useResolvedNativeListContextMenu(contextMenuProps);
   const contextMenuRef = useRef<NativeMenuHandle | null>(null);
@@ -290,6 +296,9 @@ function FallbackRowContainer({
   const [hovered, setHovered] = useState(false);
   const [pressed, setPressed] = useState(false);
   const usesIosSwitchPressFallback = os() === "ios" && pressResetToken != null;
+  const usesIos15EditPressRecovery = isIos15() && editMode && onPress != null;
+  const ios15EditPressScrollGenerationRef = useRef<number | null>(null);
+  const ios15EditPressHandledRef = useRef(false);
   // A native UISwitch can take over a gesture after the parent Pressable has already
   // entered its pressed state, without delivering a matching press-out event to it.
   // Keep the visual state under our control so an embedded control can clear it.
@@ -356,6 +365,46 @@ function FallbackRowContainer({
       row
     );
 
+  const handleRowPress = () => {
+    if (usesIos15EditPressRecovery) {
+      if (ios15EditPressHandledRef.current) {
+        return;
+      }
+      ios15EditPressHandledRef.current = true;
+    }
+
+    captureListScrollPosition?.();
+    onPress?.();
+    triggerNativeHaptics(resolvedHaptics);
+  };
+
+  const handleTouchStart = (_event: GestureResponderEvent) => {
+    if (!usesIos15EditPressRecovery) return;
+
+    ios15EditPressScrollGenerationRef.current = listScrollGenerationRef?.current ?? 0;
+    ios15EditPressHandledRef.current = false;
+  };
+
+  const clearIos15EditTouch = () => {
+    ios15EditPressScrollGenerationRef.current = null;
+  };
+
+  const handleTouchEnd = (_event: GestureResponderEvent) => {
+    const touchScrollGeneration = ios15EditPressScrollGenerationRef.current;
+    clearIos15EditTouch();
+    if (
+      !usesIos15EditPressRecovery ||
+      touchScrollGeneration == null ||
+      touchScrollGeneration !== (listScrollGenerationRef?.current ?? 0)
+    ) {
+      return;
+    }
+
+    // iOS 15 偶尔会在原始触摸正常结束后丢失 Pressable.onPress/onPressOut。
+    // 直接用触摸结束完成选择；若 FlashList 已开始滚动，上面的滚动代次会阻止触发。
+    handleRowPress();
+  };
+
   if (onPress == null && programmaticContextMenuProps == null) {
     return wrapIosNativeContextMenu(
       <View
@@ -382,16 +431,11 @@ function FallbackRowContainer({
           ? () => contextMenuRef.current?.presentMenu()
           : undefined
       }
-      onPress={
-        onPress != null
-          ? () => {
-              captureListScrollPosition?.();
-              onPress();
-              triggerNativeHaptics(resolvedHaptics);
-            }
-          : undefined
-      }
+      onPress={onPress != null ? handleRowPress : undefined}
       onPressOut={usesIosSwitchPressFallback ? () => setPressed(false) : undefined}
+      onTouchCancel={usesIos15EditPressRecovery ? clearIos15EditTouch : undefined}
+      onTouchEnd={usesIos15EditPressRecovery ? handleTouchEnd : undefined}
+      onTouchStart={usesIos15EditPressRecovery ? handleTouchStart : undefined}
       style={styles.pressable}
     >
       {({ pressed: pressablePressed }) => (
@@ -1827,6 +1871,7 @@ export function NativeListRoot({
     nestedScrollEnabled,
     onLayout,
     onScroll,
+    onScrollBeginDrag,
     scrollEventThrottle,
     scrollIndicatorInsets,
     showsVerticalScrollIndicator,
@@ -1839,6 +1884,7 @@ export function NativeListRoot({
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
   const flashListRef = useRef<FlashListRef<FallbackListEntry> | null>(null);
+  const listScrollGenerationRef = useRef(0);
   const currentWebScrollOffsetRef = useRef(0);
   const pendingWebScrollRestoreRef = useRef(false);
   const savedWebScrollOffsetRef = useRef(0);
@@ -1852,6 +1898,13 @@ export function NativeListRoot({
     currentWebScrollOffsetRef.current = offset;
     savedWebScrollOffsetRef.current = offset;
   }, []);
+  const listInteractionContext = useMemo(
+    () => ({
+      captureScrollPosition: captureWebScrollPosition,
+      scrollGenerationRef: listScrollGenerationRef,
+    }),
+    [captureWebScrollPosition],
+  );
   const entries = useMemo(
     () => createFallbackListEntries(children, contextMenuProps),
     [children, contextMenuProps],
@@ -1882,6 +1935,13 @@ export function NativeListRoot({
       }
     },
     [navigation, trackedOnScroll],
+  );
+  const handleScrollBeginDrag = useCallback(
+    (event: ScrollEvent) => {
+      listScrollGenerationRef.current += 1;
+      onScrollBeginDrag?.(event);
+    },
+    [onScrollBeginDrag],
   );
   const restoreWebScrollPosition = useCallback(() => {
     if (!isRestoreScroll || contentOffset != null || !pendingWebScrollRestoreRef.current) return;
@@ -2064,6 +2124,7 @@ export function NativeListRoot({
           nestedScrollEnabled={nestedScrollEnabled ?? true}
           onLayout={onLayout}
           onScroll={trackedOnScroll}
+          onScrollBeginDrag={onScrollBeginDrag}
           scrollEnabled={scrollable}
           scrollEventThrottle={resolvedScrollEventThrottle}
           showsVerticalScrollIndicator={showsVerticalScrollIndicator ?? true}
@@ -2087,7 +2148,7 @@ export function NativeListRoot({
       onSelectedIdsChange={onSelectedIdsChange}
       selectedIds={selectedIds}
     >
-      <FallbackListScrollCaptureContext.Provider value={captureWebScrollPosition}>
+      <FallbackListInteractionContext.Provider value={listInteractionContext}>
         <FlashList
           automaticallyAdjustsScrollIndicatorInsets={
             manuallyAdjustNormalPageIndicator ? false : automaticallyAdjustsScrollIndicatorInsets
@@ -2114,6 +2175,7 @@ export function NativeListRoot({
           onLayout={handleFlashListLayout}
           onRefresh={handleRefresh}
           onScroll={handleFlashListScroll}
+          onScrollBeginDrag={handleScrollBeginDrag}
           ref={flashListRef}
           refreshing={onRefresh != null ? refreshing : undefined}
           renderItem={renderFallbackListEntry}
@@ -2131,7 +2193,7 @@ export function NativeListRoot({
           style={[styles.root, rootBackground, style]}
           {...scrollViewProps}
         />
-      </FallbackListScrollCaptureContext.Provider>
+      </FallbackListInteractionContext.Provider>
     </NativeListEditModeProvider>
   );
 }
