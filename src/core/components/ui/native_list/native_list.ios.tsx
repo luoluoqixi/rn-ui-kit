@@ -708,7 +708,10 @@ function NativeHostedTrailingControl({
       <View
         collapsable={false}
         pointerEvents={interactionsDisabled ? "none" : "auto"}
-        style={styles.trailingHostedContent}
+        style={[
+          styles.trailingHostedContent,
+          interactionsDisabled ? styles.disabledContent : null,
+        ]}
       >
         {children}
       </View>
@@ -1705,7 +1708,6 @@ function NativeIos15MenuSelectRow({
             modifiers={[
               frame({ maxWidth: 99999, alignment: "leading" }),
               contentShape(shapes.rectangle()),
-              opacity(editMode || disabled ? 0.5 : 1),
             ]}
             spacing={12}
           >
@@ -1731,19 +1733,24 @@ function NativeIos15MenuSelectRow({
               titleFontSize={itemProps.titleFontSize}
             />
             <Spacer minLength={12} />
-            <SwiftText
-              modifiers={[
-                ...valueModifiers(itemProps.valueFontSize),
-                foregroundStyle(resolvedValueColor),
-              ]}
+            <HStack
+              modifiers={[opacity(editMode || disabled ? 0.5 : 1)]}
+              spacing={4}
             >
-              {selectedLabel}
-            </SwiftText>
-            <Image
-              color={resolvedValueColor}
-              size={13}
-              systemName="chevron.up.chevron.down"
-            />
+              <SwiftText
+                modifiers={[
+                  ...valueModifiers(itemProps.valueFontSize),
+                  foregroundStyle(resolvedValueColor),
+                ]}
+              >
+                {selectedLabel}
+              </SwiftText>
+              <Image
+                color={resolvedValueColor}
+                size={13}
+                systemName="chevron.up.chevron.down"
+              />
+            </HStack>
           </HStack>
         }
         modifiers={[
