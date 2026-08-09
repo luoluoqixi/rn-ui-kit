@@ -36,6 +36,7 @@ import {
   Text,
   isIos15,
   os,
+  useNativeListEditMode,
 } from "rn-ui-kit/core";
 
 import { ExampleBlock, ExampleStack } from "../shared";
@@ -61,6 +62,36 @@ const NATIVE_LIST_SORT_LIST: SelectItemData[] = [
   { value: "defaultSort", label: "默认排序" },
   { value: "timeSort", label: "时间排序" },
 ];
+
+function NativeListSortTrailing() {
+  const editMode = useNativeListEditMode();
+
+  console.log(editMode);
+
+  return (
+    <Select
+      disabled={editMode}
+      value="defaultSort"
+      renderValue={() => "排序方式"}
+      options={NATIVE_LIST_SORT_LIST}
+      nativeTrigger
+      nativeTriggerLabelProps={{
+        fontSize: 14,
+        color: "$accent11",
+        opacity: 1,
+      }}
+      nativeTriggerContainerStyle={{
+        alignItems: "center",
+        flexDirection: "row",
+        flexShrink: 1,
+        gap: 4,
+        maxWidth: 180,
+        minHeight: 32,
+        minWidth: 0,
+      }}
+    />
+  );
+}
 
 const styles = StyleSheet.create({
   listFrame: { height: 320, minHeight: 0 },
@@ -223,28 +254,7 @@ export function NativeListExample() {
                 footer="导航行适合跳转到更深层的设置页。"
                 title="工作区"
                 titleColor="#7c3aed"
-                trailing={
-                  <Select
-                    value="defaultSort"
-                    renderValue={() => "排序方式"}
-                    options={NATIVE_LIST_SORT_LIST}
-                    nativeTrigger
-                    nativeTriggerLabelProps={{
-                      fontSize: 14,
-                      color: "$accent11",
-                      opacity: 1,
-                    }}
-                    nativeTriggerContainerStyle={{
-                      alignItems: "center",
-                      flexDirection: "row",
-                      flexShrink: 1,
-                      gap: 4,
-                      maxWidth: 180,
-                      minHeight: 32,
-                      minWidth: 0,
-                    }}
-                  />
-                }
+                trailing={NativeListSortTrailing}
               >
                 <NativeListNavigationItem
                   chevronColor={NATIVE_LIST_ICON_COLOR}

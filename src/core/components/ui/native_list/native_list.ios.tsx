@@ -72,6 +72,7 @@ import { useTrueSheetScrollLayout } from "../sheet/native_sheet/true_sheet/true_
 import { isIos15, isIos26Plus } from "../utils/platform";
 import { toSwiftUIHexColor, triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
 import { NativeListContextMenuProvider, useResolvedNativeListContextMenu } from "./context_menu";
+import { renderNativeListSectionContent } from "./section_content";
 import {
   NativeListEditModeProvider,
   useNativeListEditMode,
@@ -1143,14 +1144,17 @@ function NativeListSection({
 }: NativeListSectionProps) {
   const nativeListEnabled = useNativeListEnabled();
   const resolvedContextMenuProps = useResolvedNativeListContextMenu(contextMenuProps);
+  const resolvedFooter = renderNativeListSectionContent(footer);
+  const resolvedTitle = renderNativeListSectionContent(title);
+  const resolvedTrailing = renderNativeListSectionContent(trailing);
 
   if (!nativeListEnabled) {
     return (
       <FallbackSection
         contextMenuProps={contextMenuProps}
-        footer={footer}
-        trailing={trailing}
-        title={title}
+        footer={resolvedFooter}
+        trailing={resolvedTrailing}
+        title={resolvedTitle}
         titleColor={titleColor}
         titleFontSize={titleFontSize}
       >
@@ -1159,7 +1163,7 @@ function NativeListSection({
     );
   }
 
-  const stringTitle = toPlainText(title);
+  const stringTitle = toPlainText(resolvedTitle);
   const sectionChildren = Children.map(children, (child) =>
     child != null ? (
       <NativeListContextMenuProvider contextMenuProps={resolvedContextMenuProps}>
@@ -1167,14 +1171,15 @@ function NativeListSection({
       </NativeListContextMenuProvider>
     ) : null,
   );
-  const stringFooter = toPlainText(footer);
+  const stringFooter = toPlainText(resolvedFooter);
   const resolvedSectionTitleColor =
     titleColor != null ? (toSwiftUIHexColor(titleColor) ?? titleColor) : undefined;
   const usesIos15HeaderRow =
     isIos15() &&
-    ((title != null && stringTitle == null) || (trailing != null && toPlainText(trailing) == null));
+    ((resolvedTitle != null && stringTitle == null) ||
+      (resolvedTrailing != null && toPlainText(resolvedTrailing) == null));
   const header =
-    trailing != null || usesIos15HeaderRow ? (
+    resolvedTrailing != null || usesIos15HeaderRow ? (
       <HStack
         alignment="center"
         modifiers={[
@@ -1203,11 +1208,13 @@ function NativeListSection({
           >
             {stringTitle}
           </SwiftText>
-        ) : title != null ? (
-          <NativeHostedContent>{title}</NativeHostedContent>
+        ) : resolvedTitle != null ? (
+          <NativeHostedContent>{resolvedTitle}</NativeHostedContent>
         ) : null}
-        {trailing != null ? <Spacer minLength={0} /> : null}
-        {trailing != null ? <NativeTrailingContent>{trailing}</NativeTrailingContent> : null}
+        {resolvedTrailing != null ? <Spacer minLength={0} /> : null}
+        {resolvedTrailing != null ? (
+          <NativeTrailingContent>{resolvedTrailing}</NativeTrailingContent>
+        ) : null}
       </HStack>
     ) : stringTitle != null && (resolvedSectionTitleColor != null || titleFontSize != null) ? (
       <SwiftText
@@ -1220,14 +1227,14 @@ function NativeListSection({
       >
         {stringTitle}
       </SwiftText>
-    ) : title != null && stringTitle == null ? (
-      <NativeHostedContent>{title}</NativeHostedContent>
+    ) : resolvedTitle != null && stringTitle == null ? (
+      <NativeHostedContent>{resolvedTitle}</NativeHostedContent>
     ) : undefined;
   const footerView =
     stringFooter != null ? (
       <SwiftText modifiers={subtitleModifiers()}>{stringFooter}</SwiftText>
-    ) : footer != null ? (
-      <NativeHostedContent>{footer}</NativeHostedContent>
+    ) : resolvedFooter != null ? (
+      <NativeHostedContent>{resolvedFooter}</NativeHostedContent>
     ) : undefined;
 
   if (usesIos15HeaderRow && header != null) {

@@ -5,6 +5,7 @@ import {
   Menu,
   type NativeListContextMenuProps,
   NativeListMenuItem,
+  useNativeListEditMode,
   type NativeListRootProps,
   type NativeListSelectionId,
   NativeTrigger,
@@ -29,6 +30,7 @@ import {
 void Button;
 void Menu;
 void NativeListMenuItem;
+void useNativeListEditMode;
 void NativeTrigger;
 void NativeTriggerPressable;
 void Select.NativeTrigger;

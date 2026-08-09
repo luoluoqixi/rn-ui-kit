@@ -67,6 +67,7 @@ import {
   resolveNativeListContextMenu,
   useResolvedNativeListContextMenu,
 } from "./context_menu";
+import { renderNativeListSectionContent } from "./section_content";
 import type {
   NativeListActionItemProps,
   NativeListButtonItemProps,
@@ -915,28 +916,31 @@ function appendSectionEntries(
   inheritedContextMenuProps?: NativeListContextMenuProps,
 ) {
   const sectionChildren = Children.toArray(sectionProps.children);
+  const footer = renderNativeListSectionContent(sectionProps.footer);
+  const title = renderNativeListSectionContent(sectionProps.title);
+  const trailing = renderNativeListSectionContent(sectionProps.trailing);
   const sectionContextMenuProps = resolveNativeListContextMenu(
     sectionProps.contextMenuProps,
     inheritedContextMenuProps,
   );
   const hasSectionContent =
-    sectionProps.title != null ||
-    sectionProps.trailing != null ||
+    title != null ||
+    trailing != null ||
     sectionChildren.length > 0 ||
-    sectionProps.footer != null;
+    footer != null;
 
   if (!hasSectionContent) {
     return;
   }
 
-  if (sectionProps.title != null || sectionProps.trailing != null) {
+  if (title != null || trailing != null) {
     entries.push({
       key: `${sectionKey}-header`,
       sectionKey,
-      title: sectionProps.title,
+      title,
       titleColor: sectionProps.titleColor,
       titleFontSize: sectionProps.titleFontSize,
-      trailing: sectionProps.trailing,
+      trailing,
       type: "sectionHeader",
     });
   }
@@ -952,9 +956,9 @@ function appendSectionEntries(
     );
   });
 
-  if (sectionProps.footer != null) {
+  if (footer != null) {
     entries.push({
-      footer: sectionProps.footer,
+      footer,
       key: `${sectionKey}-footer`,
       sectionKey,
       type: "sectionFooter",

@@ -10,6 +10,9 @@ import type { InputProps } from "../input";
 import type { TextAreaProps } from "../text_area";
 import type { NativeHapticsSetting } from "../utils";
 import type { NavigationBarScrollEdgeTrackingProps } from "../utils/navigation";
+import type { NativeListSectionContent } from "./section_content";
+
+export type { NativeListSectionContent } from "./section_content";
 
 export type NativeListSelectionId = string | number;
 
@@ -159,14 +162,12 @@ export type NativeListSectionProps = {
   children?: ReactNode;
   /** 当前 Section 内所有行的菜单；覆盖 NativeList 配置。传 `false` 可关闭继承菜单。 */
   contextMenuProps?: NativeListContextMenuProps | false;
-  /** footer */
-  footer?: ReactNode;
-  /**
-   * 显示在分组标题右侧的自定义内容，例如“全部显示”按钮。
-   */
-  trailing?: ReactNode;
-  /** title */
-  title?: ReactNode;
+  /** Footer 内容；也可传入无参数函数组件。 */
+  footer?: NativeListSectionContent;
+  /** 显示在分组标题右侧的内容，例如“全部显示”按钮；也可传入无参数函数组件。 */
+  trailing?: NativeListSectionContent;
+  /** Section 标题；也可传入无参数函数组件。 */
+  title?: NativeListSectionContent;
   /** Section 标题文本颜色；复杂 ReactNode 标题请直接在节点上设置样式。 */
   titleColor?: string;
   /** Section 标题字体大小；复杂 ReactNode 标题请直接在节点上设置样式。 */

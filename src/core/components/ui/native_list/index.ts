@@ -13,6 +13,8 @@ export {
   NativeListCustomItem,
 } from "./native_list";
 
+export { useNativeListEditMode } from "./edit_mode";
+
 export type {
   NativeListContextMenuProps,
   NativeListInputItemProps,
