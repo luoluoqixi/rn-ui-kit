@@ -276,6 +276,14 @@ function FallbackRowContainer({
     !resolvedContextMenuProps.triggerProps?.disabled
       ? resolvedContextMenuProps
       : undefined;
+  // iOS 必须将 UIContextMenuInteraction 直接挂载到可见行。通过隐藏锚点弹出菜单会绕过
+  // 原生的按压与取消生命周期，导致 Pressable、TextInput 和列表滚动手势争抢同一次触摸。
+  // Android 继续使用现有的程序式锚点实现。
+  const usesIosNativeContextMenuTrigger =
+    os() === "ios" && activeNativeContextMenuProps != null;
+  const programmaticContextMenuProps = usesIosNativeContextMenuTrigger
+    ? undefined
+    : activeNativeContextMenuProps;
   const resolvedHaptics = useResolvedNativeHaptics(nativeHaptics);
   const { defaultRowBackground, theme } = useFallbackRowThemeColors();
   const [hovered, setHovered] = useState(false);
@@ -323,15 +331,32 @@ function FallbackRowContainer({
   });
 
   const contextMenuAnchor =
-    activeNativeContextMenuProps != null ? (
+    programmaticContextMenuProps != null ? (
       <FallbackNativeContextMenuAnchor
-        contextMenuProps={activeNativeContextMenuProps}
+        contextMenuProps={programmaticContextMenuProps}
         menuRef={contextMenuRef}
       />
     ) : null;
 
-  if (onPress == null && activeNativeContextMenuProps == null) {
-    return (
+  const wrapIosNativeContextMenu = (row: ReactElement) =>
+    usesIosNativeContextMenuTrigger ? (
+      <ContextMenu
+        {...activeNativeContextMenuProps}
+        trigger={row}
+        triggerProps={{
+          ...activeNativeContextMenuProps.triggerProps,
+          style: [
+            styles.contextMenuRow,
+            activeNativeContextMenuProps.triggerProps?.style,
+          ] as any,
+        }}
+      />
+    ) : (
+      row
+    );
+
+  if (onPress == null && programmaticContextMenuProps == null) {
+    return wrapIosNativeContextMenu(
       <View
         style={[
           styles.rowContainer,
@@ -341,7 +366,7 @@ function FallbackRowContainer({
         ]}
       >
         {children}
-      </View>
+      </View>,
     );
   }
 
@@ -352,7 +377,7 @@ function FallbackRowContainer({
       onHoverOut={() => setHovered(false)}
       onPressIn={usesIosSwitchPressFallback ? () => setPressed(true) : undefined}
       onLongPress={
-        activeNativeContextMenuProps != null
+        programmaticContextMenuProps != null
           ? () => contextMenuRef.current?.presentMenu()
           : undefined
       }
@@ -382,6 +407,10 @@ function FallbackRowContainer({
       )}
     </Pressable>
   );
+
+  if (usesIosNativeContextMenuTrigger) {
+    return wrapIosNativeContextMenu(row);
+  }
 
   if (contextMenuAnchor == null) {
     return row;
