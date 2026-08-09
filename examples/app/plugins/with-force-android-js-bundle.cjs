@@ -20,14 +20,11 @@ tasks.configureEach { task ->
 module.exports = function withForceAndroidJsBundle(config) {
   return withAppBuildGradle(config, (config) => {
     if (config.modResults.language !== "groovy") {
-      throw new Error(
-        "with-force-android-js-bundle only supports Groovy build.gradle",
-      );
+      throw new Error("with-force-android-js-bundle only supports Groovy build.gradle");
     }
 
     if (!config.modResults.contents.includes(marker)) {
-      config.modResults.contents =
-        `${config.modResults.contents.trimEnd()}\n${gradleConfig}`;
+      config.modResults.contents = `${config.modResults.contents.trimEnd()}\n${gradleConfig}`;
     }
 
     return config;
