@@ -23,7 +23,9 @@ import {
   font,
   foregroundStyle,
   frame,
+  // @ts-ignore
   ios15ListRowTopRoundedBackground,
+  // @ts-ignore
   ios15ListRowSeparatorHidden,
   layoutPriority,
   lineLimit,
@@ -72,7 +74,6 @@ import { toSwiftUIHexColor, triggerNativeHaptics, useResolvedNativeHaptics } fro
 import { NativeListContextMenuProvider, useResolvedNativeListContextMenu } from "./context_menu";
 import {
   NativeListEditModeProvider,
-  useNativeListEditIcons,
   useNativeListEditMode,
   useNativeListEditRow,
 } from "./edit_mode";
@@ -382,17 +383,6 @@ function resolveNativeListAssistColor(theme: ReturnType<typeof useTheme>) {
   );
 }
 
-function resolveNativeListEditIndicatorBorderColor(theme: ReturnType<typeof useTheme>) {
-  return (
-    toSwiftUIHexColor(theme.gray8?.val) ??
-    toSwiftUIHexColor(theme.color7?.val) ??
-    toSwiftUIHexColor(theme.borderColor?.val) ??
-    theme.gray8?.val ??
-    theme.color7?.val ??
-    theme.borderColor?.val
-  );
-}
-
 function NativeRowLabel({
   subtitle,
   subtitleColor,
@@ -508,7 +498,6 @@ function NativeRowContainer({
   children,
   contextMenuProps,
   disabled,
-  editingSelected,
   nativeSelectionId,
   nativeScrollId,
   onPress,
@@ -526,7 +515,6 @@ function NativeRowContainer({
   children: ReactNode;
   contextMenuProps?: NativeListContextMenuProps;
   disabled?: boolean;
-  editingSelected?: boolean;
   nativeSelectionId?: NativeListSelectionId;
   nativeScrollId?: string | number;
   onPress?: () => void;
@@ -538,9 +526,6 @@ function NativeRowContainer({
   const theme = useTheme();
   const restoresIos15TopCorners = useContext(Ios15FirstVisibleRowContext);
   const primaryColor = toSwiftUIHexColor(theme.color.val) ?? theme.color.val;
-  const selectedBackgroundColor =
-    toSwiftUIHexColor(theme.color5?.val ?? theme.backgroundPress?.val ?? theme.background?.val) ??
-    theme.color5?.val;
   const resolvedTint = resolveNativeListBtnTintColor(btnTint, primaryColor);
   const usesSwiftUIContextMenu = canUseSwiftUIContextMenu(contextMenuProps);
   const hostedContextMenuProps = usesSwiftUIContextMenu ? undefined : contextMenuProps;
@@ -607,9 +592,6 @@ function NativeRowContainer({
           buttonStyle(btnStyle ?? "automatic"),
           ...(nativeScrollId != null ? [viewID(nativeScrollId)] : []),
           ...(nativeSelectionId != null ? [tag(nativeSelectionId)] : []),
-          ...(editingSelected && selectedBackgroundColor != null
-            ? [listRowBackground(selectedBackgroundColor)]
-            : []),
           ...(handleLongPress != null ? [onLongPressGesture(handleLongPress)] : []),
         ]}
         onPress={onPress}
@@ -639,9 +621,6 @@ function NativeRowContainer({
     disabledModifier(disabled ?? false),
     ...(nativeScrollId != null ? [viewID(nativeScrollId)] : []),
     ...(nativeSelectionId != null ? [tag(nativeSelectionId)] : []),
-    ...(editingSelected && selectedBackgroundColor != null
-      ? [listRowBackground(selectedBackgroundColor)]
-      : []),
     ...(restoresIos15TopCorners || contextMenuProps != null
       ? [frame({ maxWidth: 99999, alignment: "leading" }), contentShape(shapes.rectangle())]
       : []),
@@ -692,42 +671,6 @@ function NativeRowContainer({
   );
 }
 
-function NativeEditingIndicator({ selected }: { selected: boolean }) {
-  const theme = useTheme();
-  const { editModeIcon, editModeSelectedIcon, editModeSelectedSfSymbol, editModeSfSymbol } =
-    useNativeListEditIcons();
-  const customIcon = selected ? editModeSelectedIcon : editModeIcon;
-  const configuredSfSymbol = selected ? editModeSelectedSfSymbol : editModeSfSymbol;
-  const accentColor =
-    toSwiftUIHexColor(theme.accent10?.val ?? theme.color10?.val ?? theme.color.val) ??
-    theme.accent10?.val ??
-    theme.color10?.val ??
-    theme.color.val;
-  const borderColor = resolveNativeListEditIndicatorBorderColor(theme);
-
-  if (configuredSfSymbol != null) {
-    return (
-      <Image
-        color={selected ? accentColor : borderColor}
-        size={24}
-        systemName={configuredSfSymbol}
-      />
-    );
-  }
-
-  if (customIcon != null) {
-    return <NativeHostedEditingIcon>{customIcon}</NativeHostedEditingIcon>;
-  }
-
-  return (
-    <Image
-      color={selected ? accentColor : borderColor}
-      size={24}
-      systemName={selected ? "checkmark.circle.fill" : "circle"}
-    />
-  );
-}
-
 function NativeHostedIcon({ children }: { children: ReactNode }) {
   return (
     <RNHostView matchContents>
@@ -737,16 +680,6 @@ function NativeHostedIcon({ children }: { children: ReactNode }) {
        * RNHostView fall back to an unbounded SwiftUI frame and consume the whole row.
        */}
       <View collapsable={false} style={styles.hostedIcon}>
-        {children}
-      </View>
-    </RNHostView>
-  );
-}
-
-function NativeHostedEditingIcon({ children }: { children: ReactNode }) {
-  return (
-    <RNHostView matchContents>
-      <View collapsable={false} style={styles.hostedEditingIcon}>
         {children}
       </View>
     </RNHostView>
@@ -958,8 +891,7 @@ function NativePressRow({
           : resolvedContextMenuProps
       }
       disabled={disabled}
-      editingSelected={editRow.nativeSelection ? false : editRow.editingSelected}
-      nativeSelectionId={editRow.nativeSelection ? editRow.selectionId : undefined}
+      nativeSelectionId={editRow.editMode ? editRow.selectionId : undefined}
       onPress={handlePress}
       btnStyle={btnStyle}
       btnTint={btnTint}
@@ -973,9 +905,6 @@ function NativePressRow({
       rowAlignment={rowAlignment}
       rowMinHeight={rowMinHeight}
     >
-      {editRow.editMode && !editRow.nativeSelection ? (
-        <NativeEditingIndicator key="edit-mode-indicator" selected={editRow.editingSelected} />
-      ) : null}
       {sfSymbol != null ? (
         <ZStack
           key="leading-icon"
@@ -1058,7 +987,6 @@ function NativeListRoot({
   editModeSfSymbol,
   fixesIOS26NestedScrollIndicatorSafeArea,
   initialScrollTarget,
-  iosEditModeVariant = "native",
   native = true,
   nestedScrollEnabled,
   navigationBarScrollEdgeOptions,
@@ -1095,7 +1023,7 @@ function NativeListRoot({
   const resolvedBackgroundColor =
     backgroundColor != null ? (toSwiftUIHexColor(backgroundColor) ?? undefined) : undefined;
   const isNestedNativeList = nestedScrollEnabled === true;
-  const usesNativeEditMode = editMode === true && iosEditModeVariant === "native";
+  const usesNativeEditMode = editMode === true;
 
   if (!native) {
     return (
@@ -1157,13 +1085,7 @@ function NativeListRoot({
     <NativeListEditModeProvider
       defaultSelectedIds={defaultSelectedIds}
       editMode={editMode}
-      editModeIcon={iosEditModeVariant === "custom" ? editModeIcon : undefined}
-      editModeSelectedIcon={iosEditModeVariant === "custom" ? editModeSelectedIcon : undefined}
-      editModeSelectedSfSymbol={
-        iosEditModeVariant === "custom" ? editModeSelectedSfSymbol : undefined
-      }
-      editModeSfSymbol={iosEditModeVariant === "custom" ? editModeSfSymbol : undefined}
-      nativeSelectionEnabled={iosEditModeVariant === "native"}
+      nativeSelectionEnabled
       onSelectedIdsChange={handleSelectedIdsChange}
       selectedIds={resolvedSelectedIds}
     >
@@ -1175,6 +1097,7 @@ function NativeListRoot({
             automaticallyAdjustsScrollIndicatorInsets={
               manuallyAdjustNormalPageIndicator ? false : automaticallyAdjustsScrollIndicatorInsets
             }
+            // @ts-ignore
             contentInsetAdjustmentBehavior={resolvedContentInsetAdjustmentBehavior}
             tracksNavigationBarScrollEdge={
               (!insideTrueSheet || trueSheetPresentationActive) &&
@@ -1189,14 +1112,8 @@ function NativeListRoot({
             }
             initialScrollAnchor="center"
             initialScrollTarget={initialScrollTarget}
-            nativeEditMode={
-              iosEditModeVariant === "native"
-                ? usesNativeEditMode
-                  ? "active"
-                  : "inactive"
-                : undefined
-            }
-            nativeEditTint={iosEditModeVariant === "native" ? nativeEditTint : undefined}
+            nativeEditMode={usesNativeEditMode ? "active" : "inactive"}
+            nativeEditTint={nativeEditTint}
             onSelectionChange={usesNativeEditMode ? handleSelectedIdsChange : undefined}
             selection={usesNativeEditMode ? [...resolvedSelectedIds] : undefined}
             modifiers={[
@@ -1986,16 +1903,11 @@ export function NativeListCustomItem({
     return (
       <NativeRowContainer
         {...rowPaddingProps}
-        btnStyle="plain"
         disabled={disabled}
-        editingSelected={editRow.nativeSelection ? false : editRow.editingSelected}
-        nativeSelectionId={editRow.nativeSelection ? editRow.selectionId : undefined}
+        nativeSelectionId={editRow.editMode ? editRow.selectionId : undefined}
         nativeScrollId={nativeScrollId}
         onPress={editRow.onPress}
       >
-        {!editRow.nativeSelection ? (
-          <NativeEditingIndicator selected={editRow.editingSelected} />
-        ) : null}
         <NativeHostedCustomRow disableInteractions>{children}</NativeHostedCustomRow>
       </NativeRowContainer>
     );
@@ -2160,15 +2072,6 @@ const styles = StyleSheet.create({
   hostedContent: {
     flexDirection: "row",
     alignItems: "center",
-  },
-  hostedEditingIcon: {
-    alignItems: "center",
-    alignSelf: "center",
-    flexDirection: "row",
-    flexShrink: 0,
-    height: 24,
-    justifyContent: "center",
-    width: 24,
   },
   hostedIcon: {
     alignItems: "center",

@@ -360,12 +360,9 @@ export function SettingsList() {
 - 向 `NativeList` 传入 `editMode` 可在 iOS、Android 与 Web 开启备忘录式多选：每行左侧
   显示选择标记，并将原行操作切换为选择/取消选择。列表可通过 `selectedIds` /
   `onSelectedIdsChange` 受控，也可仅传 `defaultSelectedIds` 使用内部状态；行可传
-  `selectionId` 提供稳定标识。iOS 原生 List 默认使用 `iosEditModeVariant="native"`，由
-  SwiftUI `List` 原生多选负责系统选择圆标、选中背景及滑动快速选择。传入
-  `iosEditModeVariant="custom"` 可保留主题按下背景和现有的自定义选择实现；只有此模式会在
-  iOS 使用 `editModeIcon` / `editModeSelectedIcon` 或优先使用 `editModeSfSymbol` /
-  `editModeSelectedSfSymbol`。Android、Web 与 fallback 始终使用自定义实现，并继续支持
-  React Native 自定义图标。
+  `selectionId` 提供稳定标识。iOS 原生 List 始终使用 SwiftUI `List` 原生多选，负责系统
+  选择圆标、选中背景及滑动快速选择。`editModeIcon` 和 `editModeSelectedIcon` 在 iOS 原生
+  List 中会被忽略；Android、Web 与 fallback 继续使用原有自定义实现并支持 React Native 图标。
 - 原生文本行的 `title`、`subtitle` 和 `value` 适合传入字符串或数字；无法直接映射到
   SwiftUI 的复杂 ReactNode 会按行降级渲染。
 - 所有基础 Item 都支持 `titleColor` / `titleFontSize`、`subtitleColor` /

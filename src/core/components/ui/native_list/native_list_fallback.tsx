@@ -322,12 +322,13 @@ function FallbackRowContainer({
           : normalRowBackground,
   });
 
-  const contextMenuAnchor = activeNativeContextMenuProps != null ? (
-    <FallbackNativeContextMenuAnchor
-      contextMenuProps={activeNativeContextMenuProps}
-      menuRef={contextMenuRef}
-    />
-  ) : null;
+  const contextMenuAnchor =
+    activeNativeContextMenuProps != null ? (
+      <FallbackNativeContextMenuAnchor
+        contextMenuProps={activeNativeContextMenuProps}
+        menuRef={contextMenuRef}
+      />
+    ) : null;
 
   if (onPress == null && activeNativeContextMenuProps == null) {
     return (
@@ -844,21 +845,15 @@ function createFallbackRowEntry(
   };
 }
 
-const FallbackListRowFrame = forwardRef<
-  ComponentRef<typeof View>,
-  ComponentProps<typeof View>
->(function FallbackListRowFrame({ children, style, ...viewProps }, forwardedRef) {
-  return (
-    <View
-      ref={forwardedRef}
-      {...viewProps}
-      collapsable={false}
-      style={[styles.rowFrame, style]}
-    >
-      {children}
-    </View>
-  );
-});
+const FallbackListRowFrame = forwardRef<ComponentRef<typeof View>, ComponentProps<typeof View>>(
+  function FallbackListRowFrame({ children, style, ...viewProps }, forwardedRef) {
+    return (
+      <View ref={forwardedRef} {...viewProps} collapsable={false} style={[styles.rowFrame, style]}>
+        {children}
+      </View>
+    );
+  },
+);
 
 function FallbackListContextMenuRow({
   children,
@@ -1774,7 +1769,6 @@ export function NativeListRoot({
   editModeSfSymbol,
   fixesIOS26NestedScrollIndicatorSafeArea: _fixesIOS26NestedScrollIndicatorSafeArea,
   initialScrollTarget,
-  iosEditModeVariant: _iosEditModeVariant,
   native: _native,
   navigationBarScrollEdgeOptions,
   onRefresh,
@@ -1787,7 +1781,6 @@ export function NativeListRoot({
 }: NativeListRootProps) {
   void _native;
   void _fixesIOS26NestedScrollIndicatorSafeArea;
-  void _iosEditModeVariant;
   const {
     alwaysBounceVertical,
     automaticallyAdjustsScrollIndicatorInsets,
