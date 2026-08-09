@@ -461,6 +461,21 @@ export function NativeListExample() {
                     title="Android Dialog"
                   />
                 ) : null}
+                <NativeListSelectItem
+                  icon={
+                    <SlidersHorizontal
+                      color={NATIVE_LIST_ICON_COLOR}
+                      size={NATIVE_LIST_ICON_SIZE}
+                    />
+                  }
+                  sfSymbol="slider.horizontal.3"
+                  selectProps={{
+                    options: [{ label: "Item", value: "item" }],
+                    placeholder: "Item",
+                    value: "item",
+                  }}
+                  title="仅一个Item"
+                />
               </NativeListSection>
             </NativeList>
           ) : null}

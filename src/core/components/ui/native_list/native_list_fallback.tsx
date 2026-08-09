@@ -296,9 +296,9 @@ function FallbackRowContainer({
   const [hovered, setHovered] = useState(false);
   const [pressed, setPressed] = useState(false);
   const usesIosSwitchPressFallback = os() === "ios" && pressResetToken != null;
-  const usesIos15EditPressRecovery = isIos15() && editMode && onPress != null;
-  const ios15EditPressScrollGenerationRef = useRef<number | null>(null);
-  const ios15EditPressHandledRef = useRef(false);
+  const usesIos15PressRecovery = isIos15() && onPress != null;
+  const ios15PressScrollGenerationRef = useRef<number | null>(null);
+  const ios15PressHandledRef = useRef(false);
   // A native UISwitch can take over a gesture after the parent Pressable has already
   // entered its pressed state, without delivering a matching press-out event to it.
   // Keep the visual state under our control so an embedded control can clear it.
@@ -352,6 +352,13 @@ function FallbackRowContainer({
     usesIosNativeContextMenuTrigger ? (
       <ContextMenu
         {...activeNativeContextMenuProps}
+        onOpenChange={(nextOpen) => {
+          if (nextOpen) {
+            ios15PressScrollGenerationRef.current = null;
+            ios15PressHandledRef.current = true;
+          }
+          activeNativeContextMenuProps.onOpenChange?.(nextOpen);
+        }}
         trigger={row}
         triggerProps={{
           ...activeNativeContextMenuProps.triggerProps,
@@ -366,11 +373,11 @@ function FallbackRowContainer({
     );
 
   const handleRowPress = () => {
-    if (usesIos15EditPressRecovery) {
-      if (ios15EditPressHandledRef.current) {
+    if (usesIos15PressRecovery) {
+      if (ios15PressHandledRef.current) {
         return;
       }
-      ios15EditPressHandledRef.current = true;
+      ios15PressHandledRef.current = true;
     }
 
     captureListScrollPosition?.();
@@ -378,22 +385,35 @@ function FallbackRowContainer({
     triggerNativeHaptics(resolvedHaptics);
   };
 
-  const handleTouchStart = (_event: GestureResponderEvent) => {
-    if (!usesIos15EditPressRecovery) return;
-
-    ios15EditPressScrollGenerationRef.current = listScrollGenerationRef?.current ?? 0;
-    ios15EditPressHandledRef.current = false;
+  const armIos15PressRecovery = () => {
+    ios15PressScrollGenerationRef.current = listScrollGenerationRef?.current ?? 0;
+    ios15PressHandledRef.current = false;
   };
 
-  const clearIos15EditTouch = () => {
-    ios15EditPressScrollGenerationRef.current = null;
+  const handlePressIn = () => {
+    if (usesIosSwitchPressFallback) {
+      setPressed(true);
+    }
+    if (usesIos15PressRecovery && !editMode) {
+      armIos15PressRecovery();
+    }
+  };
+
+  const handleTouchStart = (_event: GestureResponderEvent) => {
+    if (usesIos15PressRecovery && editMode) {
+      armIos15PressRecovery();
+    }
+  };
+
+  const clearIos15Press = () => {
+    ios15PressScrollGenerationRef.current = null;
   };
 
   const handleTouchEnd = (_event: GestureResponderEvent) => {
-    const touchScrollGeneration = ios15EditPressScrollGenerationRef.current;
-    clearIos15EditTouch();
+    const touchScrollGeneration = ios15PressScrollGenerationRef.current;
+    clearIos15Press();
     if (
-      !usesIos15EditPressRecovery ||
+      !usesIos15PressRecovery ||
       touchScrollGeneration == null ||
       touchScrollGeneration !== (listScrollGenerationRef?.current ?? 0)
     ) {
@@ -401,7 +421,7 @@ function FallbackRowContainer({
     }
 
     // iOS 15 偶尔会在原始触摸正常结束后丢失 Pressable.onPress/onPressOut。
-    // 直接用触摸结束完成选择；若 FlashList 已开始滚动，上面的滚动代次会阻止触发。
+    // 直接用触摸结束完成点击；若 FlashList 已开始滚动，上面的滚动代次会阻止触发。
     handleRowPress();
   };
 
@@ -425,7 +445,9 @@ function FallbackRowContainer({
       disabled={disabled}
       onHoverIn={() => setHovered(true)}
       onHoverOut={() => setHovered(false)}
-      onPressIn={usesIosSwitchPressFallback ? () => setPressed(true) : undefined}
+      onPressIn={
+        usesIosSwitchPressFallback || usesIos15PressRecovery ? handlePressIn : undefined
+      }
       onLongPress={
         programmaticContextMenuProps != null
           ? () => contextMenuRef.current?.presentMenu()
@@ -433,9 +455,9 @@ function FallbackRowContainer({
       }
       onPress={onPress != null ? handleRowPress : undefined}
       onPressOut={usesIosSwitchPressFallback ? () => setPressed(false) : undefined}
-      onTouchCancel={usesIos15EditPressRecovery ? clearIos15EditTouch : undefined}
-      onTouchEnd={usesIos15EditPressRecovery ? handleTouchEnd : undefined}
-      onTouchStart={usesIos15EditPressRecovery ? handleTouchStart : undefined}
+      onTouchCancel={usesIos15PressRecovery ? clearIos15Press : undefined}
+      onTouchEnd={usesIos15PressRecovery ? handleTouchEnd : undefined}
+      onTouchStart={usesIos15PressRecovery && editMode ? handleTouchStart : undefined}
       style={styles.pressable}
     >
       {({ pressed: pressablePressed }) => (
@@ -1220,6 +1242,11 @@ export function NativeListSwitchItem({ switchProps, ...itemProps }: NativeListSw
                     event: Parameters<NonNullable<typeof switchProps.onPressOut>>[0],
                   ) => {
                     switchProps.onPressOut?.(event);
+                    resetRowPress();
+                  },
+                  onTouchEnd: (event: GestureResponderEvent) => {
+                    switchProps.onTouchEnd?.(event);
+                    event.stopPropagation();
                     resetRowPress();
                   },
                 }
