@@ -39,6 +39,7 @@
     "dist",
     "src",
     "patches",
+    "scripts/clear-patch-cache.mjs",
     "scripts/sync-patches.mjs",
     "README.md",
     "LICENSE"
@@ -49,6 +50,7 @@
     "release:android-apk": "node scripts/android/release-example-apk.cjs",
     "release:notes": "node scripts/release/generate-notes.cjs",
     "set-version": "node scripts/release/set-version.cjs",
+    "clear-patch-cache": "bun scripts/clear-patch-cache.mjs",
     "sync-patches": "bun scripts/sync-patches.mjs",
     "test": "bun test test",
     "typecheck": "bun run typecheck:library && bun run --cwd examples/app typecheck",
@@ -96,6 +98,7 @@
     "zeego": "=3.0.6"
   },
   "bin": {
+    "rn-ui-clear-patch-cache": "./scripts/clear-patch-cache.mjs",
     "rn-ui-sync-patches": "./scripts/sync-patches.mjs"
   },
   "peerDependencies": {

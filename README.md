@@ -457,6 +457,32 @@ bun run sync-patches
 
 被排除的依赖不会被复制或注册。
 
+## 清除补丁缓存
+
+Bun 会缓存应用补丁后的依赖目录。修改补丁后，如需确保下一次安装不复用旧缓存，可运行：
+
+```bash
+bun run clear-patch-cache
+bun i --force
+```
+
+命令读取当前目录的 `package.json`，只删除 `patchedDependencies` 中当前包名和版本对应的
+`_patch_hash` 缓存，不会清空其他 Bun 依赖缓存。先查看将要删除的内容可使用：
+
+```bash
+bun run clear-patch-cache --dry-run
+```
+
+也可以在应用的 `package.json` 中注册：
+
+```json
+{
+  "scripts": {
+    "clear-patch-cache": "rn-ui-clear-patch-cache"
+  }
+}
+```
+
 ## 项目结构
 
 ```text
@@ -473,6 +499,7 @@ rn-ui-kit/
 ├─ examples/
 │  └─ app/                # Expo iOS / Android / Web 示例应用
 ├─ scripts/
+│  ├─ clear-patch-cache.mjs # rn-ui-clear-patch-cache
 │  ├─ sync-patches.mjs    # rn-ui-sync-patches
 │  ├─ android/            # 构建并发布 Android 示例 APK
 │  └─ release/            # 版本同步、发布包与发布分支脚本
