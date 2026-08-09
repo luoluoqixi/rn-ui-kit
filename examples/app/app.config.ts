@@ -39,6 +39,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         },
       },
     ],
+    "./plugins/with-force-android-js-bundle.cjs",
   ],
   experiments: {
     typedRoutes: false,
