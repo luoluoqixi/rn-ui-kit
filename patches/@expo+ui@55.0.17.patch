@@ -1139,59 +1139,14 @@ index 552adc5..3a44a62 100644
 +}
 +
  internal enum VerticalEdgeOptions: String, Enumerable {
-@@ -1682,68 +2081,84 @@ extension ViewModifierRegistry {
-     register("fixedSize") { params, appContext, _ in
-       return try FixedSizeModifier(from: params, appContext: appContext)
+@@ -1922,5 +2321,20 @@ extension ViewModifierRegistry {
+     register("onSubmit") { params, appContext, eventDispatcher in
+       return try OnSubmitModifier(from: params, appContext: appContext, eventDispatcher: eventDispatcher)
      }
- 
-     register("ignoreSafeArea") { params, appContext, _ in
-       return try IgnoreSafeAreaModifier(from: params, appContext: appContext)
-     }
- 
-     register("containerShape") { params, appContext, _ in
-       return try ContainerShapeModifier(from: params, appContext: appContext)
-     }
- 
-     register("contentShape") { params, appContext, _ in
-       return try ContentShapeModifier(from: params, appContext: appContext)
-     }
- 
-     register("containerRelativeFrame") { params, appContext, _ in
-       return try ContainerRelativeFrameModifier(from: params, appContext: appContext)
-     }
- 
 +    register("contentMargins") { params, appContext, _ in
 +      return try ContentMarginsModifier(from: params, appContext: appContext)
 +    }
 +
-     register("buttonStyle") { params, appContext, _ in
-       return try ButtonStyleModifier(from: params, appContext: appContext)
-     }
- 
-     register("toggleStyle") { params, appContext, _ in
-       return try ToggleStyleModifier(from: params, appContext: appContext)
-     }
- 
-     register("controlSize") { params, appContext, _ in
-       return try ControlSizeModifier(from: params, appContext: appContext)
-     }
- 
-     register("labelStyle") { params, appContext, _ in
-       return try LabelStyleModifier(from: params, appContext: appContext)
-     }
- 
-     register("textFieldStyle") { params, appContext, _ in
-       return try TextFieldStyleModifier(from: params, appContext: appContext)
-     }
- 
-     register("scrollContentBackground") { params, appContext, _ in
-       return try ScrollContentBackground(from: params, appContext: appContext)
-     }
- 
-     register("listRowBackground") { params, appContext, _ in
-       return try ListRowBackground(from: params, appContext: appContext)
-     }
- 
 +    register("ios15ListRowTopRoundedBackground") { params, appContext, _ in
 +      return try Ios15ListRowTopRoundedBackground(from: params, appContext: appContext)
 +    }
@@ -1203,27 +1158,8 @@ index 552adc5..3a44a62 100644
 +    register("viewID") { params, appContext, _ in
 +      return try ViewIDModifier(from: params, appContext: appContext)
 +    }
-+
-     register("listRowSeparator") { params, appContext, _ in
-       return try ListRowSeparator(from: params, appContext: appContext)
-     }
- 
-     register("truncationMode") { params, appContext, _ in
-       return try TextTruncationMode(from: params, appContext: appContext)
-     }
- 
-     register("kerning") { params, appContext, _ in
-       return try TextKerning(from: params, appContext: appContext)
-     }
- 
-     register("allowsTightening") { params, appContext, _ in
-       return try TextAllowsTightening(from: params, appContext: appContext)
-     }
- 
-     register("textCase") { params, appContext, _ in
-       return try TextCase(from: params, appContext: appContext)
-     }
- 
+   }
+ }
 diff --git a/ios/Modifiers/ContainerRelativeFrameModifier.swift b/ios/Modifiers/ContainerRelativeFrameModifier.swift
 index ee64956..be7d2ab 100644
 --- a/ios/Modifiers/ContainerRelativeFrameModifier.swift
