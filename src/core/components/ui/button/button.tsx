@@ -1,5 +1,5 @@
 import { type ComponentRef, type ComponentType, forwardRef } from "react";
-import { Button as RNButton } from "react-native";
+import { Button as RNButton, View } from "react-native";
 import { Button as TamaguiButton } from "tamagui";
 import { useTheme } from "tamagui";
 
@@ -33,6 +33,8 @@ export const Button = forwardRef<ComponentRef<typeof TamaguiButton>, ButtonProps
   };
 
   const resolvedOpacity = buttonProps.disabled ? DISABLED_BUTTON_OPACITY : ENABLED_BUTTON_OPACITY;
+  const nativeOpacity =
+    typeof buttonProps.opacity === "number" ? buttonProps.opacity : resolvedOpacity;
   const useNativeButton = native === true && (os() === "ios" || os() === "android");
   const resolvedTitle =
     title ??
@@ -45,13 +47,15 @@ export const Button = forwardRef<ComponentRef<typeof TamaguiButton>, ButtonProps
 
   if (useNativeButton) {
     return (
-      <RNButton
-        accessibilityLabel={props["aria-label"]}
-        color={theme.color10?.val ?? theme.color6?.val ?? theme.color?.val}
-        disabled={buttonProps.disabled}
-        onPress={handlePress}
-        title={resolvedTitle}
-      />
+      <View style={{ opacity: nativeOpacity }}>
+        <RNButton
+          accessibilityLabel={props["aria-label"]}
+          color={theme.color10?.val ?? theme.color6?.val ?? theme.color?.val}
+          disabled={buttonProps.disabled}
+          onPress={handlePress}
+          title={resolvedTitle}
+        />
+      </View>
     );
   }
 
