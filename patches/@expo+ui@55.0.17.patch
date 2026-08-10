@@ -2165,7 +2165,7 @@ index d64100ee..85442dc4 100644
    createModifierWithEventListener('onTapGesture', handler);
  
 +/**
-+ * Adds a tap gesture recognizer that runs alongside child controls.
++ * Adds a tap gesture recognizer that ignores child controls.
 + * @param handler - Function to call when tapped.
 + */
 +export const simultaneousTapGesture = (handler: () => void) =>
@@ -2178,7 +2178,7 @@ diff --git a/ios/Modifiers/ViewModifierRegistry.swift b/ios/Modifiers/ViewModifi
 index 552adc52..193d5573 100644
 --- a/ios/Modifiers/ViewModifierRegistry.swift
 +++ b/ios/Modifiers/ViewModifierRegistry.swift
-@@ -335,6 +335,27 @@ internal struct OnTapGestureModifier: ViewModifier, Record {
+@@ -335,6 +335,28 @@ internal struct OnTapGestureModifier: ViewModifier, Record {
    }
  }
  
@@ -2197,7 +2197,8 @@ index 552adc52..193d5573 100644
 +      content.simultaneousGesture(
 +        TapGesture().onEnded {
 +          eventDispatcher?(["simultaneousTapGesture": [:]])
-+        }
++        },
++        including: .gesture
 +      )
 +    }
 +  }
@@ -2235,7 +2236,7 @@ index 1e0d2ba0..3f030b42 100644
   */
  export declare const onTapGesture: (handler: () => void) => ModifierConfig;
 +/**
-+ * Adds a tap gesture recognizer that runs alongside child controls.
++ * Adds a tap gesture recognizer that ignores child controls.
 + * @param handler - Function to call when tapped.
 + */
 +export declare const simultaneousTapGesture: (handler: () => void) => ModifierConfig;
