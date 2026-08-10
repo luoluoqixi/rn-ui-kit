@@ -37,7 +37,6 @@ import {
   listSectionSpacing,
   listStyle,
   multilineTextAlignment,
-  simultaneousTapGesture,
   opacity,
   padding,
   refreshable,
@@ -59,7 +58,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Keyboard, StyleSheet, TextInput, View } from "react-native";
+import { StyleSheet, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { SFSymbol } from "sf-symbols-typescript";
 import { useTheme } from "tamagui";
@@ -1072,6 +1071,8 @@ function NativeListRoot({
             correctsNestedScrollIndicatorFrame={
               isIos26Plus() && fixesIOS26NestedScrollIndicatorSafeArea === true
             }
+            // @ts-ignore Expo UI 的原生 List 补丁提供此属性。
+            dismissKeyboardOnTap={dismissKeyboardOnTap}
             initialScrollAnchor="center"
             initialScrollTarget={initialScrollTarget}
             nativeEditMode={usesNativeEditMode ? "active" : "inactive"}
@@ -1129,7 +1130,6 @@ function NativeListRoot({
                     }),
                   ]
                 : []),
-              ...(dismissKeyboardOnTap ? [simultaneousTapGesture(Keyboard.dismiss)] : []),
               scrollDisabled(!scrollable),
             ]}
           >
