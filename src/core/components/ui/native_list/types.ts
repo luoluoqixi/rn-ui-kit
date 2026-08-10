@@ -212,6 +212,11 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
     fixesIOS26NestedScrollIndicatorSafeArea?: boolean;
     /** iOS 原生 List 初次挂载后滚动到的目标 id。 */
     initialScrollTarget?: string | number;
+    /**
+     * iOS 原生 List 空白区域被点按时收起当前键盘。
+     * 默认关闭，避免改变已有页面的原生 List 点按语义。
+     */
+    dismissKeyboardOnTap?: boolean;
     /** 设为 false 时使用 list_group 回退模式（所有平台一致） */
     native?: boolean;
     /**

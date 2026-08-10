@@ -37,6 +37,7 @@ import {
   listSectionSpacing,
   listStyle,
   multilineTextAlignment,
+  onTapGesture,
   opacity,
   padding,
   refreshable,
@@ -58,7 +59,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { StyleSheet, TextInput, View } from "react-native";
+import { Keyboard, StyleSheet, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { SFSymbol } from "sf-symbols-typescript";
 import { useTheme } from "tamagui";
@@ -940,6 +941,7 @@ function NativeListRoot({
   contentMarginBottom,
   contentMarginTop,
   defaultSelectedIds,
+  dismissKeyboardOnTap = false,
   editMode,
   editModeIcon,
   editModeSelectedIcon,
@@ -1127,6 +1129,7 @@ function NativeListRoot({
                     }),
                   ]
                 : []),
+              ...(dismissKeyboardOnTap ? [onTapGesture(Keyboard.dismiss)] : []),
               scrollDisabled(!scrollable),
             ]}
           >

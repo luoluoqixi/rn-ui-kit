@@ -1890,6 +1890,7 @@ export function NativeListRoot({
   contentMarginBottom,
   contentMarginTop,
   defaultSelectedIds,
+  dismissKeyboardOnTap: _dismissKeyboardOnTap,
   editMode,
   editModeIcon,
   editModeSelectedIcon,
@@ -1909,6 +1910,7 @@ export function NativeListRoot({
 }: NativeListRootProps) {
   void _native;
   void _fixesIOS26NestedScrollIndicatorSafeArea;
+  void _dismissKeyboardOnTap;
   const {
     alwaysBounceVertical,
     automaticallyAdjustsScrollIndicatorInsets,
