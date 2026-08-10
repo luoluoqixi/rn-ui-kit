@@ -2206,7 +2206,7 @@ index 552adc52..193d5573 100644
  internal struct OnLongPressGestureModifier: ViewModifier, Record {
    @Field var minimumDuration: Double = 0.5
    var eventDispatcher: EventDispatcher?
-@@ -1602,11 +1623,19 @@ extension ViewModifierRegistry {
+@@ -1602,11 +2022,19 @@ extension ViewModifierRegistry {
      register("clipShape") { params, appContext, _ in
        return try ClipShapeModifier(from: params, appContext: appContext)
      }
