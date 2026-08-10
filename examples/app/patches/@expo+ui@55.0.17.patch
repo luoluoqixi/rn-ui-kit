@@ -8,6 +8,7 @@
 # - SwiftUI List: 提供 `nativeEditMode` / `nativeEditTint` 原生属性；编辑态由宿主 binding 驱动，避免动态 modifier 更新重建 List、丢失滚动位置。
 # - SwiftUI modifier: iOS 15 可为透明辅助行后的首个内容行恢复顶部圆角。
 # - SwiftUI modifier: iOS 15 隐藏辅助行 separator 时直接隔离 UIKit cell，并在复用、编辑态切换导致系统复位 inset 后持续重新隐藏。
+# - SwiftUI modifier: 提供并行 tap 手势，避免父级手势拦截 List 中 Button、TextField 等子控件。
 diff --git a/ios/SliderView.swift b/ios/SliderView.swift
 index 1ffa70e..488c98b 100644
 --- a/ios/SliderView.swift
@@ -2155,3 +2156,89 @@ index a451a01..5f8f15c 100644
 +    }
   }
  }
+diff --git a/src/swift-ui/modifiers/index.ts b/src/swift-ui/modifiers/index.ts
+index d64100ee..85442dc4 100644
+--- a/src/swift-ui/modifiers/index.ts
++++ b/src/swift-ui/modifiers/index.ts
+@@ -155,6 +155,13 @@ export const ignoreSafeArea = (params?: {
+ export const onTapGesture = (handler: () => void) =>
+   createModifierWithEventListener('onTapGesture', handler);
+ 
++/**
++ * Adds a tap gesture recognizer that runs alongside child controls.
++ * @param handler - Function to call when tapped.
++ */
++export const simultaneousTapGesture = (handler: () => void) =>
++  createModifierWithEventListener('simultaneousTapGesture', handler);
++
+ /**
+  * Adds a long press gesture recognizer.
+  * @param handler - Function to call when long pressed.
+diff --git a/ios/Modifiers/ViewModifierRegistry.swift b/ios/Modifiers/ViewModifierRegistry.swift
+index 552adc52..193d5573 100644
+--- a/ios/Modifiers/ViewModifierRegistry.swift
++++ b/ios/Modifiers/ViewModifierRegistry.swift
+@@ -335,6 +335,27 @@ internal struct OnTapGestureModifier: ViewModifier, Record {
+   }
+ }
+ 
++internal struct SimultaneousTapGestureModifier: ViewModifier, Record {
++  var eventDispatcher: EventDispatcher?
++
++  init() {}
++
++  init(from params: Dict, appContext: AppContext, eventDispatcher: EventDispatcher) throws {
++    try self = .init(from: params, appContext: appContext)
++    self.eventDispatcher = eventDispatcher
++  }
++
++  func body(content: Content) -> some View {
++    if #available(iOS 15.0, tvOS 16.0, *) {
++      content.simultaneousGesture(
++        TapGesture().onEnded {
++          eventDispatcher?(["simultaneousTapGesture": [:]])
++        }
++      )
++    }
++  }
++}
++
+ internal struct OnLongPressGestureModifier: ViewModifier, Record {
+   @Field var minimumDuration: Double = 0.5
+   var eventDispatcher: EventDispatcher?
+@@ -1602,11 +1623,19 @@ extension ViewModifierRegistry {
+     register("clipShape") { params, appContext, _ in
+       return try ClipShapeModifier(from: params, appContext: appContext)
+     }
+ 
+     register("onTapGesture") { params, appContext, eventDispatcher in
+       return try OnTapGestureModifier(from: params, appContext: appContext, eventDispatcher: eventDispatcher)
+     }
+ 
++    register("simultaneousTapGesture") { params, appContext, eventDispatcher in
++      return try SimultaneousTapGestureModifier(
++        from: params,
++        appContext: appContext,
++        eventDispatcher: eventDispatcher
++      )
++    }
++
+     register("onLongPressGesture") { params, appContext, eventDispatcher in
+       return try OnLongPressGestureModifier(from: params, appContext: appContext, eventDispatcher: eventDispatcher)
+     }
+diff --git a/build/swift-ui/modifiers/index.d.ts b/build/swift-ui/modifiers/index.d.ts
+index 1e0d2ba0..3f030b42 100644
+--- a/build/swift-ui/modifiers/index.d.ts
++++ b/build/swift-ui/modifiers/index.d.ts
+@@ -112,6 +112,11 @@ export declare const ignoreSafeArea: (params?: {
+  * @see Official [SwiftUI documentation](https://developer.apple.com/documentation/swiftui/view/ontapgesture(count:perform:)).
+  */
+ export declare const onTapGesture: (handler: () => void) => ModifierConfig;
++/**
++ * Adds a tap gesture recognizer that runs alongside child controls.
++ * @param handler - Function to call when tapped.
++ */
++export declare const simultaneousTapGesture: (handler: () => void) => ModifierConfig;
+ /**
+  * Adds a long press gesture recognizer.
+  * @param handler - Function to call when long pressed.

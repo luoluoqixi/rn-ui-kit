@@ -37,7 +37,7 @@ import {
   listSectionSpacing,
   listStyle,
   multilineTextAlignment,
-  onTapGesture,
+  simultaneousTapGesture,
   opacity,
   padding,
   refreshable,
@@ -1129,7 +1129,7 @@ function NativeListRoot({
                     }),
                   ]
                 : []),
-              ...(dismissKeyboardOnTap ? [onTapGesture(Keyboard.dismiss)] : []),
+              ...(dismissKeyboardOnTap ? [simultaneousTapGesture(Keyboard.dismiss)] : []),
               scrollDisabled(!scrollable),
             ]}
           >
