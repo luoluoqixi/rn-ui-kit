@@ -41,7 +41,11 @@ import {
 } from "../utils";
 import { useAppBackgroundColors } from "../utils/theme";
 
-import { NativePickerDialog, NativePickerSwiftUI } from "./native_picker";
+import {
+  NativePickerDialog,
+  NativePickerSwiftUI,
+  type NativePickerSwiftUIHandle,
+} from "./native_picker";
 import {
   type ResolvedSelectItemData,
   type ResolvedSelectItemGroupData,
@@ -989,7 +993,12 @@ function IosNativeSheetSelectList({
 
 const selectAdaptWhen = isWeb() ? "md" : true;
 
-const SelectRoot = forwardRef<any, SelectProps>(
+/** 供外部主动唤起 Select 的实例方法。 */
+export type SelectHandle = {
+  open: () => void;
+};
+
+const SelectRoot = forwardRef<SelectHandle, SelectProps>(
   (
     {
       "aria-label": ariaLabel,
@@ -1028,10 +1037,10 @@ const SelectRoot = forwardRef<any, SelectProps>(
     },
     ref,
   ) => {
-    void ref;
     const selectBehavior = resolveSelectBehavior(native);
     const platform = os();
     const [nativePickerVisible, setNativePickerVisible] = React.useState(false);
+    const [imperativeOpen, setImperativeOpen] = React.useState(false);
     const [uncontrolledOpen, setUncontrolledOpen] = React.useState(Boolean(props.defaultOpen));
     const [nativeTriggerOpening, setNativeTriggerOpening] = React.useState(false);
     const [nativeTriggerPressed, setNativeTriggerPressed] = React.useState(false);
@@ -1045,6 +1054,7 @@ const SelectRoot = forwardRef<any, SelectProps>(
     const [webMenuOpen, setWebMenuOpen] = React.useState(Boolean(props.defaultOpen));
     const sheetScrollRef = useRef<any>(null);
     const nativeTriggerFaceRef = useRef<any>(null);
+    const nativePickerRef = useRef<NativePickerSwiftUIHandle>(null);
     const androidNativeDropdownMenuRef = useRef<{ presentMenu: () => void } | null>(null);
     const androidNativeDropdownLongPressedRef = useRef(false);
     const androidNativeDropdownPressCommittedRef = useRef(false);
@@ -1235,24 +1245,29 @@ const SelectRoot = forwardRef<any, SelectProps>(
       (platform === "ios" ||
         (platform === "android" && !!nativeTrigger && !shouldRenderNativeDropdownMenu));
 
+    const openNativePicker = useCallback(() => {
+      triggerNativeHaptics(resolvedNativeHaptics);
+      setNativePickerVisible((prev) => {
+        if (prev) {
+          requestAnimationFrame(() => setNativePickerVisible(true));
+          return false;
+        }
+
+        return true;
+      });
+    }, [resolvedNativeHaptics]);
+
     const handleTamaguiOpenChange = (nextOpen: boolean) => {
       if (props.open === undefined) {
         setUncontrolledOpen(nextOpen);
       }
       if (!nextOpen) {
+        setImperativeOpen(false);
         setNativeTriggerOpening(false);
       }
 
       if (shouldRenderNativePicker && nextOpen) {
-        triggerNativeHaptics(resolvedNativeHaptics);
-        setNativePickerVisible((prev) => {
-          if (prev) {
-            requestAnimationFrame(() => setNativePickerVisible(true));
-            return false;
-          }
-
-          return true;
-        });
+        openNativePicker();
         return;
       }
 
@@ -1272,6 +1287,7 @@ const SelectRoot = forwardRef<any, SelectProps>(
         setUncontrolledOpen(nextOpen);
       }
       if (!nextOpen) {
+        setImperativeOpen(false);
         setNativeTriggerOpening(false);
         setNativeTriggerPressed(false);
       }
@@ -1401,6 +1417,46 @@ const SelectRoot = forwardRef<any, SelectProps>(
       !selectBehavior.shouldUseWebSheet &&
       children == null;
     const selectDisabled = disabled ?? isDisabled ?? triggerProps?.disabled;
+    React.useImperativeHandle(
+      ref,
+      () => ({
+        open() {
+          if (selectDisabled) return;
+
+          // 受控 Select 由使用方持有状态；这里仅发出打开请求。
+          if (props.open !== undefined) {
+            onOpenChange?.(true);
+            return;
+          }
+
+          if (shouldRenderNativePlatformPicker) {
+            nativePickerRef.current?.open();
+            return;
+          }
+
+          if (shouldRenderNativePicker) {
+            openNativePicker();
+            return;
+          }
+
+          if (shouldRenderNativeDropdownMenu) {
+            androidNativeDropdownMenuRef.current?.presentMenu();
+            return;
+          }
+
+          setImperativeOpen(true);
+        },
+      }),
+      [
+        onOpenChange,
+        openNativePicker,
+        props.open,
+        selectDisabled,
+        shouldRenderNativeDropdownMenu,
+        shouldRenderNativePicker,
+        shouldRenderNativePlatformPicker,
+      ],
+    );
     const {
       hoverStyle: triggerHoverStyle,
       nativeHaptics: _triggerNativeHaptics,
@@ -1564,7 +1620,7 @@ const SelectRoot = forwardRef<any, SelectProps>(
       ...(contentProps as any),
       ...(viewportProps as any),
     };
-    const resolvedWebMenuOpen = props.open ?? webMenuOpen;
+    const resolvedWebMenuOpen = props.open ?? (imperativeOpen || webMenuOpen);
     const resolvedWebMenuContentMaxHeight =
       webMenuContentMaxHeight ?? WEB_MENU_SCROLL_VIEW_MAX_HEIGHT;
     const resolvedWebMenuContentMinWidth =
@@ -1593,6 +1649,9 @@ const SelectRoot = forwardRef<any, SelectProps>(
     const handleWebMenuOpenChange = (nextOpen: boolean) => {
       if (props.open === undefined) {
         setWebMenuOpen(nextOpen);
+      }
+      if (!nextOpen) {
+        setImperativeOpen(false);
       }
 
       onOpenChange?.(nextOpen);
@@ -1892,6 +1951,7 @@ const SelectRoot = forwardRef<any, SelectProps>(
           </YStack>
         ) : shouldRenderNativePlatformPicker ? (
           <NativePickerSwiftUI
+            ref={nativePickerRef}
             disabled={selectDisabled}
             items={resolvedItems}
             value={selectedValue}
@@ -1929,7 +1989,11 @@ const SelectRoot = forwardRef<any, SelectProps>(
             {...(shouldRenderNativeDropdownMenu
               ? { value: selectedValue ?? undefined }
               : undefined)}
-            open={shouldRenderNativeDropdownMenu || shouldRenderNativePicker ? false : undefined}
+            open={
+              shouldRenderNativeDropdownMenu || shouldRenderNativePicker
+                ? false
+                : (props.open ?? (imperativeOpen ? true : undefined))
+            }
             native={selectBehavior.tamaguiNative}
             onOpenChange={handleTamaguiOpenChange}
             onValueChange={handleTamaguiValueChange}
@@ -2021,6 +2085,7 @@ const SelectRoot = forwardRef<any, SelectProps>(
                         nativeHaptics={resolvedNativeHaptics}
                         onOpenChange={handleNativeDropdownMenuOpenChange}
                         open={isSelectOpen}
+                        {...({ __menuRef: androidNativeDropdownMenuRef } as any)}
                         trigger={
                           <SelectTrigger
                             backgroundColor="$background"
