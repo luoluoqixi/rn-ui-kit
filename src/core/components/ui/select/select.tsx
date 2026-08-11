@@ -1055,6 +1055,7 @@ const SelectRoot = forwardRef<SelectHandle, SelectProps>(
     const sheetScrollRef = useRef<any>(null);
     const nativeTriggerFaceRef = useRef<any>(null);
     const nativePickerRef = useRef<NativePickerSwiftUIHandle>(null);
+    const imperativeOpenRef = useRef(false);
     const androidNativeDropdownMenuRef = useRef<{ presentMenu: () => void } | null>(null);
     const androidNativeDropdownLongPressedRef = useRef(false);
     const androidNativeDropdownPressCommittedRef = useRef(false);
@@ -1258,10 +1259,11 @@ const SelectRoot = forwardRef<SelectHandle, SelectProps>(
     }, [resolvedNativeHaptics]);
 
     const handleTamaguiOpenChange = (nextOpen: boolean) => {
-      if (props.open === undefined) {
+      if (props.open === undefined && !imperativeOpenRef.current) {
         setUncontrolledOpen(nextOpen);
       }
       if (!nextOpen) {
+        imperativeOpenRef.current = false;
         setImperativeOpen(false);
         setNativeTriggerOpening(false);
       }
@@ -1287,6 +1289,7 @@ const SelectRoot = forwardRef<SelectHandle, SelectProps>(
         setUncontrolledOpen(nextOpen);
       }
       if (!nextOpen) {
+        imperativeOpenRef.current = false;
         setImperativeOpen(false);
         setNativeTriggerOpening(false);
         setNativeTriggerPressed(false);
@@ -1444,6 +1447,7 @@ const SelectRoot = forwardRef<SelectHandle, SelectProps>(
             return;
           }
 
+          imperativeOpenRef.current = true;
           setImperativeOpen(true);
         },
       }),
@@ -1647,10 +1651,11 @@ const SelectRoot = forwardRef<SelectHandle, SelectProps>(
     }, [resolvedWebMenuOpen, selectedValue, shouldRenderWebMenuSelect, webMenuRootId]);
 
     const handleWebMenuOpenChange = (nextOpen: boolean) => {
-      if (props.open === undefined) {
+      if (props.open === undefined && !imperativeOpenRef.current) {
         setWebMenuOpen(nextOpen);
       }
       if (!nextOpen) {
+        imperativeOpenRef.current = false;
         setImperativeOpen(false);
       }
 
