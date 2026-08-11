@@ -26,3 +26,12 @@ export function splitMenuItemsBySeparators(items: MenuItemData[]): MenuItemData[
 
   return groups;
 }
+
+/**
+ * 生成交给 Tamagui iOS DropdownMenu 的分组顺序。
+ * Tamagui 会再次反转 Content / SubContent 的直接 children，因此这里只反转分组顺序，
+ * 不能反转分组内部条目。
+ */
+export function resolveIosMenuItemGroups(items: MenuItemData[]): MenuItemData[][] {
+  return splitMenuItemsBySeparators(items).reverse();
+}

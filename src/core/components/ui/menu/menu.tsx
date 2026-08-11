@@ -15,7 +15,7 @@ import { isWeb, os } from "../utils/platform";
 import { resolveAriaLabel, triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
 import { NativeTrigger } from "../native_trigger";
 
-import { splitMenuItemsBySeparators } from "./item_groups";
+import { resolveIosMenuItemGroups } from "./item_groups";
 import type {
   MenuArrowProps,
   MenuCheckboxItemProps,
@@ -258,12 +258,11 @@ function MenuRoot(props: MenuProps) {
   };
 
   function renderItems(menuItems: MenuItemData[], depth = 0): ReactNode {
-    const resolvedMenuItems = ios ? [...menuItems].reverse() : menuItems;
-
     if (ios) {
-      const groups = splitMenuItemsBySeparators(resolvedMenuItems);
+      const groups = resolveIosMenuItemGroups(menuItems);
 
       // Zeego 会将 Group 映射为 UIMenu.Options.displayInline，由系统在各组之间绘制分割线。
+      // Tamagui 随后只会反转这些 Group，不会反转 Group 内部条目，所以组内保持原始顺序。
       if (groups.length > 1) {
         return groups.map((group, groupIndex) => (
           <MenuGroup key={`menu-group-${depth}-${groupIndex}`}>
@@ -272,10 +271,11 @@ function MenuRoot(props: MenuProps) {
         ));
       }
 
-      return (groups[0] ?? []).map((item) => renderItem(item, depth));
+      // 没有有效分割线时，条目仍是 Content 的直接 children，需要沿用原来的扁平反转。
+      return [...(groups[0] ?? [])].reverse().map((item) => renderItem(item, depth));
     }
 
-    return resolvedMenuItems.map((item) => renderItem(item, depth));
+    return menuItems.map((item) => renderItem(item, depth));
   }
 
   if (!hasDefaultStructure) {
