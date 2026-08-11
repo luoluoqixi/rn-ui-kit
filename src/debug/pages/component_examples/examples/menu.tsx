@@ -18,6 +18,10 @@ export function MenuExample() {
           items={[
             {
               icon: <FilePlus color="$color10" size={14} />,
+              iconProps: {
+                androidIconName: "ic_menu_add",
+                ios: { name: "doc.badge.plus" },
+              },
               label: "新建文件",
               onSelect: () => setAction("新建文件"),
               value: "new",
@@ -27,12 +31,20 @@ export function MenuExample() {
               subMenu: [
                 {
                   icon: <Settings color="$color10" size={14} />,
+                  iconProps: {
+                    androidIconName: "ic_menu_preferences",
+                    ios: { name: "gearshape" },
+                  },
                   label: "打开设置",
                   onSelect: () => setAction("打开设置"),
                   value: "settings",
                 },
                 {
                   icon: <Download color="$color10" size={14} />,
+                  iconProps: {
+                    androidIconName: "ic_menu_save",
+                    ios: { name: "square.and.arrow.down" },
+                  },
                   label: "导出快照",
                   onSelect: () => setAction("导出快照"),
                   value: "export",
@@ -56,6 +68,10 @@ export function MenuExample() {
           items={[
             {
               icon: <FilePlus color="$color10" size={14} />,
+              iconProps: {
+                androidIconName: "ic_menu_add",
+                ios: { name: "doc.badge.plus" },
+              },
               label: "新建文件",
               onSelect: () => setAction("新建文件"),
               value: "new",
@@ -65,12 +81,20 @@ export function MenuExample() {
               subMenu: [
                 {
                   icon: <Settings color="$color10" size={14} />,
+                  iconProps: {
+                    androidIconName: "ic_menu_preferences",
+                    ios: { name: "gearshape" },
+                  },
                   label: "打开设置",
                   onSelect: () => setAction("打开设置"),
                   value: "settings",
                 },
                 {
                   icon: <Download color="$color10" size={14} />,
+                  iconProps: {
+                    androidIconName: "ic_menu_save",
+                    ios: { name: "square.and.arrow.down" },
+                  },
                   label: "导出快照",
                   onSelect: () => setAction("导出快照"),
                   value: "export",

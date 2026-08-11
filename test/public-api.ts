@@ -69,6 +69,10 @@ const nativeMenuProps = {
   items: [
     {
       icon: "更多操作图标",
+      iconProps: {
+        androidIconName: "ic_menu_more",
+        ios: { name: "ellipsis.circle", weight: "semibold" },
+      },
       label: "更多操作",
       subMenu: [
         { label: "编辑", value: "edit" },

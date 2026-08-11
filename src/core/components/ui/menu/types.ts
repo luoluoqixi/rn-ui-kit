@@ -9,8 +9,10 @@ export interface MenuItemData {
   "aria-label"?: string;
   "destructive"?: boolean;
   "disabled"?: boolean;
-  /** 菜单项右侧的自定义图标。 */
+  /** 菜单项右侧的 React 图标，用作 Web fallback；原生图标请通过 iconProps 配置。 */
   "icon"?: ReactNode;
+  /** 原生菜单图标配置，例如 iOS SF Symbol 或 Android drawable resource。 */
+  "iconProps"?: Omit<MenuItemIconProps, "children">;
   "indicator"?: ReactNode;
   "label"?: ReactNode;
   "onPress"?: MenuItemProps["onSelect"];

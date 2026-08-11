@@ -201,7 +201,8 @@ function MenuRoot(props: MenuProps) {
       item["aria-label"] ?? itemProps?.["aria-label"],
       label,
     );
-    const hasTrailingContent = item.icon != null || item.indicator != null;
+    const shouldRenderItemIcon = item.icon != null || (!web && item.iconProps != null);
+    const hasTrailingContent = shouldRenderItemIcon || item.indicator != null;
 
     if (item.subMenu?.length) {
       const subMenuTitle = item.subMenuTitle === false ? null : (item.subMenuTitle ?? label);
@@ -217,7 +218,9 @@ function MenuRoot(props: MenuProps) {
             textValue={textValue}
           >
             <MenuItemTitle>{label}</MenuItemTitle>
-            {item.icon != null ? <MenuItemIcon>{item.icon}</MenuItemIcon> : null}
+            {shouldRenderItemIcon ? (
+              <MenuItemIcon {...item.iconProps}>{item.icon}</MenuItemIcon>
+            ) : null}
             {item.indicator}
             {web ? (
               <MenuItemIcon>
@@ -248,7 +251,7 @@ function MenuRoot(props: MenuProps) {
         textValue={textValue}
       >
         <MenuItemTitle>{label}</MenuItemTitle>
-        {item.icon != null ? <MenuItemIcon>{item.icon}</MenuItemIcon> : null}
+        {shouldRenderItemIcon ? <MenuItemIcon {...item.iconProps}>{item.icon}</MenuItemIcon> : null}
         {item.indicator != null ? <MenuItemIndicator>{item.indicator}</MenuItemIndicator> : null}
       </MenuItem>
     );
