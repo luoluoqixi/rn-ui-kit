@@ -21,6 +21,7 @@ import {
 } from "react";
 import {
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   TextInput,
@@ -1902,6 +1903,7 @@ export function NativeListRoot({
   navigationBarScrollEdgeOptions,
   onRefresh,
   onSelectedIdsChange,
+  refreshColor,
   scrollable = true,
   selectedIds,
   style,
@@ -1971,6 +1973,8 @@ export function NativeListRoot({
     nativeScrollInsetsApplied,
   } = useTrueSheetScrollLayout();
   const appBackgroundColors = useAppBackgroundColors();
+  const theme = useTheme();
+  const resolvedRefreshColor = refreshColor ?? theme.color10.val;
   const trackedOnScroll = useNavigationBarScrollEdge({
     navigationBarScrollEdgeOptions,
     onScroll,
@@ -2224,11 +2228,19 @@ export function NativeListRoot({
           keyExtractor={getEntryKey}
           nestedScrollEnabled={nestedScrollEnabled ?? true}
           onLayout={handleFlashListLayout}
-          onRefresh={handleRefresh}
           onScroll={handleFlashListScroll}
           onScrollBeginDrag={handleScrollBeginDrag}
           ref={flashListRef}
-          refreshing={onRefresh != null ? refreshing : undefined}
+          refreshControl={
+            onRefresh != null ? (
+              <RefreshControl
+                colors={[resolvedRefreshColor]}
+                onRefresh={handleRefresh}
+                refreshing={refreshing}
+                tintColor={resolvedRefreshColor}
+              />
+            ) : undefined
+          }
           renderItem={renderFallbackListEntry}
           scrollEnabled={scrollable}
           scrollEventThrottle={scrollEventThrottle ?? 16}

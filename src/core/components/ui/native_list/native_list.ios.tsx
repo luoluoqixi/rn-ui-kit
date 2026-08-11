@@ -953,6 +953,7 @@ function NativeListRoot({
   navigationBarScrollEdgeOptions,
   onRefresh,
   onSelectedIdsChange,
+  refreshColor: _refreshColor,
   scrollIndicatorInsets,
   style,
   scrollable = true,
@@ -961,6 +962,7 @@ function NativeListRoot({
   webAutoRestoreScroll: _webAutoRestoreScroll,
   ...fallbackProps
 }: NativeListRootProps) {
+  void _refreshColor;
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const nativeEditTint = toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;

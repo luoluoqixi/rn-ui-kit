@@ -1,5 +1,5 @@
 import type { ReactElement, ReactNode } from "react";
-import type { ScrollViewProps, ViewStyle } from "react-native";
+import type { ColorValue, ScrollViewProps, ViewStyle } from "react-native";
 import type { SFSymbol } from "sf-symbols-typescript";
 
 import type { SelectProps } from "../select";
@@ -190,6 +190,11 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
     contentMarginTop?: number;
     /** 原生 List 内容底部内边距。 */
     contentMarginBottom?: number;
+    /**
+     * fallback 列表下拉刷新指示器颜色；未传时使用当前主题色。
+     * iOS 原生 SwiftUI List 会忽略此项。
+     */
+    refreshColor?: ColorValue;
     /** 非受控编辑模式初次挂载时默认选中的行。 */
     defaultSelectedIds?: readonly NativeListSelectionId[];
     /** 开启后，所有 NativeList 行显示左侧选择图标并拦截原点击行为。 */

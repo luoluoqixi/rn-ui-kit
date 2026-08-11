@@ -77,6 +77,8 @@ const DEBUG_HOME_LARGE_TITLE_OPTIONS: NativeStackNavigationOptions =
 const DEBUG_SECTION_SHEET_SNAP_POINTS = isIos26Plus() ? [50, 75, 85] : [50, 75, 100];
 const DEBUG_DEFAULT_SNAP_POINT = ["85%"];
 
+const onRefreshHome = () => new Promise((r) => setTimeout(r, 1000));
+
 function getDebugPages(pages?: RnUiKitDebugRouteDefinition[]) {
   return Array.from(
     new Map(
@@ -357,7 +359,7 @@ function RnUiKitDebugHostHomePage({
   return (
     <YStack background="$background" flex={1} {...props}>
       <RnUiKitDebugHomePage
-        onRefresh={() => {}}
+        onRefresh={onRefreshHome}
         onOpenPanelSheet={() => setPanelSheetOpen(true)}
         onOpenSection={(key) => {
           if (openSectionsInSheet) {
@@ -538,7 +540,7 @@ function RnUiKitDebugPanelContent({
           >
             {() => (
               <RnUiKitDebugHomeRoute
-                onRefresh={() => {}}
+                onRefresh={onRefreshHome}
                 onOpenInSheet={(key) =>
                   setOpenSectionSheets((current) => new Set(current).add(key))
                 }
@@ -632,7 +634,7 @@ function RnUiKitDebugHomeRoute({
   onSectionSheetPositionChange: (position: number) => void;
   openSectionsInSheet: boolean;
   sectionSheetPosition: number;
-  onRefresh?: () => Promise<void> | void;
+  onRefresh?: () => Promise<any> | void;
 }) {
   const navigation = useNavigation<NavigationProp<RnUiKitDebugStackParamList>>();
 

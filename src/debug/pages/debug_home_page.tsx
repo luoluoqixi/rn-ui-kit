@@ -28,7 +28,7 @@ export function RnUiKitDebugHomePage({
   headerTransparent?: boolean;
   layoutHost?: "default" | "nativeSheet";
   openSectionsInSheet: boolean;
-  onRefresh?: () => Promise<void> | void;
+  onRefresh?: () => Promise<any> | void;
   pages: RnUiKitDebugRouteDefinition[];
   onOpenPanelSheet?: () => void;
   sectionSheetPosition: number;
