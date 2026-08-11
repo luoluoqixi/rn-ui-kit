@@ -15,6 +15,7 @@ import { isWeb, os } from "../utils/platform";
 import { resolveAriaLabel, triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
 import { NativeTrigger } from "../native_trigger";
 
+import { splitMenuItemsBySeparators } from "./item_groups";
 import type {
   MenuArrowProps,
   MenuCheckboxItemProps,
@@ -143,9 +144,7 @@ function MenuRoot(props: MenuProps) {
     opacity: isTriggerActive ? DEFAULT_MENU_TRIGGER_ACTIVE_OPACITY : 1,
   };
   // 函数 trigger 必须作为 React component 渲染，不能直接调用；否则其内部 hook 不在 Provider 中。
-  const renderedTrigger = triggerIsRenderFunction
-    ? createElement(trigger, triggerState)
-    : trigger;
+  const renderedTrigger = triggerIsRenderFunction ? createElement(trigger, triggerState) : trigger;
   const shouldRenderTrigger =
     renderedTrigger != null ||
     (nativeTrigger === true &&
@@ -191,73 +190,90 @@ function MenuRoot(props: MenuProps) {
 
   // Menu 在 native 上浮动定位后视觉顺序反转，统一反转 children / items
   const resolvedChildren = Children.toArray(children).reverse();
-  const renderItems = (menuItems: MenuItemData[], depth = 0): ReactNode => {
-    const resolvedMenuItems = ios ? [...menuItems].reverse() : menuItems;
+  const renderItem = (item: MenuItemData, depth: number): ReactNode => {
+    if (item.separator) {
+      return <MenuSeparator key={item.value} />;
+    }
 
-    return resolvedMenuItems.map((item) => {
-      if (item.separator) {
-        return <MenuSeparator key={item.value} />;
-      }
+    const label = item.label ?? item.value;
+    const textValue = item.textValue ?? getMenuItemTextValue(label, item.value);
+    const accessibilityLabel = resolveAriaLabel(
+      item["aria-label"] ?? itemProps?.["aria-label"],
+      label,
+    );
+    const hasTrailingContent = item.icon != null || item.indicator != null;
 
-      const label = item.label ?? item.value;
-      const textValue = item.textValue ?? getMenuItemTextValue(label, item.value);
-      const accessibilityLabel = resolveAriaLabel(
-        item["aria-label"] ?? itemProps?.["aria-label"],
-        label,
-      );
-      const hasTrailingContent = item.icon != null || item.indicator != null;
-
-      if (item.subMenu?.length) {
-        const subMenuTitle = item.subMenuTitle === false ? null : (item.subMenuTitle ?? label);
-
-        return (
-          <MenuSub key={item.value}>
-            <MenuSubTrigger
-              {...(itemProps as MenuSubTriggerProps)}
-              aria-label={accessibilityLabel}
-              destructive={item.destructive ?? itemProps?.destructive}
-              disabled={item.disabled ?? itemProps?.disabled}
-              justify={itemProps?.justify ?? "space-between"}
-              textValue={textValue}
-            >
-              <MenuItemTitle>{label}</MenuItemTitle>
-              {item.icon != null ? <MenuItemIcon>{item.icon}</MenuItemIcon> : null}
-              {item.indicator}
-              {web ? (
-                <MenuItemIcon>
-                  <ChevronRight color="$color10" size={16} />
-                </MenuItemIcon>
-              ) : null}
-            </MenuSubTrigger>
-            <MenuPortal zIndex={200 + depth}>
-              <MenuSubContent>
-                {web && subMenuTitle != null ? <MenuLabel>{subMenuTitle}</MenuLabel> : null}
-                {renderItems(item.subMenu, depth + 1)}
-              </MenuSubContent>
-            </MenuPortal>
-          </MenuSub>
-        );
-      }
+    if (item.subMenu?.length) {
+      const subMenuTitle = item.subMenuTitle === false ? null : (item.subMenuTitle ?? label);
 
       return (
-        <MenuItem
-          {...itemProps}
-          aria-label={accessibilityLabel}
-          destructive={item.destructive ?? itemProps?.destructive}
-          disabled={item.disabled ?? itemProps?.disabled}
-          justify={itemProps?.justify ?? (hasTrailingContent ? "space-between" : undefined)}
-          key={item.value}
-          onSelect={item.onSelect ?? item.onPress}
-          {...({ selected: item.selected } as any)}
-          textValue={textValue}
-        >
-          <MenuItemTitle>{label}</MenuItemTitle>
-          {item.icon != null ? <MenuItemIcon>{item.icon}</MenuItemIcon> : null}
-          {item.indicator != null ? <MenuItemIndicator>{item.indicator}</MenuItemIndicator> : null}
-        </MenuItem>
+        <MenuSub key={item.value}>
+          <MenuSubTrigger
+            {...(itemProps as MenuSubTriggerProps)}
+            aria-label={accessibilityLabel}
+            destructive={item.destructive ?? itemProps?.destructive}
+            disabled={item.disabled ?? itemProps?.disabled}
+            justify={itemProps?.justify ?? "space-between"}
+            textValue={textValue}
+          >
+            <MenuItemTitle>{label}</MenuItemTitle>
+            {item.icon != null ? <MenuItemIcon>{item.icon}</MenuItemIcon> : null}
+            {item.indicator}
+            {web ? (
+              <MenuItemIcon>
+                <ChevronRight color="$color10" size={16} />
+              </MenuItemIcon>
+            ) : null}
+          </MenuSubTrigger>
+          <MenuPortal zIndex={200 + depth}>
+            <MenuSubContent>
+              {web && subMenuTitle != null ? <MenuLabel>{subMenuTitle}</MenuLabel> : null}
+              {renderItems(item.subMenu, depth + 1)}
+            </MenuSubContent>
+          </MenuPortal>
+        </MenuSub>
       );
-    });
+    }
+
+    return (
+      <MenuItem
+        {...itemProps}
+        aria-label={accessibilityLabel}
+        destructive={item.destructive ?? itemProps?.destructive}
+        disabled={item.disabled ?? itemProps?.disabled}
+        justify={itemProps?.justify ?? (hasTrailingContent ? "space-between" : undefined)}
+        key={item.value}
+        onSelect={item.onSelect ?? item.onPress}
+        {...({ selected: item.selected } as any)}
+        textValue={textValue}
+      >
+        <MenuItemTitle>{label}</MenuItemTitle>
+        {item.icon != null ? <MenuItemIcon>{item.icon}</MenuItemIcon> : null}
+        {item.indicator != null ? <MenuItemIndicator>{item.indicator}</MenuItemIndicator> : null}
+      </MenuItem>
+    );
   };
+
+  function renderItems(menuItems: MenuItemData[], depth = 0): ReactNode {
+    const resolvedMenuItems = ios ? [...menuItems].reverse() : menuItems;
+
+    if (ios) {
+      const groups = splitMenuItemsBySeparators(resolvedMenuItems);
+
+      // Zeego 会将 Group 映射为 UIMenu.Options.displayInline，由系统在各组之间绘制分割线。
+      if (groups.length > 1) {
+        return groups.map((group, groupIndex) => (
+          <MenuGroup key={`menu-group-${depth}-${groupIndex}`}>
+            {group.map((item) => renderItem(item, depth))}
+          </MenuGroup>
+        ));
+      }
+
+      return (groups[0] ?? []).map((item) => renderItem(item, depth));
+    }
+
+    return resolvedMenuItems.map((item) => renderItem(item, depth));
+  }
 
   if (!hasDefaultStructure) {
     return (
