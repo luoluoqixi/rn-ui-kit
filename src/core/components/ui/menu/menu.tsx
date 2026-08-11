@@ -1,5 +1,12 @@
 import { ChevronRight } from "@tamagui/lucide-icons-2";
-import { Children, type ReactNode, isValidElement, useState } from "react";
+import {
+  Children,
+  createContext,
+  type ReactNode,
+  isValidElement,
+  useContext,
+  useState,
+} from "react";
 import { StyleSheet } from "react-native";
 import { SizableText, Menu as TamaguiMenu, YStack } from "tamagui";
 
@@ -27,12 +34,31 @@ import type {
   MenuSubContentProps,
   MenuSubProps,
   MenuSubTriggerProps,
+  MenuTriggerState,
   MenuTriggerProps,
 } from "./types";
 
 const DEFAULT_MENU_ENTER_STYLE = { opacity: 0, scale: 0.96, y: -4 } as const;
 const DEFAULT_MENU_EXIT_STYLE = { opacity: 0, scale: 0.98, y: -2 } as const;
 const DEFAULT_MENU_INTERACTIVE_STYLE = { cursor: "default" } as const;
+const DEFAULT_MENU_TRIGGER_ACTIVE_OPACITY = 0.6;
+
+const MenuTriggerStateContext = createContext<MenuTriggerState | null>(null);
+
+/**
+ * 读取所属 `Menu` 的 trigger 实时状态。
+ *
+ * 仅能在该 Menu 的 `trigger` render function 返回的后代组件中调用。
+ */
+export function useMenuTriggerState(): MenuTriggerState {
+  const state = useContext(MenuTriggerStateContext);
+
+  if (state == null) {
+    throw new Error("useMenuTriggerState 必须在 Menu 的 trigger 后代组件中调用。");
+  }
+
+  return state;
+}
 
 function mergeMenuStyle<T extends object>(baseStyle: T, style: unknown): T {
   return StyleSheet.flatten([baseStyle, style] as any) as T;
@@ -93,24 +119,41 @@ function MenuRoot(props: MenuProps) {
     triggerProps,
     ...rootProps
   } = props;
-  const resolvedNativeTriggerLabel = nativeTriggerLabel ?? trigger;
+  const triggerIsRenderFunction = typeof trigger === "function";
+  const resolvedNativeTriggerLabel =
+    nativeTriggerLabel ?? (triggerIsRenderFunction ? undefined : trigger);
   const resolvedNativeAnchorAlignment = nativeAnchorAlignment ?? "center";
   const web = isWeb();
+  const ios = os() === "ios";
   const resolvedPlacement = rootProps.placement ?? (web ? "bottom" : undefined);
   const [uncontrolledOpen, setUncontrolledOpen] = useState(Boolean(rootProps.defaultOpen));
-  const [uncontrolledWillOpen, setUncontrolledWillOpen] = useState(Boolean(rootProps.defaultOpen));
+  const [willOpen, setWillOpen] = useState(Boolean(rootProps.defaultOpen));
+  const [isTriggerPressed, setIsTriggerPressed] = useState(false);
   const isOpen = rootProps.open ?? uncontrolledOpen;
+  const isOpening = willOpen && !isOpen;
+  // 保持默认 NativeTrigger 原有的 active 判定；额外的按住状态仅供外部 hook 使用。
+  const isNativeTriggerActive = ios ? (rootProps.open ?? willOpen) : isOpen;
+  const isTriggerActive = isNativeTriggerActive || isTriggerPressed;
+  const triggerState: MenuTriggerState = {
+    isActive: isTriggerActive,
+    isOpen,
+    isOpening,
+    isPressed: isTriggerPressed,
+    opacity: isTriggerActive ? DEFAULT_MENU_TRIGGER_ACTIVE_OPACITY : 1,
+  };
+  const renderedTrigger = triggerIsRenderFunction ? trigger(triggerState) : trigger;
   const shouldRenderTrigger =
-    trigger != null ||
+    renderedTrigger != null ||
     (nativeTrigger === true &&
       (resolvedNativeTriggerLabel != null || nativeTriggerContent != null));
   const hasDefaultStructure = shouldRenderTrigger || items != null || arrow != null;
   const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics);
-  const ios = os() === "ios";
-  const isNativeTriggerActive = ios ? (rootProps.open ?? uncontrolledWillOpen) : isOpen;
   const handleOpenChange: NonNullable<MenuProps["onOpenChange"]> = (nextOpen) => {
     if (rootProps.open === undefined) {
       setUncontrolledOpen(nextOpen);
+    }
+    if (!nextOpen) {
+      setIsTriggerPressed(false);
     }
     onOpenChange?.(nextOpen);
 
@@ -119,8 +162,9 @@ function MenuRoot(props: MenuProps) {
     }
   };
   const handleOpenWillChange: NonNullable<MenuProps["onOpenWillChange"]> = (nextOpen) => {
-    if (rootProps.open === undefined) {
-      setUncontrolledWillOpen(nextOpen);
+    setWillOpen(nextOpen);
+    if (!nextOpen) {
+      setIsTriggerPressed(false);
     }
     onOpenWillChange?.(nextOpen);
 
@@ -129,6 +173,17 @@ function MenuRoot(props: MenuProps) {
     }
   };
   const iosOpenWillChangeProps = ios ? { onOpenWillChange: handleOpenWillChange } : undefined;
+  const resolvedTriggerProps: MenuTriggerProps = {
+    ...triggerProps,
+    onPressIn: (event: any) => {
+      setIsTriggerPressed(true);
+      triggerProps?.onPressIn?.(event);
+    },
+    onPressOut: (event: any) => {
+      setIsTriggerPressed(false);
+      triggerProps?.onPressOut?.(event);
+    },
+  };
 
   // Menu 在 native 上浮动定位后视觉顺序反转，统一反转 children / items
   const resolvedChildren = Children.toArray(children).reverse();
@@ -194,9 +249,7 @@ function MenuRoot(props: MenuProps) {
         >
           <MenuItemTitle>{label}</MenuItemTitle>
           {item.icon != null ? <MenuItemIcon>{item.icon}</MenuItemIcon> : null}
-          {item.indicator != null ? (
-            <MenuItemIndicator>{item.indicator}</MenuItemIndicator>
-          ) : null}
+          {item.indicator != null ? <MenuItemIndicator>{item.indicator}</MenuItemIndicator> : null}
         </MenuItem>
       );
     });
@@ -204,6 +257,27 @@ function MenuRoot(props: MenuProps) {
 
   if (!hasDefaultStructure) {
     return (
+      <MenuTriggerStateContext.Provider value={triggerState}>
+        <TamaguiMenu
+          {...rootProps}
+          {...({ anchorAlignment: resolvedNativeAnchorAlignment } as any)}
+          {...({ isAnchoredToRight: resolvedNativeAnchorAlignment === "end" } as any)}
+          {...(nativeSelectedItemBackgroundColor != null
+            ? ({ selectedItemBackgroundColor: nativeSelectedItemBackgroundColor } as any)
+            : undefined)}
+          {...iosOpenWillChangeProps}
+          offset={offset ?? 8}
+          onOpenChange={handleOpenChange}
+          placement={resolvedPlacement}
+        >
+          {resolvedChildren}
+        </TamaguiMenu>
+      </MenuTriggerStateContext.Provider>
+    );
+  }
+
+  return (
+    <MenuTriggerStateContext.Provider value={triggerState}>
       <TamaguiMenu
         {...rootProps}
         {...({ anchorAlignment: resolvedNativeAnchorAlignment } as any)}
@@ -216,51 +290,39 @@ function MenuRoot(props: MenuProps) {
         onOpenChange={handleOpenChange}
         placement={resolvedPlacement}
       >
-        {resolvedChildren}
+        {shouldRenderTrigger ? (
+          <MenuTrigger
+            {...resolvedTriggerProps}
+            asChild={nativeTrigger ? true : triggerProps?.asChild}
+          >
+            {triggerIsRenderFunction ? (
+              renderedTrigger
+            ) : nativeTrigger ? (
+              <NativeTrigger
+                active={isNativeTriggerActive}
+                containerStyle={nativeTriggerContainerStyle}
+                content={nativeTriggerContent}
+                icon={nativeTriggerIcon}
+                keepPressedOpacity={ios}
+                label={resolvedNativeTriggerLabel}
+                labelProps={nativeTriggerLabelProps}
+              />
+            ) : (
+              renderedTrigger
+            )}
+          </MenuTrigger>
+        ) : null}
+        <MenuPortal {...portalProps}>
+          <MenuContent {...contentProps}>
+            {arrow ? <MenuArrow {...arrowProps} /> : null}
+            <MenuScrollView>
+              {items ? renderItems(items) : null}
+              {resolvedChildren}
+            </MenuScrollView>
+          </MenuContent>
+        </MenuPortal>
       </TamaguiMenu>
-    );
-  }
-
-  return (
-    <TamaguiMenu
-      {...rootProps}
-      {...({ anchorAlignment: resolvedNativeAnchorAlignment } as any)}
-      {...({ isAnchoredToRight: resolvedNativeAnchorAlignment === "end" } as any)}
-      {...(nativeSelectedItemBackgroundColor != null
-        ? ({ selectedItemBackgroundColor: nativeSelectedItemBackgroundColor } as any)
-        : undefined)}
-      {...iosOpenWillChangeProps}
-      offset={offset ?? 8}
-      onOpenChange={handleOpenChange}
-      placement={resolvedPlacement}
-    >
-      {shouldRenderTrigger ? (
-        <MenuTrigger {...triggerProps} asChild={nativeTrigger ? true : triggerProps?.asChild}>
-          {nativeTrigger ? (
-            <NativeTrigger
-              active={isNativeTriggerActive}
-              containerStyle={nativeTriggerContainerStyle}
-              content={nativeTriggerContent}
-              icon={nativeTriggerIcon}
-              keepPressedOpacity={ios}
-              label={resolvedNativeTriggerLabel}
-              labelProps={nativeTriggerLabelProps}
-            />
-          ) : (
-            trigger
-          )}
-        </MenuTrigger>
-      ) : null}
-      <MenuPortal {...portalProps}>
-        <MenuContent {...contentProps}>
-          {arrow ? <MenuArrow {...arrowProps} /> : null}
-          <MenuScrollView>
-            {items ? renderItems(items) : null}
-            {resolvedChildren}
-          </MenuScrollView>
-        </MenuContent>
-      </MenuPortal>
-    </TamaguiMenu>
+    </MenuTriggerStateContext.Provider>
   );
 }
 
