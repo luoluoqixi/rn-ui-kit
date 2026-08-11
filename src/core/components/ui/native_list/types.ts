@@ -74,6 +74,11 @@ export type NativeListItemBaseProps = NativeListItemPaddingProps &
     pressBackgroundColor?: ViewStyle["backgroundColor"];
     /** 编辑模式中用于标识这一行；未传时会在当前挂载周期内自动生成。 */
     selectionId?: NativeListSelectionId;
+    /**
+     * 编辑模式中禁止此行参与多选，并隐藏该行的选择标记。
+     * 不影响非编辑模式下的行点击行为。
+     */
+    selectionDisabled?: boolean;
     selected?: boolean;
     subtitle?: ReactNode;
     subtitleColor?: string;
@@ -153,6 +158,11 @@ export type NativeListCustomItemProps = NativeListItemPaddingProps & {
   pressBackgroundColor?: ViewStyle["backgroundColor"];
   /** 编辑模式中用于标识这一行；未传时会在当前挂载周期内自动生成。 */
   selectionId?: NativeListSelectionId;
+  /**
+   * 编辑模式中禁止此行参与多选，并隐藏该行的选择标记。
+   * 不影响非编辑模式下的行点击行为。
+   */
+  selectionDisabled?: boolean;
 };
 
 /** 一个占满列表行的多行文本输入框。 */

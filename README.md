@@ -364,6 +364,8 @@ export function SettingsList() {
   `selectionId` 提供稳定标识。iOS 原生 List 始终使用 SwiftUI `List` 原生多选，负责系统
   选择圆标、选中背景及滑动快速选择。`editModeIcon` 和 `editModeSelectedIcon` 在 iOS 原生
   List 中会被忽略；Android、Web 与 fallback 继续使用原有自定义实现并支持 React Native 图标。
+  若某一行不应参与多选，可在该 Item 上传入 `selectionDisabled`；编辑模式中该行不会显示选择
+  标记，也不会变更 `selectedIds`。
 - 原生文本行的 `title`、`subtitle` 和 `value` 适合传入字符串或数字；无法直接映射到
   SwiftUI 的复杂 ReactNode 会按行降级渲染。
 - 所有基础 Item 都支持 `titleColor` / `titleFontSize`、`subtitleColor` /

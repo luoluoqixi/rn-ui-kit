@@ -154,12 +154,14 @@ export function useNativeListEditRow({
   nativeSelection = false,
   onPress,
   selectionId,
+  selectionDisabled = false,
 }: {
   disabled?: boolean;
   nativeScrollId?: string | number;
   nativeSelection?: boolean;
   onPress?: () => void;
   selectionId?: NativeListSelectionId;
+  selectionDisabled?: boolean;
 }) {
   const generatedSelectionId = useId();
   const inheritedSelectionId = useContext(NativeListEditRowIdContext);
@@ -168,9 +170,10 @@ export function useNativeListEditRow({
   const resolvedSelectionId =
     selectionId ?? nativeScrollId ?? inheritedSelectionId ?? generatedSelectionId;
   const editingSelected = editMode && isSelected(resolvedSelectionId);
-  const usesNativeSelection = editMode && nativeSelectionEnabled && nativeSelection;
+  const selectionEnabled = editMode && !selectionDisabled;
+  const usesNativeSelection = selectionEnabled && nativeSelectionEnabled && nativeSelection;
   const resolvedOnPress = editMode
-    ? disabled || usesNativeSelection
+    ? disabled || selectionDisabled || usesNativeSelection
       ? undefined
       : () => toggleSelection(resolvedSelectionId)
     : onPress;
@@ -181,5 +184,6 @@ export function useNativeListEditRow({
     nativeSelection: usesNativeSelection,
     onPress: resolvedOnPress,
     selectionId: resolvedSelectionId,
+    selectionEnabled,
   };
 }

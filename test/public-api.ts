@@ -4,6 +4,7 @@ import {
   type ContextMenuItemData,
   Menu,
   type NativeListContextMenuProps,
+  type NativeListInputItemProps,
   NativeListMenuItem,
   useNativeListEditMode,
   type NativeListRootProps,
@@ -113,6 +114,14 @@ const nativeListEditModeProps = {
 } satisfies NativeListRootProps;
 
 void nativeListEditModeProps;
+
+const nativeListSelectionDisabledProps = {
+  inputProps: {},
+  selectionDisabled: true,
+  title: "不可选择的输入项",
+} satisfies NativeListInputItemProps;
+
+void nativeListSelectionDisabledProps;
 
 const nativeListContextMenuProps = {
   items: [

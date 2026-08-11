@@ -383,6 +383,9 @@ Notes:
   `editModeSelectedIcon` or the preferred `editModeSfSymbol` /
   `editModeSelectedSfSymbol`. Android, Web, and fallback always use the custom
   implementation and continue to support React Native custom icons.
+  Pass `selectionDisabled` to an item that must not participate in multi-selection;
+  it hides that row's selection indicator in edit mode and prevents changes to
+  `selectedIds`.
 - Plain strings or numbers are recommended for a native row's `title`,
   `subtitle`, and `value`. Complex React nodes that cannot map directly to
   SwiftUI fall back to the cross-platform row implementation.

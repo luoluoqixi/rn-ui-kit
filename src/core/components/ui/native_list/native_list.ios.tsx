@@ -769,6 +769,7 @@ function NativePressRow({
   paddingVertical,
   selected = false,
   selectionId,
+  selectionDisabled,
   subtitle,
   subtitleColor,
   subtitleFontSize,
@@ -811,6 +812,7 @@ function NativePressRow({
     nativeSelection: true,
     onPress,
     selectionId,
+    selectionDisabled,
   });
   const resolvedHaptics = useResolvedNativeHaptics(nativeHaptics);
   const accentColor = toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;
@@ -850,7 +852,7 @@ function NativePressRow({
           : resolvedContextMenuProps
       }
       disabled={disabled}
-      nativeSelectionId={editRow.editMode ? editRow.selectionId : undefined}
+      nativeSelectionId={editRow.nativeSelection ? editRow.selectionId : undefined}
       onPress={handlePress}
       btnStyle={btnStyle}
       btnTint={btnTint}
@@ -1666,6 +1668,7 @@ function NativeIos15MenuSelectRow({
     nativeScrollId: itemProps.nativeScrollId,
     nativeSelection: true,
     selectionId: itemProps.selectionId,
+    selectionDisabled: itemProps.selectionDisabled,
   });
   const resolvedHaptics = useResolvedNativeHaptics(
     selectProps.nativeHaptics ?? itemProps.nativeHaptics ?? false,
@@ -1729,7 +1732,7 @@ function NativeIos15MenuSelectRow({
         }
         disabled={disabled}
         nativeScrollId={itemProps.nativeScrollId}
-        nativeSelectionId={editRow.editMode ? editRow.selectionId : undefined}
+        nativeSelectionId={editRow.nativeSelection ? editRow.selectionId : undefined}
         paddingBottom={itemProps.paddingBottom}
         paddingHorizontal={itemProps.paddingHorizontal}
         paddingLeft={itemProps.paddingLeft}
@@ -1809,7 +1812,7 @@ function NativeIos15MenuSelectRow({
       }
       disabled={disabled}
       nativeScrollId={itemProps.nativeScrollId}
-      nativeSelectionId={editRow.editMode ? editRow.selectionId : undefined}
+      nativeSelectionId={editRow.nativeSelection ? editRow.selectionId : undefined}
       paddingBottom={itemProps.paddingBottom}
       paddingHorizontal={itemProps.paddingHorizontal}
       paddingLeft={itemProps.paddingLeft}
@@ -2151,6 +2154,7 @@ export function NativeListCustomItem({
   paddingVertical,
   pressBackgroundColor,
   selectionId,
+  selectionDisabled,
 }: NativeListCustomItemProps) {
   const restoresIos15TopCorners = useContext(Ios15FirstVisibleRowContext);
   const resolvedContextMenuProps = useResolvedNativeListContextMenu(contextMenuProps);
@@ -2160,6 +2164,7 @@ export function NativeListCustomItem({
     nativeSelection: true,
     onPress,
     selectionId,
+    selectionDisabled,
   });
   const rowPaddingProps = {
     paddingBottom,
@@ -2190,6 +2195,7 @@ export function NativeListCustomItem({
         {...rowPaddingProps}
         pressBackgroundColor={pressBackgroundColor}
         selectionId={selectionId}
+        selectionDisabled={selectionDisabled}
       >
         {children}
       </FallbackCustomItem>
@@ -2201,7 +2207,7 @@ export function NativeListCustomItem({
       <NativeRowContainer
         {...rowPaddingProps}
         disabled={disabled}
-        nativeSelectionId={editRow.editMode ? editRow.selectionId : undefined}
+        nativeSelectionId={editRow.nativeSelection ? editRow.selectionId : undefined}
         nativeScrollId={nativeScrollId}
         onPress={editRow.onPress}
       >

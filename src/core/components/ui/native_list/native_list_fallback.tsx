@@ -669,6 +669,7 @@ function NativeListRow({
   pressResetToken,
   pressBackgroundColor,
   selectionId,
+  selectionDisabled,
   selected = false,
   subtitle,
   subtitleColor,
@@ -683,7 +684,13 @@ function NativeListRow({
   valueFontSize,
   valueOpacity,
 }: NativeListRowProps) {
-  const editRow = useNativeListEditRow({ disabled, nativeScrollId, onPress, selectionId });
+  const editRow = useNativeListEditRow({
+    disabled,
+    nativeScrollId,
+    onPress,
+    selectionId,
+    selectionDisabled,
+  });
   const titleAlignment =
     titleAlign === "center" ? "center" : titleAlign === "right" ? "flex-end" : "flex-start";
   const textAlign = titleAlign === "center" ? "center" : titleAlign === "right" ? "right" : "left";
@@ -712,7 +719,9 @@ function NativeListRow({
       pressBackgroundColor={pressBackgroundColor}
     >
       <View pointerEvents={editRow.editMode ? "none" : "auto"} style={styles.rowContent}>
-        {editRow.editMode ? <FallbackEditingIndicator selected={editRow.editingSelected} /> : null}
+        {editRow.selectionEnabled ? (
+          <FallbackEditingIndicator selected={editRow.editingSelected} />
+        ) : null}
         {customIcon != null ? (
           <View
             style={[
@@ -1827,8 +1836,15 @@ export function NativeListCustomItem({
   paddingVertical,
   pressBackgroundColor,
   selectionId,
+  selectionDisabled,
 }: NativeListCustomItemProps) {
-  const editRow = useNativeListEditRow({ disabled, nativeScrollId, onPress, selectionId });
+  const editRow = useNativeListEditRow({
+    disabled,
+    nativeScrollId,
+    onPress,
+    selectionId,
+    selectionDisabled,
+  });
 
   return (
     <FallbackRowContainer
@@ -1851,7 +1867,9 @@ export function NativeListCustomItem({
         pointerEvents={editRow.editMode ? "none" : "auto"}
         style={editRow.editMode ? styles.editingCustomRowContent : styles.customRowContent}
       >
-        {editRow.editMode ? <FallbackEditingIndicator selected={editRow.editingSelected} /> : null}
+        {editRow.selectionEnabled ? (
+          <FallbackEditingIndicator selected={editRow.editingSelected} />
+        ) : null}
         <View style={styles.customRowContent}>{children}</View>
       </View>
     </FallbackRowContainer>
