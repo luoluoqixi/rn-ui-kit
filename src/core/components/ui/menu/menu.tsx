@@ -1,6 +1,7 @@
 import { ChevronRight } from "@tamagui/lucide-icons-2";
 import {
   Children,
+  createElement,
   createContext,
   type ReactNode,
   isValidElement,
@@ -48,7 +49,7 @@ const MenuTriggerStateContext = createContext<MenuTriggerState | null>(null);
 /**
  * 读取所属 `Menu` 的 trigger 实时状态。
  *
- * 仅能在该 Menu 的 `trigger` render function 返回的后代组件中调用。
+ * 仅能在该 Menu 的 function component trigger 及其后代组件中调用。
  */
 export function useMenuTriggerState(): MenuTriggerState {
   const state = useContext(MenuTriggerStateContext);
@@ -141,7 +142,10 @@ function MenuRoot(props: MenuProps) {
     isPressed: isTriggerPressed,
     opacity: isTriggerActive ? DEFAULT_MENU_TRIGGER_ACTIVE_OPACITY : 1,
   };
-  const renderedTrigger = triggerIsRenderFunction ? trigger(triggerState) : trigger;
+  // 函数 trigger 必须作为 React component 渲染，不能直接调用；否则其内部 hook 不在 Provider 中。
+  const renderedTrigger = triggerIsRenderFunction
+    ? createElement(trigger, triggerState)
+    : trigger;
   const shouldRenderTrigger =
     renderedTrigger != null ||
     (nativeTrigger === true &&

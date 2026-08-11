@@ -44,9 +44,9 @@ export interface MenuTriggerState {
 }
 
 /**
- * 自定义 Menu trigger 的 render function。
+ * 自定义 Menu trigger function component。
  *
- * 如需在独立组件中读取同一状态，可在该函数返回的组件内调用
+ * 该组件会收到 `MenuTriggerState` props，因此既可直接读取 `opacity`，也可调用
  * `useMenuTriggerState`。
  */
 export type MenuTriggerRender = (state: MenuTriggerState) => ReactNode;
@@ -76,8 +76,8 @@ export interface MenuProps extends ComponentProps<typeof TamaguiMenu> {
   nativeTriggerLabelProps?: NativeTriggerFaceProps["labelProps"];
   portalProps?: MenuPortalProps;
   /**
-   * 菜单入口；也可传 render function 以读取实时 trigger 状态。
-   * 启用 `nativeTrigger` 时，ReactNode 会作为其默认 label；render function 则完全替换默认 trigger。
+   * 菜单入口；也可传 function component 以读取实时 trigger 状态。
+   * 启用 `nativeTrigger` 时，ReactNode 会作为其默认 label；function component 则完全替换默认 trigger。
    */
   trigger?: ReactNode | MenuTriggerRender;
   triggerProps?: MenuTriggerProps;
