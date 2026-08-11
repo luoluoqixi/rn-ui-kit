@@ -1186,6 +1186,7 @@ const SelectRoot = forwardRef<SelectHandle, SelectProps>(
     );
     const renderGroup = (group: ResolvedSelectItemGroupData, groupIndex: number) => {
       const label = getGroupLabel(group, groupIndex);
+      const items = group.items.map(renderItem);
       const content = (
         <SelectGroup>
           {label && (
@@ -1201,7 +1202,20 @@ const SelectRoot = forwardRef<SelectHandle, SelectProps>(
               {label}
             </Select.Label>
           )}
-          {group.items.map(renderItem)}
+          {shouldUseTouchSheetLayout ? (
+            <YStack
+              background={TOUCH_SHEET_GROUP_BACKGROUND}
+              style={{
+                borderRadius: TOUCH_SHEET_GROUP_RADIUS,
+                overflow: "hidden",
+                width: "100%",
+              }}
+            >
+              {items}
+            </YStack>
+          ) : (
+            items
+          )}
         </SelectGroup>
       );
 
@@ -1212,12 +1226,9 @@ const SelectRoot = forwardRef<SelectHandle, SelectProps>(
       return (
         <YStack
           key={group.key}
-          background={TOUCH_SHEET_GROUP_BACKGROUND}
           style={{
-            borderRadius: TOUCH_SHEET_GROUP_RADIUS,
             marginBottom:
               groupIndex === resolvedItemGroups.length - 1 ? 0 : DEFAULT_TOUCH_SHEET_GROUP_GAP,
-            overflow: "hidden",
             width: "100%",
           }}
         >
