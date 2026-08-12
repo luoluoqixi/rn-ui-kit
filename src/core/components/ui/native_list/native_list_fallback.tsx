@@ -1212,6 +1212,18 @@ function renderStaticEntries(entries: FallbackListEntry[]) {
   });
 }
 
+function renderFallbackFlatListEntry(
+  { item, index }: ListRenderItemInfo<FallbackListEntry>,
+  entries: FallbackListEntry[],
+) {
+  return (
+    <View>
+      {renderFallbackListEntry({ item })}
+      <FallbackListItemSeparator leadingItem={item} trailingItem={entries[index + 1]} />
+    </View>
+  );
+}
+
 function getEntryKey(item: FallbackListEntry) {
   return item.key;
 }
@@ -2220,6 +2232,10 @@ export function NativeListRoot({
     () => createFallbackListEntries(children, contextMenuProps),
     [children, contextMenuProps],
   );
+  const renderFlatListEntry = useCallback(
+    (info: ListRenderItemInfo<FallbackListEntry>) => renderFallbackFlatListEntry(info, entries),
+    [entries],
+  );
   const initialScrollIndex = useMemo(
     () => getInitialScrollIndex(entries, initialScrollTarget),
     [entries, initialScrollTarget],
@@ -2483,7 +2499,6 @@ export function NativeListRoot({
           contentOffset={contentOffset}
           data={entries}
           extraData={entries}
-          ItemSeparatorComponent={FallbackListItemSeparator}
           keyboardShouldPersistTaps={keyboardShouldPersistTaps ?? "handled"}
           keyExtractor={getEntryKey}
           nestedScrollEnabled={nestedScrollEnabled ?? true}
@@ -2504,7 +2519,7 @@ export function NativeListRoot({
               />
             ) : undefined
           }
-          renderItem={renderFallbackListEntry}
+          renderItem={renderFlatListEntry}
           scrollEnabled={scrollable}
           scrollEventThrottle={resolvedScrollEventThrottle}
           showsVerticalScrollIndicator={showsVerticalScrollIndicator ?? true}
