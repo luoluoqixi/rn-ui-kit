@@ -44,6 +44,9 @@ import { ContextMenu } from "../context_menu";
 import { Menu } from "../menu";
 import { NativeTriggerPressable } from "../native_trigger";
 import { Select } from "../select";
+import { NativePickerSwiftUI } from "../select/native_picker";
+import type { NativePickerSwiftUIHandle } from "../select/native_picker";
+import { resolveSelectItemGroups } from "../select/select_grouping";
 import {
   getTrueSheetScrollBottomPadding,
   getTrueSheetScrollIndicatorBottomInset,
@@ -108,6 +111,53 @@ type PressableHoverEvent = Parameters<
 type NativeMenuHandle = {
   presentMenu: () => void;
 };
+
+function useInlineNativeTriggerGuard() {
+  const triggerInteractionRef = useRef(false);
+  const clearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearTimer = () => {
+    if (clearTimerRef.current != null) {
+      clearTimeout(clearTimerRef.current);
+      clearTimerRef.current = null;
+    }
+  };
+  const beginTriggerInteraction = (event?: GestureResponderEvent) => {
+    event?.stopPropagation();
+    clearTimer();
+    triggerInteractionRef.current = true;
+  };
+  const finishTriggerInteraction = (event?: GestureResponderEvent) => {
+    event?.stopPropagation();
+    clearTimer();
+    // Keep the marker through Pressable's touch-end -> onPress handoff. The native
+    // trigger has already opened the menu, so the parent row must not open it again.
+    clearTimerRef.current = setTimeout(() => {
+      triggerInteractionRef.current = false;
+      clearTimerRef.current = null;
+    }, 750);
+  };
+  const cancelTriggerInteraction = (event?: GestureResponderEvent) => {
+    event?.stopPropagation();
+    clearTimer();
+    triggerInteractionRef.current = false;
+  };
+  const consumeTriggerInteraction = () => {
+    if (!triggerInteractionRef.current) return false;
+
+    cancelTriggerInteraction();
+    return true;
+  };
+
+  useEffect(() => cancelTriggerInteraction, []);
+
+  return {
+    beginTriggerInteraction,
+    cancelTriggerInteraction,
+    consumeTriggerInteraction,
+    finishTriggerInteraction,
+  };
+}
 
 type FallbackListEntry =
   | {
@@ -559,6 +609,7 @@ function FallbackEditingIndicator({ selected }: { selected: boolean }) {
 
 type NativeListRowProps = NativeListItemBaseProps & {
   iconAfter?: ReactNode;
+  labelOpacity?: number;
   pressResetToken?: number;
   valueOpacity?: number;
 };
@@ -651,6 +702,7 @@ function NativeListRow({
   icon,
   iconAfter,
   iconSlotWidth,
+  labelOpacity = 1,
   nativeHaptics,
   nativeScrollId,
   onPress,
@@ -726,7 +778,7 @@ function NativeListRow({
             {customIcon}
           </View>
         ) : null}
-        <View style={[styles.textColumn, { alignItems: titleAlignment }]}>
+        <View style={[styles.textColumn, { alignItems: titleAlignment, opacity: labelOpacity }]}>
           {titleNode}
           {subtitleNode}
         </View>
@@ -1493,6 +1545,34 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
   const disabled = itemProps.disabled || selectProps.disabled || selectProps.isDisabled;
   const selectedLabel = getSelectedLabel(selectProps);
   const editMode = useNativeListEditMode();
+  const resolvedHaptics = useResolvedNativeHaptics(
+    selectProps.nativeHaptics ?? itemProps.nativeHaptics ?? false,
+  );
+  const resolvedPickerMode = selectProps.nativePickerMode ?? "dropdown";
+  const usesIosInlineDropdown =
+    os() === "ios" && resolvedPickerMode === "dropdown" && (selectProps.native ?? true) === true;
+  const pickerRef = useRef<NativePickerSwiftUIHandle>(null);
+  const inlineTriggerGuard = useInlineNativeTriggerGuard();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [uncontrolledSelectValue, setUncontrolledSelectValue] = useState<string | null>(
+    selectProps.defaultValue ?? null,
+  );
+  const resolvedItemGroups = resolveSelectItemGroups({
+    itemGroups: selectProps.itemGroups,
+    items: selectProps.items,
+    options: selectProps.options,
+  });
+  const selectItems = resolvedItemGroups.flatMap((group) => group.items);
+  const selectedValue =
+    selectProps.value !== undefined ? selectProps.value : uncontrolledSelectValue;
+  const selectedItem = selectItems.find((item) => item.value === selectedValue);
+  const defaultTriggerLabel = selectedItem?.label ?? selectProps.placeholder ?? "";
+  const nativeTriggerLabel =
+    selectedValue == null || selectedValue === "" || selectProps.renderValue == null
+      ? defaultTriggerLabel
+      : selectProps.renderValue(selectedValue);
+  const resolvedSelectedLabel = usesIosInlineDropdown ? defaultTriggerLabel : selectedLabel;
+  const fadeTitleOnOpen = itemProps.fadeTitleOnOpen !== false;
   const resolvedContextMenuProps = useResolvedNativeListContextMenu(itemProps.contextMenuProps);
   const contextMenuRef = useRef<NativeMenuHandle | null>(null);
   const activeAndroidContextMenuProps =
@@ -1511,9 +1591,84 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
       <NativeListRow
         {...itemProps}
         disabled={disabled}
-        value={selectedLabel}
+        value={resolvedSelectedLabel}
         valueColor={itemProps.valueColor ?? "$color10"}
         valueOpacity={0.5}
+      />
+    );
+  }
+
+  if (usesIosInlineDropdown) {
+    return (
+      <NativeListRow
+        {...itemProps}
+        disabled={disabled}
+        labelOpacity={fadeTitleOnOpen && dropdownOpen ? 0.6 : 1}
+        nativeHaptics={resolvedHaptics}
+        onPress={() => {
+          if (inlineTriggerGuard.consumeTriggerInteraction()) return;
+
+          const picker = pickerRef.current;
+          if (picker == null) return;
+
+          if (fadeTitleOnOpen) {
+            setDropdownOpen(true);
+          }
+          picker.open();
+        }}
+        iconAfter={
+          <View
+            collapsable={false}
+            onTouchCancel={inlineTriggerGuard.cancelTriggerInteraction}
+            onTouchEnd={inlineTriggerGuard.finishTriggerInteraction}
+            onTouchStart={inlineTriggerGuard.beginTriggerInteraction}
+          >
+            <NativePickerSwiftUI
+              ref={pickerRef}
+              disabled={disabled}
+              items={selectItems}
+              mode="dropdown"
+              nativeDropdownAlign={selectProps.nativeDropdownAlign ?? "end"}
+              nativeDropdownAnchorWidth={selectProps.nativeDropdownAnchorWidth}
+              nativeDropdownEdgeOffset={selectProps.nativeDropdownEdgeOffset}
+              nativeTrigger
+              nativeTriggerContainerStyle={[
+                styles.selectInlineTrigger,
+                disabled ? styles.disabledContent : null,
+                selectProps.nativeTriggerContainerStyle,
+              ]}
+              nativeTriggerContent={selectProps.nativeTriggerContent}
+              nativeTriggerIcon={selectProps.nativeTriggerIcon ?? "chevrons-up-down"}
+              nativeTriggerLabel={nativeTriggerLabel}
+              nativeTriggerLabelProps={{
+                color: itemProps.valueColor ?? "$color10",
+                fontSize: itemProps.valueFontSize ?? "$4",
+                numberOfLines: 1,
+                opacity: 1,
+                ...selectProps.nativeTriggerLabelProps,
+              }}
+              onOpenChange={(nextOpen: boolean) => {
+                selectProps.onOpenChange?.(nextOpen);
+              }}
+              onOpenWillChange={(nextOpen: boolean) => {
+                setDropdownOpen(nextOpen);
+                if (!nextOpen) {
+                  inlineTriggerGuard.cancelTriggerInteraction();
+                }
+              }}
+              onValueChange={(nextValue: string | null) => {
+                if (selectProps.value === undefined) {
+                  setUncontrolledSelectValue(nextValue);
+                }
+                selectProps.onValueChange?.(nextValue);
+              }}
+              placeholder={selectProps.placeholder}
+              resolvedNativeHaptics={resolvedHaptics}
+              value={selectedValue ?? null}
+            />
+          </View>
+        }
+        value={undefined}
       />
     );
   }
@@ -1749,6 +1904,13 @@ function AndroidNativeListMenuItem({
 export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuItemProps) {
   const disabled = itemProps.disabled || menuProps.triggerProps?.disabled;
   const editMode = useNativeListEditMode();
+  const menuRef = useRef<NativeMenuHandle | null>(null);
+  const inlineTriggerGuard = useInlineNativeTriggerGuard();
+  const [uncontrolledWillOpen, setUncontrolledWillOpen] = useState(
+    Boolean(menuProps.defaultOpen),
+  );
+  const menuOpen = menuProps.open ?? uncontrolledWillOpen;
+  const fadeTitleOnOpen = itemProps.fadeTitleOnOpen !== false;
   const resolvedContextMenuProps = useResolvedNativeListContextMenu(itemProps.contextMenuProps);
   const activeAndroidContextMenuProps =
     os() === "android" &&
@@ -1783,6 +1945,74 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
         disabled={disabled}
         valueColor={itemProps.valueColor ?? "$color10"}
         valueOpacity={0.5}
+      />
+    );
+  }
+
+  if (os() === "ios") {
+    return (
+      <NativeListRow
+        {...itemProps}
+        disabled={disabled}
+        labelOpacity={fadeTitleOnOpen && menuOpen ? 0.6 : 1}
+        nativeHaptics={false}
+        onPress={() => {
+          if (inlineTriggerGuard.consumeTriggerInteraction()) return;
+
+          const menu = menuRef.current;
+          if (menu == null) return;
+
+          if (fadeTitleOnOpen && menuProps.open === undefined) {
+            setUncontrolledWillOpen(true);
+          }
+          menu.presentMenu();
+        }}
+        iconAfter={
+          <View
+            collapsable={false}
+            onTouchCancel={inlineTriggerGuard.cancelTriggerInteraction}
+            onTouchEnd={inlineTriggerGuard.finishTriggerInteraction}
+            onTouchStart={inlineTriggerGuard.beginTriggerInteraction}
+          >
+            <Menu
+              {...menuProps}
+              nativeHaptics={menuProps.nativeHaptics ?? itemProps.nativeHaptics ?? false}
+              nativeTrigger
+              nativeTriggerContainerStyle={[
+                styles.selectInlineTrigger,
+                disabled ? styles.disabledContent : null,
+              ]}
+              nativeTriggerIcon="chevrons-up-down"
+              nativeTriggerLabel={itemProps.value ?? "更多"}
+              nativeTriggerLabelProps={
+                {
+                  color: itemProps.valueColor ?? "$color10",
+                  fontSize: itemProps.valueFontSize ?? "$4",
+                  numberOfLines: 1,
+                  opacity: 1,
+                } as any
+              }
+              onOpenChange={(nextOpen) => {
+                menuProps.onOpenChange?.(nextOpen);
+              }}
+              onOpenWillChange={(nextOpen) => {
+                if (menuProps.open === undefined) {
+                  setUncontrolledWillOpen(nextOpen);
+                }
+                if (!nextOpen) {
+                  inlineTriggerGuard.cancelTriggerInteraction();
+                }
+                menuProps.onOpenWillChange?.(nextOpen);
+              }}
+              triggerProps={{
+                ...menuProps.triggerProps,
+                disabled,
+              }}
+              {...({ __menuRef: menuRef } as any)}
+            />
+          </View>
+        }
+        value={undefined}
       />
     );
   }
@@ -2457,6 +2687,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexShrink: 1,
     gap: 4,
+    minWidth: 0,
+  },
+  selectInlineTrigger: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexShrink: 1,
+    gap: 4,
+    maxWidth: 180,
+    minHeight: 32,
     minWidth: 0,
   },
   staticRoot: {
