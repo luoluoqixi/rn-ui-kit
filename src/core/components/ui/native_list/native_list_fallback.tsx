@@ -392,7 +392,17 @@ function FallbackRowContainer({
     ios15PressScrollGenerationRef.current = null;
   };
 
+  const handleTouchCancel = () => {
+    if (usesIosSwitchPressFallback) {
+      setPressed(false);
+    }
+    clearIos15Press();
+  };
+
   const handleTouchEnd = (_event: GestureResponderEvent) => {
+    if (usesIosSwitchPressFallback) {
+      setPressed(false);
+    }
     const touchScrollGeneration = ios15PressScrollGenerationRef.current;
     clearIos15Press();
     if (
@@ -436,8 +446,12 @@ function FallbackRowContainer({
       }
       onPress={onPress != null ? handleRowPress : undefined}
       onPressOut={usesIosSwitchPressFallback ? () => setPressed(false) : undefined}
-      onTouchCancel={usesIos15PressRecovery ? clearIos15Press : undefined}
-      onTouchEnd={usesIos15PressRecovery ? handleTouchEnd : undefined}
+      onTouchCancel={
+        usesIosSwitchPressFallback || usesIos15PressRecovery ? handleTouchCancel : undefined
+      }
+      onTouchEnd={
+        usesIosSwitchPressFallback || usesIos15PressRecovery ? handleTouchEnd : undefined
+      }
       onTouchStart={usesIos15PressRecovery && editMode ? handleTouchStart : undefined}
       style={styles.pressable}
     >
@@ -1178,10 +1192,21 @@ export function NativeListSwitchItem({ switchProps, ...itemProps }: NativeListSw
   const disabled = itemProps.disabled || switchProps.disabled;
   const isIos = os() === "ios";
   const [pressResetToken, setPressResetToken] = useState(0);
+  const switchGestureResetRef = useRef(false);
   const resetRowPress = () => {
     if (isIos) {
       setPressResetToken((token) => token + 1);
     }
+  };
+  const resetRowPressDuringDrag = () => {
+    if (switchGestureResetRef.current) return;
+
+    switchGestureResetRef.current = true;
+    resetRowPress();
+  };
+  const finishSwitchGesture = () => {
+    switchGestureResetRef.current = false;
+    resetRowPress();
   };
   const editMode = useNativeListEditMode();
   const switchDisabled = disabled || editMode;
@@ -1208,18 +1233,36 @@ export function NativeListSwitchItem({ switchProps, ...itemProps }: NativeListSw
               ? {
                   onCheckedChange: (nextChecked: boolean) => {
                     switchProps.onCheckedChange?.(nextChecked);
-                    resetRowPress();
+                    finishSwitchGesture();
                   },
                   onPressOut: (
                     event: Parameters<NonNullable<typeof switchProps.onPressOut>>[0],
                   ) => {
                     switchProps.onPressOut?.(event);
-                    resetRowPress();
+                    finishSwitchGesture();
+                  },
+                  onResponderTerminate: (event: GestureResponderEvent) => {
+                    switchProps.onResponderTerminate?.(event);
+                    finishSwitchGesture();
+                  },
+                  onTouchCancel: (event: GestureResponderEvent) => {
+                    switchProps.onTouchCancel?.(event);
+                    finishSwitchGesture();
                   },
                   onTouchEnd: (event: GestureResponderEvent) => {
                     switchProps.onTouchEnd?.(event);
                     event.stopPropagation();
-                    resetRowPress();
+                    finishSwitchGesture();
+                  },
+                  onTouchMove: (event: GestureResponderEvent) => {
+                    switchProps.onTouchMove?.(event);
+                    // UISwitch can retain the native gesture after it leaves the row and omit
+                    // the matching JS press-out. Clear the row as soon as a drag is observed.
+                    resetRowPressDuringDrag();
+                  },
+                  onTouchStart: (event: GestureResponderEvent) => {
+                    switchGestureResetRef.current = false;
+                    switchProps.onTouchStart?.(event);
                   },
                 }
               : null)}
