@@ -201,6 +201,7 @@ export function NativeListExample() {
               editModeSelectedIcon={
                 customEditModeIcon ? <SquareCheckBig color="$color10" size={24} /> : undefined
               }
+              refreshEnabledInEditMode={false}
               fixesIOS26NestedScrollIndicatorSafeArea
               key={native ? "native-list" : "fallback-list"}
               native={native}

@@ -352,6 +352,9 @@ export function SettingsList() {
 - Android 和 Web 会自动使用基于 `FlashList` / React Native 视图的跨平台实现。
 - 在 iOS 上传入 `<NativeList native={false}>`，可主动使用相同的 fallback 外观。
 - `NativeList` 的 fallback 下拉刷新可用 `refreshColor` 设置指示器颜色；未传时使用当前主题色。iOS 原生 SwiftUI List 会忽略此项。
+- `NativeList` 进入编辑模式后默认禁用下拉刷新；如需在编辑模式中保留刷新，可显式传入
+  `refreshEnabledInEditMode`。iOS 原生 List 直接持有稳定的 `UIRefreshControl`，不会使用或动态增删
+  `refreshable` modifier；切换编辑模式只在原生 `UIScrollView` 上挂载或解绑该控件，因此不会重建列表或改变滚动位置。
 - `NativeList`、`NativeListSection` 与每个 Item 都支持 `contextMenuProps`，可直接传入
   `items`、`contentProps`、`itemProps`、打开事件等 `ContextMenu` 配置。解析优先级为
   Item > Section > NativeList；Item 或 Section 传 `contextMenuProps={false}` 可停止继承。

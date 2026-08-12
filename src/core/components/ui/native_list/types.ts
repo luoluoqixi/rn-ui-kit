@@ -210,6 +210,11 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
     /** 开启后，所有 NativeList 行显示左侧选择图标并拦截原点击行为。 */
     editMode?: boolean;
     /**
+     * 编辑模式中是否仍允许下拉刷新。默认关闭。
+     * iOS 原生 List 会直接挂载或解绑稳定的 UIRefreshControl，不会动态增删 refreshable modifier。
+     */
+    refreshEnabledInEditMode?: boolean;
+    /**
      * 编辑模式未选中时的自定义 React Native 图标；Android、Web 与 fallback 使用。
      * iOS 原生 List 使用系统选择标记，因此会忽略此项。
      */

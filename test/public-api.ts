@@ -110,6 +110,7 @@ const nativeListEditModeProps = {
   editMode: true,
   onSelectedIdsChange: (_selectedIds: NativeListSelectionId[]) => {},
   refreshColor: "#7c3aed",
+  refreshEnabledInEditMode: true,
   selectedIds: ["first-row"],
 } satisfies NativeListRootProps;
 

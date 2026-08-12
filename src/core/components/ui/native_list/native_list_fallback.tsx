@@ -1922,6 +1922,7 @@ export function NativeListRoot({
   onRefresh,
   onSelectedIdsChange,
   refreshColor,
+  refreshEnabledInEditMode = false,
   scrollable = true,
   selectedIds,
   style,
@@ -1993,6 +1994,8 @@ export function NativeListRoot({
   const appBackgroundColors = useAppBackgroundColors();
   const theme = useTheme();
   const resolvedRefreshColor = refreshColor ?? theme.color10.val;
+  const refreshControlEnabled =
+    onRefresh != null && (editMode !== true || refreshEnabledInEditMode);
   const trackedOnScroll = useNavigationBarScrollEdge({
     navigationBarScrollEdgeOptions,
     onScroll,
@@ -2164,6 +2167,7 @@ export function NativeListRoot({
     onRefresh == null
       ? undefined
       : async () => {
+          if (!refreshControlEnabled) return;
           setRefreshing(true);
           try {
             await onRefresh();
@@ -2253,9 +2257,10 @@ export function NativeListRoot({
             onRefresh != null ? (
               <RefreshControl
                 colors={[resolvedRefreshColor]}
+                enabled={refreshControlEnabled}
                 onRefresh={handleRefresh}
-                refreshing={refreshing}
-                tintColor={resolvedRefreshColor}
+                refreshing={refreshControlEnabled && refreshing}
+                tintColor={refreshControlEnabled ? resolvedRefreshColor : "transparent"}
               />
             ) : undefined
           }

@@ -39,7 +39,6 @@ import {
   multilineTextAlignment,
   opacity,
   padding,
-  refreshable,
   scrollContentBackground,
   scrollDisabled,
   shapes,
@@ -956,6 +955,7 @@ function NativeListRoot({
   onRefresh,
   onSelectedIdsChange,
   refreshColor: _refreshColor,
+  refreshEnabledInEditMode = false,
   scrollIndicatorInsets,
   style,
   scrollable = true,
@@ -968,6 +968,7 @@ function NativeListRoot({
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const nativeEditTint = toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;
+  const [nativeRefreshing, setNativeRefreshing] = useState(false);
   const [uncontrolledSelectedIds, setUncontrolledSelectedIds] = useState<NativeListSelectionId[]>(
     () => [...(defaultSelectedIds ?? [])],
   );
@@ -1010,6 +1011,7 @@ function NativeListRoot({
           navigationBarScrollEdgeOptions={navigationBarScrollEdgeOptions}
           onRefresh={onRefresh}
           onSelectedIdsChange={onSelectedIdsChange}
+          refreshEnabledInEditMode={refreshEnabledInEditMode}
           scrollIndicatorInsets={scrollIndicatorInsets}
           style={style}
           scrollable={scrollable}
@@ -1046,6 +1048,18 @@ function NativeListRoot({
       : insideTrueSheet && automaticContentInsetAdjustment
         ? "automatic"
         : undefined);
+  const refreshControlEnabled =
+    onRefresh != null && (!usesNativeEditMode || refreshEnabledInEditMode);
+  const handleNativeRefresh = async () => {
+    if (!refreshControlEnabled || onRefresh == null) return;
+
+    setNativeRefreshing(true);
+    try {
+      await onRefresh();
+    } finally {
+      setNativeRefreshing(false);
+    }
+  };
   return (
     <NativeListEditModeProvider
       defaultSelectedIds={defaultSelectedIds}
@@ -1083,6 +1097,13 @@ function NativeListRoot({
             nativeEditTint={nativeEditTint}
             onSelectionChange={usesNativeEditMode ? handleSelectedIdsChange : undefined}
             selection={usesNativeEditMode ? [...resolvedSelectedIds] : undefined}
+            // @ts-ignore Expo UI 的原生 List 补丁提供稳定的 UIKit 刷新控件属性。
+            onRefresh={handleNativeRefresh}
+            // 禁用时从 UIScrollView 解绑原生刷新控件；控件实例本身保持稳定，
+            // 不会像动态增删 SwiftUI modifier 一样重建 List。
+            refreshable={refreshControlEnabled}
+            refreshEnabled={refreshControlEnabled}
+            refreshing={refreshControlEnabled && nativeRefreshing}
             modifiers={[
               listStyle("insetGrouped"),
               listSectionSpacing("compact"),
@@ -1127,13 +1148,6 @@ function NativeListRoot({
                       }),
                     ]
                   : []),
-              ...(onRefresh != null
-                ? [
-                    refreshable(async () => {
-                      await onRefresh();
-                    }),
-                  ]
-                : []),
               scrollDisabled(!scrollable),
             ]}
           >
