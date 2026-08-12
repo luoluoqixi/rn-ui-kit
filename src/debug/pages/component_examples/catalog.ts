@@ -193,6 +193,7 @@ export const componentExampleDefinitions: ComponentExampleDefinition[] = [
     group: "列表与滚动",
     key: "native-list",
     label: "NativeList",
+    layout: "fill",
   },
   {
     Component: ListGroupExample,

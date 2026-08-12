@@ -20,14 +20,15 @@ import {
   useState,
 } from "react";
 import {
+  FlatList,
   Pressable,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   TextInput,
   View,
   type GestureResponderEvent,
   type LayoutChangeEvent,
+  type ListRenderItemInfo,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   type ViewStyle,
@@ -38,7 +39,6 @@ import { useTheme } from "tamagui";
 import { isIos15, isWeb, os } from "../utils/platform";
 import { useAppBackgroundColors, useUiPreferences } from "../utils/theme";
 
-import { FlashList, type FlashListRef, type ListRenderItemInfo } from "../flash_list";
 import { Input } from "../input";
 import { ContextMenu } from "../context_menu";
 import { Menu } from "../menu";
@@ -124,18 +124,6 @@ type FallbackListEntry =
       key: string;
       nativeScrollId?: string | number;
       renderRow: () => ReactElement | null;
-      rowType:
-        | "actionRow"
-        | "buttonRow"
-        | "customRow"
-        | "inputRow"
-        | "itemRow"
-        | "menuRow"
-        | "navigationRow"
-        | "selectRow"
-        | "switchRow"
-        | "textAreaRow"
-        | "unknownRow";
       sectionKey: string;
       type: "row";
     }
@@ -169,16 +157,14 @@ const FallbackListInteractionContext = createContext<{
   scrollGenerationRef: RefObject<number>;
 } | null>(null);
 
-function getWebScrollableNode(
-  list: FlashListRef<FallbackListEntry> | null,
-): WebScrollableNode | null {
+function getWebScrollableNode(list: FlatList<FallbackListEntry> | null): WebScrollableNode | null {
   try {
     const scrollableNode = list?.getScrollableNode() as WebScrollableNode | null | undefined;
     return scrollableNode != null && typeof scrollableNode.scrollTop === "number"
       ? scrollableNode
       : null;
   } catch {
-    // FlashList can expose its public ref one render before the inner ScrollView ref is ready.
+    // FlatList can expose its public ref one render before the inner scroll node is ready.
     return null;
   }
 }
@@ -287,8 +273,7 @@ function FallbackRowContainer({
   // iOS 必须将 UIContextMenuInteraction 直接挂载到可见行。通过隐藏锚点弹出菜单会绕过
   // 原生的按压与取消生命周期，导致 Pressable、TextInput 和列表滚动手势争抢同一次触摸。
   // Android 继续使用现有的程序式锚点实现。
-  const usesIosNativeContextMenuTrigger =
-    os() === "ios" && activeNativeContextMenuProps != null;
+  const usesIosNativeContextMenuTrigger = os() === "ios" && activeNativeContextMenuProps != null;
   const programmaticContextMenuProps = usesIosNativeContextMenuTrigger
     ? undefined
     : activeNativeContextMenuProps;
@@ -363,10 +348,7 @@ function FallbackRowContainer({
         trigger={row}
         triggerProps={{
           ...activeNativeContextMenuProps.triggerProps,
-          style: [
-            styles.contextMenuRow,
-            activeNativeContextMenuProps.triggerProps?.style,
-          ] as any,
+          style: [styles.contextMenuRow, activeNativeContextMenuProps.triggerProps?.style] as any,
         }}
       />
     ) : (
@@ -422,7 +404,7 @@ function FallbackRowContainer({
     }
 
     // iOS 15 偶尔会在原始触摸正常结束后丢失 Pressable.onPress/onPressOut。
-    // 直接用触摸结束完成点击；若 FlashList 已开始滚动，上面的滚动代次会阻止触发。
+    // 直接用触摸结束完成点击；若 FlatList 已开始滚动，上面的滚动代次会阻止触发。
     handleRowPress();
   };
 
@@ -446,9 +428,7 @@ function FallbackRowContainer({
       disabled={disabled}
       onHoverIn={() => setHovered(true)}
       onHoverOut={() => setHovered(false)}
-      onPressIn={
-        usesIosSwitchPressFallback || usesIos15PressRecovery ? handlePressIn : undefined
-      }
+      onPressIn={usesIosSwitchPressFallback || usesIos15PressRecovery ? handlePressIn : undefined}
       onLongPress={
         programmaticContextMenuProps != null
           ? () => contextMenuRef.current?.presentMenu()
@@ -835,7 +815,6 @@ function createFallbackRowEntry(
       key,
       nativeScrollId: child.props.nativeScrollId,
       renderRow: () => <NativeListActionItem {...child.props} />,
-      rowType: "actionRow",
       sectionKey,
       type: "row",
     };
@@ -847,7 +826,6 @@ function createFallbackRowEntry(
       key,
       nativeScrollId: child.props.nativeScrollId,
       renderRow: () => <NativeListNavigationItem {...child.props} />,
-      rowType: "navigationRow",
       sectionKey,
       type: "row",
     };
@@ -859,7 +837,6 @@ function createFallbackRowEntry(
       key,
       nativeScrollId: child.props.nativeScrollId,
       renderRow: () => <NativeListSwitchItem {...child.props} />,
-      rowType: "switchRow",
       sectionKey,
       type: "row",
     };
@@ -871,7 +848,6 @@ function createFallbackRowEntry(
       key,
       nativeScrollId: child.props.nativeScrollId,
       renderRow: () => <NativeListSelectItem {...child.props} />,
-      rowType: "selectRow",
       sectionKey,
       type: "row",
     };
@@ -883,7 +859,6 @@ function createFallbackRowEntry(
       key,
       nativeScrollId: child.props.nativeScrollId,
       renderRow: () => <NativeListMenuItem {...child.props} />,
-      rowType: "menuRow",
       sectionKey,
       type: "row",
     };
@@ -895,7 +870,6 @@ function createFallbackRowEntry(
       key,
       nativeScrollId: child.props.nativeScrollId,
       renderRow: () => <NativeListButtonItem {...child.props} />,
-      rowType: "buttonRow",
       sectionKey,
       type: "row",
     };
@@ -906,7 +880,6 @@ function createFallbackRowEntry(
       contextMenuProps,
       key,
       renderRow: () => <NativeListInputItem {...child.props} />,
-      rowType: "inputRow",
       sectionKey,
       type: "row",
     };
@@ -917,7 +890,6 @@ function createFallbackRowEntry(
       contextMenuProps,
       key,
       renderRow: () => <NativeListTextAreaItem {...child.props} />,
-      rowType: "textAreaRow",
       sectionKey,
       type: "row",
     };
@@ -929,7 +901,6 @@ function createFallbackRowEntry(
       key,
       nativeScrollId: child.props.nativeScrollId,
       renderRow: () => <NativeListItem {...child.props} />,
-      rowType: "itemRow",
       sectionKey,
       type: "row",
     };
@@ -941,7 +912,6 @@ function createFallbackRowEntry(
       key,
       nativeScrollId: getNativeScrollId(child),
       renderRow: () => <NativeListCustomItem {...child.props} />,
-      rowType: "customRow",
       sectionKey,
       type: "row",
     };
@@ -952,7 +922,6 @@ function createFallbackRowEntry(
     key,
     nativeScrollId: getNativeScrollId(child),
     renderRow: () => (isValidElement(child) ? child : null),
-    rowType: "unknownRow",
     sectionKey,
     type: "row",
   };
@@ -1007,10 +976,7 @@ function appendSectionEntries(
     inheritedContextMenuProps,
   );
   const hasSectionContent =
-    title != null ||
-    trailing != null ||
-    sectionChildren.length > 0 ||
-    footer != null;
+    title != null || trailing != null || sectionChildren.length > 0 || footer != null;
 
   if (!hasSectionContent) {
     return;
@@ -1081,7 +1047,7 @@ function createFallbackListEntries(
 
 function renderFallbackListEntry({
   item,
-}: ListRenderItemInfo<FallbackListEntry>): ReactElement | null {
+}: Pick<ListRenderItemInfo<FallbackListEntry>, "item">): ReactElement | null {
   switch (item.type) {
     case "sectionHeader":
       return (
@@ -1173,15 +1139,11 @@ function renderStaticEntries(entries: FallbackListEntry[]) {
 
     return (
       <View key={entry.key}>
-        {renderFallbackListEntry({ item: entry, index, target: "Cell" })}
+        {renderFallbackListEntry({ item: entry })}
         <FallbackListItemSeparator leadingItem={entry} trailingItem={trailingItem} />
       </View>
     );
   });
-}
-
-function getEntryType(item: FallbackListEntry) {
-  return item.type === "row" ? item.rowType : item.type;
 }
 
 function getEntryKey(item: FallbackListEntry) {
@@ -1955,7 +1917,9 @@ export function NativeListRoot({
   const navigation = useContext(NavigationContext) as NavigationWithFocusEvents | undefined;
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
-  const flashListRef = useRef<FlashListRef<FallbackListEntry> | null>(null);
+  const flatListRef = useRef<FlatList<FallbackListEntry> | null>(null);
+  const scrollToIndexRetryRef = useRef({ attempts: 0, index: -1 });
+  const scrollToIndexRetryFrameRef = useRef<number | undefined>(undefined);
   const listScrollGenerationRef = useRef(0);
   const currentWebScrollOffsetRef = useRef(0);
   const pendingWebScrollRestoreRef = useRef(false);
@@ -1965,7 +1929,7 @@ export function NativeListRoot({
   const captureWebScrollPosition = useCallback(() => {
     if (!isRestoreScroll) return;
 
-    const actualOffset = getWebScrollableNode(flashListRef.current)?.scrollTop;
+    const actualOffset = getWebScrollableNode(flatListRef.current)?.scrollTop;
     const offset = Math.max(0, actualOffset ?? currentWebScrollOffsetRef.current);
     currentWebScrollOffsetRef.current = offset;
     savedWebScrollOffsetRef.current = offset;
@@ -2001,7 +1965,7 @@ export function NativeListRoot({
     onScroll,
     tracksNavigationBarScrollEdge,
   });
-  const handleFlashListScroll = useCallback(
+  const handleFlatListScroll = useCallback(
     (event: ScrollEvent) => {
       trackedOnScroll?.(event);
       // native-stack's Web fallback can emit a final zero-offset event while hiding this route.
@@ -2025,16 +1989,16 @@ export function NativeListRoot({
     const offset = savedWebScrollOffsetRef.current;
     if (offset <= 0) return;
 
-    flashListRef.current?.scrollToOffset({ animated: false, offset });
-    const scrollableNode = getWebScrollableNode(flashListRef.current);
+    flatListRef.current?.scrollToOffset({ animated: false, offset });
+    const scrollableNode = getWebScrollableNode(flatListRef.current);
     if (scrollableNode != null) {
       scrollableNode.scrollTop = offset;
     }
   }, [contentOffset]);
   const getActualWebScrollOffset = useCallback(() => {
-    return getWebScrollableNode(flashListRef.current)?.scrollTop ?? null;
+    return getWebScrollableNode(flatListRef.current)?.scrollTop ?? null;
   }, []);
-  const handleFlashListLayout = useCallback(
+  const handleFlatListLayout = useCallback(
     (event: LayoutChangeEvent) => {
       onLayout?.(event);
       if (!isRestoreScroll || event.nativeEvent.layout.height <= 0) return;
@@ -2043,6 +2007,46 @@ export function NativeListRoot({
     },
     [onLayout, restoreWebScrollPosition],
   );
+  const handleScrollToIndexFailed = useCallback(
+    ({ averageItemLength, index }: { averageItemLength: number; index: number }) => {
+      const retryState = scrollToIndexRetryRef.current;
+      if (retryState.index !== index) {
+        retryState.index = index;
+        retryState.attempts = 0;
+      }
+      if (retryState.attempts >= 2) return;
+
+      retryState.attempts += 1;
+      flatListRef.current?.scrollToOffset({
+        animated: false,
+        offset: Math.max(0, averageItemLength * index),
+      });
+      if (scrollToIndexRetryFrameRef.current != null) {
+        cancelAnimationFrame(scrollToIndexRetryFrameRef.current);
+      }
+      scrollToIndexRetryFrameRef.current = requestAnimationFrame(() => {
+        scrollToIndexRetryFrameRef.current = undefined;
+        flatListRef.current?.scrollToIndex({ animated: false, index });
+      });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    scrollToIndexRetryRef.current = { attempts: 0, index: initialScrollIndex ?? -1 };
+    if (initialScrollIndex != null) {
+      scrollToIndexRetryFrameRef.current = requestAnimationFrame(() => {
+        scrollToIndexRetryFrameRef.current = undefined;
+        flatListRef.current?.scrollToIndex({ animated: false, index: initialScrollIndex });
+      });
+    }
+    return () => {
+      if (scrollToIndexRetryFrameRef.current != null) {
+        cancelAnimationFrame(scrollToIndexRetryFrameRef.current);
+        scrollToIndexRetryFrameRef.current = undefined;
+      }
+    };
+  }, [initialScrollIndex]);
 
   useEffect(() => {
     if (!isRestoreScroll || navigation == null || contentOffset != null) return;
@@ -2101,7 +2105,7 @@ export function NativeListRoot({
       savedWebScrollOffsetRef.current = currentWebScrollOffsetRef.current;
     });
     const unsubscribeFocus = navigation.addListener("focus", requestScrollRestore);
-    // The Web native-stack transition may reset FlashList after focus has already restored it.
+    // The Web native-stack transition may reset FlatList after focus has already restored it.
     // Start a fresh verified restore once the transition itself has finished.
     const unsubscribeTransitionEnd = navigation.addListener("transitionEnd", requestScrollRestore);
 
@@ -2162,7 +2166,6 @@ export function NativeListRoot({
     ...(contentTopPadding != null ? { paddingTop: contentTopPadding } : null),
     ...(contentBottomPadding != null ? { paddingBottom: contentBottomPadding } : null),
   };
-  const shouldUseTrueSheetScrollView = insideTrueSheet && os() === "android";
   const handleRefresh =
     onRefresh == null
       ? undefined
@@ -2176,44 +2179,6 @@ export function NativeListRoot({
           }
         };
 
-  if (shouldUseTrueSheetScrollView) {
-    return (
-      <NativeListEditModeProvider
-        defaultSelectedIds={defaultSelectedIds}
-        editMode={editMode}
-        editModeIcon={editModeIcon}
-        editModeSelectedIcon={editModeSelectedIcon}
-        editModeSelectedSfSymbol={editModeSelectedSfSymbol}
-        editModeSfSymbol={editModeSfSymbol}
-        onSelectedIdsChange={onSelectedIdsChange}
-        selectedIds={selectedIds}
-      >
-        <ScrollView
-          alwaysBounceVertical={alwaysBounceVertical}
-          contentContainerStyle={[
-            styles.rootContent,
-            styles.scrollViewportFill,
-            rootBackground,
-            contentSpacingStyle,
-            contentContainerStyle,
-          ]}
-          keyboardShouldPersistTaps={keyboardShouldPersistTaps ?? "handled"}
-          nestedScrollEnabled={nestedScrollEnabled ?? true}
-          onLayout={onLayout}
-          onScroll={trackedOnScroll}
-          onScrollBeginDrag={onScrollBeginDrag}
-          scrollEnabled={scrollable}
-          scrollEventThrottle={resolvedScrollEventThrottle}
-          showsVerticalScrollIndicator={showsVerticalScrollIndicator ?? true}
-          style={[styles.root, rootBackground, style]}
-          {...scrollViewProps}
-        >
-          {renderStaticEntries(entries)}
-        </ScrollView>
-      </NativeListEditModeProvider>
-    );
-  }
-
   return (
     <NativeListEditModeProvider
       defaultSelectedIds={defaultSelectedIds}
@@ -2226,7 +2191,7 @@ export function NativeListRoot({
       selectedIds={selectedIds}
     >
       <FallbackListInteractionContext.Provider value={listInteractionContext}>
-        <FlashList
+        <FlatList
           automaticallyAdjustsScrollIndicatorInsets={
             manuallyAdjustNormalPageIndicator ? false : automaticallyAdjustsScrollIndicatorInsets
           }
@@ -2243,16 +2208,16 @@ export function NativeListRoot({
           contentOffset={contentOffset}
           data={entries}
           extraData={entries}
-          getItemType={getEntryType}
-          initialScrollIndex={initialScrollIndex}
           ItemSeparatorComponent={FallbackListItemSeparator}
           keyboardShouldPersistTaps={keyboardShouldPersistTaps ?? "handled"}
           keyExtractor={getEntryKey}
           nestedScrollEnabled={nestedScrollEnabled ?? true}
-          onLayout={handleFlashListLayout}
-          onScroll={handleFlashListScroll}
+          onLayout={handleFlatListLayout}
+          onScroll={handleFlatListScroll}
           onScrollBeginDrag={handleScrollBeginDrag}
-          ref={flashListRef}
+          onScrollToIndexFailed={handleScrollToIndexFailed}
+          ref={flatListRef}
+          removeClippedSubviews={false}
           refreshControl={
             onRefresh != null ? (
               <RefreshControl
@@ -2266,7 +2231,7 @@ export function NativeListRoot({
           }
           renderItem={renderFallbackListEntry}
           scrollEnabled={scrollable}
-          scrollEventThrottle={scrollEventThrottle ?? 16}
+          scrollEventThrottle={resolvedScrollEventThrottle}
           showsVerticalScrollIndicator={showsVerticalScrollIndicator ?? true}
           scrollIndicatorInsets={
             indicatorBottomInset != null
