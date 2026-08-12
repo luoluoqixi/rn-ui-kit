@@ -949,6 +949,7 @@ function NativeListRoot({
   editModeSfSymbol,
   fixesIOS26NestedScrollIndicatorSafeArea,
   initialScrollTarget,
+  iosListStyle = "insetGrouped",
   native = true,
   nestedScrollEnabled,
   navigationBarScrollEdgeOptions,
@@ -1105,7 +1106,7 @@ function NativeListRoot({
             refreshEnabled={refreshControlEnabled}
             refreshing={refreshControlEnabled && nativeRefreshing}
             modifiers={[
-              listStyle("insetGrouped"),
+              listStyle(iosListStyle),
               listSectionSpacing("compact"),
               /**
                * iOS 15 的 SwiftUI List 不支持 `scrollContentBackground(.hidden)`，

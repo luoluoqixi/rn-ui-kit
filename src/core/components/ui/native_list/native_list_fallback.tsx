@@ -2152,6 +2152,7 @@ export function NativeListRoot({
   editModeSfSymbol,
   fixesIOS26NestedScrollIndicatorSafeArea: _fixesIOS26NestedScrollIndicatorSafeArea,
   initialScrollTarget,
+  iosListStyle: _iosListStyle,
   native: _native,
   navigationBarScrollEdgeOptions,
   onRefresh,
@@ -2165,6 +2166,7 @@ export function NativeListRoot({
   ...rest
 }: NativeListRootProps) {
   void _native;
+  void _iosListStyle;
   void _fixesIOS26NestedScrollIndicatorSafeArea;
   void _dismissKeyboardOnTap;
   const {

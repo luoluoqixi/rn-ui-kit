@@ -16,6 +16,15 @@ export type { NativeListSectionContent } from "./section_content";
 
 export type NativeListSelectionId = string | number;
 
+/** iOS 原生 SwiftUI List 支持的系统列表样式。 */
+export type NativeListIosStyle =
+  | "automatic"
+  | "plain"
+  | "inset"
+  | "insetGrouped"
+  | "grouped"
+  | "sidebar";
+
 /**
  * NativeList 行使用的 ContextMenu 配置。trigger 由列表行自身提供；其余 ContextMenu
  * props（包括 `items`、自定义 children、`contentProps`、`itemProps` 与事件）均可直接传入。
@@ -232,6 +241,11 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
     fixesIOS26NestedScrollIndicatorSafeArea?: boolean;
     /** iOS 原生 List 初次挂载后滚动到的目标 id。 */
     initialScrollTarget?: string | number;
+    /**
+     * iOS 原生 SwiftUI List 的系统样式。默认 `insetGrouped`。
+     * 使用 `plain` 可显示为无分组圆角、横向铺满的列表；fallback、Android 与 Web 忽略此项。
+     */
+    iosListStyle?: NativeListIosStyle;
     /**
      * iOS 原生 List 空白区域被点按时收起当前键盘。
      * 默认关闭，避免改变已有页面的原生 List 点按语义。

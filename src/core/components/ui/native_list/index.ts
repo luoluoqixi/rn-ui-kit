@@ -18,6 +18,7 @@ export { useNativeListEditMode } from "./edit_mode";
 export type {
   NativeListContextMenuProps,
   NativeListInputItemProps,
+  NativeListIosStyle,
   NativeListMenuItemProps,
   NativeListRootProps,
   NativeListSelectionId,

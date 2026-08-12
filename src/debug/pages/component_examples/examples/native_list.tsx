@@ -30,8 +30,9 @@ import {
   NativeListSelectItem,
   NativeListSwitchItem,
   NativeListTextAreaItem,
+  type NativeListIosStyle,
   Select,
-  SelectItemData,
+  type SelectItemData,
   Switch,
   Text,
   isIos15,
@@ -59,6 +60,15 @@ const NATIVE_LIST_BACKUP_OPTIONS = [
 const NATIVE_LIST_SORT_LIST: SelectItemData[] = [
   { value: "defaultSort", label: "默认排序" },
   { value: "timeSort", label: "时间排序" },
+];
+
+const NATIVE_LIST_IOS_STYLE_OPTIONS: SelectItemData[] = [
+  { value: "automatic", label: "系统自动" },
+  { value: "plain", label: "通栏无圆角" },
+  { value: "inset", label: "内缩" },
+  { value: "insetGrouped", label: "圆角分组" },
+  { value: "grouped", label: "分组" },
+  { value: "sidebar", label: "侧边栏" },
 ];
 
 function NativeListSortTrailing() {
@@ -89,6 +99,25 @@ function NativeListSortTrailing() {
 }
 
 const styles = StyleSheet.create({
+  exampleControlCopy: { flex: 1, gap: 2, minWidth: 0 },
+  exampleControlRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 16,
+    justifyContent: "space-between",
+    minHeight: 48,
+  },
+  exampleIosStyleTrigger: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexShrink: 0,
+    gap: 4,
+    justifyContent: "flex-end",
+    maxWidth: 150,
+    minHeight: 36,
+    minWidth: 112,
+    paddingHorizontal: 10,
+  },
   exampleHeader: { gap: 10 },
   exampleRoot: { flex: 1, gap: 12, minHeight: 0, padding: 16 },
   nativeListFrame: { flex: 1, minHeight: 0 },
@@ -101,6 +130,7 @@ export function NativeListExample() {
   const [native, setNative] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Array<string | number>>([]);
   const [fallbackMounted, setFallbackMounted] = useState(true);
+  const [iosListStyle, setIosListStyle] = useState<NativeListIosStyle>("insetGrouped");
   const [theme, setTheme] = useState<string | null>("system");
   const [syncInterval, setSyncInterval] = useState<string | null>("hourly");
   const [backupInterval, setBackupInterval] = useState("four-hours");
@@ -125,12 +155,6 @@ export function NativeListExample() {
   return (
     <View style={styles.exampleRoot}>
       <View style={styles.exampleHeader}>
-        <Text fontSize="$5" fontWeight="600">
-          工作区设置
-        </Text>
-        <Text opacity={0.6}>
-          完整覆盖下拉刷新、导航、开关、单选、Select 与平台原生 picker 变体。
-        </Text>
         <Switch
           checked={native}
           label="使用原生 List 外观"
@@ -158,6 +182,34 @@ export function NativeListExample() {
           labelPosition="end"
           onCheckedChange={setCustomEditModeIcon}
         />
+        {os() === "ios" ? (
+          <View style={styles.exampleControlRow}>
+            <View style={styles.exampleControlCopy}>
+              <Text fontSize={15} opacity={native ? 1 : 0.5}>
+                iOS List 样式
+              </Text>
+            </View>
+            <Select
+              disabled={!native}
+              native
+              nativeDropdownAnchorWidth={180}
+              nativeTrigger
+              nativeTriggerContainerStyle={styles.exampleIosStyleTrigger}
+              nativeTriggerLabelProps={{
+                fontSize: 14,
+                numberOfLines: 1,
+                opacity: native ? 1 : 0.5,
+              }}
+              onValueChange={(nextStyle) => {
+                if (nextStyle != null) {
+                  setIosListStyle(nextStyle as NativeListIosStyle);
+                }
+              }}
+              options={NATIVE_LIST_IOS_STYLE_OPTIONS}
+              value={iosListStyle}
+            />
+          </View>
+        ) : null}
       </View>
       <View style={styles.nativeListFrame}>
         {native || fallbackMounted ? (
@@ -196,7 +248,8 @@ export function NativeListExample() {
             }
             refreshEnabledInEditMode={false}
             fixesIOS26NestedScrollIndicatorSafeArea
-            key={native ? "native-list" : "fallback-list"}
+            iosListStyle={iosListStyle}
+            key={native ? `native-list-${iosListStyle}` : "fallback-list"}
             native={native}
             nestedScrollEnabled
             onSelectedIdsChange={setSelectedIds}
