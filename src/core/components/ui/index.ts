@@ -8,6 +8,7 @@ export * from "./context_menu";
 export * from "./dialog";
 export * from "./flash_list";
 export * from "./form";
+export * from "./glass_effect";
 export * from "./image";
 export * from "./native_list";
 export * from "./native_trigger";

@@ -12,6 +12,7 @@ import { TextAreaExample } from "./examples/text_area";
 import { SelectExample } from "./examples/select";
 import { RadioGroupExample } from "./examples/radio_group";
 import { FormExample } from "./examples/form";
+import { GlassEffectExample } from "./examples/glass_effect";
 import { LabelExample } from "./examples/label";
 import { AccordionExample } from "./examples/accordion";
 import { TabsExample } from "./examples/tabs";
@@ -120,6 +121,14 @@ export const componentExampleDefinitions: ComponentExampleDefinition[] = [
     group: "输入与表单",
     key: "form",
     label: "Form",
+  },
+  {
+    Component: GlassEffectExample,
+    group: "组合与布局",
+    handlesHeaderInsets: true,
+    key: "glass-effect",
+    label: "GlassEffect",
+    layout: "fill",
   },
   {
     Component: LabelExample,

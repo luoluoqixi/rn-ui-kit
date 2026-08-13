@@ -1,6 +1,7 @@
 export * from "./accessibility";
 export * from "./color";
 export * from "./haptics";
+export * from "./keyboard";
 export * from "./layout";
 export * from "./navigation";
 export * from "./overlay";

@@ -1,5 +1,6 @@
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TamaguiProvider, Theme } from "tamagui";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 
 import { NativeDialogProvider } from "../native_dialog";
 import { Toaster } from "../toast/toaster";
@@ -13,6 +14,7 @@ export function UIProvider({
   children,
   colorScheme,
   defaultNativeHapticsEnabled = false,
+  keyboardAnimationProviderProps,
   preferences,
   tamaguiConfig,
 }: UIProviderProps) {
@@ -22,17 +24,19 @@ export function UIProvider({
   );
 
   return (
-    <TamaguiProvider config={tamaguiConfig} defaultTheme={colorScheme} insets={insets}>
-      <UiPreferencesProvider accentThemeNames={accentThemeNames} preferences={preferences}>
-        <Theme name={resolvedAccentThemeName as never}>
-          <NativeDialogProvider>
-            <NativeHapticsProvider enabledByDefault={defaultNativeHapticsEnabled}>
-              {children}
-              <Toaster accentThemeName={resolvedAccentThemeName} />
-            </NativeHapticsProvider>
-          </NativeDialogProvider>
-        </Theme>
-      </UiPreferencesProvider>
-    </TamaguiProvider>
+    <KeyboardProvider {...keyboardAnimationProviderProps}>
+      <TamaguiProvider config={tamaguiConfig} defaultTheme={colorScheme} insets={insets}>
+        <UiPreferencesProvider accentThemeNames={accentThemeNames} preferences={preferences}>
+          <Theme name={resolvedAccentThemeName as never}>
+            <NativeDialogProvider>
+              <NativeHapticsProvider enabledByDefault={defaultNativeHapticsEnabled}>
+                {children}
+                <Toaster accentThemeName={resolvedAccentThemeName} />
+              </NativeHapticsProvider>
+            </NativeDialogProvider>
+          </Theme>
+        </UiPreferencesProvider>
+      </TamaguiProvider>
+    </KeyboardProvider>
   );
 }

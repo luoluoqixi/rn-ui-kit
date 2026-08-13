@@ -127,7 +127,8 @@ export function RnUiKitComponentExampleDetailPage({
     const fillBodyStyle = [
       styles.detailBody,
       { backgroundColor: pageBackgroundColor },
-      headerTransparent && { paddingTop: headerHeight },
+      headerTransparent &&
+        !definition.handlesHeaderInsets && { paddingTop: headerHeight },
     ];
 
     if (layoutHost === "nativeSheet") {
