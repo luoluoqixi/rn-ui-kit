@@ -20,6 +20,7 @@ import {
   TextInput,
   View,
   type StyleProp,
+  type TextStyle,
   type ViewStyle,
   useColorScheme,
 } from "react-native";
@@ -58,6 +59,19 @@ const MODE_OPTIONS: Array<{ label: string; value: GlassExampleMode }> = [
   { label: "组合式玻璃按钮容器", value: "container" },
   { label: "玻璃材质样式对照", value: "style-gallery" },
 ];
+
+const WEB_SEARCH_INPUT_STYLE: StyleProp<TextStyle> =
+  Platform.OS === "web"
+    ? ({
+        backgroundColor: "transparent",
+        borderColor: "transparent",
+        borderWidth: 0,
+        boxShadow: "none",
+        outlineColor: "transparent",
+        outlineStyle: "none",
+        outlineWidth: 0,
+      } as unknown as TextStyle)
+    : undefined;
 
 const GLASS_STYLE_OPTIONS = [
   { label: "Regular", value: "regular" },
@@ -261,7 +275,11 @@ function GlassEffectPreview({
             placeholderTextColor={secondaryColor}
             ref={searchInputRef}
             returnKeyType="search"
-            style={[styles.searchInput, { color: foregroundColor }]}
+            style={[
+              styles.searchInput,
+              WEB_SEARCH_INPUT_STYLE,
+              { color: foregroundColor },
+            ]}
             value={search}
           />
         </GlassEffect>
