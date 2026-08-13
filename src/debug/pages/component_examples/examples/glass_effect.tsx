@@ -11,8 +11,6 @@ import {
   Search,
   X,
 } from "@tamagui/lucide-icons-2";
-import { Button as SwiftButton, Host } from "@expo/ui/swift-ui";
-import { buttonStyle, controlSize, labelStyle, tint } from "@expo/ui/swift-ui/modifiers";
 import { useRef, useState, type ReactNode } from "react";
 import {
   Keyboard,
@@ -25,7 +23,6 @@ import {
   type ViewStyle,
   useColorScheme,
 } from "react-native";
-import type { SFSymbol } from "sf-symbols-typescript";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Button,
@@ -111,57 +108,36 @@ function getModeLabel(mode: GlassExampleMode) {
   return MODE_OPTIONS.find((option) => option.value === mode)?.label ?? mode;
 }
 
-type NativeGlassIconButtonProps = {
+type ExampleToolbarButtonProps = {
   accessibilityLabel: string;
   appearance?: "glass" | "plain";
   fallbackIcon: ReactNode;
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
-  systemImage: SFSymbol;
-  tintColor: string;
+  title: string;
 };
 
-function NativeGlassIconButton({
+function ExampleToolbarButton({
   accessibilityLabel,
   appearance = "glass",
   fallbackIcon,
   onPress,
   style,
-  systemImage,
-  tintColor,
-}: NativeGlassIconButtonProps) {
-  if (Platform.OS === "ios") {
-    return (
-      <Host ignoreSafeArea="all" style={[styles.nativeIconButton, style]}>
-        <SwiftButton
-          label={accessibilityLabel}
-          modifiers={[
-            buttonStyle(appearance),
-            controlSize("large"),
-            labelStyle("iconOnly"),
-            tint(tintColor),
-          ]}
-          onPress={onPress}
-          systemImage={systemImage}
-        />
-      </Host>
-    );
-  }
-
+  title,
+}: ExampleToolbarButtonProps) {
+  const native = Platform.OS === "ios";
   return (
-    <Pressable
-      accessibilityLabel={accessibilityLabel}
-      accessibilityRole="button"
+    <Button
+      aria-label={accessibilityLabel}
+      chromeless={!native && appearance === "plain"}
+      circular={!native}
+      native={native}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.nativeIconButton,
-        appearance === "glass" ? styles.nativeIconButtonFallback : undefined,
-        pressed ? styles.nativeIconButtonPressed : undefined,
-        style,
-      ]}
+      style={[styles.nativeIconButton, style]}
+      title={native ? title : undefined}
     >
-      <View pointerEvents="none">{fallbackIcon}</View>
-    </Pressable>
+      {native ? undefined : fallbackIcon}
+    </Button>
   );
 }
 
@@ -289,7 +265,7 @@ function GlassEffectPreview({
             value={search}
           />
         </GlassEffect>
-        <NativeGlassIconButton
+        <ExampleToolbarButton
           accessibilityLabel={searchFocused ? "取消搜索" : "新建内容"}
           fallbackIcon={
             searchFocused ? (
@@ -308,8 +284,7 @@ function GlassEffectPreview({
             Keyboard.dismiss();
             onAction("取消搜索");
           }}
-          systemImage={searchFocused ? "xmark" : "square.and.pencil"}
-          tintColor={foregroundColor}
+          title={searchFocused ? "×" : "新建"}
         />
       </GlassEffect>
     );
@@ -442,17 +417,15 @@ function GlassEffectPreview({
   }
 
   const buttonDefinitions = [
-    { Icon: ChevronLeft, systemImage: "chevron.left" as const, title: "返回", action: "返回" },
-    { Icon: Plus, systemImage: "plus" as const, title: "新增", action: "新增" },
+    { Icon: ChevronLeft, title: "返回", action: "返回" },
+    { Icon: Plus, title: "新增", action: "新增" },
     {
       Icon: FolderPlus,
-      systemImage: "folder.badge.plus" as const,
       title: "文件夹",
       action: "新建文件夹",
     },
     {
       Icon: MoreHorizontal,
-      systemImage: "ellipsis" as const,
       title: "更多",
       action: "更多操作",
     },
@@ -478,14 +451,13 @@ function GlassEffectPreview({
       testID="glass-effect-floating-buttons"
     >
       {buttonDefinitions.map(({ Icon, ...button }) => (
-        <NativeGlassIconButton
+        <ExampleToolbarButton
           accessibilityLabel={button.title}
           appearance="plain"
           fallbackIcon={<Icon color={foregroundColor} size={23} />}
           key={button.action}
           onPress={() => onAction(button.action)}
-          systemImage={button.systemImage}
-          tintColor={foregroundColor}
+          title={button.title}
         />
       ))}
     </GlassEffect>
@@ -539,7 +511,6 @@ export function GlassEffectExample() {
               value: mode,
             }}
             title="工具栏展示模式"
-            value={getModeLabel(mode)}
           />
           <NativeListItem
             chevron={false}
@@ -567,7 +538,6 @@ export function GlassEffectExample() {
               value: effectStyle,
             }}
             title="glassEffectStyle"
-            value={effectStyle}
           />
           <NativeListSwitchItem
             switchProps={{
@@ -584,7 +554,6 @@ export function GlassEffectExample() {
               value: String(animationDuration),
             }}
             title="animationDuration"
-            value={`${animationDuration} 秒`}
           />
           <NativeListSelectItem
             selectProps={{
@@ -593,7 +562,6 @@ export function GlassEffectExample() {
               value: colorScheme,
             }}
             title="colorScheme"
-            value={colorScheme}
           />
           <NativeListSelectItem
             selectProps={{
@@ -603,7 +571,6 @@ export function GlassEffectExample() {
               value: tintColor ?? "none",
             }}
             title="tintColor"
-            value={TINT_OPTIONS.find((option) => option.value === (tintColor ?? "none"))?.label}
           />
           <NativeListSwitchItem
             switchProps={{ checked: interactive, onCheckedChange: setInteractive }}
@@ -622,7 +589,6 @@ export function GlassEffectExample() {
               value: String(cornerRadius),
             }}
             title="圆角"
-            value={cornerRadius === 999 ? "胶囊" : `${cornerRadius} pt`}
           />
           <NativeListSelectItem
             selectProps={{
@@ -631,7 +597,6 @@ export function GlassEffectExample() {
               value: String(horizontalInset),
             }}
             title="水平边距"
-            value={`${horizontalInset} pt`}
           />
           <NativeListSelectItem
             selectProps={{
@@ -640,7 +605,6 @@ export function GlassEffectExample() {
               value: String(bottomOffset),
             }}
             title="底部悬浮距离"
-            value={`${bottomOffset} pt`}
           />
           <NativeListSelectItem
             selectProps={{
@@ -649,7 +613,6 @@ export function GlassEffectExample() {
               value: String(containerSpacing),
             }}
             title="GlassContainer spacing"
-            value={`${containerSpacing} pt`}
           />
         </NativeListSection>
 
@@ -675,7 +638,6 @@ export function GlassEffectExample() {
               value: String(buttonCount),
             }}
             title="原生 Button 数量"
-            value={`${buttonCount} 个`}
           />
           <NativeListInputItem
             inputProps={{
@@ -801,14 +763,7 @@ const styles = StyleSheet.create({
   musicCopy: { flex: 1, gap: 2, minWidth: 0 },
   musicToolbar: { gap: 10 },
   nativeButtonsToolbar: { gap: 6, justifyContent: "space-around" },
-  nativeIconButton: { height: 52, width: 52 },
-  nativeIconButtonFallback: {
-    alignItems: "center",
-    backgroundColor: "rgba(242, 242, 247, 0.92)",
-    borderRadius: 26,
-    justifyContent: "center",
-  },
-  nativeIconButtonPressed: { opacity: 0.55 },
+  nativeIconButton: { height: 52, padding: 0, width: 52 },
   searchBarRow: {
     alignItems: "center",
     flexDirection: "row",
