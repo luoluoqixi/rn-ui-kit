@@ -15,7 +15,7 @@ import { isWeb, os } from "../utils/platform";
 import { resolveAriaLabel, triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
 import { NativeTrigger } from "../native_trigger";
 
-import { resolveIosMenuItemGroups } from "./item_groups";
+import { resolveAndroidMenuItems, resolveIosMenuItemGroups } from "./item_groups";
 import type {
   MenuArrowProps,
   MenuCheckboxItemProps,
@@ -127,6 +127,7 @@ function MenuRoot(props: MenuProps) {
   const resolvedNativeAnchorAlignment = nativeAnchorAlignment ?? "center";
   const web = isWeb();
   const ios = os() === "ios";
+  const android = os() === "android";
   const resolvedPlacement = rootProps.placement ?? (web ? "bottom" : undefined);
   const [uncontrolledOpen, setUncontrolledOpen] = useState(Boolean(rootProps.defaultOpen));
   const [willOpen, setWillOpen] = useState(Boolean(rootProps.defaultOpen));
@@ -190,7 +191,11 @@ function MenuRoot(props: MenuProps) {
 
   // Menu 在 native 上浮动定位后视觉顺序反转，统一反转 children / items
   const resolvedChildren = Children.toArray(children).reverse();
-  const renderItem = (item: MenuItemData, depth: number): ReactNode => {
+  const renderItem = (
+    item: MenuItemData,
+    depth: number,
+    separatorBefore = false,
+  ): ReactNode => {
     if (item.separator) {
       return <MenuSeparator key={item.value} />;
     }
@@ -211,6 +216,7 @@ function MenuRoot(props: MenuProps) {
         <MenuSub key={item.value}>
           <MenuSubTrigger
             {...(itemProps as MenuSubTriggerProps)}
+            {...({ separatorBefore: separatorBefore || undefined } as any)}
             aria-label={accessibilityLabel}
             destructive={item.destructive ?? itemProps?.destructive}
             disabled={item.disabled ?? itemProps?.disabled}
@@ -241,6 +247,7 @@ function MenuRoot(props: MenuProps) {
     return (
       <MenuItem
         {...itemProps}
+        {...({ separatorBefore: separatorBefore || undefined } as any)}
         aria-label={accessibilityLabel}
         destructive={item.destructive ?? itemProps?.destructive}
         disabled={item.disabled ?? itemProps?.disabled}
@@ -276,6 +283,12 @@ function MenuRoot(props: MenuProps) {
 
       // 没有有效分割线时，条目仍是 Content 的直接 children，需要沿用原来的扁平反转。
       return [...(groups[0] ?? [])].reverse().map((item) => renderItem(item, depth));
+    }
+
+    if (android) {
+      return resolveAndroidMenuItems(menuItems).map(({ item, separatorBefore }) =>
+        renderItem(item, depth, separatorBefore),
+      );
     }
 
     return menuItems.map((item) => renderItem(item, depth));

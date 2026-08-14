@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  resolveAndroidMenuItems,
   resolveIosMenuItemGroups,
   splitMenuItemsBySeparators,
 } from "../src/core/components/ui/menu/item_groups";
@@ -65,5 +66,41 @@ describe("resolveIosMenuItemGroups", () => {
     resolveIosMenuItemGroups(items);
 
     expect(items.map((item) => item.value)).toEqual(["first", "separator", "second"]);
+  });
+});
+
+describe("resolveAndroidMenuItems", () => {
+  test("将 separator 标记到下一有效条目并保持顺序", () => {
+    const items = [
+      { value: "select-workspace" },
+      { value: "create-workspace" },
+      { separator: true, value: "separator-01" },
+      { value: "sort-workspaces" },
+      { separator: true, value: "separator-02" },
+      { value: "settings" },
+    ];
+
+    expect(resolveAndroidMenuItems(items)).toEqual([
+      { item: { value: "select-workspace" }, separatorBefore: false },
+      { item: { value: "create-workspace" }, separatorBefore: false },
+      { item: { value: "sort-workspaces" }, separatorBefore: true },
+      { item: { value: "settings" }, separatorBefore: true },
+    ]);
+  });
+
+  test("忽略首尾及连续 separator", () => {
+    const items = [
+      { separator: true, value: "leading" },
+      { value: "first" },
+      { separator: true, value: "separator-1" },
+      { separator: true, value: "separator-2" },
+      { value: "second" },
+      { separator: true, value: "trailing" },
+    ];
+
+    expect(resolveAndroidMenuItems(items)).toEqual([
+      { item: { value: "first" }, separatorBefore: false },
+      { item: { value: "second" }, separatorBefore: true },
+    ]);
   });
 });

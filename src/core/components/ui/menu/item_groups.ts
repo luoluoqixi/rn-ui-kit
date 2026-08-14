@@ -35,3 +35,31 @@ export function splitMenuItemsBySeparators(items: MenuItemData[]): MenuItemData[
 export function resolveIosMenuItemGroups(items: MenuItemData[]): MenuItemData[][] {
   return splitMenuItemsBySeparators(items).reverse();
 }
+
+export interface ResolvedAndroidMenuItem {
+  item: MenuItemData;
+  separatorBefore: boolean;
+}
+
+/**
+ * Android PopupMenu 没有独立 separator action；将分割线折叠为下一有效条目的标记。
+ * 首尾及连续 separator 不产生空行。
+ */
+export function resolveAndroidMenuItems(items: MenuItemData[]): ResolvedAndroidMenuItem[] {
+  const resolvedItems: ResolvedAndroidMenuItem[] = [];
+  let separatorBefore = false;
+
+  for (const item of items) {
+    if (item.separator) {
+      if (resolvedItems.length > 0) {
+        separatorBefore = true;
+      }
+      continue;
+    }
+
+    resolvedItems.push({ item, separatorBefore });
+    separatorBefore = false;
+  }
+
+  return resolvedItems;
+}

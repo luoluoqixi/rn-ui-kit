@@ -17,7 +17,7 @@ export interface MenuItemData {
   "label"?: ReactNode;
   "onPress"?: MenuItemProps["onSelect"];
   "onSelect"?: MenuItemProps["onSelect"];
-  /** 将当前占位条目渲染为分割线。Web 与 iOS 支持；Android 暂时忽略。 */
+  /** 将当前占位条目渲染为分割线。原生平台使用系统菜单分组样式。 */
   "separator"?: boolean;
   /** 原生 Menu 中标识当前项；Android 会应用选中状态。 */
   "selected"?: boolean;
