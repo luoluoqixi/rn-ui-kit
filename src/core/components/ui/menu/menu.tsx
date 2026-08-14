@@ -247,7 +247,10 @@ function MenuRoot(props: MenuProps) {
         justify={itemProps?.justify ?? (hasTrailingContent ? "space-between" : undefined)}
         key={item.value}
         onSelect={item.onSelect ?? item.onPress}
-        {...({ selected: item.selected } as any)}
+        {...({
+          androidIconColor: item.iconProps?.androidIconColor,
+          selected: item.selected,
+        } as any)}
         textValue={textValue}
       >
         <MenuItemTitle>{label}</MenuItemTitle>

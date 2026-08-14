@@ -20,6 +20,8 @@ export interface SelectItemData {
   isDisabled?: boolean;
   label: string;
   startContent?: ReactNode;
+  /** 选项颜色圆点。Web/Sheet 显示在行尾，原生 dropdown/dialog 映射为平台图标。 */
+  swatchColor?: string;
   value: string;
 }
 

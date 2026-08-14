@@ -1711,6 +1711,44 @@ function NativeIos15MenuSelectRow({
     selectProps.onValueChange?.(nextValue);
   };
 
+  const renderSelectOption = (item: ResolvedSelectItemData) => {
+    const optionKey = `${item.groupKey}:${item.value}`;
+    const optionDisabled = Boolean(item.disabled || item.isDisabled);
+    const isSelected = item.value === selectedValue;
+
+    if (item.swatchColor == null) {
+      return (
+        <SwiftButton
+          key={optionKey}
+          label={item.label}
+          modifiers={[disabledModifier(optionDisabled)]}
+          onPress={() => handleSelection(item.value)}
+          systemImage={isSelected ? "checkmark" : undefined}
+        />
+      );
+    }
+
+    const swatchColor = toSwiftUIHexColor(item.swatchColor) ?? item.swatchColor;
+
+    return (
+      <SwiftButton
+        key={optionKey}
+        modifiers={[disabledModifier(optionDisabled)]}
+        onPress={() => handleSelection(item.value)}
+      >
+        <HStack
+          modifiers={[frame({ maxWidth: 99999, alignment: "leading" })]}
+          spacing={8}
+        >
+          {isSelected ? <Image size={14} systemName="checkmark" /> : null}
+          <SwiftText>{item.label}</SwiftText>
+          <Spacer minLength={24} />
+          <Image color={swatchColor} size={14} systemName="circle.fill" />
+        </HStack>
+      </SwiftButton>
+    );
+  };
+
   if (!fadeTitleOnOpen) {
     const leadingContent = (
       <HStack spacing={12}>
@@ -1803,15 +1841,7 @@ function NativeIos15MenuSelectRow({
               disabledModifier(editMode || disabled),
             ]}
           >
-            {selectItems.map((item) => (
-              <SwiftButton
-                key={`${item.groupKey}:${item.value}`}
-                label={item.label}
-                modifiers={[disabledModifier(Boolean(item.disabled || item.isDisabled))]}
-                onPress={() => handleSelection(item.value)}
-                systemImage={item.value === selectedValue ? "checkmark" : undefined}
-              />
-            ))}
+            {selectItems.map(renderSelectOption)}
           </SwiftMenu>
         </ZStack>
       </NativeRowContainer>
@@ -1893,15 +1923,7 @@ function NativeIos15MenuSelectRow({
           disabledModifier(editMode || disabled),
         ]}
       >
-        {selectItems.map((item) => (
-          <SwiftButton
-            key={`${item.groupKey}:${item.value}`}
-            label={item.label}
-            modifiers={[disabledModifier(Boolean(item.disabled || item.isDisabled))]}
-            onPress={() => handleSelection(item.value)}
-            systemImage={item.value === selectedValue ? "checkmark" : undefined}
-          />
-        ))}
+        {selectItems.map(renderSelectOption)}
       </SwiftMenu>
     </NativeRowContainer>
   );

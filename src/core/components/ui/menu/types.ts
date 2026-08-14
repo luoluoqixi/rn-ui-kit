@@ -94,7 +94,10 @@ export type MenuGroupProps = ComponentProps<typeof TamaguiMenu.Group>;
 export type MenuLabelProps = ComponentProps<typeof TamaguiMenu.Label>;
 export type MenuItemProps = ComponentProps<typeof TamaguiMenu.Item>;
 export type MenuItemTitleProps = ComponentProps<typeof TamaguiMenu.ItemTitle>;
-export type MenuItemIconProps = ComponentProps<typeof TamaguiMenu.ItemIcon>;
+export type MenuItemIconProps = ComponentProps<typeof TamaguiMenu.ItemIcon> & {
+  /** Android 原生菜单图标颜色。 */
+  androidIconColor?: ColorValue;
+};
 export type MenuCheckboxItemProps = ComponentProps<typeof TamaguiMenu.CheckboxItem>;
 export type MenuRadioGroupProps = ComponentProps<typeof TamaguiMenu.RadioGroup>;
 export type MenuRadioItemProps = ComponentProps<typeof TamaguiMenu.RadioItem>;

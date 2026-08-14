@@ -203,6 +203,25 @@ const WEB_NATIVE_TRIGGER_SELECT_OVERLAY_STYLE = {
 } as const;
 
 const WEB_MENU_CONTENT_Z_INDEX = 2_147_483_647;
+const SELECT_ITEM_INDICATOR_SLOT_WIDTH = 24;
+const SELECT_ITEM_SWATCH_SIZE = 14;
+
+function SelectItemSwatch({ color, leading = false }: { color: string; leading?: boolean }) {
+  return (
+    <View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={{
+        backgroundColor: color,
+        borderRadius: SELECT_ITEM_SWATCH_SIZE / 2,
+        height: SELECT_ITEM_SWATCH_SIZE,
+        marginLeft: leading ? 0 : 8,
+        marginRight: leading ? 8 : 0,
+        width: SELECT_ITEM_SWATCH_SIZE,
+      }}
+    />
+  );
+}
 const WEB_MENU_CONTENT_MAX_WIDTH = "calc(100vw - 32px)";
 const WEB_MENU_CONTENT_MIN_WIDTH = 220;
 const WEB_MENU_SCROLL_VIEW_MAX_HEIGHT =
@@ -967,6 +986,9 @@ function IosNativeSheetSelectList({
                 <NativeListItem
                   chevron={false}
                   disabled={disabled}
+                  iconColor={item.swatchColor}
+                  iconSize={item.swatchColor != null ? 14 : undefined}
+                  iconSlotWidth={item.swatchColor != null ? 24 : undefined}
                   key={item.value}
                   nativeHaptics={nativeHaptics}
                   nativeScrollId={item.value}
@@ -980,6 +1002,7 @@ function IosNativeSheetSelectList({
                         }
                   }
                   selected={item.value === value}
+                  sfSymbol={item.swatchColor != null ? "circle.fill" : undefined}
                   title={item.label}
                 />
               );
@@ -1065,7 +1088,6 @@ const SelectRoot = forwardRef<SelectHandle, SelectProps>(
     const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics);
     const nativeMenuTheme = useTheme();
     const nativeMenuSelectedItemBackgroundColor = nativeMenuTheme.color3?.val;
-    const shouldUseTouchSheetLayout = !isWeb() || selectBehavior.shouldUseWebSheet;
     const resolvedPickerMode =
       nativePickerMode ??
       (platform === "android"
@@ -1073,6 +1095,8 @@ const SelectRoot = forwardRef<SelectHandle, SelectProps>(
         : DEFAULT_IOS_NATIVE_PICKER_MODE);
     const resolvedItemGroups = resolveSelectItemGroups({ itemGroups, items, options });
     const resolvedItems = resolvedItemGroups.flatMap((group) => group.items);
+    const hasSwatchItems = resolvedItems.some((item) => item.swatchColor != null);
+    const shouldUseTouchSheetLayout = !isWeb() || selectBehavior.shouldUseWebSheet;
     const getGroupLabel = (group: ResolvedSelectItemGroupData, groupIndex: number) =>
       group.label ?? (groupIndex === 0 ? itemLabel : null);
     const groupLabelCount = resolvedItemGroups.filter(
@@ -1167,6 +1191,9 @@ const SelectRoot = forwardRef<SelectHandle, SelectProps>(
             }
           >
             {item.startContent}
+            {shouldUseTouchSheetLayout && item.swatchColor != null ? (
+              <SelectItemSwatch color={item.swatchColor} leading />
+            ) : null}
             <SelectItemText
               fontSize={shouldUseTouchSheetLayout ? "$4" : undefined}
               lineHeight={shouldUseTouchSheetLayout ? 22 : undefined}
@@ -1175,11 +1202,31 @@ const SelectRoot = forwardRef<SelectHandle, SelectProps>(
               {item.label}
             </SelectItemText>
             {item.description}
-            {item.endContent}
-            <SelectItemIndicator marginLeft="auto" {...itemIndicatorProps}>
-              {itemIndicatorProps?.children ??
-                (shouldUseTouchSheetLayout ? <Check size={22} /> : undefined)}
-            </SelectItemIndicator>
+            {item.swatchColor != null ? (
+              <>
+                {item.endContent}
+                <YStack
+                  items="center"
+                  justify="center"
+                  ml="auto"
+                  width={SELECT_ITEM_INDICATOR_SLOT_WIDTH}
+                >
+                  <SelectItemIndicator {...itemIndicatorProps}>
+                    {itemIndicatorProps?.children ??
+                      (shouldUseTouchSheetLayout ? <Check size={22} /> : undefined)}
+                  </SelectItemIndicator>
+                </YStack>
+                {!shouldUseTouchSheetLayout ? <SelectItemSwatch color={item.swatchColor} /> : null}
+              </>
+            ) : (
+              <>
+                {item.endContent}
+                <SelectItemIndicator marginLeft="auto" {...itemIndicatorProps}>
+                  {itemIndicatorProps?.children ??
+                    (shouldUseTouchSheetLayout ? <Check size={22} /> : undefined)}
+                </SelectItemIndicator>
+              </>
+            )}
           </YStack>
         )}
       </SelectItem>
@@ -1237,7 +1284,7 @@ const SelectRoot = forwardRef<SelectHandle, SelectProps>(
       );
     };
 
-    /** Android dropdown 改用 Zeego Menu；dialog 保留已有 RNPicker 实现。 */
+    /** Android dropdown 始终复用现有 Zeego Menu 与底层修补链路。 */
     const shouldRenderNativeDropdownMenu = usesAndroidDropdownOpenOpacity;
     /**
      * NativePickerDialog（隐藏渲染 + focus() 触发系统弹窗）仅在 Android 上可用。
@@ -1717,11 +1764,31 @@ const SelectRoot = forwardRef<SelectHandle, SelectProps>(
               )
             ) : null}
           </YStack>
-          {item.endContent}
-          <Menu.ItemIndicator marginLeft="auto" {...(itemIndicatorProps as any)}>
-            {itemIndicatorProps?.children ??
-              (isSelected ? <Check color="$color10" size={12} /> : null)}
-          </Menu.ItemIndicator>
+          {item.swatchColor != null ? (
+            <>
+              {item.endContent}
+              <YStack
+                items="center"
+                justify="center"
+                ml="auto"
+                width={SELECT_ITEM_INDICATOR_SLOT_WIDTH}
+              >
+                <Menu.ItemIndicator {...(itemIndicatorProps as any)}>
+                  {itemIndicatorProps?.children ??
+                    (isSelected ? <Check color="$color10" size={12} /> : null)}
+                </Menu.ItemIndicator>
+              </YStack>
+              <SelectItemSwatch color={item.swatchColor} />
+            </>
+          ) : (
+            <>
+              {item.endContent}
+              <Menu.ItemIndicator marginLeft="auto" {...(itemIndicatorProps as any)}>
+                {itemIndicatorProps?.children ??
+                  (isSelected ? <Check color="$color10" size={12} /> : null)}
+              </Menu.ItemIndicator>
+            </>
+          )}
         </Menu.RadioItem>
       );
     };
@@ -2060,6 +2127,13 @@ const SelectRoot = forwardRef<SelectHandle, SelectProps>(
                             }
                             items={resolvedItems.map((item) => ({
                               disabled: item.disabled ?? item.isDisabled,
+                              iconProps:
+                                item.swatchColor != null
+                                  ? {
+                                      androidIconColor: item.swatchColor,
+                                      androidIconName: "presence_online",
+                                    }
+                                  : undefined,
                               label: item.label,
                               onSelect: () => handleTamaguiValueChange(item.value),
                               selected: item.value === selectedValue,
@@ -2093,6 +2167,13 @@ const SelectRoot = forwardRef<SelectHandle, SelectProps>(
                         nativeSelectedItemBackgroundColor={nativeMenuSelectedItemBackgroundColor}
                         items={resolvedItems.map((item) => ({
                           disabled: item.disabled ?? item.isDisabled,
+                          iconProps:
+                            item.swatchColor != null
+                              ? {
+                                  androidIconColor: item.swatchColor,
+                                  androidIconName: "presence_online",
+                                }
+                              : undefined,
                           label: item.label,
                           onSelect: () => handleTamaguiValueChange(item.value),
                           selected: item.value === selectedValue,

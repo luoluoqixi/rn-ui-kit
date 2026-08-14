@@ -66,8 +66,6 @@ export function NativePickerDialog({
     }
   }, [visible]);
 
-  if (!visible) return null;
-
   const selectedBg = theme.color3?.val ?? "rgba(0,0,0,0.06)";
   const selectedColor = theme.color?.val ?? "#1A73E8";
   const resolvedAnchorWidth = anchorWidth ?? DEFAULT_ANDROID_DROPDOWN_MIN_WIDTH;
@@ -92,6 +90,8 @@ export function NativePickerDialog({
         : { left: anchorEdgeOffset, width: resolvedAnchorWidth };
   const anchorVerticalStyle = anchorVerticalAlign === "bottom" ? { bottom: 0 } : { top: 0 };
 
+  if (!visible) return null;
+
   return (
     <View style={styles.dialogContainer} onLayout={handleAnchorContainerLayout}>
       <View style={[styles.dialogAnchor, anchorHorizontalStyle, anchorVerticalStyle]}>
@@ -114,6 +114,7 @@ export function NativePickerDialog({
                 label={item.label}
                 value={item.value}
                 enabled={!(item.disabled ?? item.isDisabled)}
+                {...({ swatchColor: item.swatchColor } as any)}
                 style={{
                   backgroundColor: isSelected ? selectedBg : "transparent",
                   color: isSelected ? selectedColor : undefined,

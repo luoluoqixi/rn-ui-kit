@@ -475,6 +475,11 @@ function NativePickerDropdownCustom({
           <Menu.ItemIndicator>
             <Check size={16} color="$color10" />
           </Menu.ItemIndicator>
+          {item.swatchColor != null ? (
+            <Menu.ItemIcon
+              ios={{ name: "circle.fill", hierarchicalColor: item.swatchColor }}
+            />
+          ) : null}
         </Menu.CheckboxItem>
       ))}
     </Menu>
