@@ -499,9 +499,7 @@ function FallbackRowContainer({
       onTouchCancel={
         usesIosSwitchPressFallback || usesIos15PressRecovery ? handleTouchCancel : undefined
       }
-      onTouchEnd={
-        usesIosSwitchPressFallback || usesIos15PressRecovery ? handleTouchEnd : undefined
-      }
+      onTouchEnd={usesIosSwitchPressFallback || usesIos15PressRecovery ? handleTouchEnd : undefined}
       onTouchStart={usesIos15PressRecovery && editMode ? handleTouchStart : undefined}
       style={styles.pressable}
     >
@@ -1918,9 +1916,7 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
   const editMode = useNativeListEditMode();
   const menuRef = useRef<NativeMenuHandle | null>(null);
   const inlineTriggerGuard = useInlineNativeTriggerGuard();
-  const [uncontrolledWillOpen, setUncontrolledWillOpen] = useState(
-    Boolean(menuProps.defaultOpen),
-  );
+  const [uncontrolledWillOpen, setUncontrolledWillOpen] = useState(Boolean(menuProps.defaultOpen));
   const menuOpen = menuProps.open ?? uncontrolledWillOpen;
   const fadeTitleOnOpen = itemProps.fadeTitleOnOpen !== false;
   const resolvedContextMenuProps = useResolvedNativeListContextMenu(itemProps.contextMenuProps);
@@ -2544,7 +2540,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   disabledContent: {
-    opacity: 0.5,
+    opacity: 0.7,
   },
   editingCustomRowContent: {
     alignItems: "center",

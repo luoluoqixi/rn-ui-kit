@@ -329,6 +329,23 @@ export function NativeListExample() {
                 subtitle="邀请、角色与访问权限"
                 title="成员"
               />
+              <NativeListItem
+                icon={<CircleOff color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
+                sfSymbol="nosign"
+                onPress={() => setLastAction("点击编辑时不可选择的行")}
+                selectionDisabled
+                selectionId="workspace-non-selectable"
+                subtitle="编辑模式下不显示选择标记，也不会加入已选项"
+                title="编辑时不可选择"
+              />
+              <NativeListItem
+                disabled
+                selectionDisabled
+                icon={<CircleOff color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
+                sfSymbol="nosign"
+                subtitle="disabled 会在非编辑与编辑模式中均禁用整行"
+                title="始终禁用"
+              />
             </NativeListSection>
             <NativeListSection
               footer="numberOfLines 控制可见高度；超出内容可在整个输入区域内滚动。"
