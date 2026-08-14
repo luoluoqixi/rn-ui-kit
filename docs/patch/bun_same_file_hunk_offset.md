@@ -52,14 +52,119 @@ nextOperation()
 4. 如需保留同一文件的多个 diff 块，可将新增改动对应的完整 hunk 单独放到后一个
    `diff --git` 块；保留生成的 `@@ -旧行,+新行 @@` 头，尤其不要把 `+新行` 改回孤立
    小 diff 的行号。
-5. 运行 hunk 完整性校验：
+5. 将本文「内嵌 hunk 完整性校验脚本」保存到仓库内的临时路径，例如
+   `.temp/patch-tools/validate_patch_hunks.cjs`，再运行 hunk 完整性校验：
 
    ```bash
-   node /Users/luoqixi/luoqixi/project/luoluoqixi/lonanote_agents/skills/generate_git_patch_from_files/scripts/validate_patch_hunks.cjs \
+   node .temp/patch-tools/validate_patch_hunks.cjs \
      patches/@scope+package@version.patch
    ```
 
    这一步只校验 hunk 行数，不验证 Bun 实际的定位结果。
+
+## 内嵌 hunk 完整性校验脚本
+
+以下是本文所需校验脚本的完整内容，不依赖仓库外部路径。将其保存为
+`validate_patch_hunks.cjs` 后即可按上面的相对路径命令执行。
+
+```js
+#!/usr/bin/env node
+/**
+ * 校验 unified diff 中每个 hunk 头的行数是否与正文一致（Bun patchedDependencies 同类规则）。
+ */
+const fs = require("fs");
+const path = require("path");
+
+function validatePatch(filePath) {
+  const lines = fs.readFileSync(filePath, "utf8").replace(/\r\n/g, "\n").split("\n");
+  if (lines.length && lines[lines.length - 1] === "") lines.pop();
+
+  let i = 0;
+  let hunkIndex = 0;
+  let failures = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    if (!line.startsWith("@@ ")) {
+      i++;
+      continue;
+    }
+    hunkIndex++;
+    const parts = line.split(" ");
+    const oldPart = parts[1]?.slice(1).split(",") ?? [];
+    const newPart = parts[2]?.slice(1).split(",") ?? [];
+    const wantOld = +(oldPart[1] || 1);
+    const wantNew = +(newPart[1] || 1);
+
+    let gotOld = 0;
+    let gotNew = 0;
+    let j = i + 1;
+    for (; j < lines.length; j++) {
+      const x = lines[j];
+      if (
+        x.startsWith("@@ ") ||
+        x.startsWith("diff --git ") ||
+        x.startsWith("--- ") ||
+        x.startsWith("+++ ") ||
+        x.startsWith("index ")
+      ) {
+        break;
+      }
+      if (x.startsWith("+")) gotNew++;
+      else if (x.startsWith("-")) gotOld++;
+      else if (x.startsWith(" ")) {
+        gotOld++;
+        gotNew++;
+      } else if (x === "") {
+        gotOld++;
+        gotNew++;
+      } else if (x.startsWith("\\ No newline at end of file")) {
+        // pragma，不计行
+      } else {
+        console.error(`WARN ${path.basename(filePath)} hunk #${hunkIndex}: unrecognized line: ${JSON.stringify(x)}`);
+      }
+    }
+
+    if (wantOld !== gotOld || wantNew !== gotNew) {
+      failures++;
+      console.error(
+        `FAIL ${path.basename(filePath)} hunk #${hunkIndex}: ${line}\n` +
+          `  want old=${wantOld} new=${wantNew}, got old=${gotOld} new=${gotNew}`,
+      );
+    }
+    i = j;
+  }
+
+  return { hunkIndex, failures };
+}
+
+function main() {
+  const files = process.argv.slice(2);
+  if (!files.length) {
+    console.error("Usage: node validate_patch_hunks.cjs <patch> [patch2 ...]");
+    process.exit(2);
+  }
+
+  let totalFail = 0;
+  for (const f of files) {
+    const p = path.resolve(f);
+    if (!fs.existsSync(p)) {
+      console.error(`not found: ${p}`);
+      totalFail++;
+      continue;
+    }
+    const { hunkIndex, failures } = validatePatch(p);
+    if (failures === 0) {
+      console.log(`OK ${path.basename(p)} (${hunkIndex} hunks)`);
+    } else {
+      totalFail += failures;
+    }
+  }
+  process.exit(totalFail > 0 ? 1 : 0);
+}
+
+main();
+```
 
 ## 必做的 Bun 验证
 
