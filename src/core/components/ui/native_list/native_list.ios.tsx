@@ -66,6 +66,7 @@ import { NativePickerSwiftUI } from "../select/native_picker";
 import type { NativePickerSwiftUIHandle } from "../select/native_picker";
 import { resolveSelectItemGroups } from "../select/select_grouping";
 import type { ResolvedSelectItemData } from "../select/select_grouping";
+import { Text } from "../text";
 import type { ContextMenuItemData } from "../context_menu";
 import { Menu } from "../menu";
 import { getTrueSheetScrollBottomPadding } from "../sheet/native_sheet/true_sheet/sheet_scroll_layout";
@@ -116,6 +117,27 @@ function getNativeContextMenuLabel(item: ContextMenuItemData) {
   }
 
   return item.textValue ?? item.value;
+}
+
+function renderNativeListSelectTriggerLabel(
+  label: ReactNode,
+  swatchColor: string | undefined,
+  labelProps?: NativeListSelectItemProps["selectProps"]["nativeTriggerLabelProps"],
+) {
+  if (swatchColor == null) {
+    return label;
+  }
+
+  return (
+    <View style={styles.selectInlineLabel}>
+      <View style={[styles.selectSwatch, { backgroundColor: swatchColor }]} />
+      {typeof label === "string" || typeof label === "number" ? (
+        <Text {...(labelProps as any)}>{label}</Text>
+      ) : (
+        label
+      )}
+    </View>
+  );
 }
 
 function hasSwiftUIContextMenu(contextMenuProps?: NativeListContextMenuProps) {
@@ -1721,6 +1743,10 @@ function NativeIos15MenuSelectRow({
   const placeholder = toPlainText(selectProps.placeholder) ?? "请选择";
   const selectedItem = selectItems.find((item) => item.value === selectedValue);
   const selectedLabel = selectedItem?.label ?? placeholder;
+  const selectedSwatchColor =
+    selectedItem?.swatchColor == null
+      ? undefined
+      : (toSwiftUIHexColor(selectedItem.swatchColor) ?? selectedItem.swatchColor);
   const fadeTitleOnOpen = itemProps.fadeTitleOnOpen !== false;
 
   const handleSelection = (nextValue: string) => {
@@ -1829,6 +1855,9 @@ function NativeIos15MenuSelectRow({
                 </HStack>
                 <Spacer minLength={12} />
                 <HStack modifiers={[opacity(editMode ? 0.5 : 1)]} spacing={4}>
+                  {selectedSwatchColor != null ? (
+                    <Image color={selectedSwatchColor} size={14} systemName="circle.fill" />
+                  ) : null}
                   <SwiftText
                     modifiers={[
                       ...valueModifiers(itemProps.valueFontSize),
@@ -1908,6 +1937,9 @@ function NativeIos15MenuSelectRow({
             />
             <Spacer minLength={12} />
             <HStack modifiers={[opacity(editMode ? 0.5 : 1)]} spacing={4}>
+              {selectedSwatchColor != null ? (
+                <Image color={selectedSwatchColor} size={14} systemName="circle.fill" />
+              ) : null}
               <SwiftText
                 modifiers={[
                   ...valueModifiers(itemProps.valueFontSize),
@@ -1959,10 +1991,22 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
   const selectedValue = selectProps.value ?? selectProps.defaultValue;
   const selectedItem = selectItems.find((item) => item.value === selectedValue);
   const defaultTriggerLabel = selectedItem?.label ?? selectProps.placeholder ?? "";
-  const nativeTriggerLabel =
+  const nativeTriggerLabelProps = {
+    color: itemProps.valueColor ?? "$color10",
+    fontSize: itemProps.valueFontSize ?? "$4",
+    numberOfLines: 1,
+    opacity: 1,
+    ...selectProps.nativeTriggerLabelProps,
+  };
+  const nativeTriggerLabelValue =
     selectedValue == null || selectedValue === "" || selectProps.renderValue == null
       ? defaultTriggerLabel
       : selectProps.renderValue(selectedValue);
+  const nativeTriggerLabel = renderNativeListSelectTriggerLabel(
+    nativeTriggerLabelValue,
+    selectedItem?.swatchColor,
+    nativeTriggerLabelProps as any,
+  );
   const disabled = itemProps.disabled || selectProps.disabled || selectProps.isDisabled;
   const pickerRef = useRef<NativePickerSwiftUIHandle>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -2060,13 +2104,7 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
             nativeTriggerContent={selectProps.nativeTriggerContent}
             nativeTriggerIcon={selectProps.nativeTriggerIcon ?? "chevrons-up-down"}
             nativeTriggerLabel={nativeTriggerLabel}
-            nativeTriggerLabelProps={{
-              color: itemProps.valueColor ?? "$color10",
-              fontSize: itemProps.valueFontSize ?? "$4",
-              numberOfLines: 1,
-              opacity: 1,
-              ...selectProps.nativeTriggerLabelProps,
-            }}
+            nativeTriggerLabelProps={nativeTriggerLabelProps}
             // wheel 行使用 SwiftUI plain Button；整行已经提供按压透明度，
             // 禁用内部 trigger 的反馈，避免行尾内容被重复降低透明度。
             nativeTriggerPressedOpacity={resolvedPickerMode === "wheel" ? false : undefined}
@@ -2386,6 +2424,18 @@ const styles = StyleSheet.create({
     maxWidth: 180,
     minHeight: 32,
     minWidth: 0,
+  },
+  selectInlineLabel: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexShrink: 1,
+    gap: 6,
+    minWidth: 0,
+  },
+  selectSwatch: {
+    borderRadius: 7,
+    height: 14,
+    width: 14,
   },
   trailingHostedContent: {
     alignItems: "center",

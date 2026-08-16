@@ -820,6 +820,27 @@ function getSelectedLabel(selectProps: NativeListSelectItemProps["selectProps"])
   );
 }
 
+function renderNativeListSelectTriggerLabel(
+  label: ReactNode,
+  swatchColor: string | undefined,
+  labelProps?: NativeListSelectItemProps["selectProps"]["nativeTriggerLabelProps"],
+) {
+  if (swatchColor == null) {
+    return label;
+  }
+
+  return (
+    <View style={styles.selectInlineLabel}>
+      <View style={[styles.selectSwatch, { backgroundColor: swatchColor }]} />
+      {typeof label === "string" || typeof label === "number" ? (
+        <Text {...(labelProps as any)}>{label}</Text>
+      ) : (
+        label
+      )}
+    </View>
+  );
+}
+
 function getNodeKey(node: ReactNode, fallback: string) {
   if (isValidElement(node) && node.key != null) {
     return String(node.key);
@@ -1612,10 +1633,22 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
     selectProps.value !== undefined ? selectProps.value : uncontrolledSelectValue;
   const selectedItem = selectItems.find((item) => item.value === selectedValue);
   const defaultTriggerLabel = selectedItem?.label ?? selectProps.placeholder ?? "";
-  const nativeTriggerLabel =
+  const nativeTriggerLabelProps = {
+    color: itemProps.valueColor ?? "$color10",
+    fontSize: itemProps.valueFontSize ?? "$4",
+    numberOfLines: 1,
+    opacity: 1,
+    ...selectProps.nativeTriggerLabelProps,
+  };
+  const nativeTriggerLabelValue =
     selectedValue == null || selectedValue === "" || selectProps.renderValue == null
       ? defaultTriggerLabel
       : selectProps.renderValue(selectedValue);
+  const nativeTriggerLabel = renderNativeListSelectTriggerLabel(
+    nativeTriggerLabelValue,
+    selectedItem?.swatchColor,
+    nativeTriggerLabelProps as any,
+  );
   const resolvedSelectedLabel = usesIosInlineDropdown ? defaultTriggerLabel : selectedLabel;
   const fadeTitleOnOpen = itemProps.fadeTitleOnOpen !== false;
   const resolvedContextMenuProps = useResolvedNativeListContextMenu(itemProps.contextMenuProps);
@@ -1685,13 +1718,7 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
               nativeTriggerContent={selectProps.nativeTriggerContent}
               nativeTriggerIcon={selectProps.nativeTriggerIcon ?? "chevrons-up-down"}
               nativeTriggerLabel={nativeTriggerLabel}
-              nativeTriggerLabelProps={{
-                color: itemProps.valueColor ?? "$color10",
-                fontSize: itemProps.valueFontSize ?? "$4",
-                numberOfLines: 1,
-                opacity: 1,
-                ...selectProps.nativeTriggerLabelProps,
-              }}
+              nativeTriggerLabelProps={nativeTriggerLabelProps}
               onOpenChange={(nextOpen: boolean) => {
                 selectProps.onOpenChange?.(nextOpen);
               }}
@@ -1737,6 +1764,11 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
           disabled={disabled}
           iconAfter={
             <View style={styles.selectValue}>
+              {selectedItem?.swatchColor != null ? (
+                <View
+                  style={[styles.selectSwatch, { backgroundColor: selectedItem.swatchColor }]}
+                />
+              ) : null}
               <Text
                 color={(itemProps.valueColor ?? "$color10") as any}
                 fontSize={itemProps.valueFontSize ?? "$4"}
@@ -2753,6 +2785,18 @@ const styles = StyleSheet.create({
     maxWidth: 180,
     minHeight: 32,
     minWidth: 0,
+  },
+  selectInlineLabel: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexShrink: 1,
+    gap: 6,
+    minWidth: 0,
+  },
+  selectSwatch: {
+    borderRadius: 7,
+    height: 14,
+    width: 14,
   },
   staticRoot: {
     width: "100%",
