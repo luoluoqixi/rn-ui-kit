@@ -400,7 +400,8 @@ export function SettingsList() {
   `value`、`onChangeText`、`placeholder`、`autoFocus` 等属性；传入 `title` 或 `subtitle`
   时，文本显示在左侧、输入框显示在右侧。默认在 iOS 编辑时显示清除按钮；传入
   `inputProps.clearButtonMode` 可以覆盖该行为。Web fallback 的输入框背景默认透明，可通过
-  `inputProps.style.backgroundColor` 显式覆盖。NativeList 编辑模式会将 iOS 单行与多行输入框
+  `inputProps.style.backgroundColor` 显式覆盖。带标题时可通过 `inputWidth` 调整右侧输入框容器宽度，
+  默认保持列表原有宽度。NativeList 编辑模式会将 iOS 单行与多行输入框
   显示为只读的 SwiftUI 文本快照，保留当前值或占位文字，同时将整行点击交给多选行为。
 - `NativeListItem.trailing` 可渲染自定义行尾内容；`NativeListSection.trailing` 可渲染分组
   标题右侧内容，例如“全部显示”。iOS 15 会将包含复杂 React Native trailing 的 header

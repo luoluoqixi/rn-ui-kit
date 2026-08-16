@@ -146,6 +146,8 @@ export type NativeListInputItemProps = Omit<
   NativeListItemBaseProps,
   "onPress" | "selected" | "trailing" | "value"
 > & {
+  /** 带标题时控制右侧输入框容器宽度；未传时使用列表默认宽度。 */
+  inputWidth?: ViewStyle["width"];
   /** 传递给 `Input` 的属性，例如 `value`、`onChangeText`、`placeholder` 与 `autoFocus`。 */
   inputProps: InputProps;
 };

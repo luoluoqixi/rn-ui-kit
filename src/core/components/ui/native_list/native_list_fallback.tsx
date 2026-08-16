@@ -1363,7 +1363,11 @@ export function NativeListButtonItem({
  * A full-width editable text field that follows the surrounding NativeList row styling.
  * `clearButtonMode` defaults to `while-editing` so iOS gets the familiar clear affordance.
  */
-export function NativeListInputItem({ inputProps, ...itemProps }: NativeListInputItemProps) {
+export function NativeListInputItem({
+  inputProps,
+  inputWidth,
+  ...itemProps
+}: NativeListInputItemProps) {
   const theme = useTheme();
   const disabled = itemProps.disabled || inputProps.disabled;
   const hasLeadingLabel = itemProps.title != null || itemProps.subtitle != null;
@@ -1434,7 +1438,11 @@ export function NativeListInputItem({ inputProps, ...itemProps }: NativeListInpu
       <NativeListRow
         {...itemProps}
         disabled={disabled}
-        iconAfter={<View style={styles.inputTrailing}>{resolvedInput}</View>}
+        iconAfter={
+          <View style={[styles.inputTrailing, inputWidth != null ? { width: inputWidth } : null]}>
+            {resolvedInput}
+          </View>
+        }
       />
     );
   }
@@ -2320,11 +2328,17 @@ export function NativeListRoot({
   );
 
   useEffect(() => {
-    scrollToIndexRetryRef.current = { attempts: 0, index: initialScrollIndex ?? -1 };
+    scrollToIndexRetryRef.current = {
+      attempts: 0,
+      index: initialScrollIndex ?? -1,
+    };
     if (initialScrollIndex != null) {
       scrollToIndexRetryFrameRef.current = requestAnimationFrame(() => {
         scrollToIndexRetryFrameRef.current = undefined;
-        flatListRef.current?.scrollToIndex({ animated: false, index: initialScrollIndex });
+        flatListRef.current?.scrollToIndex({
+          animated: false,
+          index: initialScrollIndex,
+        });
       });
     }
     return () => {
@@ -2405,7 +2419,9 @@ export function NativeListRoot({
   }, [contentOffset, getActualWebScrollOffset, navigation, restoreWebScrollPosition]);
   const resolvedScrollEventThrottle =
     scrollEventThrottle ?? (trackedOnScroll == null ? undefined : 16);
-  const rootBackground = { backgroundColor: backgroundColor ?? appBackgroundColors.screen };
+  const rootBackground = {
+    backgroundColor: backgroundColor ?? appBackgroundColors.screen,
+  };
   const isNestedFallbackList = nestedScrollEnabled === true;
 
   const bottomPadding =

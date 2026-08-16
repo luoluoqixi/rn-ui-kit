@@ -118,6 +118,7 @@ void nativeListEditModeProps;
 
 const nativeListSelectionDisabledProps = {
   inputProps: {},
+  inputWidth: 200,
   selectionDisabled: true,
   title: "不可选择的输入项",
 } satisfies NativeListInputItemProps;

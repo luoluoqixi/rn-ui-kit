@@ -243,10 +243,17 @@ type SwiftUIButtonStyle =
   | "glassProminent"
   | "plain";
 
-const NativeListContext = createContext<NativeListContextValue>({ native: true });
+const NativeListContext = createContext<NativeListContextValue>({
+  native: true,
+});
 const Ios15FirstVisibleRowContext = createContext(false);
 
-const ROW_INSETS = listRowInsets({ top: 0, leading: 0, bottom: 0, trailing: 0 });
+const ROW_INSETS = listRowInsets({
+  top: 0,
+  leading: 0,
+  bottom: 0,
+  trailing: 0,
+});
 const IOS15_SECTION_HEADER_ROW_INSETS = listRowInsets({
   top: 0,
   leading: 20,
@@ -706,10 +713,7 @@ function NativeHostedTrailingControl({
       <View
         collapsable={false}
         pointerEvents={interactionsDisabled ? "none" : "auto"}
-        style={[
-          styles.trailingHostedContent,
-          interactionsDisabled ? styles.disabledContent : null,
-        ]}
+        style={[styles.trailingHostedContent, interactionsDisabled ? styles.disabledContent : null]}
       >
         {children}
       </View>
@@ -1229,7 +1233,10 @@ function NativeListSection({
         {stringTitle != null ? (
           <SwiftText
             modifiers={[
-              font({ size: titleFontSize ?? DEFAULT_SECTION_TITLE_FONT_SIZE, weight: "regular" }),
+              font({
+                size: titleFontSize ?? DEFAULT_SECTION_TITLE_FONT_SIZE,
+                weight: "regular",
+              }),
               ...(resolvedSectionTitleColor != null
                 ? [foregroundStyle(resolvedSectionTitleColor)]
                 : []),
@@ -1248,7 +1255,10 @@ function NativeListSection({
     ) : stringTitle != null && (resolvedSectionTitleColor != null || titleFontSize != null) ? (
       <SwiftText
         modifiers={[
-          font({ size: titleFontSize ?? DEFAULT_SECTION_TITLE_FONT_SIZE, weight: "regular" }),
+          font({
+            size: titleFontSize ?? DEFAULT_SECTION_TITLE_FONT_SIZE,
+            weight: "regular",
+          }),
           ...(resolvedSectionTitleColor != null
             ? [foregroundStyle(resolvedSectionTitleColor)]
             : []),
@@ -1357,7 +1367,11 @@ export function NativeListButtonItem({
  * Keeps a React Native text input inside the SwiftUI List row, which preserves
  * controlled values and the full `Input` API while retaining native list chrome.
  */
-export function NativeListInputItem({ inputProps, ...itemProps }: NativeListInputItemProps) {
+export function NativeListInputItem({
+  inputProps,
+  inputWidth,
+  ...itemProps
+}: NativeListInputItemProps) {
   const nativeListEnabled = useNativeListEnabled();
   const editMode = useNativeListEditMode();
   const theme = useTheme();
@@ -1433,7 +1447,10 @@ export function NativeListInputItem({ inputProps, ...itemProps }: NativeListInpu
         disabled={disabled}
         trailingControl={
           <NativeHostedTrailingControl>
-            <View collapsable={false} style={styles.inputTrailing}>
+            <View
+              collapsable={false}
+              style={[styles.inputTrailing, inputWidth != null ? { width: inputWidth } : null]}
+            >
               {resolvedInput}
             </View>
           </NativeHostedTrailingControl>
@@ -1736,10 +1753,7 @@ function NativeIos15MenuSelectRow({
         modifiers={[disabledModifier(optionDisabled)]}
         onPress={() => handleSelection(item.value)}
       >
-        <HStack
-          modifiers={[frame({ maxWidth: 99999, alignment: "leading" })]}
-          spacing={8}
-        >
+        <HStack modifiers={[frame({ maxWidth: 99999, alignment: "leading" })]} spacing={8}>
           {isSelected ? <Image size={14} systemName="checkmark" /> : null}
           <SwiftText>{item.label}</SwiftText>
           <Spacer minLength={24} />
@@ -1793,14 +1807,8 @@ function NativeIos15MenuSelectRow({
         paddingTop={itemProps.paddingTop}
         paddingVertical={itemProps.paddingVertical}
       >
-        <ZStack
-          alignment="center"
-          modifiers={[frame({ maxWidth: 99999, alignment: "leading" })]}
-        >
-          <HStack
-            modifiers={[frame({ maxWidth: 99999, alignment: "leading" })]}
-            spacing={12}
-          >
+        <ZStack alignment="center" modifiers={[frame({ maxWidth: 99999, alignment: "leading" })]}>
+          <HStack modifiers={[frame({ maxWidth: 99999, alignment: "leading" })]} spacing={12}>
             {leadingContent}
             <Spacer minLength={12} />
           </HStack>
@@ -1896,10 +1904,7 @@ function NativeIos15MenuSelectRow({
               titleFontSize={itemProps.titleFontSize}
             />
             <Spacer minLength={12} />
-            <HStack
-              modifiers={[opacity(editMode || disabled ? 0.5 : 1)]}
-              spacing={4}
-            >
+            <HStack modifiers={[opacity(editMode || disabled ? 0.5 : 1)]} spacing={4}>
               <SwiftText
                 modifiers={[
                   ...valueModifiers(itemProps.valueFontSize),
@@ -1908,11 +1913,7 @@ function NativeIos15MenuSelectRow({
               >
                 {selectedLabel}
               </SwiftText>
-              <Image
-                color={resolvedValueColor}
-                size={13}
-                systemName="chevron.up.chevron.down"
-              />
+              <Image color={resolvedValueColor} size={13} systemName="chevron.up.chevron.down" />
             </HStack>
           </HStack>
         }
@@ -1970,10 +1971,7 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
     resolvedItemGroups[0]?.label == null &&
     selectItems.length > 0 &&
     !selectItems.some(
-      (item) =>
-        item.description != null ||
-        item.startContent != null ||
-        item.endContent != null,
+      (item) => item.description != null || item.startContent != null || item.endContent != null,
     ) &&
     (itemProps.icon == null || itemProps.sfSymbol != null) &&
     itemProps.btnTint == null &&
@@ -2028,9 +2026,7 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
     <NativePressRow
       {...itemProps}
       disabled={disabled}
-      labelOpacity={
-        resolvedPickerMode === "dropdown" && fadeTitleOnOpen && dropdownOpen ? 0.6 : 1
-      }
+      labelOpacity={resolvedPickerMode === "dropdown" && fadeTitleOnOpen && dropdownOpen ? 0.6 : 1}
       nativeHaptics={resolvedHaptics}
       onPress={() => {
         const picker = pickerRef.current;
@@ -2104,9 +2100,7 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
 
   const disabled = itemProps.disabled || menuProps.triggerProps?.disabled;
   const menuRef = useRef<{ presentMenu: () => void } | null>(null);
-  const [uncontrolledWillOpen, setUncontrolledWillOpen] = useState(
-    Boolean(menuProps.defaultOpen),
-  );
+  const [uncontrolledWillOpen, setUncontrolledWillOpen] = useState(Boolean(menuProps.defaultOpen));
   const menuOpen = menuProps.open ?? uncontrolledWillOpen;
   const fadeTitleOnOpen = itemProps.fadeTitleOnOpen !== false;
   const menuValue = itemProps.value ?? "更多";
