@@ -206,8 +206,16 @@ const WEB_MENU_CONTENT_Z_INDEX = 2_147_483_647;
 const SELECT_ITEM_INDICATOR_SLOT_WIDTH = 24;
 const SELECT_ITEM_SWATCH_SIZE = 14;
 
-function SelectItemSwatch({ color, leading = false }: { color: string; leading?: boolean }) {
-  return (
+function SelectItemSwatch({
+  color,
+  leading = false,
+  leadingGap = 8,
+}: {
+  color: string;
+  leading?: boolean;
+  leadingGap?: number;
+}) {
+  const swatch = (
     <View
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
@@ -215,11 +223,33 @@ function SelectItemSwatch({ color, leading = false }: { color: string; leading?:
         backgroundColor: color,
         borderRadius: SELECT_ITEM_SWATCH_SIZE / 2,
         height: SELECT_ITEM_SWATCH_SIZE,
-        marginLeft: leading ? 0 : 8,
-        marginRight: leading ? 8 : 0,
         width: SELECT_ITEM_SWATCH_SIZE,
       }}
     />
+  );
+
+  if (leading) {
+    return (
+      <View
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={{ height: SELECT_ITEM_SWATCH_SIZE, width: SELECT_ITEM_SWATCH_SIZE + leadingGap }}
+      >
+        {swatch}
+      </View>
+    );
+  }
+
+  return (
+    <View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={{
+        marginLeft: 8,
+      }}
+    >
+      {swatch}
+    </View>
   );
 }
 const WEB_MENU_CONTENT_MAX_WIDTH = "calc(100vw - 32px)";
@@ -263,6 +293,56 @@ function renderSelectWebMenuTriggerLabel(label: React.ReactNode, isPlaceholder: 
   }
 
   return label;
+}
+
+function renderSelectTriggerLabel(
+  label: React.ReactNode,
+  isPlaceholder: boolean,
+  swatchColor?: string,
+) {
+  const renderedLabel = renderSelectWebMenuTriggerLabel(label, isPlaceholder);
+
+  if (swatchColor == null) {
+    return renderedLabel;
+  }
+
+  return (
+    <XStack flex={1} items="center">
+      <SelectItemSwatch color={swatchColor} leading leadingGap={12} />
+      {renderedLabel}
+    </XStack>
+  );
+}
+
+function renderSelectNativeTriggerLabel(
+  label: React.ReactNode,
+  swatchColor?: string,
+  labelProps?: SelectProps["nativeTriggerLabelProps"],
+) {
+  if (swatchColor == null) {
+    return label;
+  }
+
+  const renderedLabel =
+    typeof label === "string" || typeof label === "number" ? (
+      <SizableText
+        color="$color"
+        fontSize={getFontSize("$4")}
+        opacity={typeof labelProps?.opacity === "number" ? labelProps.opacity : 0.58}
+        {...labelProps}
+      >
+        {label}
+      </SizableText>
+    ) : (
+      label
+    );
+
+  return (
+    <XStack items="center">
+      <SelectItemSwatch color={swatchColor} leading />
+      {renderedLabel}
+    </XStack>
+  );
 }
 
 function getWebMenuItemElement(rootId: string, itemValue: string) {
@@ -1133,14 +1213,30 @@ const SelectRoot = forwardRef<SelectHandle, SelectProps>(
       : shouldRestoreNativeTriggerOnPressOut
         ? false
         : isSelectOpen || nativeTriggerOpening;
+    const getItemByValue = (value: string | null | undefined) =>
+      resolvedItems.find((item) => item.value === value);
     const getItemLabelByValue = (value: string | null | undefined) =>
-      resolvedItems.find((item) => item.value === value)?.label ?? null;
-    const selectedItem = getItemLabelByValue(selectedValue);
+      getItemByValue(value)?.label ?? null;
+    const selectedItemData = getItemByValue(selectedValue);
+    const selectedItem = selectedItemData?.label ?? null;
+    const selectedSwatchColor = selectedItemData?.swatchColor;
     const triggerLabel = selectedItem ?? placeholder ?? "";
-    const nativeTriggerLabel =
+    const triggerValueLabel =
       selectedValue == null || selectedValue === "" || props.renderValue == null
         ? triggerLabel
         : props.renderValue(selectedValue);
+    const nativeTriggerLabelValue = triggerValueLabel;
+    const nativeTriggerLabel = renderSelectNativeTriggerLabel(
+      nativeTriggerLabelValue,
+      selectedSwatchColor,
+      nativeTriggerLabelProps,
+    );
+    const renderTriggerValue = (nextValue: string) =>
+      renderSelectTriggerLabel(
+        props.renderValue ? props.renderValue(nextValue) : getItemLabelByValue(nextValue),
+        false,
+        getItemByValue(nextValue)?.swatchColor,
+      );
     const defaultAndroidDropdownAlign =
       platform === "android" && resolvedPickerMode === "dropdown" ? "center" : undefined;
     const resolvedNativeDropdownAlign = nativeDropdownAlign ?? defaultAndroidDropdownAlign;
@@ -1862,7 +1958,7 @@ const SelectRoot = forwardRef<SelectHandle, SelectProps>(
           />
         ) : (
           <>
-            {renderSelectWebMenuTriggerLabel(triggerLabel, selectedItem == null)}
+            {renderSelectTriggerLabel(triggerLabel, selectedItem == null, selectedSwatchColor)}
             <ChevronDown
               color="$color10"
               size={getFontSize((props.size as FontSizeTokens) ?? "$true")}
@@ -1996,7 +2092,7 @@ const SelectRoot = forwardRef<SelectHandle, SelectProps>(
               />
             ) : (
               <>
-                {renderSelectWebMenuTriggerLabel(triggerLabel, selectedItem == null)}
+                {renderSelectTriggerLabel(triggerLabel, selectedItem == null, selectedSwatchColor)}
                 <YStack
                   position="absolute"
                   r={0}
@@ -2016,7 +2112,7 @@ const SelectRoot = forwardRef<SelectHandle, SelectProps>(
                 {...props}
                 native={selectBehavior.tamaguiNative}
                 onValueChange={handleTamaguiValueChange}
-                renderValue={props.renderValue ?? ((nextValue) => getItemLabelByValue(nextValue))}
+                renderValue={renderTriggerValue}
               >
                 <SelectContent {...contentProps}>
                   <SelectViewport
@@ -2080,7 +2176,7 @@ const SelectRoot = forwardRef<SelectHandle, SelectProps>(
             native={selectBehavior.tamaguiNative}
             onOpenChange={handleTamaguiOpenChange}
             onValueChange={handleTamaguiValueChange}
-            renderValue={props.renderValue ?? ((nextValue) => getItemLabelByValue(nextValue))}
+            renderValue={renderTriggerValue}
           >
             {children ??
               (resolvedItems.length === 0 ? null : (
@@ -2306,7 +2402,15 @@ const SelectRoot = forwardRef<SelectHandle, SelectProps>(
                           opacity={isNativeTriggerActive ? 0.6 : 1}
                         />
                       ) : (
-                        <SelectValue placeholder={placeholder} />
+                        selectBehavior.shouldUseWebSheet ? (
+                          renderSelectTriggerLabel(
+                            triggerValueLabel,
+                            selectedItem == null,
+                            selectedSwatchColor,
+                          )
+                        ) : (
+                          <SelectValue placeholder={placeholder} />
+                        )
                       )}
                     </SelectTrigger>
                   )}

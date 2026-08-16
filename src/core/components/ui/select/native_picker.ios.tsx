@@ -14,7 +14,7 @@ import {
   useColorScheme,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ListItem as TamaguiListItem } from "tamagui";
+import { ListItem as TamaguiListItem, XStack } from "tamagui";
 
 import { Button } from "../button";
 import { Menu } from "../menu";
@@ -42,6 +42,40 @@ let wheelSheetCounter = 0;
 const WHEEL_SHEET_DETENT_DEFAULT = 0.3;
 const DEFAULT_TRIGGER_HOVER_STYLE = { background: "$color3" } as const;
 const DEFAULT_TRIGGER_PRESS_STYLE = { background: "$color4" } as const;
+const NATIVE_PICKER_TRIGGER_SWATCH_SIZE = 14;
+
+function renderNativePickerDefaultTriggerLabel(
+  label: React.ReactNode,
+  placeholder: boolean,
+  swatchColor?: string,
+) {
+  const text = (
+    <TamaguiListItem.Text color="$color" opacity={placeholder ? 0.58 : 1}>
+      {label}
+    </TamaguiListItem.Text>
+  );
+
+  if (swatchColor == null) {
+    return text;
+  }
+
+  return (
+    <XStack flex={1} items="center">
+      <View
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={{
+          backgroundColor: swatchColor,
+          borderRadius: NATIVE_PICKER_TRIGGER_SWATCH_SIZE / 2,
+          height: NATIVE_PICKER_TRIGGER_SWATCH_SIZE,
+          marginRight: 12,
+          width: NATIVE_PICKER_TRIGGER_SWATCH_SIZE,
+        }}
+      />
+      {text}
+    </XStack>
+  );
+}
 
 /** wheel 模式共享的 TrueSheet 弹出层 */
 function WheelTrueSheet({
@@ -126,11 +160,13 @@ function NativePickerDefaultTrigger({
   disabled,
   label,
   placeholder,
+  swatchColor,
   onPress,
 }: {
   disabled?: boolean;
   label: React.ReactNode;
   placeholder: boolean;
+  swatchColor?: string;
   onPress?: () => void;
 }) {
   return (
@@ -146,9 +182,7 @@ function NativePickerDefaultTrigger({
       pressStyle={DEFAULT_TRIGGER_PRESS_STYLE}
       size="$true"
     >
-      <TamaguiListItem.Text color="$color" opacity={placeholder ? 0.58 : 1}>
-        {label}
-      </TamaguiListItem.Text>
+      {renderNativePickerDefaultTriggerLabel(label, placeholder, swatchColor)}
     </TamaguiListItem>
   );
 }
@@ -168,7 +202,8 @@ const NativePickerWheelSheet = React.forwardRef<
   const [pendingValue, setPendingValue] = React.useState<string>(
     (value as string) ?? items[0]?.value ?? "",
   );
-  const selectedLabel = items.find((item) => item.value === value)?.label ?? null;
+  const selectedItem = items.find((item) => item.value === value);
+  const selectedLabel = selectedItem?.label ?? null;
   const [sheetName] = React.useState(() => `select-wheel-${++wheelSheetCounter}`);
 
   const openSheet = useCallback(
@@ -211,6 +246,7 @@ const NativePickerWheelSheet = React.forwardRef<
         label={selectedLabel ?? (typeof placeholder === "string" ? placeholder : "选择")}
         onPress={() => openSheet(true)}
         placeholder={selectedLabel == null}
+        swatchColor={selectedItem?.swatchColor}
       />
 
       <WheelTrueSheet
@@ -410,7 +446,8 @@ function NativePickerDropdownCustom({
   nativeTriggerLabelProps?: TextProps;
   __menuRef?: React.MutableRefObject<{ presentMenu: () => void } | null>;
 }) {
-  const selectedLabel = items.find((item) => item.value === value)?.label ?? null;
+  const selectedItem = items.find((item) => item.value === value);
+  const selectedLabel = selectedItem?.label ?? null;
 
   const handleSelect = useCallback(
     (itemValue: string) => {
@@ -430,6 +467,7 @@ function NativePickerDropdownCustom({
       disabled={disabled}
       label={selectedLabel ?? (typeof placeholder === "string" ? placeholder : "选择")}
       placeholder={selectedLabel == null}
+      swatchColor={selectedItem?.swatchColor}
     />
   );
 
