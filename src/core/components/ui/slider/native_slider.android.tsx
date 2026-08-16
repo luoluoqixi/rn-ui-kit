@@ -20,6 +20,7 @@ export function NativeSlider(props: SliderProps) {
     min,
     max,
     step: stepProp,
+    style,
     colors: colorsProp,
     nativeHaptics,
     nativeHapticsInterval,
@@ -28,7 +29,12 @@ export function NativeSlider(props: SliderProps) {
 
   const safeMin = min ?? 0;
   const safeMax = max ?? 100;
-  const safeStep = stepProp ?? 1;
+  const safeStep =
+    stepProp === 0
+      ? undefined
+      : typeof stepProp === "number" && Number.isFinite(stepProp) && stepProp > 0
+        ? stepProp
+        : 1;
 
   const currentValue = value?.[0] ?? safeMin;
 
@@ -74,10 +80,13 @@ export function NativeSlider(props: SliderProps) {
   }, [nativeHapticsInterval, safeMax, safeMin, safeStep, value]);
 
   const resolvedSteps =
-    safeStep > 0 ? Math.max(0, Math.round((safeMax - safeMin) / safeStep) - 1) : 0;
+    safeStep != null ? Math.max(0, Math.round((safeMax - safeMin) / safeStep) - 1) : 0;
 
   const handleValueChange = (nextValue: number) => {
-    const stepped = Math.round((nextValue - safeMin) / safeStep) * safeStep + safeMin;
+    const stepped =
+      safeStep != null
+        ? Math.round((nextValue - safeMin) / safeStep) * safeStep + safeMin
+        : nextValue;
     latestValueRef.current = stepped;
     onValueChange?.([stepped]);
 
@@ -100,7 +109,7 @@ export function NativeSlider(props: SliderProps) {
   };
 
   return (
-    <Host style={{ height: 48, width: "100%", justifyContent: "center" }}>
+    <Host style={[{ height: 48, justifyContent: "center", width: "100%" }, style] as any}>
       <ExpoSlider
         value={currentValue}
         onValueChange={handleValueChange}

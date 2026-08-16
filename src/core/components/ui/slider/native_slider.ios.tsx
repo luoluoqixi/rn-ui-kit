@@ -6,11 +6,7 @@ import React from "react";
 import { View } from "react-native";
 
 import { supportsImpactHaptics } from "../utils/platform";
-import {
-  toSwiftUIHexColor,
-  triggerSliderNativeHaptics,
-  useResolvedNativeHaptics,
-} from "../utils";
+import { toSwiftUIHexColor, triggerSliderNativeHaptics, useResolvedNativeHaptics } from "../utils";
 
 import type { SliderProps } from "./types";
 
@@ -22,13 +18,19 @@ export function NativeSlider(props: SliderProps) {
     min,
     max,
     step: stepProp,
+    style,
     nativeHaptics,
   } = props;
   const theme = useTheme();
 
   const safeMin = min ?? 0;
   const safeMax = max ?? 100;
-  const safeStep = stepProp ?? 1;
+  const safeStep =
+    stepProp === 0
+      ? undefined
+      : typeof stepProp === "number" && Number.isFinite(stepProp) && stepProp > 0
+        ? stepProp
+        : 1;
 
   const currentValue = value?.[0] ?? safeMin;
   const trackTintColor = toSwiftUIHexColor(theme.color10?.val) ?? theme.color6?.val;
@@ -45,11 +47,13 @@ export function NativeSlider(props: SliderProps) {
   }, [currentValue]);
 
   const handleValueChange = (nextValue: number) => {
-    // 四舍五入到最近的 step，避免浮点数
-    const stepped = Math.min(
-      safeMax,
-      Math.max(safeMin, Math.round((nextValue - safeMin) / safeStep) * safeStep + safeMin),
-    );
+    const stepped =
+      safeStep != null
+        ? Math.min(
+            safeMax,
+            Math.max(safeMin, Math.round((nextValue - safeMin) / safeStep) * safeStep + safeMin),
+          )
+        : Math.min(safeMax, Math.max(safeMin, nextValue));
     latestValueRef.current = stepped;
     onValueChange?.([stepped]);
 
@@ -67,7 +71,7 @@ export function NativeSlider(props: SliderProps) {
   };
 
   return (
-    <View style={{ height: 48, width: "100%" }}>
+    <View style={[{ height: 48, width: "100%" }, style] as any}>
       <Host
         // 嵌套 TrueSheet 中，SwiftUI Host 会把当前可见 safe area 当作宿主约束，
         // 导致原生 Slider 在滚到视口上/下边缘时出现反向“自动避让”偏移。

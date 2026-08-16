@@ -21,6 +21,8 @@ export interface SliderProps extends ReplicaSliderProps {
   /** 使用 @expo/ui 原生平台的 Slider（iOS: SwiftUI, Android: Material3）。
    * web 端此参数无效，会退回非原生实现。 */
   native?: boolean;
+  /** 原生模式下传入 0 使用连续值；不传时维持默认步进 1。 */
+  step?: number;
   /** Android Material3 Slider 颜色（仅 native 模式生效）。不传则从 Tamagui 主题自动获取。 */
   colors?: SliderColors;
   nativeHaptics?: NativeHapticsSetting;
