@@ -9,7 +9,7 @@ import {
   type UiPreferences,
 } from "rn-ui-kit";
 
-import { accentThemeNames } from "./themes";
+import { accentThemeNames, accentThemeSwatchColors } from "./themes";
 
 type UpdatePreferences = (updater: (current: UiPreferences) => UiPreferences) => void;
 
@@ -19,7 +19,12 @@ function createThemeDebugPage(preferences: UiPreferences, updatePreferences: Upd
     const tracksScrollEdgeHeader =
       Platform.OS === "android" || Platform.OS === "web" || usesNativeIosScrollEdgeHeader;
     const accentOptions = useMemo(
-      () => accentThemeNames.map((value) => ({ label: value, value })),
+      () =>
+        accentThemeNames.map((value) => ({
+          label: value,
+          swatchColor: accentThemeSwatchColors[value],
+          value,
+        })),
       [],
     );
 

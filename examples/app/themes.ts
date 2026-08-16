@@ -69,6 +69,18 @@ const accentChildThemeNames = [
 
 export const accentThemeNames = accentChildThemeNames;
 
+export const accentThemeSwatchColors: Record<(typeof accentThemeNames)[number], string> = {
+  aqua: cyan.cyan10,
+  forest: mint.mint10,
+  golden: yellow.yellow10,
+  lavender: purple.purple10,
+  mono: gray.gray10,
+  ocean: blue.blue10,
+  ruby: crimson.crimson10,
+  sakura: pink.pink10,
+  sunset: amber.amber10,
+};
+
 const accentChildThemeNamePattern = new RegExp(
   `^(light|dark)_(${accentChildThemeNames.join("|")})(?:_|$)`,
 );
