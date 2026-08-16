@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import { resolveNativeListContextMenu } from "../src/core/components/ui/native_list/context_menu";
+import {
+  resolveNativeListContextMenu,
+  resolveNativeListDisabledStyle,
+} from "../src/core/components/ui/native_list/context_menu";
 
 describe("resolveNativeListContextMenu", () => {
   const rootMenu = { items: [{ label: "根菜单", value: "root" }] };
@@ -20,5 +23,14 @@ describe("resolveNativeListContextMenu", () => {
   test("禁用的 Item 不会保留自身或继承的菜单", () => {
     expect(resolveNativeListContextMenu(undefined, rootMenu, true)).toBeUndefined();
     expect(resolveNativeListContextMenu(itemMenu, rootMenu, true)).toBeUndefined();
+  });
+});
+
+describe("resolveNativeListDisabledStyle", () => {
+  test("默认启用并按 Item、Section、NativeList 的顺序覆盖", () => {
+    expect(resolveNativeListDisabledStyle(undefined)).toBe(true);
+    expect(resolveNativeListDisabledStyle(undefined, false)).toBe(false);
+    expect(resolveNativeListDisabledStyle(true, false)).toBe(true);
+    expect(resolveNativeListDisabledStyle(false, true)).toBe(false);
   });
 });

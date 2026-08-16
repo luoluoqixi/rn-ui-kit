@@ -69,6 +69,7 @@ import {
 } from "./edit_mode";
 import {
   NativeListContextMenuProvider,
+  useResolvedNativeListDisabledStyle,
   resolveNativeListContextMenu,
   useResolvedNativeListContextMenu,
 } from "./context_menu";
@@ -96,6 +97,7 @@ type RowContainerProps = NativeListItemPaddingProps & {
   children: ReactNode;
   contextMenuProps?: NativeListContextMenuProps | false;
   disabled?: boolean;
+  disabledStyle?: boolean;
   editingSelected?: boolean;
   hoverBackgroundColor?: ViewStyle["backgroundColor"];
   nativeHaptics?: NativeListItemBaseProps["nativeHaptics"];
@@ -171,6 +173,7 @@ type FallbackListEntry =
     }
   | {
       contextMenuProps?: NativeListContextMenuProps;
+      disabledStyle?: boolean;
       key: string;
       nativeScrollId?: string | number;
       renderRow: () => ReactElement | null;
@@ -294,6 +297,7 @@ function FallbackRowContainer({
   children,
   contextMenuProps,
   disabled,
+  disabledStyle,
   editingSelected,
   hoverBackgroundColor,
   nativeHaptics,
@@ -312,6 +316,7 @@ function FallbackRowContainer({
   const listScrollGenerationRef = listInteraction?.scrollGenerationRef;
   const editMode = useNativeListEditMode();
   const resolvedContextMenuProps = useResolvedNativeListContextMenu(contextMenuProps);
+  const resolvedDisabledStyle = useResolvedNativeListDisabledStyle(disabledStyle);
   const contextMenuRef = useRef<NativeMenuHandle | null>(null);
   const activeNativeContextMenuProps =
     !isWeb() &&
@@ -476,7 +481,7 @@ function FallbackRowContainer({
           styles.rowContainer,
           resolvedRowPadding,
           getRowBackground(),
-          disabled ? styles.disabledContent : null,
+          disabled && resolvedDisabledStyle ? styles.disabledContent : null,
         ]}
       >
         {children}
@@ -510,7 +515,7 @@ function FallbackRowContainer({
             styles.rowContainer,
             resolvedRowPadding,
             getRowBackground(usesIosSwitchPressFallback ? pressed : pressablePressed),
-            disabled ? styles.disabledContent : null,
+            disabled && resolvedDisabledStyle ? styles.disabledContent : null,
           ]}
         >
           {children}
@@ -697,6 +702,7 @@ function NativeListRow({
   chevronColor,
   contextMenuProps,
   disabled,
+  disabledStyle,
   hoverBackgroundColor,
   icon,
   iconAfter,
@@ -750,6 +756,7 @@ function NativeListRow({
       backgroundColor={backgroundColor}
       contextMenuProps={contextMenuProps}
       disabled={disabled}
+      disabledStyle={disabledStyle}
       editingSelected={editRow.editingSelected}
       hoverBackgroundColor={hoverBackgroundColor}
       nativeHaptics={nativeHaptics}
@@ -865,6 +872,14 @@ function getFallbackContextMenuProps(node: ReactNode) {
   return node.props.contextMenuProps;
 }
 
+function getFallbackDisabledStyle(node: ReactNode) {
+  if (!isValidElement<{ disabledStyle?: boolean }>(node)) {
+    return undefined;
+  }
+
+  return node.props.disabledStyle;
+}
+
 function isFallbackListItemDisabled(node: ReactNode) {
   if (!isValidElement(node)) {
     return false;
@@ -881,12 +896,12 @@ function isFallbackListItemDisabled(node: ReactNode) {
 
   return Boolean(
     props.disabled ||
-      props.inputProps?.disabled ||
-      props.menuProps?.triggerProps?.disabled ||
-      props.selectProps?.disabled ||
-      props.selectProps?.isDisabled ||
-      props.switchProps?.disabled ||
-      props.textAreaProps?.disabled,
+    props.inputProps?.disabled ||
+    props.menuProps?.triggerProps?.disabled ||
+    props.selectProps?.disabled ||
+    props.selectProps?.isDisabled ||
+    props.switchProps?.disabled ||
+    props.textAreaProps?.disabled,
   );
 }
 
@@ -914,128 +929,98 @@ function createFallbackRowEntry(
   key: string,
   sectionKey: string,
   inheritedContextMenuProps?: NativeListContextMenuProps,
+  inheritedDisabledStyle?: boolean,
 ): FallbackListEntry {
   const contextMenuProps = resolveNativeListContextMenu(
     getFallbackContextMenuProps(child),
     inheritedContextMenuProps,
     isFallbackListItemDisabled(child),
   );
+  const disabledStyle = getFallbackDisabledStyle(child) ?? inheritedDisabledStyle;
+  const rowEntry = { contextMenuProps, disabledStyle, key, sectionKey, type: "row" as const };
 
   if (isNativeListElementType(child, NativeListActionItem)) {
     return {
-      contextMenuProps,
-      key,
+      ...rowEntry,
       nativeScrollId: child.props.nativeScrollId,
       renderRow: () => <NativeListActionItem {...child.props} />,
-      sectionKey,
-      type: "row",
     };
   }
 
   if (isNativeListElementType(child, NativeListNavigationItem)) {
     return {
-      contextMenuProps,
-      key,
+      ...rowEntry,
       nativeScrollId: child.props.nativeScrollId,
       renderRow: () => <NativeListNavigationItem {...child.props} />,
-      sectionKey,
-      type: "row",
     };
   }
 
   if (isNativeListElementType(child, NativeListSwitchItem)) {
     return {
-      contextMenuProps,
-      key,
+      ...rowEntry,
       nativeScrollId: child.props.nativeScrollId,
       renderRow: () => <NativeListSwitchItem {...child.props} />,
-      sectionKey,
-      type: "row",
     };
   }
 
   if (isNativeListElementType(child, NativeListSelectItem)) {
     return {
-      contextMenuProps,
-      key,
+      ...rowEntry,
       nativeScrollId: child.props.nativeScrollId,
       renderRow: () => <NativeListSelectItem {...child.props} />,
-      sectionKey,
-      type: "row",
     };
   }
 
   if (isNativeListElementType(child, NativeListMenuItem)) {
     return {
-      contextMenuProps,
-      key,
+      ...rowEntry,
       nativeScrollId: child.props.nativeScrollId,
       renderRow: () => <NativeListMenuItem {...child.props} />,
-      sectionKey,
-      type: "row",
     };
   }
 
   if (isNativeListElementType(child, NativeListButtonItem)) {
     return {
-      contextMenuProps,
-      key,
+      ...rowEntry,
       nativeScrollId: child.props.nativeScrollId,
       renderRow: () => <NativeListButtonItem {...child.props} />,
-      sectionKey,
-      type: "row",
     };
   }
 
   if (isNativeListElementType(child, NativeListInputItem)) {
     return {
-      contextMenuProps,
-      key,
+      ...rowEntry,
       renderRow: () => <NativeListInputItem {...child.props} />,
-      sectionKey,
-      type: "row",
     };
   }
 
   if (isNativeListElementType(child, NativeListTextAreaItem)) {
     return {
-      contextMenuProps,
-      key,
+      ...rowEntry,
       renderRow: () => <NativeListTextAreaItem {...child.props} />,
-      sectionKey,
-      type: "row",
     };
   }
 
   if (isNativeListElementType(child, NativeListItem)) {
     return {
-      contextMenuProps,
-      key,
+      ...rowEntry,
       nativeScrollId: child.props.nativeScrollId,
       renderRow: () => <NativeListItem {...child.props} />,
-      sectionKey,
-      type: "row",
     };
   }
 
   if (isNativeListElementType(child, NativeListCustomItem)) {
     return {
-      contextMenuProps,
-      key,
+      ...rowEntry,
       nativeScrollId: getNativeScrollId(child),
       renderRow: () => <NativeListCustomItem {...child.props} />,
-      sectionKey,
-      type: "row",
     };
   }
 
   return {
-    contextMenuProps,
-    key,
+    ...rowEntry,
     nativeScrollId: getNativeScrollId(child),
     renderRow: () => (isValidElement(child) ? child : null),
-    sectionKey,
-    type: "row",
   };
 }
 
@@ -1078,6 +1063,7 @@ function appendSectionEntries(
   sectionProps: NativeListSectionProps,
   sectionKey: string,
   inheritedContextMenuProps?: NativeListContextMenuProps,
+  inheritedDisabledStyle?: boolean,
 ) {
   const sectionChildren = Children.toArray(sectionProps.children);
   const footer = renderNativeListSectionContent(sectionProps.footer);
@@ -1087,6 +1073,7 @@ function appendSectionEntries(
     sectionProps.contextMenuProps,
     inheritedContextMenuProps,
   );
+  const sectionDisabledStyle = sectionProps.disabledStyle ?? inheritedDisabledStyle;
   const hasSectionContent =
     title != null || trailing != null || sectionChildren.length > 0 || footer != null;
 
@@ -1113,6 +1100,7 @@ function appendSectionEntries(
         `${sectionKey}-row-${getNodeKey(child, String(index))}`,
         sectionKey,
         sectionContextMenuProps,
+        sectionDisabledStyle,
       ),
     );
   });
@@ -1130,6 +1118,7 @@ function appendSectionEntries(
 function createFallbackListEntries(
   children: ReactNode,
   contextMenuProps?: NativeListContextMenuProps,
+  disabledStyle?: boolean,
 ) {
   const entries: FallbackListEntry[] = [];
 
@@ -1140,6 +1129,7 @@ function createFallbackListEntries(
         child.props,
         getNodeKey(child, `section-${index}`),
         contextMenuProps,
+        disabledStyle,
       );
       return;
     }
@@ -1150,6 +1140,7 @@ function createFallbackListEntries(
         `direct-row-${getNodeKey(child, String(index))}`,
         `direct-${index}`,
         contextMenuProps,
+        disabledStyle,
       ),
     );
   });
@@ -1192,9 +1183,11 @@ function renderFallbackListEntry({
     case "row":
       return (
         <NativeListEditRowIdProvider selectionId={item.nativeScrollId ?? item.key}>
-          <FallbackListContextMenuRow contextMenuProps={item.contextMenuProps}>
-            <FallbackListRowFrame>{item.renderRow()}</FallbackListRowFrame>
-          </FallbackListContextMenuRow>
+          <NativeListContextMenuProvider disabledStyle={item.disabledStyle}>
+            <FallbackListContextMenuRow contextMenuProps={item.contextMenuProps}>
+              <FallbackListRowFrame>{item.renderRow()}</FallbackListRowFrame>
+            </FallbackListContextMenuRow>
+          </NativeListContextMenuProvider>
         </NativeListEditRowIdProvider>
       );
     case "sectionFooter":
@@ -1712,7 +1705,6 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
               nativeTrigger
               nativeTriggerContainerStyle={[
                 styles.selectInlineTrigger,
-                disabled ? styles.disabledContent : null,
                 selectProps.nativeTriggerContainerStyle,
               ]}
               nativeTriggerContent={selectProps.nativeTriggerContent}
@@ -2053,10 +2045,7 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
               {...menuProps}
               nativeHaptics={menuProps.nativeHaptics ?? itemProps.nativeHaptics ?? false}
               nativeTrigger
-              nativeTriggerContainerStyle={[
-                styles.selectInlineTrigger,
-                disabled ? styles.disabledContent : null,
-              ]}
+              nativeTriggerContainerStyle={[styles.selectInlineTrigger]}
               nativeTriggerIcon="chevrons-up-down"
               nativeTriggerLabel={itemProps.value ?? "更多"}
               nativeTriggerLabelProps={
@@ -2134,6 +2123,7 @@ export function NativeListCustomItem({
   children,
   contextMenuProps,
   disabled,
+  disabledStyle,
   hoverBackgroundColor,
   nativeHaptics,
   nativeScrollId,
@@ -2161,6 +2151,7 @@ export function NativeListCustomItem({
       backgroundColor={backgroundColor}
       contextMenuProps={contextMenuProps}
       disabled={disabled}
+      disabledStyle={disabledStyle}
       editingSelected={editRow.editingSelected}
       hoverBackgroundColor={hoverBackgroundColor}
       nativeHaptics={nativeHaptics}
@@ -2189,12 +2180,14 @@ export function NativeListCustomItem({
 export function NativeListSection({
   children,
   contextMenuProps,
+  disabledStyle,
   footer,
   trailing,
   title,
   titleColor,
   titleFontSize,
 }: NativeListSectionProps) {
+  const resolvedDisabledStyle = useResolvedNativeListDisabledStyle(disabledStyle);
   const entries = createFallbackListEntries(
     <NativeListSection
       footer={footer}
@@ -2206,15 +2199,22 @@ export function NativeListSection({
     >
       {children}
     </NativeListSection>,
+    undefined,
+    resolvedDisabledStyle,
   );
 
-  return <View style={styles.staticSection}>{renderStaticEntries(entries)}</View>;
+  return (
+    <NativeListContextMenuProvider disabledStyle={resolvedDisabledStyle}>
+      <View style={styles.staticSection}>{renderStaticEntries(entries)}</View>
+    </NativeListContextMenuProvider>
+  );
 }
 
 export function NativeListRoot({
   backgroundColor,
   children,
   contextMenuProps,
+  disabledStyle,
   contentContainerStyle,
   contentMarginBottom,
   contentMarginTop,
@@ -2292,8 +2292,8 @@ export function NativeListRoot({
     [captureWebScrollPosition],
   );
   const entries = useMemo(
-    () => createFallbackListEntries(children, contextMenuProps),
-    [children, contextMenuProps],
+    () => createFallbackListEntries(children, contextMenuProps, disabledStyle),
+    [children, contextMenuProps, disabledStyle],
   );
   const renderFlatListEntry = useCallback(
     (info: ListRenderItemInfo<FallbackListEntry>) => renderFallbackFlatListEntry(info, entries),
@@ -2553,58 +2553,60 @@ export function NativeListRoot({
       selectedIds={selectedIds}
     >
       <FallbackListInteractionContext.Provider value={listInteractionContext}>
-        <FlatList
-          automaticallyAdjustsScrollIndicatorInsets={
-            manuallyAdjustNormalPageIndicator ? false : automaticallyAdjustsScrollIndicatorInsets
-          }
-          alwaysBounceVertical={alwaysBounceVertical ?? (!insideTrueSheet && os() === "ios")}
-          contentInset={contentInset}
-          contentContainerStyle={[
-            insideTrueSheet ? styles.rootContent : styles.scrollRootContent,
-            styles.scrollViewportFill,
-            rootBackground,
-            contentSpacingStyle,
-            contentContainerStyle,
-          ]}
-          contentInsetAdjustmentBehavior={resolvedContentInsetAdjustmentBehavior}
-          contentOffset={contentOffset}
-          data={entries}
-          extraData={entries}
-          keyboardShouldPersistTaps={keyboardShouldPersistTaps ?? "handled"}
-          keyExtractor={getEntryKey}
-          nestedScrollEnabled={nestedScrollEnabled ?? true}
-          onLayout={handleFlatListLayout}
-          onScroll={handleFlatListScroll}
-          onScrollBeginDrag={handleScrollBeginDrag}
-          onScrollToIndexFailed={handleScrollToIndexFailed}
-          ref={flatListRef}
-          removeClippedSubviews={false}
-          refreshControl={
-            onRefresh != null ? (
-              <RefreshControl
-                colors={[resolvedRefreshColor]}
-                enabled={refreshControlEnabled}
-                onRefresh={handleRefresh}
-                refreshing={refreshControlEnabled && refreshing}
-                tintColor={refreshControlEnabled ? resolvedRefreshColor : "transparent"}
-              />
-            ) : undefined
-          }
-          renderItem={renderFlatListEntry}
-          scrollEnabled={scrollable}
-          scrollEventThrottle={resolvedScrollEventThrottle}
-          showsVerticalScrollIndicator={showsVerticalScrollIndicator ?? true}
-          scrollIndicatorInsets={
-            indicatorBottomInset != null
-              ? {
-                  ...scrollIndicatorInsets,
-                  bottom: indicatorBottomInset,
-                }
-              : scrollIndicatorInsets
-          }
-          style={[styles.root, rootBackground, style]}
-          {...scrollViewProps}
-        />
+        <NativeListContextMenuProvider disabledStyle={disabledStyle}>
+          <FlatList
+            automaticallyAdjustsScrollIndicatorInsets={
+              manuallyAdjustNormalPageIndicator ? false : automaticallyAdjustsScrollIndicatorInsets
+            }
+            alwaysBounceVertical={alwaysBounceVertical ?? (!insideTrueSheet && os() === "ios")}
+            contentInset={contentInset}
+            contentContainerStyle={[
+              insideTrueSheet ? styles.rootContent : styles.scrollRootContent,
+              styles.scrollViewportFill,
+              rootBackground,
+              contentSpacingStyle,
+              contentContainerStyle,
+            ]}
+            contentInsetAdjustmentBehavior={resolvedContentInsetAdjustmentBehavior}
+            contentOffset={contentOffset}
+            data={entries}
+            extraData={entries}
+            keyboardShouldPersistTaps={keyboardShouldPersistTaps ?? "handled"}
+            keyExtractor={getEntryKey}
+            nestedScrollEnabled={nestedScrollEnabled ?? true}
+            onLayout={handleFlatListLayout}
+            onScroll={handleFlatListScroll}
+            onScrollBeginDrag={handleScrollBeginDrag}
+            onScrollToIndexFailed={handleScrollToIndexFailed}
+            ref={flatListRef}
+            removeClippedSubviews={false}
+            refreshControl={
+              onRefresh != null ? (
+                <RefreshControl
+                  colors={[resolvedRefreshColor]}
+                  enabled={refreshControlEnabled}
+                  onRefresh={handleRefresh}
+                  refreshing={refreshControlEnabled && refreshing}
+                  tintColor={refreshControlEnabled ? resolvedRefreshColor : "transparent"}
+                />
+              ) : undefined
+            }
+            renderItem={renderFlatListEntry}
+            scrollEnabled={scrollable}
+            scrollEventThrottle={resolvedScrollEventThrottle}
+            showsVerticalScrollIndicator={showsVerticalScrollIndicator ?? true}
+            scrollIndicatorInsets={
+              indicatorBottomInset != null
+                ? {
+                    ...scrollIndicatorInsets,
+                    bottom: indicatorBottomInset,
+                  }
+                : scrollIndicatorInsets
+            }
+            style={[styles.root, rootBackground, style]}
+            {...scrollViewProps}
+          />
+        </NativeListContextMenuProvider>
       </FallbackListInteractionContext.Provider>
     </NativeListEditModeProvider>
   );

@@ -73,7 +73,11 @@ import { getTrueSheetScrollBottomPadding } from "../sheet/native_sheet/true_shee
 import { useTrueSheetScrollLayout } from "../sheet/native_sheet/true_sheet/true_sheet_scroll_context";
 import { isIos15, isIos26Plus } from "../utils/platform";
 import { toSwiftUIHexColor, triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
-import { NativeListContextMenuProvider, useResolvedNativeListContextMenu } from "./context_menu";
+import {
+  NativeListContextMenuProvider,
+  useResolvedNativeListDisabledStyle,
+  useResolvedNativeListContextMenu,
+} from "./context_menu";
 import { renderNativeListSectionContent } from "./section_content";
 import {
   NativeListEditModeProvider,
@@ -532,6 +536,7 @@ function NativeRowContainer({
   children,
   contextMenuProps,
   disabled,
+  disabledStyle,
   nativeSelectionId,
   nativeScrollId,
   onPress,
@@ -549,6 +554,7 @@ function NativeRowContainer({
   children: ReactNode;
   contextMenuProps?: NativeListContextMenuProps;
   disabled?: boolean;
+  disabledStyle?: boolean;
   nativeSelectionId?: NativeListSelectionId;
   nativeScrollId?: string | number;
   onPress?: () => void;
@@ -561,12 +567,12 @@ function NativeRowContainer({
   const restoresIos15TopCorners = useContext(Ios15FirstVisibleRowContext);
   const primaryColor = toSwiftUIHexColor(theme.color.val) ?? theme.color.val;
   const resolvedTint = resolveNativeListBtnTintColor(btnTint, primaryColor);
-  const swiftUIContextMenuProps = !disabled && hasSwiftUIContextMenu(contextMenuProps)
-    ? contextMenuProps
-    : undefined;
+  const resolvedDisabledStyle = useResolvedNativeListDisabledStyle(disabledStyle);
+  const swiftUIContextMenuProps =
+    !disabled && hasSwiftUIContextMenu(contextMenuProps) ? contextMenuProps : undefined;
   const baseModifiers = [
     ROW_INSETS,
-    ...(disabled ? [opacity(0.5)] : []),
+    ...(disabled && resolvedDisabledStyle ? [opacity(0.5)] : []),
     padding(
       resolveRowPadding({
         paddingBottom,
@@ -781,6 +787,7 @@ function NativePressRow({
   chevronColor,
   contextMenuProps,
   disabled,
+  disabledStyle,
   icon,
   iconColor,
   iconSize,
@@ -880,6 +887,7 @@ function NativePressRow({
           : resolvedContextMenuProps
       }
       disabled={disabled}
+      disabledStyle={disabledStyle}
       nativeSelectionId={editRow.nativeSelection ? editRow.selectionId : undefined}
       onPress={handlePress}
       btnStyle={btnStyle}
@@ -966,6 +974,7 @@ function NativeListRoot({
   backgroundColor,
   children,
   contextMenuProps,
+  disabledStyle,
   contentInsetAdjustmentBehavior,
   contentMarginBottom,
   contentMarginTop,
@@ -1031,6 +1040,7 @@ function NativeListRoot({
           backgroundColor={backgroundColor}
           contentInsetAdjustmentBehavior={contentInsetAdjustmentBehavior}
           contextMenuProps={contextMenuProps}
+          disabledStyle={disabledStyle}
           defaultSelectedIds={defaultSelectedIds}
           editMode={editMode}
           editModeIcon={editModeIcon}
@@ -1181,7 +1191,10 @@ function NativeListRoot({
               scrollDisabled(!scrollable),
             ]}
           >
-            <NativeListContextMenuProvider contextMenuProps={contextMenuProps}>
+            <NativeListContextMenuProvider
+              contextMenuProps={contextMenuProps}
+              disabledStyle={disabledStyle}
+            >
               {children}
             </NativeListContextMenuProvider>
           </List>
@@ -1194,6 +1207,7 @@ function NativeListRoot({
 function NativeListSection({
   children,
   contextMenuProps,
+  disabledStyle,
   footer,
   trailing,
   title,
@@ -1202,6 +1216,7 @@ function NativeListSection({
 }: NativeListSectionProps) {
   const nativeListEnabled = useNativeListEnabled();
   const resolvedContextMenuProps = useResolvedNativeListContextMenu(contextMenuProps);
+  const resolvedDisabledStyle = useResolvedNativeListDisabledStyle(disabledStyle);
   const resolvedFooter = renderNativeListSectionContent(footer);
   const resolvedTitle = renderNativeListSectionContent(title);
   const resolvedTrailing = renderNativeListSectionContent(trailing);
@@ -1210,6 +1225,7 @@ function NativeListSection({
     return (
       <FallbackSection
         contextMenuProps={contextMenuProps}
+        disabledStyle={resolvedDisabledStyle}
         footer={resolvedFooter}
         trailing={resolvedTrailing}
         title={resolvedTitle}
@@ -1224,7 +1240,10 @@ function NativeListSection({
   const stringTitle = toPlainText(resolvedTitle);
   const sectionChildren = Children.map(children, (child) =>
     child != null ? (
-      <NativeListContextMenuProvider contextMenuProps={resolvedContextMenuProps}>
+      <NativeListContextMenuProvider
+        contextMenuProps={resolvedContextMenuProps}
+        disabledStyle={resolvedDisabledStyle}
+      >
         {child}
       </NativeListContextMenuProvider>
     ) : null,
@@ -1827,6 +1846,7 @@ function NativeIos15MenuSelectRow({
             : resolvedContextMenuProps
         }
         disabled={disabled}
+        disabledStyle={itemProps.disabledStyle}
         nativeScrollId={itemProps.nativeScrollId}
         nativeSelectionId={editRow.nativeSelection ? editRow.selectionId : undefined}
         paddingBottom={itemProps.paddingBottom}
@@ -1896,6 +1916,7 @@ function NativeIos15MenuSelectRow({
           : resolvedContextMenuProps
       }
       disabled={disabled}
+      disabledStyle={itemProps.disabledStyle}
       nativeScrollId={itemProps.nativeScrollId}
       nativeSelectionId={editRow.nativeSelection ? editRow.selectionId : undefined}
       paddingBottom={itemProps.paddingBottom}
@@ -2177,9 +2198,7 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
             {...menuProps}
             nativeHaptics={menuProps.nativeHaptics ?? itemProps.nativeHaptics ?? false}
             nativeTrigger
-            nativeTriggerContainerStyle={[
-              styles.selectInlineTrigger,
-            ]}
+            nativeTriggerContainerStyle={[styles.selectInlineTrigger]}
             nativeTriggerIcon="chevrons-up-down"
             nativeTriggerLabel={menuValue}
             nativeTriggerLabelProps={
@@ -2212,6 +2231,7 @@ export function NativeListCustomItem({
   children,
   contextMenuProps,
   disabled,
+  disabledStyle,
   hoverBackgroundColor,
   nativeHaptics,
   nativeScrollId,
@@ -2228,6 +2248,7 @@ export function NativeListCustomItem({
 }: NativeListCustomItemProps) {
   const restoresIos15TopCorners = useContext(Ios15FirstVisibleRowContext);
   const resolvedContextMenuProps = useResolvedNativeListContextMenu(contextMenuProps);
+  const resolvedDisabledStyle = useResolvedNativeListDisabledStyle(disabledStyle);
   const editRow = useNativeListEditRow({
     disabled,
     nativeScrollId,
@@ -2258,6 +2279,7 @@ export function NativeListCustomItem({
         backgroundColor={backgroundColor}
         contextMenuProps={contextMenuProps}
         disabled={disabled}
+        disabledStyle={resolvedDisabledStyle}
         hoverBackgroundColor={hoverBackgroundColor}
         nativeHaptics={nativeHaptics}
         nativeScrollId={nativeScrollId}
@@ -2277,6 +2299,7 @@ export function NativeListCustomItem({
       <NativeRowContainer
         {...rowPaddingProps}
         disabled={disabled}
+        disabledStyle={resolvedDisabledStyle}
         nativeSelectionId={editRow.nativeSelection ? editRow.selectionId : undefined}
         nativeScrollId={nativeScrollId}
         onPress={editRow.onPress}
@@ -2298,7 +2321,12 @@ export function NativeListCustomItem({
 
     const customRow = (
       <VStack modifiers={rowModifiers}>
-        <NativeHostedCustomRow disabled={Boolean(disabled)}>{children}</NativeHostedCustomRow>
+        <NativeHostedCustomRow
+          disabled={Boolean(disabled && resolvedDisabledStyle)}
+          disableInteractions={Boolean(disabled)}
+        >
+          {children}
+        </NativeHostedCustomRow>
       </VStack>
     );
 
@@ -2335,7 +2363,12 @@ export function NativeListCustomItem({
             }),
           ]}
         >
-          <NativeHostedCustomRow disabled={Boolean(disabled)}>{children}</NativeHostedCustomRow>
+          <NativeHostedCustomRow
+            disabled={Boolean(disabled && resolvedDisabledStyle)}
+            disableInteractions={Boolean(disabled)}
+          >
+            {children}
+          </NativeHostedCustomRow>
         </VStack>
       </SwiftButton>
     );
@@ -2361,7 +2394,12 @@ export function NativeListCustomItem({
         triggerNativeHaptics(resolvedHaptics);
       }}
     >
-      <NativeHostedCustomRow disabled={Boolean(disabled)}>{children}</NativeHostedCustomRow>
+      <NativeHostedCustomRow
+        disabled={Boolean(disabled && resolvedDisabledStyle)}
+        disableInteractions={Boolean(disabled)}
+      >
+        {children}
+      </NativeHostedCustomRow>
     </SwiftButton>
   );
 

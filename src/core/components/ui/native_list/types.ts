@@ -63,6 +63,8 @@ export type NativeListItemBaseProps = NativeListItemPaddingProps &
     /** 当前行的菜单；覆盖 Section 与 NativeList 上的配置。传 `false` 可关闭继承菜单。 */
     contextMenuProps?: NativeListContextMenuProps | false;
     disabled?: boolean;
+    /** disabled 时是否显示禁用视觉；默认继承 NativeList/Section 的设置，最终默认为 true。 */
+    disabledStyle?: boolean;
     /** fallback 行的 hover 背景色；iOS 原生 List 会忽略。 */
     hoverBackgroundColor?: ViewStyle["backgroundColor"];
     /** `sfSymbol` 的颜色；自定义 `icon` 需由调用方自行设置颜色。 */
@@ -159,6 +161,8 @@ export type NativeListCustomItemProps = NativeListItemPaddingProps & {
   /** 当前行的菜单；覆盖 Section 与 NativeList 上的配置。传 `false` 可关闭继承菜单。 */
   contextMenuProps?: NativeListContextMenuProps | false;
   disabled?: boolean;
+  /** disabled 时是否显示禁用视觉；默认继承 NativeList/Section 的设置，最终默认为 true。 */
+  disabledStyle?: boolean;
   /** fallback 行的 hover 背景色；iOS 原生 List 会忽略。 */
   hoverBackgroundColor?: ViewStyle["backgroundColor"];
   nativeHaptics?: NativeHapticsSetting;
@@ -187,6 +191,8 @@ export type NativeListSectionProps = {
   children?: ReactNode;
   /** 当前 Section 内所有行的菜单；覆盖 NativeList 配置。传 `false` 可关闭继承菜单。 */
   contextMenuProps?: NativeListContextMenuProps | false;
+  /** Section 内 disabled 行是否显示禁用视觉；覆盖 NativeList 设置，默认继承。 */
+  disabledStyle?: boolean;
   /** Footer 内容；也可传入无参数函数组件。 */
   footer?: NativeListSectionContent;
   /** 显示在分组标题右侧的内容，例如“全部显示”按钮；也可传入无参数函数组件。 */
@@ -207,6 +213,8 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
     children?: ReactNode;
     /** 所有行默认使用的菜单；Section 或 item 可逐级覆盖。 */
     contextMenuProps?: NativeListContextMenuProps;
+    /** 所有 disabled 行是否显示禁用视觉；Section 或 item 可逐级覆盖，默认 true。 */
+    disabledStyle?: boolean;
     /** 原生 List 内容顶部内边距。 */
     contentMarginTop?: number;
     /** 原生 List 内容底部内边距。 */

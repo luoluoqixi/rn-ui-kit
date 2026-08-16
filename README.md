@@ -359,7 +359,8 @@ export function SettingsList() {
   `items`、`contentProps`、`itemProps`、打开事件等 `ContextMenu` 配置。解析优先级为
   Item > Section > NativeList；Item 或 Section 传 `contextMenuProps={false}` 可停止继承。
   iOS/Android 长按打开，Web 右键打开；编辑模式和 `disabled` Item 中会暂时停用，避免与多选或禁用状态冲突。
-  iOS 原生 Item 在禁用时会以 50% 透明度显示。
+  iOS 原生 Item 默认在禁用时以 50% 透明度显示。
+  `disabledStyle` 同样按 NativeList > Section > Item 继承，默认启用；传入 `false` 可关闭对应层级的禁用视觉。
   `ContextMenuItemData` 支持 `icon`、`indicator`、`selected`、`subtitle`、`subMenu` 与
   `subMenuTitle`，其中 Android 原生菜单只支持一级子菜单。
 - 向 `NativeList` 传入 `editMode` 可在 iOS、Android 与 Web 开启备忘录式多选：每行左侧

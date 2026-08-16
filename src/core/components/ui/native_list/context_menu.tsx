@@ -5,19 +5,36 @@ import type { NativeListContextMenuProps } from "./types";
 const NativeListContextMenuContext = createContext<NativeListContextMenuProps | undefined>(
   undefined,
 );
+const NativeListDisabledStyleContext = createContext(true);
 
 export function NativeListContextMenuProvider({
   children,
   contextMenuProps,
+  disabledStyle,
 }: {
   children: ReactNode;
   contextMenuProps?: NativeListContextMenuProps;
+  disabledStyle?: boolean;
 }) {
+  const inheritedDisabledStyle = useContext(NativeListDisabledStyleContext);
+
   return (
     <NativeListContextMenuContext.Provider value={contextMenuProps}>
-      {children}
+      <NativeListDisabledStyleContext.Provider value={disabledStyle ?? inheritedDisabledStyle}>
+        {children}
+      </NativeListDisabledStyleContext.Provider>
     </NativeListContextMenuContext.Provider>
   );
+}
+
+export function useResolvedNativeListDisabledStyle(disabledStyle?: boolean) {
+  const inheritedDisabledStyle = useContext(NativeListDisabledStyleContext);
+
+  return resolveNativeListDisabledStyle(disabledStyle, inheritedDisabledStyle);
+}
+
+export function resolveNativeListDisabledStyle(disabledStyle?: boolean, inherited = true) {
+  return disabledStyle ?? inherited;
 }
 
 export function resolveNativeListContextMenu(
