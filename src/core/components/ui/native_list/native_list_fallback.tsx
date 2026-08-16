@@ -316,6 +316,7 @@ function FallbackRowContainer({
   const activeNativeContextMenuProps =
     !isWeb() &&
     !editMode &&
+    !disabled &&
     resolvedContextMenuProps != null &&
     !resolvedContextMenuProps.triggerProps?.disabled
       ? resolvedContextMenuProps
@@ -843,6 +844,31 @@ function getFallbackContextMenuProps(node: ReactNode) {
   return node.props.contextMenuProps;
 }
 
+function isFallbackListItemDisabled(node: ReactNode) {
+  if (!isValidElement(node)) {
+    return false;
+  }
+
+  const props = node.props as {
+    disabled?: boolean;
+    inputProps?: { disabled?: boolean };
+    menuProps?: { triggerProps?: { disabled?: boolean } };
+    selectProps?: { disabled?: boolean; isDisabled?: boolean };
+    switchProps?: { disabled?: boolean };
+    textAreaProps?: { disabled?: boolean };
+  };
+
+  return Boolean(
+    props.disabled ||
+      props.inputProps?.disabled ||
+      props.menuProps?.triggerProps?.disabled ||
+      props.selectProps?.disabled ||
+      props.selectProps?.isDisabled ||
+      props.switchProps?.disabled ||
+      props.textAreaProps?.disabled,
+  );
+}
+
 function isNativeListSectionType(type: ReactElement["type"]) {
   if (type === NativeListSection) {
     return true;
@@ -871,6 +897,7 @@ function createFallbackRowEntry(
   const contextMenuProps = resolveNativeListContextMenu(
     getFallbackContextMenuProps(child),
     inheritedContextMenuProps,
+    isFallbackListItemDisabled(child),
   );
 
   if (isNativeListElementType(child, NativeListActionItem)) {

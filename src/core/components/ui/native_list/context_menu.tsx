@@ -23,8 +23,9 @@ export function NativeListContextMenuProvider({
 export function resolveNativeListContextMenu(
   contextMenuProps?: NativeListContextMenuProps | false,
   inheritedContextMenuProps?: NativeListContextMenuProps,
+  disabled = false,
 ) {
-  if (contextMenuProps === false) {
+  if (disabled || contextMenuProps === false) {
     return undefined;
   }
 
@@ -33,8 +34,9 @@ export function resolveNativeListContextMenu(
 
 export function useResolvedNativeListContextMenu(
   contextMenuProps?: NativeListContextMenuProps | false,
+  disabled = false,
 ) {
   const inheritedContextMenuProps = useContext(NativeListContextMenuContext);
 
-  return resolveNativeListContextMenu(contextMenuProps, inheritedContextMenuProps);
+  return resolveNativeListContextMenu(contextMenuProps, inheritedContextMenuProps, disabled);
 }

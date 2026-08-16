@@ -16,4 +16,9 @@ describe("resolveNativeListContextMenu", () => {
   test("false 会停止继承", () => {
     expect(resolveNativeListContextMenu(false, rootMenu)).toBeUndefined();
   });
+
+  test("禁用的 Item 不会保留自身或继承的菜单", () => {
+    expect(resolveNativeListContextMenu(undefined, rootMenu, true)).toBeUndefined();
+    expect(resolveNativeListContextMenu(itemMenu, rootMenu, true)).toBeUndefined();
+  });
 });

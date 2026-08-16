@@ -539,11 +539,12 @@ function NativeRowContainer({
   const restoresIos15TopCorners = useContext(Ios15FirstVisibleRowContext);
   const primaryColor = toSwiftUIHexColor(theme.color.val) ?? theme.color.val;
   const resolvedTint = resolveNativeListBtnTintColor(btnTint, primaryColor);
-  const swiftUIContextMenuProps = hasSwiftUIContextMenu(contextMenuProps)
+  const swiftUIContextMenuProps = !disabled && hasSwiftUIContextMenu(contextMenuProps)
     ? contextMenuProps
     : undefined;
   const baseModifiers = [
     ROW_INSETS,
+    ...(disabled ? [opacity(0.5)] : []),
     padding(
       resolveRowPadding({
         paddingBottom,
@@ -733,17 +734,19 @@ function NativeTrailingContent({ children }: { children: ReactNode }) {
 
 function NativeHostedCustomRow({
   children,
+  disabled = false,
   disableInteractions = false,
 }: {
   children: ReactNode;
+  disabled?: boolean;
   disableInteractions?: boolean;
 }) {
   return (
     <RNHostView matchContents={{ vertical: true } as unknown as boolean}>
       <View
         collapsable={false}
-        pointerEvents={disableInteractions ? "none" : "auto"}
-        style={styles.customRowShell}
+        pointerEvents={disableInteractions || disabled ? "none" : "auto"}
+        style={[styles.customRowShell, disabled ? styles.disabledContent : null]}
       >
         {children}
       </View>
@@ -850,7 +853,7 @@ function NativePressRow({
   return (
     <NativeRowContainer
       contextMenuProps={
-        editRow.editMode || resolvedContextMenuProps?.triggerProps?.disabled
+        disabled || editRow.editMode || resolvedContextMenuProps?.triggerProps?.disabled
           ? undefined
           : resolvedContextMenuProps
       }
@@ -1793,7 +1796,7 @@ function NativeIos15MenuSelectRow({
     return (
       <NativeRowContainer
         contextMenuProps={
-          editRow.editMode || resolvedContextMenuProps?.triggerProps?.disabled
+          disabled || editRow.editMode || resolvedContextMenuProps?.triggerProps?.disabled
             ? undefined
             : resolvedContextMenuProps
         }
@@ -1825,7 +1828,7 @@ function NativeIos15MenuSelectRow({
                   {leadingContent}
                 </HStack>
                 <Spacer minLength={12} />
-                <HStack modifiers={[opacity(editMode || disabled ? 0.5 : 1)]} spacing={4}>
+                <HStack modifiers={[opacity(editMode ? 0.5 : 1)]} spacing={4}>
                   <SwiftText
                     modifiers={[
                       ...valueModifiers(itemProps.valueFontSize),
@@ -1859,7 +1862,7 @@ function NativeIos15MenuSelectRow({
   return (
     <NativeRowContainer
       contextMenuProps={
-        editRow.editMode || resolvedContextMenuProps?.triggerProps?.disabled
+        disabled || editRow.editMode || resolvedContextMenuProps?.triggerProps?.disabled
           ? undefined
           : resolvedContextMenuProps
       }
@@ -1904,7 +1907,7 @@ function NativeIos15MenuSelectRow({
               titleFontSize={itemProps.titleFontSize}
             />
             <Spacer minLength={12} />
-            <HStack modifiers={[opacity(editMode || disabled ? 0.5 : 1)]} spacing={4}>
+            <HStack modifiers={[opacity(editMode ? 0.5 : 1)]} spacing={4}>
               <SwiftText
                 modifiers={[
                   ...valueModifiers(itemProps.valueFontSize),
@@ -2052,7 +2055,6 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
             nativeTrigger
             nativeTriggerContainerStyle={[
               styles.selectInlineTrigger,
-              disabled ? styles.disabledContent : null,
               selectProps.nativeTriggerContainerStyle,
             ]}
             nativeTriggerContent={selectProps.nativeTriggerContent}
@@ -2139,7 +2141,6 @@ export function NativeListMenuItem({ menuProps, ...itemProps }: NativeListMenuIt
             nativeTrigger
             nativeTriggerContainerStyle={[
               styles.selectInlineTrigger,
-              disabled ? styles.disabledContent : null,
             ]}
             nativeTriggerIcon="chevrons-up-down"
             nativeTriggerLabel={menuValue}
@@ -2206,7 +2207,7 @@ export function NativeListCustomItem({
     paddingVertical,
   };
   const activeContextMenuProps =
-    editRow.editMode || resolvedContextMenuProps?.triggerProps?.disabled
+    disabled || editRow.editMode || resolvedContextMenuProps?.triggerProps?.disabled
       ? undefined
       : resolvedContextMenuProps;
   const swiftUIContextMenuProps = hasSwiftUIContextMenu(activeContextMenuProps)
@@ -2259,7 +2260,7 @@ export function NativeListCustomItem({
 
     const customRow = (
       <VStack modifiers={rowModifiers}>
-        <NativeHostedCustomRow>{children}</NativeHostedCustomRow>
+        <NativeHostedCustomRow disabled={Boolean(disabled)}>{children}</NativeHostedCustomRow>
       </VStack>
     );
 
@@ -2296,7 +2297,7 @@ export function NativeListCustomItem({
             }),
           ]}
         >
-          <NativeHostedCustomRow>{children}</NativeHostedCustomRow>
+          <NativeHostedCustomRow disabled={Boolean(disabled)}>{children}</NativeHostedCustomRow>
         </VStack>
       </SwiftButton>
     );
@@ -2322,7 +2323,7 @@ export function NativeListCustomItem({
         triggerNativeHaptics(resolvedHaptics);
       }}
     >
-      <NativeHostedCustomRow>{children}</NativeHostedCustomRow>
+      <NativeHostedCustomRow disabled={Boolean(disabled)}>{children}</NativeHostedCustomRow>
     </SwiftButton>
   );
 
