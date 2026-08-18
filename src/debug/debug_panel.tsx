@@ -62,7 +62,7 @@ const DEBUG_PANEL_SHEET_OVERLAY_HOST = "rn-ui-kit-debug-panel-sheet-overlay";
 const DEBUG_SECTION_SHEET_OVERLAY_HOST = "rn-ui-kit-debug-section-sheet-overlay";
 const DEBUG_HOST_SECTION_PARAM = "__rnUiKitDebugSection";
 const DEBUG_HOST_EXAMPLE_PARAM = "__rnUiKitDebugExample";
-const DEBUG_HOME_LARGE_TITLE_OPTIONS: NativeStackNavigationOptions =
+const DEBUG_LARGE_TITLE_OPTIONS: NativeStackNavigationOptions =
   Platform.OS === "ios"
     ? {
         headerLargeTitle: true,
@@ -253,6 +253,7 @@ function RnUiKitDebugHostPanel({
       ? routeParams[DEBUG_HOST_EXAMPLE_PARAM]
       : undefined;
   const isRootRoute = sectionKey == null && exampleKey == null;
+  const usesLargeTitle = isRootRoute || sectionKey === "component-examples";
   const showsExplicitRootBackLabel =
     isRootRoute && backButtonLabel != null && backButtonLabel.trim().length > 0;
   const title =
@@ -273,7 +274,7 @@ function RnUiKitDebugHostPanel({
         headerBackTitle: showsExplicitRootBackLabel ? backButtonLabel : undefined,
         headerShown: true,
         title,
-        ...(isRootRoute ? DEBUG_HOME_LARGE_TITLE_OPTIONS : {}),
+        ...(usesLargeTitle ? DEBUG_LARGE_TITLE_OPTIONS : {}),
         ...pageScreenOptions,
       }),
     );
@@ -535,7 +536,7 @@ function RnUiKitDebugPanelContent({
             name="index"
             options={{
               title: `${RN_UI_KIT_PACKAGE_NAME} - ${RN_UI_KIT_PACKAGE_VERSION}`,
-              ...DEBUG_HOME_LARGE_TITLE_OPTIONS,
+              ...DEBUG_LARGE_TITLE_OPTIONS,
             }}
           >
             {() => (
@@ -560,7 +561,10 @@ function RnUiKitDebugPanelContent({
             <Stack.Screen
               key={definition.key}
               name={definition.key}
-              options={{ title: definition.label }}
+              options={{
+                title: definition.label,
+                ...(definition.key === "component-examples" ? DEBUG_LARGE_TITLE_OPTIONS : {}),
+              }}
             >
               {() => (
                 <RnUiKitDebugSectionPage
