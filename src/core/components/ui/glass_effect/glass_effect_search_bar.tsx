@@ -120,7 +120,12 @@ export const GlassEffectSearchBar = forwardRef<TextInput, GlassEffectSearchBarPr
           nativeButtonStyle={usesNativeCancelButton ? (cancelButtonStyle ?? "glass") : undefined}
           nativeSystemImage={usesNativeCancelButton ? "xmark" : undefined}
           nativeSystemImageSize={cancelButtonProps?.nativeSystemImageSize ?? 22}
-          buttonSize={cancelButtonProps?.buttonSize ?? { height: 40, width: 40 }}
+          buttonSize={
+            cancelButtonProps?.buttonSize ?? {
+              height: usesNativeCancelButton ? 40 : 50,
+              width: usesNativeCancelButton ? 40 : 50,
+            }
+          }
           onPress={handleCancel}
           style={cancelButtonProps?.style}
           title={cancelButtonProps?.title ?? "×"}

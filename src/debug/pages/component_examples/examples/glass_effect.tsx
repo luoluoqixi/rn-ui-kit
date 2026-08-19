@@ -1,7 +1,11 @@
 import {
+  Bold,
   ChevronLeft,
   FolderPlus,
+  Italic,
+  Link,
   ListMusic,
+  List,
   MoreHorizontal,
   Music2,
   Pause,
@@ -42,6 +46,7 @@ import {
 type GlassExampleMode =
   | "floating-buttons"
   | "docked-actions"
+  | "editor"
   | "search"
   | "music"
   | "container"
@@ -50,6 +55,7 @@ type GlassExampleMode =
 const MODE_OPTIONS: Array<{ label: string; value: GlassExampleMode }> = [
   { label: "悬浮式底部按钮栏", value: "floating-buttons" },
   { label: "贴底式操作栏", value: "docked-actions" },
+  { label: "键盘跟随编辑工具栏", value: "editor" },
   { label: "悬浮式搜索栏", value: "search" },
   { label: "悬浮式媒体控制栏", value: "music" },
   { label: "组合式玻璃按钮容器", value: "container" },
@@ -148,6 +154,7 @@ type PreviewProps = {
   containerSpacing: number;
   cornerRadius: number;
   effectStyle: GlassStyle;
+  editorFocused: boolean;
   fallbackSurfaceColor: string;
   glassAvailable: boolean;
   horizontalInset: number;
@@ -173,6 +180,7 @@ function GlassEffectPreview({
   containerSpacing,
   cornerRadius,
   effectStyle,
+  editorFocused,
   fallbackSurfaceColor,
   glassAvailable,
   horizontalInset,
@@ -251,7 +259,10 @@ function GlassEffectPreview({
             native={isIos26Plus() ? "swift-ui" : false}
             circular
             nativeButtonStyle="glass"
-            buttonSize={{ height: 40, width: 40 }}
+            buttonSize={{
+              height: isIos26Plus() ? 40 : 50,
+              width: isIos26Plus() ? 40 : 50,
+            }}
             onPress={() => onAction("新建内容")}
             title="新建"
           />
@@ -261,6 +272,85 @@ function GlassEffectPreview({
           { bottom: searchBottom, left: horizontalInset, right: horizontalInset },
         ]}
       />
+    );
+  }
+
+  if (mode === "editor") {
+    if (!editorFocused) {
+      return null;
+    }
+
+    const usesNativeEditorToolbar = isIos26Plus();
+    return (
+      <GlassEffect
+        {...sharedGlassProps}
+        accessibilityLabel="跟随键盘的编辑工具栏"
+        keyboardAvoidance={usesNativeEditorToolbar ? true : { subtractSafeAreaInset: false }}
+        onLayout={handleLayout}
+        style={[
+          usesNativeEditorToolbar ? styles.editorToolbar : styles.dockedToolbar,
+          usesNativeEditorToolbar
+            ? {
+                borderRadius: cornerRadius,
+                bottom: insets.bottom + 8,
+                left: 8,
+                right: 8,
+              }
+            : { paddingBottom: Math.max(insets.bottom, 8) },
+          fallbackStyle,
+        ]}
+        testID="glass-effect-editor-toolbar"
+      >
+        <Button
+          aria-label="加粗"
+          buttonSize={{ height: 48, width: 48 }}
+          circular
+          native={usesNativeEditorToolbar ? "swift-ui" : false}
+          nativeButtonStyle="glass"
+          nativeSystemImage="bold"
+          onPress={() => onAction("切换加粗")}
+          title="加粗"
+        >
+          <Bold color={foregroundColor} size={21} />
+        </Button>
+        <Button
+          aria-label="斜体"
+          buttonSize={{ height: 48, width: 48 }}
+          circular
+          native={usesNativeEditorToolbar ? "swift-ui" : false}
+          nativeButtonStyle="glass"
+          nativeSystemImage="italic"
+          onPress={() => onAction("切换斜体")}
+          title="斜体"
+        >
+          <Italic color={foregroundColor} size={21} />
+        </Button>
+        <Button
+          aria-label="插入列表"
+          buttonSize={{ height: 48, width: 48 }}
+          circular
+          native={usesNativeEditorToolbar ? "swift-ui" : false}
+          nativeButtonStyle="glass"
+          nativeSystemImage="list.bullet"
+          onPress={() => onAction("插入列表")}
+          title="列表"
+        >
+          <List color={foregroundColor} size={21} />
+        </Button>
+        <View style={styles.flexSpacer} />
+        <Button
+          aria-label="插入链接"
+          buttonSize={{ height: 48, width: 48 }}
+          circular
+          native={usesNativeEditorToolbar ? "swift-ui" : false}
+          nativeButtonStyle="glass"
+          nativeSystemImage="link"
+          onPress={() => onAction("插入链接")}
+          title="链接"
+        >
+          <Link color={foregroundColor} size={21} />
+        </Button>
+      </GlassEffect>
     );
   }
 
@@ -455,6 +545,8 @@ export function GlassEffectExample() {
   const [compact, setCompact] = useState(false);
   const [showSubtitle, setShowSubtitle] = useState(true);
   const [buttonCount, setButtonCount] = useState(3);
+  const [editorFocused, setEditorFocused] = useState(false);
+  const [editorText, setEditorText] = useState("");
   const [search, setSearch] = useState("");
   const [playing, setPlaying] = useState(false);
   const [lastAction, setLastAction] = useState("尚未操作");
@@ -480,7 +572,13 @@ export function GlassEffectExample() {
         >
           <NativeListSelectItem
             selectProps={{
-              onValueChange: (value) => value != null && setMode(value as GlassExampleMode),
+              onValueChange: (value) => {
+                if (value == null) {
+                  return;
+                }
+                setEditorFocused(false);
+                setMode(value as GlassExampleMode);
+              },
               options: MODE_OPTIONS,
               value: mode,
             }}
@@ -500,6 +598,24 @@ export function GlassEffectExample() {
           <NativeListItem chevron={false} title="最近一次布局" value={lastLayoutSize} />
           <NativeListItem chevron={false} title="最近操作" value={lastAction} />
         </NativeListSection>
+
+        {mode === "editor" ? (
+          <NativeListSection
+            footer="点击输入框后，工具栏会显示在键盘上方；点击格式按钮不会收起键盘。"
+            title="编辑器输入"
+          >
+            <NativeListInputItem
+              inputProps={{
+                onBlur: () => setEditorFocused(false),
+                onChangeText: setEditorText,
+                onFocus: () => setEditorFocused(true),
+                placeholder: "输入内容以显示编辑工具栏",
+                value: editorText,
+              }}
+              title="正文"
+            />
+          </NativeListSection>
+        ) : null}
 
         <NativeListSection
           footer="这些设置会直接透传到 expo-glass-effect 的 GlassView。"
@@ -627,10 +743,7 @@ export function GlassEffectExample() {
           />
         </NativeListSection>
 
-        <NativeListSection
-          footer="额外条目用于确认 NativeList 可以持续滚动，悬浮工具栏始终保持在页面底部。"
-          title="滚动内容"
-        >
+        <NativeListSection title="滚动内容">
           {Array.from({ length: 12 }, (_, index) => (
             <NativeListItem
               chevron={false}
@@ -653,6 +766,7 @@ export function GlassEffectExample() {
         compact={compact}
         containerSpacing={containerSpacing}
         cornerRadius={cornerRadius}
+        editorFocused={editorFocused}
         effectStyle={effectStyle}
         fallbackSurfaceColor={fallbackSurfaceColor}
         glassAvailable={glassAvailable}
@@ -699,6 +813,16 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     position: "absolute",
     right: 0,
+    zIndex: 20,
+  },
+  editorToolbar: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 8,
+    minHeight: 64,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    position: "absolute",
     zIndex: 20,
   },
   flexSpacer: { flex: 1 },
