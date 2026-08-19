@@ -212,6 +212,15 @@ function KeyboardAvoidingGlassEffect({
       navigationGestureActive.value = active;
 
       if (active) {
+        if (height.value <= 0) {
+          // A later back gesture can occur after the IME is gone. Do not reuse
+          // the previous keyboard's stable height in that case.
+          frozenKeyboardHeight.value = 0;
+          keyboardAvoidanceReleasePending.value = false;
+          keyboardAvoidanceFrozen.value = false;
+          return;
+        }
+
         // On iOS 18 the keyboard can report one interactive height before the
         // navigation event reaches JS. Freeze against the last settled OPEN
         // height instead of that transient value.
@@ -219,6 +228,12 @@ function KeyboardAvoidingGlassEffect({
         keyboardAvoidanceReleasePending.value = false;
         keyboardAvoidanceFrozen.value = true;
       } else if (keyboardAvoidanceFrozen.value) {
+        if (height.value <= 0) {
+          keyboardAvoidanceReleasePending.value = false;
+          keyboardAvoidanceFrozen.value = false;
+          return;
+        }
+
         // A cancelled interactive pop briefly reports a transition height. The
         // UI worklet releases only after the keyboard is OPEN again.
         keyboardAvoidanceReleasePending.value = true;
@@ -242,6 +257,8 @@ function KeyboardAvoidingGlassEffect({
   useDerivedValue(() => {
     if (state.value === KeyboardState.OPEN) {
       stableKeyboardHeight.value = height.value;
+    } else if (state.value === KeyboardState.CLOSED) {
+      stableKeyboardHeight.value = 0;
     }
 
     if (keyboardAvoidanceReleasePending.value && state.value === KeyboardState.OPEN) {
