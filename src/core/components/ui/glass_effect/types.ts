@@ -21,10 +21,24 @@ export type GlassEffectKeyboardAvoidance =
       subtractSafeAreaInset?: boolean;
     };
 
+export type GlassEffectKeyboardHiddenConfirmation = {
+  /** 认为键盘已隐藏的最大高度。默认 10。 */
+  heightThreshold?: number;
+  /** 键盘高度满足阈值后，连续确认的渲染帧数。默认 3。 */
+  consecutiveFrames?: number;
+};
+
 /** `expo-glass-effect` GlassView 的完整属性，包含任意 React Native children。 */
 export type GlassEffectProps = GlassViewProps & {
   /** 让整个 GlassEffect 在 UI 线程逐帧跟随软键盘高度。 */
   keyboardAvoidance?: GlassEffectKeyboardAvoidance;
+  /** `keyboardWillHide` 后确认键盘已完全隐藏的阈值与连续帧数。 */
+  keyboardHiddenConfirmation?: GlassEffectKeyboardHiddenConfirmation;
+  /**
+   * 键盘在非导航手势中完成隐藏时调用。
+   * 适合关闭键盘上方工具栏；工具栏的打开状态应由输入框自身的 focus 管理。
+   */
+  onKeyboardHidden?: () => void;
 };
 
 export type GlassEffectSearchBarTrailingContext = {

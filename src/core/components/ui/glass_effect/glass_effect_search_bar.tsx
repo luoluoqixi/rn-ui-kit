@@ -1,5 +1,11 @@
 import { Search, X } from "@tamagui/lucide-icons-2";
-import { createElement, forwardRef, useImperativeHandle, useRef, useState } from "react";
+import {
+  createElement,
+  forwardRef,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import {
   Keyboard,
   Platform,
@@ -52,6 +58,7 @@ export const GlassEffectSearchBar = forwardRef<TextInput, GlassEffectSearchBarPr
       inputProps,
       inputStyle,
       keyboardAvoidance = true,
+      keyboardHiddenConfirmation,
       onCancel,
       onFocusChange,
       placeholder = "搜索",
@@ -69,6 +76,8 @@ export const GlassEffectSearchBar = forwardRef<TextInput, GlassEffectSearchBarPr
     const inputRef = useRef<TextInput>(null);
     const [uncontrolledFocused, setUncontrolledFocused] = useState(false);
     const focused = focusedProp ?? uncontrolledFocused;
+    const focusStateRef = useRef(focused);
+    focusStateRef.current = focused;
     const dark = useColorScheme() === "dark";
     const textColor = inputColor ?? (dark ? "#f5f5f7" : "#111114");
     const secondaryColor = placeholderTextColor ?? (dark ? "#b7b7bd" : "#65656b");
@@ -76,6 +85,10 @@ export const GlassEffectSearchBar = forwardRef<TextInput, GlassEffectSearchBarPr
     useImperativeHandle(forwardedRef, () => inputRef.current as TextInput, []);
 
     const setFocusState = (nextFocused: boolean) => {
+      if (focusStateRef.current === nextFocused) {
+        return;
+      }
+      focusStateRef.current = nextFocused;
       if (focusedProp == null) {
         setUncontrolledFocused(nextFocused);
       }
@@ -88,8 +101,14 @@ export const GlassEffectSearchBar = forwardRef<TextInput, GlassEffectSearchBarPr
     };
 
     const handleBlur: NonNullable<TextInputProps["onBlur"]> = (event) => {
-      setFocusState(false);
       inputProps?.onBlur?.(event);
+    };
+
+    const handlePressIn: NonNullable<TextInputProps["onPressIn"]> = (event) => {
+      // Android back hides the IME without blurring the TextInput, so tapping an
+      // already-focused input must restore the keyboard-dependent toolbar state.
+      setFocusState(true);
+      inputProps?.onPressIn?.(event);
     };
 
     const handleCancel = () => {
@@ -139,6 +158,8 @@ export const GlassEffectSearchBar = forwardRef<TextInput, GlassEffectSearchBarPr
       <GlassEffect
         glassEffectStyle="none"
         keyboardAvoidance={keyboardAvoidance}
+        keyboardHiddenConfirmation={keyboardHiddenConfirmation}
+        onKeyboardHidden={() => setFocusState(false)}
         pointerEvents="box-none"
         style={[styles.row, style]}
       >
@@ -152,6 +173,7 @@ export const GlassEffectSearchBar = forwardRef<TextInput, GlassEffectSearchBarPr
             {...inputProps}
             onBlur={handleBlur}
             onFocus={handleFocus}
+            onPressIn={handlePressIn}
             placeholder={placeholder}
             placeholderTextColor={secondaryColor}
             ref={inputRef}

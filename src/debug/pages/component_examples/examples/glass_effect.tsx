@@ -155,6 +155,7 @@ type PreviewProps = {
   cornerRadius: number;
   effectStyle: GlassStyle;
   editorFocused: boolean;
+  onEditorFocusedChange: (focused: boolean) => void;
   fallbackSurfaceColor: string;
   glassAvailable: boolean;
   horizontalInset: number;
@@ -181,6 +182,7 @@ function GlassEffectPreview({
   cornerRadius,
   effectStyle,
   editorFocused,
+  onEditorFocusedChange,
   fallbackSurfaceColor,
   glassAvailable,
   horizontalInset,
@@ -287,6 +289,7 @@ function GlassEffectPreview({
         accessibilityLabel="跟随键盘的编辑工具栏"
         keyboardAvoidance={usesNativeEditorToolbar ? true : { subtractSafeAreaInset: false }}
         onLayout={handleLayout}
+        onKeyboardHidden={() => onEditorFocusedChange(false)}
         style={[
           usesNativeEditorToolbar ? styles.editorToolbar : styles.dockedToolbar,
           usesNativeEditorToolbar
@@ -555,6 +558,7 @@ export function GlassEffectExample() {
   const glassApiAvailable = isGlassEffectAPIAvailable();
   const fallbackSurfaceColor =
     colorSchemeName === "dark" ? "rgba(44, 44, 48, 0.96)" : "rgba(246, 246, 248, 0.96)";
+
   return (
     <>
       <NativeList
@@ -606,9 +610,9 @@ export function GlassEffectExample() {
           >
             <NativeListInputItem
               inputProps={{
-                onBlur: () => setEditorFocused(false),
                 onChangeText: setEditorText,
                 onFocus: () => setEditorFocused(true),
+                onPressIn: () => setEditorFocused(true),
                 placeholder: "输入内容以显示编辑工具栏",
                 value: editorText,
               }}
@@ -774,6 +778,7 @@ export function GlassEffectExample() {
         interactive={interactive}
         mode={mode}
         onAction={setLastAction}
+        onEditorFocusedChange={setEditorFocused}
         onLayoutSizeChange={setLastLayoutSize}
         onPlayingChange={setPlaying}
         onSearchChange={setSearch}

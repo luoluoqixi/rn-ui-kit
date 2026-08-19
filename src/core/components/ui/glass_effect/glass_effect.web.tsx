@@ -4,7 +4,15 @@ import { View } from "react-native";
 import type { GlassEffectContainerProps, GlassEffectProps } from "./types";
 
 const GlassEffectRoot = forwardRef<View, GlassEffectProps>(
-  function GlassEffectRoot({ keyboardAvoidance: _keyboardAvoidance, ...props }, forwardedRef) {
+  function GlassEffectRoot(
+    {
+      keyboardAvoidance: _keyboardAvoidance,
+      keyboardHiddenConfirmation: _keyboardHiddenConfirmation,
+      onKeyboardHidden: _onKeyboardHidden,
+      ...props
+    },
+    forwardedRef,
+  ) {
     return <View {...props} ref={forwardedRef} />;
   },
 );

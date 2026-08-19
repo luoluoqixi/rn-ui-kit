@@ -1,7 +1,9 @@
 import "rn-ui-kit/initialize";
 import {
   Button,
+  GlassEffect,
   GlassEffectSearchBar,
+  type GlassEffectProps,
   type GlassEffectSearchBarProps,
   type GlassEffectSearchBarCancelButtonProps,
   type GlassEffectSearchBarTrailingContext,
@@ -33,6 +35,7 @@ import {
 } from "rn-ui-kit/debug";
 
 void Button;
+void GlassEffect;
 void GlassEffectSearchBar;
 void Menu;
 void NativeListMenuItem;
@@ -44,6 +47,7 @@ void Select.NativeTriggerPressable;
 void RnUiKitDebugPanel;
 
 type PublicCoreProps = ButtonProps;
+type PublicGlassEffectProps = GlassEffectProps;
 type PublicGlassEffectSearchBarProps = GlassEffectSearchBarProps;
 type PublicGlassEffectSearchBarCancelButtonProps = GlassEffectSearchBarCancelButtonProps;
 type PublicGlassEffectSearchBarTrailingContext = GlassEffectSearchBarTrailingContext;
@@ -80,6 +84,17 @@ const searchBarTrailingProps = {
 } satisfies Pick<GlassEffectSearchBarProps, "focusedTrailing" | "unfocusedTrailing">;
 
 void searchBarTrailingProps;
+
+const glassKeyboardHiddenProps = {
+  keyboardAvoidance: true,
+  keyboardHiddenConfirmation: { consecutiveFrames: 3, heightThreshold: 10 },
+  onKeyboardHidden: () => {},
+} satisfies Pick<
+  PublicGlassEffectProps,
+  "keyboardAvoidance" | "keyboardHiddenConfirmation" | "onKeyboardHidden"
+>;
+
+void glassKeyboardHiddenProps;
 
 const searchBarCancelButtonProps = {
   cancelButtonProps: {

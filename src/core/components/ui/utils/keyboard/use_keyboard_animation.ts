@@ -1,8 +1,5 @@
-import {
-  KeyboardState,
-  useAnimatedKeyboard,
-} from "react-native-keyboard-controller";
-import type { SharedValue } from "react-native-reanimated";
+import { KeyboardState, useKeyboardHandler } from "react-native-keyboard-controller";
+import { useSharedValue, withTiming, type SharedValue } from "react-native-reanimated";
 
 export type KeyboardAnimationState =
   (typeof KeyboardState)[keyof typeof KeyboardState];
@@ -21,5 +18,34 @@ export type KeyboardAnimation = {
  * `KeyboardAnimationProvider`。
  */
 export function useKeyboardAnimation(): KeyboardAnimation {
-  return useAnimatedKeyboard();
+  const height = useSharedValue(0);
+  const state = useSharedValue(KeyboardState.UNKNOWN);
+
+  useKeyboardHandler(
+    {
+      onStart: (event) => {
+        "worklet";
+        state.set(event.height > 0 ? KeyboardState.OPENING : KeyboardState.CLOSING);
+        height.set(
+          withTiming(event.height, event.duration > 0 ? { duration: event.duration } : undefined),
+        );
+      },
+      onMove: (event) => {
+        "worklet";
+        height.set(event.height);
+      },
+      onInteractive: (event) => {
+        "worklet";
+        height.set(event.height);
+      },
+      onEnd: (event) => {
+        "worklet";
+        state.set(event.height > 0 ? KeyboardState.OPEN : KeyboardState.CLOSED);
+        height.set(event.height);
+      },
+    },
+    [],
+  );
+
+  return { height, state };
 }
