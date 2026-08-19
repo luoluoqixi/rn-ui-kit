@@ -5,6 +5,7 @@ import {
 import { NavigationContext } from "@react-navigation/native";
 import { forwardRef, useCallback, useContext, useEffect, useRef, type ForwardedRef } from "react";
 import { Keyboard, type View } from "react-native";
+import { KeyboardState } from "react-native-keyboard-controller";
 import Animated, {
   cancelAnimation,
   runOnJS,
@@ -21,8 +22,8 @@ import type { GlassEffectContainerProps, GlassEffectProps } from "./types";
 import { useKeyboardAnimation } from "../utils/keyboard";
 
 const AnimatedExpoGlassView = Animated.createAnimatedComponent(ExpoGlassView);
-const DEFAULT_KEYBOARD_HIDDEN_HEIGHT_THRESHOLD = 10;
-const DEFAULT_KEYBOARD_HIDDEN_CONSECUTIVE_FRAMES = 3;
+const DEFAULT_KEYBOARD_HIDDEN_HEIGHT_THRESHOLD = 20;
+const DEFAULT_KEYBOARD_HIDDEN_CONSECUTIVE_FRAMES = 1;
 const FRAME_DURATION_MS = 1000 / 60;
 type NavigationEvent = { data?: { closing?: boolean } };
 type NavigationEventSource = {
@@ -40,6 +41,10 @@ function useKeyboardHidden(
   const callbackRef = useRef(onKeyboardHidden);
   const navigationGestureCallbackRef = useRef(onNavigationGestureChange);
   const keyboardHiddenNotifiedRef = useRef(false);
+  // `keyboardDidHide` can arrive while the final UI-thread positioning animation
+  // is still running. Keep that event as a fallback only when no confirmation
+  // was started by `keyboardWillHide`.
+  const hideConfirmationPendingRef = useRef(false);
   callbackRef.current = onKeyboardHidden;
   navigationGestureCallbackRef.current = onNavigationGestureChange;
   const hideConfirmationActive = useSharedValue(false);
@@ -48,6 +53,7 @@ function useKeyboardHidden(
     if (keyboardHiddenNotifiedRef.current) {
       return;
     }
+    hideConfirmationPendingRef.current = false;
     keyboardHiddenNotifiedRef.current = true;
     callbackRef.current?.();
   }, []);
@@ -62,6 +68,7 @@ function useKeyboardHidden(
     1,
   );
   const confirmationDuration = consecutiveFrames * FRAME_DURATION_MS;
+  const finalHeight = Math.min(keyboardHiddenConfirmation?.finalHeight ?? 0, 0);
 
   useAnimatedReaction(
     () =>
@@ -86,7 +93,6 @@ function useKeyboardHidden(
           !navigationGestureActiveValue.value &&
           keyboardHeight.value <= heightThreshold
         ) {
-          hideConfirmationActive.value = false;
           runOnJS(notifyKeyboardHidden)();
         }
       });
@@ -103,19 +109,20 @@ function useKeyboardHidden(
     const handleKeyboardWillHide = () => {
       if (!navigationGestureActive) {
         keyboardHiddenNotifiedRef.current = false;
+        hideConfirmationPendingRef.current = true;
         confirmationProgress.value = 0;
         hideConfirmationActive.value = true;
       }
     };
     const handleKeyboardDidHide = () => {
-      if (!navigationGestureActive) {
-        hideConfirmationActive.value = false;
+      if (!navigationGestureActive && !hideConfirmationPendingRef.current) {
         confirmationProgress.value = 0;
         notifyKeyboardHidden();
       }
     };
     const handleKeyboardWillShow = () => {
       keyboardHiddenNotifiedRef.current = false;
+      hideConfirmationPendingRef.current = false;
       confirmationProgress.value = 0;
       hideConfirmationActive.value = false;
     };
@@ -174,6 +181,13 @@ function useKeyboardHidden(
       transitionEndUnsubscribe?.();
     };
   }, [navigation, onKeyboardHidden, onNavigationGestureChange]);
+
+  return {
+    confirmationDuration,
+    finalHeight,
+    heightThreshold,
+    isConfirming: hideConfirmationActive,
+  };
 }
 
 function KeyboardAvoidingGlassEffect({
@@ -186,48 +200,92 @@ function KeyboardAvoidingGlassEffect({
   forwardedRef: ForwardedRef<View>;
 }) {
   const insets = useSafeAreaInsets();
+  const navigationGestureActive = useSharedValue(false);
   const keyboardAvoidanceFrozen = useSharedValue(false);
+  const keyboardAvoidanceReleasePending = useSharedValue(false);
   const frozenKeyboardHeight = useSharedValue(0);
-  const { height } = useKeyboardAnimation();
-  const setKeyboardAvoidanceFrozen = useCallback(
-    (frozen: boolean) => {
-      keyboardAvoidanceFrozen.value = frozen;
+  const stableKeyboardHeight = useSharedValue(0);
+  const displayedKeyboardHeight = useSharedValue(0);
+  const { height, state } = useKeyboardAnimation();
+  const setNavigationGestureActive = useCallback(
+    (active: boolean) => {
+      navigationGestureActive.value = active;
+
+      if (active) {
+        // On iOS 18 the keyboard can report one interactive height before the
+        // navigation event reaches JS. Freeze against the last settled OPEN
+        // height instead of that transient value.
+        frozenKeyboardHeight.value = stableKeyboardHeight.value || height.value;
+        keyboardAvoidanceReleasePending.value = false;
+        keyboardAvoidanceFrozen.value = true;
+      } else if (keyboardAvoidanceFrozen.value) {
+        // A cancelled interactive pop briefly reports a transition height. The
+        // UI worklet releases only after the keyboard is OPEN again.
+        keyboardAvoidanceReleasePending.value = true;
+      }
     },
-    [keyboardAvoidanceFrozen],
+    [
+      height,
+      keyboardAvoidanceFrozen,
+      keyboardAvoidanceReleasePending,
+      navigationGestureActive,
+      stableKeyboardHeight,
+    ],
   );
-  useKeyboardHidden(
+  const keyboardHiddenConfirmationState = useKeyboardHidden(
     onKeyboardHidden,
     height,
-    keyboardAvoidanceFrozen,
+    navigationGestureActive,
     keyboardHiddenConfirmation,
-    setKeyboardAvoidanceFrozen,
+    setNavigationGestureActive,
   );
   useDerivedValue(() => {
+    if (state.value === KeyboardState.OPEN) {
+      stableKeyboardHeight.value = height.value;
+    }
+
+    if (keyboardAvoidanceReleasePending.value && state.value === KeyboardState.OPEN) {
+      keyboardAvoidanceReleasePending.value = false;
+      keyboardAvoidanceFrozen.value = false;
+    }
+
     if (!keyboardAvoidanceFrozen.value) {
       frozenKeyboardHeight.value = height.value;
+      if (
+        keyboardHiddenConfirmationState.isConfirming.value &&
+        height.value <= keyboardHiddenConfirmationState.heightThreshold
+      ) {
+        displayedKeyboardHeight.value = withTiming(keyboardHiddenConfirmationState.finalHeight, {
+          duration: keyboardHiddenConfirmationState.confirmationDuration,
+        });
+      } else {
+        displayedKeyboardHeight.value = height.value;
+      }
     }
   });
   const config = typeof keyboardAvoidance === "object" ? keyboardAvoidance : undefined;
   const enabled = keyboardAvoidance === true || config?.enabled !== false;
   const offset = config?.offset ?? 0;
   const safeAreaInset = config?.subtractSafeAreaInset === false ? 0 : insets.bottom;
-  const keyboardStyle = useAnimatedStyle(
-    () => ({
+  const keyboardStyle = useAnimatedStyle(() => {
+    const allowsNegativeFinalHeight =
+      keyboardHiddenConfirmationState.isConfirming.value &&
+      keyboardHiddenConfirmationState.finalHeight < 0;
+    const keyboardHeight = keyboardAvoidanceFrozen.value
+      ? frozenKeyboardHeight.value
+      : displayedKeyboardHeight.value;
+    const keyboardOffset = keyboardHeight - safeAreaInset + offset;
+
+    return {
       transform: [
         {
           translateY: enabled
-            ? -Math.max(
-                (keyboardAvoidanceFrozen.value ? frozenKeyboardHeight.value : height.value) -
-                  safeAreaInset +
-                  offset,
-                0,
-              )
+            ? -(allowsNegativeFinalHeight ? keyboardOffset : Math.max(keyboardOffset, 0))
             : 0,
         },
       ],
-    }),
-    [enabled, offset, safeAreaInset],
-  );
+    };
+  }, [enabled, offset, safeAreaInset]);
 
   return (
     <AnimatedExpoGlassView {...props} ref={forwardedRef} style={[props.style, keyboardStyle]} />

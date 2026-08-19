@@ -288,6 +288,7 @@ function GlassEffectPreview({
         {...sharedGlassProps}
         accessibilityLabel="跟随键盘的编辑工具栏"
         keyboardAvoidance={usesNativeEditorToolbar ? true : { subtractSafeAreaInset: false }}
+        keyboardHiddenConfirmation={{ finalHeight: -64 }}
         onLayout={handleLayout}
         onKeyboardHidden={() => onEditorFocusedChange(false)}
         style={[

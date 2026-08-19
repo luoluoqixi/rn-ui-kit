@@ -26,6 +26,8 @@ export type GlassEffectKeyboardHiddenConfirmation = {
   heightThreshold?: number;
   /** 键盘高度满足阈值后，连续确认的渲染帧数。默认 3。 */
   consecutiveFrames?: number;
+  /** 确认隐藏后显示高度的最终值；仅负值有效，默认 0。 */
+  finalHeight?: number;
 };
 
 /** `expo-glass-effect` GlassView 的完整属性，包含任意 React Native children。 */

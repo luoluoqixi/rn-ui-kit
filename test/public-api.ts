@@ -87,7 +87,7 @@ void searchBarTrailingProps;
 
 const glassKeyboardHiddenProps = {
   keyboardAvoidance: true,
-  keyboardHiddenConfirmation: { consecutiveFrames: 3, heightThreshold: 10 },
+  keyboardHiddenConfirmation: { consecutiveFrames: 3, finalHeight: -64, heightThreshold: 10 },
   onKeyboardHidden: () => {},
 } satisfies Pick<
   PublicGlassEffectProps,
