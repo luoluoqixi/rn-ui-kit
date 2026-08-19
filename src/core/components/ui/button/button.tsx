@@ -1,11 +1,19 @@
 import { type ComponentRef, type ComponentType, forwardRef } from "react";
-import { Button as RNButton, View } from "react-native";
+import {
+  Button as RNButton,
+  Pressable,
+  Text as RNText,
+  type StyleProp,
+  type ViewStyle,
+  View,
+} from "react-native";
 import { Button as TamaguiButton } from "tamagui";
 import { useTheme } from "tamagui";
 
 import { isWeb, os } from "../utils/platform";
 import { triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
 
+import { ButtonSwift } from "./button_swift";
 import type { ButtonProps } from "./types";
 
 const DISABLED_LONG_PRESS_DELAY = 2_147_483_647;
@@ -17,7 +25,21 @@ const DISABLED_BUTTON_OPACITY = 0.5;
 const ENABLED_BUTTON_OPACITY = 1;
 
 export const Button = forwardRef<ComponentRef<typeof TamaguiButton>, ButtonProps>((props, ref) => {
-  const { children, delayLongPress, native, nativeHaptics, onPress, title, ...buttonProps } = props;
+  const {
+    children,
+    buttonSize,
+    delayLongPress,
+    native,
+    nativeButtonStyle = "automatic",
+    nativeHaptics,
+    nativeSystemImage,
+    nativeSystemImageSize = 20,
+    nativeSwiftButtonSize,
+    nativeSwiftProps,
+    onPress,
+    title,
+    ...buttonProps
+  } = props;
   const theme = useTheme();
   const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics);
   const resolvedDelayLongPress =
@@ -35,6 +57,34 @@ export const Button = forwardRef<ComponentRef<typeof TamaguiButton>, ButtonProps
   const resolvedOpacity = buttonProps.disabled ? DISABLED_BUTTON_OPACITY : ENABLED_BUTTON_OPACITY;
   const nativeOpacity =
     typeof buttonProps.opacity === "number" ? buttonProps.opacity : resolvedOpacity;
+  const resolvedButtonSize = buttonSize ?? nativeSwiftButtonSize;
+  const buttonSizeProps =
+    resolvedButtonSize == null
+      ? {}
+      : {
+          ...(resolvedButtonSize.height == null ? {} : { height: resolvedButtonSize.height }),
+          ...(resolvedButtonSize.width == null ? {} : { width: resolvedButtonSize.width }),
+        };
+  // Tamagui's circular variant derives all dimensions from `size`, including
+  // min/max constraints. Mapping height to it prevents the default token size
+  // from overriding the shared Button size API.
+  const tamaguiButtonSizeProps =
+    resolvedButtonSize == null
+      ? {}
+      : {
+          ...((resolvedButtonSize.height ??
+            (buttonProps.circular ? resolvedButtonSize.width : undefined)) == null
+            ? {}
+            : {
+                size:
+                  resolvedButtonSize.height ??
+                  (buttonProps.circular ? resolvedButtonSize.width : undefined),
+              }),
+          ...(buttonProps.circular || resolvedButtonSize.width == null
+            ? {}
+            : { width: resolvedButtonSize.width }),
+        };
+  const useSwiftUIButton = native === "swift-ui" && os() === "ios";
   const useNativeButton = native === true && (os() === "ios" || os() === "android");
   const resolvedTitle =
     title ??
@@ -45,7 +95,51 @@ export const Button = forwardRef<ComponentRef<typeof TamaguiButton>, ButtonProps
         : undefined) ??
     "";
 
+  if (useSwiftUIButton) {
+    return (
+      <ButtonSwift
+        accessibilityLabel={props["aria-label"]}
+        disabled={buttonProps.disabled ?? false}
+        nativeButtonStyle={nativeButtonStyle}
+        nativeOpacity={nativeOpacity}
+        nativeSystemImage={nativeSystemImage}
+        nativeSystemImageSize={nativeSystemImageSize}
+        nativeSwiftButtonSize={resolvedButtonSize}
+        nativeSwiftProps={nativeSwiftProps}
+        onPress={() => handlePress({} as Parameters<typeof handlePress>[0])}
+        style={buttonProps.style as StyleProp<ViewStyle>}
+        title={resolvedTitle}
+      />
+    );
+  }
+
   if (useNativeButton) {
+    if (resolvedButtonSize != null) {
+      const nativeColor = theme.color10?.val ?? theme.color6?.val ?? theme.color?.val;
+      const isAndroid = os() === "android";
+      return (
+        <Pressable
+          accessibilityLabel={props["aria-label"]}
+          disabled={buttonProps.disabled}
+          onPress={handlePress}
+          style={({ pressed }) => [
+            {
+              alignItems: "center",
+              backgroundColor: isAndroid ? nativeColor : "transparent",
+              justifyContent: "center",
+              opacity: pressed ? nativeOpacity * 0.65 : nativeOpacity,
+            },
+            buttonSizeProps,
+            buttonProps.style as StyleProp<ViewStyle>,
+          ]}
+        >
+          <RNText style={{ color: isAndroid ? "#ffffff" : nativeColor, textAlign: "center" }}>
+            {resolvedTitle}
+          </RNText>
+        </Pressable>
+      );
+    }
+
     return (
       <View style={{ opacity: nativeOpacity }}>
         <RNButton
@@ -65,7 +159,13 @@ export const Button = forwardRef<ComponentRef<typeof TamaguiButton>, ButtonProps
       webTitle = undefined;
     }
     return (
-      <TamaguiButton opacity={resolvedOpacity} {...buttonProps} onPress={handlePress} ref={ref}>
+      <TamaguiButton
+        opacity={resolvedOpacity}
+        {...buttonProps}
+        {...tamaguiButtonSizeProps}
+        onPress={handlePress}
+        ref={ref}
+      >
         {webTitle}
       </TamaguiButton>
     );
@@ -75,6 +175,7 @@ export const Button = forwardRef<ComponentRef<typeof TamaguiButton>, ButtonProps
     <TamaguiButtonWithLongPressDelay
       opacity={resolvedOpacity}
       {...buttonProps}
+      {...tamaguiButtonSizeProps}
       delayLongPress={resolvedDelayLongPress}
       onPress={handlePress}
       ref={ref}

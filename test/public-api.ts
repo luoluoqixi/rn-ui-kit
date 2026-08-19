@@ -1,6 +1,10 @@
 import "rn-ui-kit/initialize";
 import {
   Button,
+  GlassEffectSearchBar,
+  type GlassEffectSearchBarProps,
+  type GlassEffectSearchBarCancelButtonProps,
+  type GlassEffectSearchBarTrailingContext,
   type ContextMenuItemData,
   Menu,
   type NativeListContextMenuProps,
@@ -29,6 +33,7 @@ import {
 } from "rn-ui-kit/debug";
 
 void Button;
+void GlassEffectSearchBar;
 void Menu;
 void NativeListMenuItem;
 void useNativeListEditMode;
@@ -39,6 +44,9 @@ void Select.NativeTriggerPressable;
 void RnUiKitDebugPanel;
 
 type PublicCoreProps = ButtonProps;
+type PublicGlassEffectSearchBarProps = GlassEffectSearchBarProps;
+type PublicGlassEffectSearchBarCancelButtonProps = GlassEffectSearchBarCancelButtonProps;
+type PublicGlassEffectSearchBarTrailingContext = GlassEffectSearchBarTrailingContext;
 type PublicContextMenuItemData = ContextMenuItemData;
 type PublicNativeListContextMenuProps = NativeListContextMenuProps;
 type PublicNativeTriggerProps = NativeTriggerProps;
@@ -62,6 +70,52 @@ const hostPanelProps = {
 } satisfies RnUiKitDebugPanelProps;
 
 void hostPanelProps;
+
+const searchBarTrailingProps = {
+  focusedTrailing: ({ cancel }: PublicGlassEffectSearchBarTrailingContext) => {
+    void cancel;
+    return null;
+  },
+  unfocusedTrailing: false,
+} satisfies Pick<GlassEffectSearchBarProps, "focusedTrailing" | "unfocusedTrailing">;
+
+void searchBarTrailingProps;
+
+const searchBarCancelButtonProps = {
+  cancelButtonProps: {
+    chromeless: true,
+    nativeSystemImageSize: 24,
+    opacity: 0.8,
+    title: "关闭",
+  },
+  cancelButtonStyle: "glassProminent",
+} satisfies Pick<GlassEffectSearchBarProps, "cancelButtonProps" | "cancelButtonStyle">;
+
+void searchBarCancelButtonProps;
+
+const nativeIconButtonProps = {
+  native: "swift-ui",
+  nativeButtonStyle: "glass",
+  nativeSystemImage: "xmark",
+  nativeSystemImageSize: 22,
+  buttonSize: { height: 60, width: 60 },
+  nativeSwiftProps: {
+    label: "关闭",
+    modifiers: [],
+    role: "cancel",
+    systemImage: "xmark.circle",
+    target: "close-search",
+  },
+} satisfies ButtonProps;
+
+void nativeIconButtonProps;
+
+const nativeTextButtonProps = {
+  native: "swift-ui",
+  title: "完成",
+} satisfies ButtonProps;
+
+void nativeTextButtonProps;
 
 const nativeMenuProps = {
   nativeTrigger: true,

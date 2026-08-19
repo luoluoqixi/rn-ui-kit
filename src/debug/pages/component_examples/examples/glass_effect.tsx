@@ -5,22 +5,16 @@ import {
   MoreHorizontal,
   Music2,
   Pause,
-  PenSquare,
   Play,
   Plus,
-  Search,
-  X,
 } from "@tamagui/lucide-icons-2";
-import { useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
-  Keyboard,
   Platform,
   Pressable,
   StyleSheet,
-  TextInput,
   View,
   type StyleProp,
-  type TextStyle,
   type ViewStyle,
   useColorScheme,
 } from "react-native";
@@ -28,6 +22,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Button,
   GlassEffect,
+  GlassEffectSearchBar,
   type GlassColorScheme,
   type GlassEffectProps,
   type GlassStyle,
@@ -41,6 +36,7 @@ import {
   isGlassEffectAPIAvailable,
   isLiquidGlassAvailable,
   useAppBackgroundColors,
+  isIos26Plus,
 } from "rn-ui-kit/core";
 
 type GlassExampleMode =
@@ -59,19 +55,6 @@ const MODE_OPTIONS: Array<{ label: string; value: GlassExampleMode }> = [
   { label: "组合式玻璃按钮容器", value: "container" },
   { label: "玻璃材质样式对照", value: "style-gallery" },
 ];
-
-const WEB_SEARCH_INPUT_STYLE: StyleProp<TextStyle> =
-  Platform.OS === "web"
-    ? ({
-        backgroundColor: "transparent",
-        borderColor: "transparent",
-        borderWidth: 0,
-        boxShadow: "none",
-        outlineColor: "transparent",
-        outlineStyle: "none",
-        outlineWidth: 0,
-      } as unknown as TextStyle)
-    : undefined;
 
 const GLASS_STYLE_OPTIONS = [
   { label: "Regular", value: "regular" },
@@ -205,8 +188,6 @@ function GlassEffectPreview({
   tintColor,
 }: PreviewProps) {
   const insets = useSafeAreaInsets();
-  const searchInputRef = useRef<TextInput>(null);
-  const [searchFocused, setSearchFocused] = useState(false);
   const colorSchemeName = useColorScheme();
   const dark = colorSchemeName === "dark";
   const foregroundColor = dark ? "#f5f5f7" : "#111114";
@@ -249,62 +230,37 @@ function GlassEffectPreview({
 
   if (mode === "search") {
     return (
-      <GlassEffect
-        glassEffectStyle="none"
-        keyboardAvoidance
-        pointerEvents="box-none"
+      <GlassEffectSearchBar
+        {...sharedGlassProps}
+        accessibilityLabel="悬浮搜索工具栏"
+        inputColor={foregroundColor}
+        inputProps={{
+          accessibilityLabel: "搜索示例内容",
+          onChangeText: onSearchChange,
+          value: search,
+        }}
+        onCancel={() => onAction("取消搜索")}
+        onLayout={handleLayout}
+        placeholder="搜索组件或设置"
+        placeholderTextColor={secondaryColor}
+        searchIconColor={secondaryColor}
+        searchStyle={[{ borderRadius: cornerRadius }, fallbackStyle]}
+        unfocusedTrailing={
+          <Button
+            aria-label="新建内容"
+            native={isIos26Plus() ? "swift-ui" : false}
+            circular
+            nativeButtonStyle="glass"
+            buttonSize={{ height: 40, width: 40 }}
+            onPress={() => onAction("新建内容")}
+            title="新建"
+          />
+        }
         style={[
           styles.searchBarRow,
           { bottom: searchBottom, left: horizontalInset, right: horizontalInset },
         ]}
-      >
-        <GlassEffect
-          {...sharedGlassProps}
-          accessibilityLabel="悬浮搜索工具栏"
-          onLayout={handleLayout}
-          style={[styles.searchToolbar, { borderRadius: cornerRadius }, fallbackStyle]}
-          testID="glass-effect-search-toolbar"
-        >
-          <Search color={secondaryColor} size={22} />
-          <TextInput
-            accessibilityLabel="搜索示例内容"
-            onBlur={() => setSearchFocused(false)}
-            onChangeText={onSearchChange}
-            onFocus={() => setSearchFocused(true)}
-            placeholder="搜索组件或设置"
-            placeholderTextColor={secondaryColor}
-            ref={searchInputRef}
-            returnKeyType="search"
-            style={[
-              styles.searchInput,
-              WEB_SEARCH_INPUT_STYLE,
-              { color: foregroundColor },
-            ]}
-            value={search}
-          />
-        </GlassEffect>
-        <ExampleToolbarButton
-          accessibilityLabel={searchFocused ? "取消搜索" : "新建内容"}
-          fallbackIcon={
-            searchFocused ? (
-              <X color={foregroundColor} size={26} />
-            ) : (
-              <PenSquare color={foregroundColor} size={24} />
-            )
-          }
-          onPress={() => {
-            if (!searchFocused) {
-              onAction("新建内容");
-              return;
-            }
-            onSearchChange("");
-            searchInputRef.current?.blur();
-            Keyboard.dismiss();
-            onAction("取消搜索");
-          }}
-          title={searchFocused ? "×" : "新建"}
-        />
-      </GlassEffect>
+      />
     );
   }
 
@@ -788,22 +744,6 @@ const styles = StyleSheet.create({
     gap: 8,
     position: "absolute",
     zIndex: 20,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    minHeight: 40,
-    minWidth: 0,
-    paddingHorizontal: 4,
-    paddingVertical: 0,
-  },
-  searchToolbar: {
-    alignItems: "center",
-    flex: 1,
-    flexDirection: "row",
-    gap: 8,
-    minHeight: 52,
-    paddingHorizontal: 16,
   },
   styleGallery: {
     flexDirection: "row",
