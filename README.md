@@ -32,7 +32,7 @@
 | Expo | 55 |
 | React Native | 0.83.9 |
 | React / React DOM | 19.2.5 |
-| Tamagui | 2.4.0 |
+| Tamagui | 2.7.7 |
 | TypeScript | 5.9.2 |
 | 包管理器 | Bun |
 

@@ -931,7 +931,7 @@ export const SheetImplementationCustom = React.forwardRef<View, SheetProps>(
                 ]}
               >
                 {/* wrap children with plain RN View for panResponder - tamagui views no longer handle responder events on web */}
-                {gestureHandlerEnabled && panGesture ? (
+                {gestureHandlerEnabled && panGesture && open ? (
                   <GestureDetectorWrapper gesture={panGesture} style={{ flex: 1 }}>
                     {props.children}
                   </GestureDetectorWrapper>

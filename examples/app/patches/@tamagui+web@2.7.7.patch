@@ -1,0 +1,160 @@
+# Tamagui Web native 补丁说明:
+# - Android 同步 onPress/onLongPress 到原生 onClick/onLongClick，并过滤 pointer 事件避免重复触发。
+# - setupMatchMedia 收到非法实现时立即返回，避免污染全局 matchMedia。
+# - 2.7.7 已重写 responder/RNGH 路径，旧 patch 的 callback ref 与空事件保护不再重复迁移。
+diff --git a/dist/cjs/eventHandling.native.js b/dist/cjs/eventHandling.native.js
+index e6ac652e9335e82a1bd411ccd1c5fab54cad8072..6f68b233cf12f61adfe26d17e0f7c8c4e51f0c8b 100644
+--- a/dist/cjs/eventHandling.native.js
++++ b/dist/cjs/eventHandling.native.js
+@@ -77,6 +77,24 @@ function useEvents(events, viewProps, stateRef, staticConfig, isHOC, isInsideNat
+     if (events.onBlur) {
+       viewProps["onBlur"] = events.onBlur;
+     }
++    if (import_react_native.Platform.OS === "android") {
++      if (events.onPress) {
++        var press = events.onPress;
++        viewProps["onClick"] = function (event) {
++          if (!event.nativeEvent || event.nativeEvent.pointerType == null) {
++            press(event);
++          }
++        };
++      }
++      if (events.onLongPress) {
++        var longPress = events.onLongPress;
++        viewProps["onLongClick"] = function (event) {
++          if (!event.nativeEvent || event.nativeEvent.pointerType == null) {
++            longPress(event);
++          }
++        };
++      }
++    }
+     if (getIsNativeDesktop()) {
+       if (events.onMouseEnter) {
+         viewProps["onMouseEnter"] = events.onMouseEnter;
+diff --git a/dist/cjs/helpers/matchMedia.native.js b/dist/cjs/helpers/matchMedia.native.js
+index 7dcc6de3cb1666991211f646058e8f6ab1b05bf8..85a678899c87d09b709369a16ae2e3f3c0c41300 100644
+--- a/dist/cjs/helpers/matchMedia.native.js
++++ b/dist/cjs/helpers/matchMedia.native.js
+@@ -49,12 +49,11 @@ function matchMediaFallback(query) {
+   };
+ }
+ function setupMatchMedia(_) {
+-  if (process.env.NODE_ENV === "development") {
+-    if (typeof _ !== "function") {
+-      if (!process.env.IS_STATIC) {
+-        console.trace(`setupMatchMedia was called without a function, this can cause issues on native`, _);
+-      }
++  if (typeof _ !== "function") {
++    if (process.env.NODE_ENV === "development" && !process.env.IS_STATIC) {
++      console.trace(`setupMatchMedia was called without a function, this can cause issues on native`, _);
+     }
++    return;
+   }
+   matchMediaImpl = _;
+   globalThis["matchMedia"] = _;
+diff --git a/dist/esm/eventHandling.native.js b/dist/esm/eventHandling.native.js
+index bc07b3f4214807c8cba259edeb29c004af57557c..025805f2ccc5b02dff3e4547083faa01c860091c 100644
+--- a/dist/esm/eventHandling.native.js
++++ b/dist/esm/eventHandling.native.js
+@@ -35,6 +35,24 @@ function useEvents(events, viewProps, stateRef, staticConfig, isHOC, isInsideNat
+     if (events.onBlur) {
+       viewProps["onBlur"] = events.onBlur;
+     }
++    if (Platform.OS === "android") {
++      if (events.onPress) {
++        var press = events.onPress;
++        viewProps["onClick"] = function (event) {
++          if (!event.nativeEvent || event.nativeEvent.pointerType == null) {
++            press(event);
++          }
++        };
++      }
++      if (events.onLongPress) {
++        var longPress = events.onLongPress;
++        viewProps["onLongClick"] = function (event) {
++          if (!event.nativeEvent || event.nativeEvent.pointerType == null) {
++            longPress(event);
++          }
++        };
++      }
++    }
+     if (getIsNativeDesktop()) {
+       if (events.onMouseEnter) {
+         viewProps["onMouseEnter"] = events.onMouseEnter;
+diff --git a/dist/esm/helpers/matchMedia.native.js b/dist/esm/helpers/matchMedia.native.js
+index e4c4d9fcd94bb8db81c45a2ebb05db1addd09055..046127933173bcb7972f8a18fdbd8154addc23ec 100644
+--- a/dist/esm/helpers/matchMedia.native.js
++++ b/dist/esm/helpers/matchMedia.native.js
+@@ -19,12 +19,11 @@ function matchMediaFallback(query) {
+   };
+ }
+ function setupMatchMedia(_) {
+-  if (process.env.NODE_ENV === "development") {
+-    if (typeof _ !== "function") {
+-      if (!process.env.IS_STATIC) {
+-        console.trace(`setupMatchMedia was called without a function, this can cause issues on native`, _);
+-      }
++  if (typeof _ !== "function") {
++    if (process.env.NODE_ENV === "development" && !process.env.IS_STATIC) {
++      console.trace(`setupMatchMedia was called without a function, this can cause issues on native`, _);
+     }
++    return;
+   }
+   matchMediaImpl = _;
+   globalThis["matchMedia"] = _;
+diff --git a/src/eventHandling.native.ts b/src/eventHandling.native.ts
+index 9533b8ab90bb3dae0e6166c9a19daa470908b872..5f817208648b5663880fa8990987c44f713236da 100644
+--- a/src/eventHandling.native.ts
++++ b/src/eventHandling.native.ts
+@@ -65,6 +65,24 @@ export function useEvents(
+     if (events.onBlur) {
+       viewProps['onBlur'] = events.onBlur
+     }
++    if (Platform.OS === 'android') {
++      if (events.onPress) {
++        const press = events.onPress
++        viewProps['onClick'] = (event) => {
++          if (!event.nativeEvent || event.nativeEvent.pointerType == null) {
++            press(event)
++          }
++        }
++      }
++      if (events.onLongPress) {
++        const longPress = events.onLongPress
++        viewProps['onLongClick'] = (event) => {
++          if (!event.nativeEvent || event.nativeEvent.pointerType == null) {
++            longPress(event)
++          }
++        }
++      }
++    }
+     if (getIsNativeDesktop()) {
+       if (events.onMouseEnter) {
+         viewProps['onMouseEnter'] = events.onMouseEnter
+diff --git a/src/helpers/matchMedia.native.ts b/src/helpers/matchMedia.native.ts
+index 10af5f14c13ae5630326468747d16a0c6a8578b6..fb5de59ef5d96b0c9a7e88e417a14bdc1ed6672b 100644
+--- a/src/helpers/matchMedia.native.ts
++++ b/src/helpers/matchMedia.native.ts
+@@ -17,15 +17,14 @@ function matchMediaFallback(query: string): MediaQueryList {
+ }
+ 
+ export function setupMatchMedia(_: MatchMedia) {
+-  if (process.env.NODE_ENV === 'development') {
+-    if (typeof _ !== 'function') {
+-      if (!process.env.IS_STATIC) {
+-        console.trace(
+-          `setupMatchMedia was called without a function, this can cause issues on native`,
+-          _
+-        )
+-      }
++  if (typeof _ !== 'function') {
++    if (process.env.NODE_ENV === 'development' && !process.env.IS_STATIC) {
++      console.trace(
++        `setupMatchMedia was called without a function, this can cause issues on native`,
++        _
++      )
+     }
++    return
+   }
+ 
+   matchMediaImpl = _

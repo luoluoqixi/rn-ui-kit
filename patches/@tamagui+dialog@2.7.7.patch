@@ -1,8 +1,8 @@
 # Tamagui Dialog sheet-overlay 补丁说明:
 # - 让 Dialog 的 portal 内容通过 @tamagui/portal 当前激活的 portal root host 渲染。
-# - 需要与 @tamagui+portal@2.4.0.patch 保持同步。
+# - 需要与 @tamagui+portal@2.7.7.patch 保持同步。
 diff --git a/dist/esm/Dialog.native.js b/dist/esm/Dialog.native.js
-index edb3c2cd..ad05e353 100644
+index edb3c2cdedd707e10a9f25ee520e2a684fefd93f..ad05e353d3168cdcb6371ef78be93d41d9163301 100644
 --- a/dist/esm/Dialog.native.js
 +++ b/dist/esm/Dialog.native.js
 @@ -8,7 +8,7 @@ import { createContext } from "@tamagui/create-context";
@@ -31,3 +31,32 @@ index edb3c2cd..ad05e353 100644
      children: content
    }) : content;
  };
+diff --git a/src/Dialog.tsx b/src/Dialog.tsx
+index 7e1ec9a9c246920dc11995328bd49eed18833c60..b67e4d309701dbbf60f9a95690fe389d561361bc 100644
+--- a/src/Dialog.tsx
++++ b/src/Dialog.tsx
+@@ -30,6 +30,7 @@ import {
+   Portal,
+   PortalItem,
+   resolveViewZIndex,
++  usePortalRootHostName,
+ } from '@tamagui/portal'
+ import { RemoveScroll } from '@tamagui/remove-scroll'
+ import { SheetController } from '@tamagui/sheet/controller'
+@@ -201,6 +202,7 @@ const DialogPortalItem = ({
+   context: DialogContextValue
+   children: React.ReactNode
+ }) => {
++  const rootHostName = usePortalRootHostName()
+   const themeName = useThemeName()
+   const isAdapted = useAdaptIsActive(context.adaptScope)
+   const adaptContext = useAdaptContext(context.adaptScope)
+@@ -222,7 +224,7 @@ const DialogPortalItem = ({
+   return isAdapted ? (
+     <AdaptPortalContents scope={context.adaptScope}>{content}</AdaptPortalContents>
+   ) : context.modal ? (
+-    <PortalItem hostName={context.modal ? 'root' : context.adaptScope}>
++    <PortalItem hostName={context.modal ? rootHostName : context.adaptScope}>
+       {content}
+     </PortalItem>
+   ) : (
