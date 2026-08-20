@@ -1,0 +1,191 @@
+# Tamagui 原生菜单适配补丁说明:
+# - 在 Tamagui 的原生 Menu 适配层中保留并透传任意原生 root props。
+# - 将 anchorAlignment、isAnchoredToRight 和 selectedItemBackgroundColor 继续传递给 Zeego。
+# - dropdown menu 和 context menu 都透传 onOpenWillChange，同时保留用于编程式打开、关闭菜单的
+#   native trigger 所有权和 ref 行为。
+diff --git a/dist/cjs/createNativeMenu/createNativeMenu.native.js b/dist/cjs/createNativeMenu/createNativeMenu.native.js
+index c2b26152a313f3ad62c712e40ac5eddbd58ffc20..91e55e9a8d9cda7950237d95b948dd60a2c7264f 100644
+--- a/dist/cjs/createNativeMenu/createNativeMenu.native.js
++++ b/dist/cjs/createNativeMenu/createNativeMenu.native.js
+@@ -393,7 +393,11 @@ var createNativeMenu = function (MenuType) {
+     var {
+       children,
+       onOpenChange,
+-      onOpenWillChange
++      onOpenWillChange,
++      anchorAlignment,
++      isAnchoredToRight,
++      selectedItemBackgroundColor,
++      ...nativeRootProps
+     } = param;
+     var triggerOwnerRef = import_react.default.useRef(null);
+     var claimTriggerBoundary = import_react.default.useCallback(function (debugName) {
+@@ -425,9 +429,19 @@ var createNativeMenu = function (MenuType) {
+       onOpenWillChange === null || onOpenWillChange === void 0 ? void 0 : onOpenWillChange(willOpen);
+     }, [onOpenWillChange, releaseTriggerBoundary]);
+     var rootProps = {
++      ...nativeRootProps,
+       onOpenChange: handleOpenChange
+     };
+-    if (isContextMenu && onOpenWillChange) {
++    if (anchorAlignment !== void 0) {
++      rootProps.anchorAlignment = anchorAlignment;
++    }
++    if (isAnchoredToRight !== void 0) {
++      rootProps.isAnchoredToRight = isAnchoredToRight;
++    }
++    if (selectedItemBackgroundColor !== void 0) {
++      rootProps.selectedItemBackgroundColor = selectedItemBackgroundColor;
++    }
++    if (onOpenWillChange) {
+       rootProps.onOpenWillChange = handleOpenWillChange;
+     }
+     var content = /* @__PURE__ */(0, import_jsx_runtime.jsx)(z.menu.Root, {
+diff --git a/dist/esm/createNativeMenu/createNativeMenu.native.js b/dist/esm/createNativeMenu/createNativeMenu.native.js
+index 36ff81ee24130a259c603ce0c917c4f86df76dc5..74024493e32f62a554186864c5bcb8264ddccd00 100644
+--- a/dist/esm/createNativeMenu/createNativeMenu.native.js
++++ b/dist/esm/createNativeMenu/createNativeMenu.native.js
+@@ -353,7 +353,11 @@ var createNativeMenu = function (MenuType) {
+     var {
+       children,
+       onOpenChange,
+-      onOpenWillChange
++      onOpenWillChange,
++      anchorAlignment,
++      isAnchoredToRight,
++      selectedItemBackgroundColor,
++      ...nativeRootProps
+     } = param;
+     var triggerOwnerRef = React.useRef(null);
+     var claimTriggerBoundary = React.useCallback(function (debugName) {
+@@ -385,9 +389,19 @@ var createNativeMenu = function (MenuType) {
+       onOpenWillChange === null || onOpenWillChange === void 0 ? void 0 : onOpenWillChange(willOpen);
+     }, [onOpenWillChange, releaseTriggerBoundary]);
+     var rootProps = {
++      ...nativeRootProps,
+       onOpenChange: handleOpenChange
+     };
+-    if (isContextMenu && onOpenWillChange) {
++    if (anchorAlignment !== void 0) {
++      rootProps.anchorAlignment = anchorAlignment;
++    }
++    if (isAnchoredToRight !== void 0) {
++      rootProps.isAnchoredToRight = isAnchoredToRight;
++    }
++    if (selectedItemBackgroundColor !== void 0) {
++      rootProps.selectedItemBackgroundColor = selectedItemBackgroundColor;
++    }
++    if (onOpenWillChange) {
+       rootProps.onOpenWillChange = handleOpenWillChange;
+     }
+     var content = /* @__PURE__ */_jsx(z.menu.Root, {
+diff --git a/dist/jsx/createNativeMenu/createNativeMenu.native.js b/dist/jsx/createNativeMenu/createNativeMenu.native.js
+index c2b26152a313f3ad62c712e40ac5eddbd58ffc20..91e55e9a8d9cda7950237d95b948dd60a2c7264f 100644
+--- a/dist/jsx/createNativeMenu/createNativeMenu.native.js
++++ b/dist/jsx/createNativeMenu/createNativeMenu.native.js
+@@ -393,7 +393,11 @@ var createNativeMenu = function (MenuType) {
+     var {
+       children,
+       onOpenChange,
+-      onOpenWillChange
++      onOpenWillChange,
++      anchorAlignment,
++      isAnchoredToRight,
++      selectedItemBackgroundColor,
++      ...nativeRootProps
+     } = param;
+     var triggerOwnerRef = import_react.default.useRef(null);
+     var claimTriggerBoundary = import_react.default.useCallback(function (debugName) {
+@@ -425,9 +429,19 @@ var createNativeMenu = function (MenuType) {
+       onOpenWillChange === null || onOpenWillChange === void 0 ? void 0 : onOpenWillChange(willOpen);
+     }, [onOpenWillChange, releaseTriggerBoundary]);
+     var rootProps = {
++      ...nativeRootProps,
+       onOpenChange: handleOpenChange
+     };
+-    if (isContextMenu && onOpenWillChange) {
++    if (anchorAlignment !== void 0) {
++      rootProps.anchorAlignment = anchorAlignment;
++    }
++    if (isAnchoredToRight !== void 0) {
++      rootProps.isAnchoredToRight = isAnchoredToRight;
++    }
++    if (selectedItemBackgroundColor !== void 0) {
++      rootProps.selectedItemBackgroundColor = selectedItemBackgroundColor;
++    }
++    if (onOpenWillChange) {
+       rootProps.onOpenWillChange = handleOpenWillChange;
+     }
+     var content = /* @__PURE__ */(0, import_jsx_runtime.jsx)(z.menu.Root, {
+diff --git a/src/createNativeMenu/createNativeMenu.tsx b/src/createNativeMenu/createNativeMenu.tsx
+index 24c8f5e0ef4a11585706381b374da05da31767e7..ecada6c86886ed49c193ad42f20d88386688a555 100644
+--- a/src/createNativeMenu/createNativeMenu.tsx
++++ b/src/createNativeMenu/createNativeMenu.tsx
+@@ -583,7 +583,15 @@ export const createNativeMenu = (
+ 
+   // on Android, provide NativeMenuContext so components use Gesture.Manual()
+   // instead of Gesture.Tap() (which sends ACTION_CANCEL to MenuView)
+-  const Menu: FC<NativeMenuProps> = ({ children, onOpenChange, onOpenWillChange }) => {
++  const Menu: FC<NativeMenuProps> = ({
++    children,
++    onOpenChange,
++    onOpenWillChange,
++    anchorAlignment,
++    isAnchoredToRight,
++    selectedItemBackgroundColor,
++    ...nativeRootProps
++  }) => {
+     const triggerOwnerRef = React.useRef<object | null>(null)
+     const claimTriggerBoundary = React.useCallback((debugName?: string | null) => {
+       if (triggerOwnerRef.current) {
+@@ -623,8 +631,20 @@ export const createNativeMenu = (
+       [onOpenWillChange, releaseTriggerBoundary]
+     )
+ 
+-    const rootProps: Record<string, unknown> = { onOpenChange: handleOpenChange }
+-    if (isContextMenu && onOpenWillChange) {
++    const rootProps: Record<string, unknown> = {
++      ...nativeRootProps,
++      onOpenChange: handleOpenChange,
++    }
++    if (anchorAlignment !== undefined) {
++      rootProps.anchorAlignment = anchorAlignment
++    }
++    if (isAnchoredToRight !== undefined) {
++      rootProps.isAnchoredToRight = isAnchoredToRight
++    }
++    if (selectedItemBackgroundColor !== undefined) {
++      rootProps.selectedItemBackgroundColor = selectedItemBackgroundColor
++    }
++    if (onOpenWillChange) {
+       rootProps.onOpenWillChange = handleOpenWillChange
+     }
+ 
+diff --git a/src/createNativeMenu/createNativeMenuTypes.ts b/src/createNativeMenu/createNativeMenuTypes.ts
+index 6a32965e3dcc62daaa3f63e21844d7fd339b84e8..d965f97116e6bf842238fdd4c716440641007130 100644
+--- a/src/createNativeMenu/createNativeMenuTypes.ts
++++ b/src/createNativeMenu/createNativeMenuTypes.ts
+@@ -8,6 +8,9 @@ type ImageOptions = {
+ export type NativeMenuProps = {
+   children: React.ReactNode
+   native?: boolean
++  anchorAlignment?: 'start' | 'center' | 'end'
++  isAnchoredToRight?: boolean
++  selectedItemBackgroundColor?: string
+   onOpenChange?: (isOpen: boolean) => void
+   /**
+    * Callback function indicating that the menu intends to open or close. Passes a `willOpen` boolean argument indicating whether it is opening or closing.
+diff --git a/types/createNativeMenu/createNativeMenuTypes.d.ts b/types/createNativeMenu/createNativeMenuTypes.d.ts
+index f6f0d8921e7fd75c7e6b9093219a46aa8b567d7d..048629b95682d9c403a0ff0d3813f468a55ca8e2 100644
+--- a/types/createNativeMenu/createNativeMenuTypes.d.ts
++++ b/types/createNativeMenu/createNativeMenuTypes.d.ts
+@@ -6,6 +6,9 @@ type ImageOptions = {
+ export type NativeMenuProps = {
+     children: React.ReactNode;
+     native?: boolean;
++    anchorAlignment?: 'start' | 'center' | 'end';
++    isAnchoredToRight?: boolean;
++    selectedItemBackgroundColor?: string;
+     onOpenChange?: (isOpen: boolean) => void;
+     /**
+      * Callback function indicating that the menu intends to open or close. Passes a `willOpen` boolean argument indicating whether it is opening or closing.

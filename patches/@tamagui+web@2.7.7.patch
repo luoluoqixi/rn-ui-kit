@@ -1,0 +1,272 @@
+# Tamagui Web native 补丁说明:
+# - Android 同步 onPress/onLongPress 到原生 onClick/onLongClick，并过滤 pointer 事件避免重复触发。
+# - setupMatchMedia 收到非法实现时立即返回，避免污染全局 matchMedia。
+# - 2.7.7 已重写 responder/RNGH 路径，旧 patch 的 callback ref 与空事件保护不再重复迁移。
+--- a/dist/cjs/eventHandling.native.js
++++ b/dist/cjs/eventHandling.native.js
+@@ -77,6 +77,24 @@
+     if (events.onBlur) {
+       viewProps["onBlur"] = events.onBlur;
+     }
++    if (import_react_native.Platform.OS === "android") {
++      if (events.onPress) {
++        var press = events.onPress;
++        viewProps["onClick"] = function (event) {
++          if (!event.nativeEvent || event.nativeEvent.pointerType == null) {
++            press(event);
++          }
++        };
++      }
++      if (events.onLongPress) {
++        var longPress = events.onLongPress;
++        viewProps["onLongClick"] = function (event) {
++          if (!event.nativeEvent || event.nativeEvent.pointerType == null) {
++            longPress(event);
++          }
++        };
++      }
++    }
+     if (getIsNativeDesktop()) {
+       if (events.onMouseEnter) {
+         viewProps["onMouseEnter"] = events.onMouseEnter;
+@@ -137,7 +155,7 @@
+   if (isUsingRNGH) {
+     var callbacksRef = (0, import_react.useRef)(isUsingRNGH ? {} : null);
+     var gestureRef = (0, import_react.useRef)(null);
+-    var useResponderFallback = !isInsideNativeMenu && Boolean(hasRealPressEvents || getIsAndroid() && hasPressEvents);
++    var useResponderFallback = !isInsideNativeMenu && Boolean((getIsAndroid() && hasPressEvents && !hasRealPressEvents && !stateRef.current.hasRealPressEvents) || (!getIsAndroid() && hasRealPressEvents));
+     (0, import_mainThreadPressEvents.useMainThreadPressEvents)(events, viewProps, useResponderFallback, debugName);
+     if (everEnabled) {
+       callbacksRef.current = hasPressEvents ? {
+@@ -146,7 +164,7 @@
+         onPress: events.onPress,
+         onLongPress: events.onLongPress
+       } : {};
+-      if (hasRealPressEvents && !isInsideNativeMenu) {
++      if (hasRealPressEvents && !isInsideNativeMenu && !getIsAndroid()) {
+         gestureRef.current = null;
+         return null;
+       }
+@@ -167,6 +185,24 @@
+             (_callbacksRef_current_onPressOut = (_callbacksRef_current = callbacksRef.current).onPressOut) === null || _callbacksRef_current_onPressOut === void 0 ? void 0 : _callbacksRef_current_onPressOut.call(_callbacksRef_current, {});
+           });
+           gestureRef.current = manual;
++        } else if (hasRealPressEvents || stateRef.current.hasRealPressEvents) {
++          gestureRef.current = gh.createPressGesture({
++            debugName,
++            onPressIn: function (e) {
++              if (callbacksRef.current.onPressIn) callbacksRef.current.onPressIn(e);
++            },
++            onPressOut: function (e) {
++              if (callbacksRef.current.onPressOut) callbacksRef.current.onPressOut(e);
++            },
++            onPress: function (e) {
++              if (callbacksRef.current.onPress) callbacksRef.current.onPress(e);
++            },
++            onLongPress: function (e) {
++              if (callbacksRef.current.onLongPress) callbacksRef.current.onLongPress(e);
++            },
++            delayLongPress: events === null || events === void 0 ? void 0 : events.delayLongPress,
++            hitSlop: viewProps.hitSlop
++          });
+         } else if (!getIsAndroid()) {
+           gestureRef.current = Gesture.Manual().runOnJS(true).manualActivation(true).onTouchesDown(function (e) {
+             var _callbacksRef_current_onPressIn, _callbacksRef_current;
+--- a/dist/cjs/helpers/matchMedia.native.js
++++ b/dist/cjs/helpers/matchMedia.native.js
+@@ -49,12 +49,11 @@
+   };
+ }
+ function setupMatchMedia(_) {
+-  if (process.env.NODE_ENV === "development") {
+-    if (typeof _ !== "function") {
+-      if (!process.env.IS_STATIC) {
+-        console.trace(`setupMatchMedia was called without a function, this can cause issues on native`, _);
+-      }
++  if (typeof _ !== "function") {
++    if (process.env.NODE_ENV === "development" && !process.env.IS_STATIC) {
++      console.trace(`setupMatchMedia was called without a function, this can cause issues on native`, _);
+     }
++    return;
+   }
+   matchMediaImpl = _;
+   globalThis["matchMedia"] = _;
+--- a/dist/esm/eventHandling.native.js
++++ b/dist/esm/eventHandling.native.js
+@@ -35,6 +35,24 @@
+     if (events.onBlur) {
+       viewProps["onBlur"] = events.onBlur;
+     }
++    if (Platform.OS === "android") {
++      if (events.onPress) {
++        var press = events.onPress;
++        viewProps["onClick"] = function (event) {
++          if (!event.nativeEvent || event.nativeEvent.pointerType == null) {
++            press(event);
++          }
++        };
++      }
++      if (events.onLongPress) {
++        var longPress = events.onLongPress;
++        viewProps["onLongClick"] = function (event) {
++          if (!event.nativeEvent || event.nativeEvent.pointerType == null) {
++            longPress(event);
++          }
++        };
++      }
++    }
+     if (getIsNativeDesktop()) {
+       if (events.onMouseEnter) {
+         viewProps["onMouseEnter"] = events.onMouseEnter;
+@@ -95,7 +113,7 @@
+   if (isUsingRNGH) {
+     var callbacksRef = useRef(isUsingRNGH ? {} : null);
+     var gestureRef = useRef(null);
+-    var useResponderFallback = !isInsideNativeMenu && Boolean(hasRealPressEvents || getIsAndroid() && hasPressEvents);
++    var useResponderFallback = !isInsideNativeMenu && Boolean((getIsAndroid() && hasPressEvents && !hasRealPressEvents && !stateRef.current.hasRealPressEvents) || (!getIsAndroid() && hasRealPressEvents));
+     useMainThreadPressEvents(events, viewProps, useResponderFallback, debugName);
+     if (everEnabled) {
+       callbacksRef.current = hasPressEvents ? {
+@@ -104,7 +122,7 @@
+         onPress: events.onPress,
+         onLongPress: events.onLongPress
+       } : {};
+-      if (hasRealPressEvents && !isInsideNativeMenu) {
++      if (hasRealPressEvents && !isInsideNativeMenu && !getIsAndroid()) {
+         gestureRef.current = null;
+         return null;
+       }
+@@ -125,6 +143,24 @@
+             (_callbacksRef_current_onPressOut = (_callbacksRef_current = callbacksRef.current).onPressOut) === null || _callbacksRef_current_onPressOut === void 0 ? void 0 : _callbacksRef_current_onPressOut.call(_callbacksRef_current, {});
+           });
+           gestureRef.current = manual;
++        } else if (hasRealPressEvents || stateRef.current.hasRealPressEvents) {
++          gestureRef.current = gh.createPressGesture({
++            debugName,
++            onPressIn: function (e) {
++              if (callbacksRef.current.onPressIn) callbacksRef.current.onPressIn(e);
++            },
++            onPressOut: function (e) {
++              if (callbacksRef.current.onPressOut) callbacksRef.current.onPressOut(e);
++            },
++            onPress: function (e) {
++              if (callbacksRef.current.onPress) callbacksRef.current.onPress(e);
++            },
++            onLongPress: function (e) {
++              if (callbacksRef.current.onLongPress) callbacksRef.current.onLongPress(e);
++            },
++            delayLongPress: events === null || events === void 0 ? void 0 : events.delayLongPress,
++            hitSlop: viewProps.hitSlop
++          });
+         } else if (!getIsAndroid()) {
+           gestureRef.current = Gesture.Manual().runOnJS(true).manualActivation(true).onTouchesDown(function (e) {
+             var _callbacksRef_current_onPressIn, _callbacksRef_current;
+--- a/dist/esm/helpers/matchMedia.native.js
++++ b/dist/esm/helpers/matchMedia.native.js
+@@ -19,12 +19,11 @@
+   };
+ }
+ function setupMatchMedia(_) {
+-  if (process.env.NODE_ENV === "development") {
+-    if (typeof _ !== "function") {
+-      if (!process.env.IS_STATIC) {
+-        console.trace(`setupMatchMedia was called without a function, this can cause issues on native`, _);
+-      }
++  if (typeof _ !== "function") {
++    if (process.env.NODE_ENV === "development" && !process.env.IS_STATIC) {
++      console.trace(`setupMatchMedia was called without a function, this can cause issues on native`, _);
+     }
++    return;
+   }
+   matchMediaImpl = _;
+   globalThis["matchMedia"] = _;
+--- a/src/eventHandling.native.ts
++++ b/src/eventHandling.native.ts
+@@ -65,6 +65,24 @@
+     if (events.onBlur) {
+       viewProps['onBlur'] = events.onBlur
+     }
++    if (Platform.OS === 'android') {
++      if (events.onPress) {
++        const press = events.onPress
++        viewProps['onClick'] = (event) => {
++          if (!event.nativeEvent || event.nativeEvent.pointerType == null) {
++            press(event)
++          }
++        }
++      }
++      if (events.onLongPress) {
++        const longPress = events.onLongPress
++        viewProps['onLongClick'] = (event) => {
++          if (!event.nativeEvent || event.nativeEvent.pointerType == null) {
++            longPress(event)
++          }
++        }
++      }
++    }
+     if (getIsNativeDesktop()) {
+       if (events.onMouseEnter) {
+         viewProps['onMouseEnter'] = events.onMouseEnter
+@@ -166,7 +184,10 @@
+     // no-ops when enabled is false.
+     const useResponderFallback =
+       !isInsideNativeMenu &&
+-      Boolean(hasRealPressEvents || (getIsAndroid() && hasPressEvents))
++      Boolean(
++        (getIsAndroid() && hasPressEvents && !hasRealPressEvents && !stateRef.current.hasRealPressEvents) ||
++          (!getIsAndroid() && hasRealPressEvents)
++      )
+     useMainThreadPressEvents(events, viewProps, useResponderFallback, debugName)
+ 
+     if (everEnabled) {
+@@ -180,7 +201,7 @@
+           }
+         : {}
+ 
+-      if (hasRealPressEvents && !isInsideNativeMenu) {
++      if (hasRealPressEvents && !isInsideNativeMenu && !getIsAndroid()) {
+         // Real handlers are delivered by useMainThreadPressEvents above. Clear
+         // any cached pressStyle observer from an earlier render so it cannot
+         // double-fire after onPress appears dynamically.
+@@ -210,6 +231,16 @@
+               callbacksRef.current.onPressOut?.({})
+             })
+           gestureRef.current = manual
++        } else if (hasRealPressEvents || stateRef.current.hasRealPressEvents) {
++          gestureRef.current = gh.createPressGesture({
++            debugName,
++            onPressIn: (e: any) => callbacksRef.current.onPressIn?.(e),
++            onPressOut: (e: any) => callbacksRef.current.onPressOut?.(e),
++            onPress: (e: any) => callbacksRef.current.onPress?.(e),
++            onLongPress: (e: any) => callbacksRef.current.onLongPress?.(e),
++            delayLongPress: events?.delayLongPress,
++            hitSlop: viewProps.hitSlop,
++          })
+         } else if (!getIsAndroid()) {
+           // pressStyle-only (events.onPress was synthesized to drive pressStyle
+           // visuals, no user handler): use Manual + manualActivation. Touch
+--- a/src/helpers/matchMedia.native.ts
++++ b/src/helpers/matchMedia.native.ts
+@@ -17,15 +17,14 @@
+ }
+ 
+ export function setupMatchMedia(_: MatchMedia) {
+-  if (process.env.NODE_ENV === 'development') {
+-    if (typeof _ !== 'function') {
+-      if (!process.env.IS_STATIC) {
+-        console.trace(
+-          `setupMatchMedia was called without a function, this can cause issues on native`,
+-          _
+-        )
+-      }
++  if (typeof _ !== 'function') {
++    if (process.env.NODE_ENV === 'development' && !process.env.IS_STATIC) {
++      console.trace(
++        `setupMatchMedia was called without a function, this can cause issues on native`,
++        _
++      )
+     }
++    return
+   }
+ 
+   matchMediaImpl = _

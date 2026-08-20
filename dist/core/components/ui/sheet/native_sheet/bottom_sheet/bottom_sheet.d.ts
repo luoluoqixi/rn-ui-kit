@@ -1,0 +1,22 @@
+import type { NativeSheetProps } from "../types";
+type BottomSheetPanelProps = {
+    backgroundColor?: NativeSheetProps["backgroundColor"];
+    children: React.ReactNode;
+    dismissOnOverlayPress?: boolean;
+    disableDrag?: boolean;
+    enableHandle?: boolean;
+    name?: string;
+    onAnimationComplete?: NativeSheetProps["onAnimationComplete"];
+    onOpenChange: (open: boolean) => void;
+    onPositionChange?: (position: number) => void;
+    open: boolean;
+    overlay?: boolean;
+    overlayPortalHostName?: string;
+    position: number;
+    snapPoints: NativeSheetProps["snapPoints"];
+    snapPointsMode: NativeSheetProps["snapPointsMode"];
+    transition?: NativeSheetProps["transition"];
+    disableRemoveScroll?: boolean;
+};
+export declare function BottomSheetPanel({ backgroundColor, children, dismissOnOverlayPress, disableDrag, enableHandle, onAnimationComplete, onOpenChange, onPositionChange, open, overlay, overlayPortalHostName, position, snapPoints, snapPointsMode, transition, disableRemoveScroll, }: BottomSheetPanelProps): import("react").JSX.Element;
+export {};
