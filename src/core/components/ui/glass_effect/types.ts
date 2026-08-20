@@ -9,6 +9,7 @@ import type { ComponentType, ReactNode, RefObject } from "react";
 import type { StyleProp, TextInput, TextInputProps, TextStyle, ViewStyle } from "react-native";
 
 import type { ButtonProps } from "../button";
+import type { KeyboardHiddenConfirmation } from "../utils/keyboard";
 
 export type GlassEffectKeyboardAvoidance =
   | boolean
@@ -21,14 +22,8 @@ export type GlassEffectKeyboardAvoidance =
       subtractSafeAreaInset?: boolean;
     };
 
-export type GlassEffectKeyboardHiddenConfirmation = {
-  /** 认为键盘已隐藏的最大高度。默认 10。 */
-  heightThreshold?: number;
-  /** 键盘高度满足阈值后，连续确认的渲染帧数。默认 3。 */
-  consecutiveFrames?: number;
-  /** 确认隐藏后显示高度的最终值；仅负值有效，默认 0。 */
-  finalHeight?: number;
-};
+/** @deprecated 请改用通用的 `KeyboardHiddenConfirmation`。 */
+export type GlassEffectKeyboardHiddenConfirmation = KeyboardHiddenConfirmation;
 
 /** `expo-glass-effect` GlassView 的完整属性，包含任意 React Native children。 */
 export type GlassEffectProps = GlassViewProps & {

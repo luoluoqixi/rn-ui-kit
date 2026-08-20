@@ -18,7 +18,12 @@ import {
   NativeTrigger,
   NativeTriggerPressable,
   Select,
+  useKeyboardAvoidance,
+  useKeyboardVisibility,
   type ButtonProps,
+  type KeyboardHiddenConfirmation,
+  type KeyboardVisibilityOptions,
+  type KeyboardVisibilityPhase,
   type MenuProps,
   type NativeListMenuItemProps,
   type NativeTriggerPressableProps,
@@ -44,6 +49,8 @@ void NativeTrigger;
 void NativeTriggerPressable;
 void Select.NativeTrigger;
 void Select.NativeTriggerPressable;
+void useKeyboardAvoidance;
+void useKeyboardVisibility;
 void RnUiKitDebugPanel;
 
 type PublicCoreProps = ButtonProps;
@@ -64,6 +71,9 @@ type PublicDebugProps = RnUiKitDebugPanelProps;
 type PublicDebugPageScreenOptions = RnUiKitDebugPanelPageScreenOptions;
 type PublicDebugNativeSheetScreenOptions = RnUiKitDebugPanelNativeSheetScreenOptions;
 type PublicDebugSheetProps = RnUiKitDebugPanelSheetProps;
+type PublicKeyboardHiddenConfirmation = KeyboardHiddenConfirmation;
+type PublicKeyboardVisibilityOptions = KeyboardVisibilityOptions;
+type PublicKeyboardVisibilityPhase = KeyboardVisibilityPhase;
 
 const hostPanelProps = {
   backButtonLabel: "返回",
@@ -95,6 +105,18 @@ const glassKeyboardHiddenProps = {
 >;
 
 void glassKeyboardHiddenProps;
+
+const keyboardVisibilityOptions = {
+  hiddenConfirmation: { consecutiveFrames: 2, heightThreshold: 12 },
+  onPhaseChange: (phase) => {
+    void phase;
+  },
+} satisfies KeyboardVisibilityOptions;
+
+void keyboardVisibilityOptions;
+void ({} as PublicKeyboardHiddenConfirmation);
+void ({} as PublicKeyboardVisibilityOptions);
+void ({} as PublicKeyboardVisibilityPhase);
 
 const searchBarCancelButtonProps = {
   cancelButtonProps: {

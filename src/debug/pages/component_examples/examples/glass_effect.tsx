@@ -12,7 +12,7 @@ import {
   Play,
   Plus,
 } from "@tamagui/lucide-icons-2";
-import { useState, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import {
   Platform,
   Pressable,
@@ -30,6 +30,7 @@ import {
   type GlassColorScheme,
   type GlassEffectProps,
   type GlassStyle,
+  type KeyboardVisibilityPhase,
   NativeList,
   NativeListInputItem,
   NativeListItem,
@@ -40,6 +41,7 @@ import {
   isGlassEffectAPIAvailable,
   isLiquidGlassAvailable,
   useAppBackgroundColors,
+  useKeyboardVisibility,
   isIos26Plus,
 } from "rn-ui-kit/core";
 
@@ -154,8 +156,7 @@ type PreviewProps = {
   containerSpacing: number;
   cornerRadius: number;
   effectStyle: GlassStyle;
-  editorFocused: boolean;
-  onEditorFocusedChange: (focused: boolean) => void;
+  editorKeyboardVisible: boolean;
   fallbackSurfaceColor: string;
   glassAvailable: boolean;
   horizontalInset: number;
@@ -181,8 +182,7 @@ function GlassEffectPreview({
   containerSpacing,
   cornerRadius,
   effectStyle,
-  editorFocused,
-  onEditorFocusedChange,
+  editorKeyboardVisible,
   fallbackSurfaceColor,
   glassAvailable,
   horizontalInset,
@@ -278,7 +278,7 @@ function GlassEffectPreview({
   }
 
   if (mode === "editor") {
-    if (!editorFocused) {
+    if (!editorKeyboardVisible) {
       return null;
     }
 
@@ -290,7 +290,6 @@ function GlassEffectPreview({
         keyboardAvoidance={usesNativeEditorToolbar ? true : { subtractSafeAreaInset: false }}
         keyboardHiddenConfirmation={{ finalHeight: -64 }}
         onLayout={handleLayout}
-        onKeyboardHidden={() => onEditorFocusedChange(false)}
         style={[
           usesNativeEditorToolbar ? styles.editorToolbar : styles.dockedToolbar,
           usesNativeEditorToolbar
@@ -549,7 +548,7 @@ export function GlassEffectExample() {
   const [compact, setCompact] = useState(false);
   const [showSubtitle, setShowSubtitle] = useState(true);
   const [buttonCount, setButtonCount] = useState(3);
-  const [editorFocused, setEditorFocused] = useState(false);
+  const [editorKeyboardVisible, setEditorKeyboardVisible] = useState(false);
   const [editorText, setEditorText] = useState("");
   const [search, setSearch] = useState("");
   const [playing, setPlaying] = useState(false);
@@ -559,10 +558,15 @@ export function GlassEffectExample() {
   const glassApiAvailable = isGlassEffectAPIAvailable();
   const fallbackSurfaceColor =
     colorSchemeName === "dark" ? "rgba(44, 44, 48, 0.96)" : "rgba(246, 246, 248, 0.96)";
+  const handleEditorKeyboardPhaseChange = useCallback((phase: KeyboardVisibilityPhase) => {
+    setEditorKeyboardVisible(phase !== "hidden");
+  }, []);
+  useKeyboardVisibility({ onPhaseChange: handleEditorKeyboardPhaseChange });
 
   return (
     <>
       <NativeList
+        dismissKeyboardOnTap
         automaticallyAdjustsScrollIndicatorInsets={Platform.OS === "ios" ? true : undefined}
         backgroundColor={appBackgroundColors.screen}
         contentInsetAdjustmentBehavior={Platform.OS === "ios" ? "automatic" : undefined}
@@ -581,7 +585,6 @@ export function GlassEffectExample() {
                 if (value == null) {
                   return;
                 }
-                setEditorFocused(false);
                 setMode(value as GlassExampleMode);
               },
               options: MODE_OPTIONS,
@@ -606,14 +609,12 @@ export function GlassEffectExample() {
 
         {mode === "editor" ? (
           <NativeListSection
-            footer="点击输入框后，工具栏会显示在键盘上方；点击格式按钮不会收起键盘。"
+            footer="键盘显示时，工具栏会显示在键盘上方；点击格式按钮不会收起键盘。"
             title="编辑器输入"
           >
             <NativeListInputItem
               inputProps={{
                 onChangeText: setEditorText,
-                onFocus: () => setEditorFocused(true),
-                onPressIn: () => setEditorFocused(true),
                 placeholder: "输入内容以显示编辑工具栏",
                 value: editorText,
               }}
@@ -771,7 +772,7 @@ export function GlassEffectExample() {
         compact={compact}
         containerSpacing={containerSpacing}
         cornerRadius={cornerRadius}
-        editorFocused={editorFocused}
+        editorKeyboardVisible={editorKeyboardVisible}
         effectStyle={effectStyle}
         fallbackSurfaceColor={fallbackSurfaceColor}
         glassAvailable={glassAvailable}
@@ -779,7 +780,6 @@ export function GlassEffectExample() {
         interactive={interactive}
         mode={mode}
         onAction={setLastAction}
-        onEditorFocusedChange={setEditorFocused}
         onLayoutSizeChange={setLastLayoutSize}
         onPlayingChange={setPlaying}
         onSearchChange={setSearch}
