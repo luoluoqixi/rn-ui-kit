@@ -1,186 +1,297 @@
-import { type ComponentRef, type ComponentType, forwardRef } from "react";
-import {
-  Button as RNButton,
-  Pressable,
-  Text as RNText,
-  type StyleProp,
-  type ViewStyle,
-  View,
-} from "react-native";
-import { Button as TamaguiButton } from "tamagui";
-import { useTheme } from "tamagui";
-
-import { isWeb, os } from "../utils/platform";
-import { triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
-
-import { ButtonSwift } from "./button_swift";
+import { TextClassContext } from "../text";
+import { Text } from "../text";
+import { Icon } from "../icon";
+import { cn } from "../utils/cn";
+import { triggerNativeHaptics } from "../utils";
+import { useUiTheme } from "../utils/theme";
+import { cva } from "class-variance-authority";
+import { Loader2 } from "lucide-react-native";
+import * as React from "react";
+import Animated, {
+  Easing,
+  cancelAnimation,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
+import { Platform, Pressable, type StyleProp, type ViewStyle } from "react-native";
 import type { ButtonProps } from "./types";
 
-const DISABLED_LONG_PRESS_DELAY = 2_147_483_647;
-const TamaguiButtonWithLongPressDelay = TamaguiButton as unknown as ComponentType<
-  ButtonProps & { ref?: React.Ref<ComponentRef<typeof TamaguiButton>> }
->;
+import { ButtonNative } from "./button_native";
 
-const DISABLED_BUTTON_OPACITY = 0.5;
-const ENABLED_BUTTON_OPACITY = 1;
+const buttonVariants = cva(
+  cn(
+    "group shrink-0 flex-row items-center justify-center gap-2 rounded-md shadow-none",
+    Platform.select({
+      web: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive whitespace-nowrap outline-none transition-all focus-visible:ring-[3px] disabled:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+    }),
+  ),
+  {
+    variants: {
+      variant: {
+        default: cn(
+          "bg-primary active:bg-primary/90 shadow-sm shadow-black/5",
+          Platform.select({ web: "hover:bg-primary/90" }),
+        ),
+        destructive: cn(
+          "bg-destructive active:bg-destructive/90 dark:bg-destructive/60 shadow-sm shadow-black/5",
+          Platform.select({
+            web: "hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
+          }),
+        ),
+        outline: cn(
+          "border-border bg-background active:bg-accent dark:bg-input/30 dark:border-input dark:active:bg-input/50 border shadow-sm shadow-black/5",
+          Platform.select({
+            web: "hover:bg-accent dark:hover:bg-input/50 disabled:hover:bg-background disabled:active:bg-background",
+          }),
+        ),
+        secondary: cn(
+          "bg-secondary active:bg-input shadow-sm shadow-black/5",
+          Platform.select({ web: "hover:bg-input/70" }),
+        ),
+        ghost: cn(
+          "active:bg-accent dark:active:bg-accent/50",
+          Platform.select({ web: "hover:bg-accent dark:hover:bg-accent/50" }),
+        ),
+        link: Platform.select({ web: "hover:opacity-80" }),
+      },
+      size: {
+        default: cn("h-10 px-4 py-2 sm:h-9", Platform.select({ web: "has-[>svg]:px-3" })),
+        sm: cn("h-9 gap-1.5 rounded-md px-3 sm:h-8", Platform.select({ web: "has-[>svg]:px-2.5" })),
+        lg: cn("h-11 rounded-md px-6 sm:h-10", Platform.select({ web: "has-[>svg]:px-4" })),
+        icon: "h-10 w-10 sm:h-9 sm:w-9",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+);
 
-export const Button = forwardRef<ComponentRef<typeof TamaguiButton>, ButtonProps>((props, ref) => {
-  const {
-    children,
+const buttonTextVariants = cva(
+  cn(
+    "text-foreground text-sm font-medium",
+    Platform.select({ web: "pointer-events-none transition-colors" }),
+  ),
+  {
+    variants: {
+      variant: {
+        default: "text-primary-foreground",
+        destructive: "text-white",
+        outline: cn(
+          "group-active:text-accent-foreground",
+          Platform.select({
+            web: "group-hover:text-accent-foreground disabled:group-hover:text-foreground disabled:group-active:text-foreground",
+          }),
+        ),
+        secondary: "text-secondary-foreground",
+        ghost: "group-active:text-accent-foreground",
+        link: cn(
+          "text-primary underline underline-offset-4 group-active:opacity-70",
+          Platform.select({ web: "group-hover:opacity-80" }),
+        ),
+      },
+      size: {
+        default: "",
+        sm: "",
+        lg: "",
+        icon: "",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+);
+
+function normalizeButtonChildren(children: React.ReactNode): React.ReactNode {
+  return React.Children.map(children, (child) =>
+    typeof child === "string" || typeof child === "number" ? <Text>{child}</Text> : child,
+  ) as React.ReactNode;
+}
+
+function ButtonLoadingIcon({ children }: { children: React.ReactNode }) {
+  const loadingRotation = useSharedValue(0);
+  const loadingIconStyle = useAnimatedStyle(() => ({
+    transform: [{ rotateZ: `${loadingRotation.value}deg` }],
+  }));
+
+  React.useEffect(() => {
+    loadingRotation.value = withRepeat(
+      withTiming(360, { duration: 1000, easing: Easing.linear }),
+      -1,
+      false,
+    );
+
+    return () => {
+      cancelAnimation(loadingRotation);
+      loadingRotation.value = 0;
+    };
+  }, [loadingRotation]);
+
+  return (
+    <Animated.View className="pointer-events-none" style={loadingIconStyle}>
+      {children}
+    </Animated.View>
+  );
+}
+
+const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProps>(function Button(
+  {
     buttonSize,
-    delayLongPress,
+    children,
+    circular,
+    className,
     native,
     nativeButtonStyle = "automatic",
+    nativeComposeProps,
     nativeHaptics,
-    nativeSystemImage,
-    nativeSystemImageSize = 20,
-    nativeSwiftButtonSize,
     nativeSwiftProps,
+    nativeSystemImage,
+    nativeSystemImageSize,
+    loading = false,
+    loadingIcon,
     onPress,
+    size,
+    style,
     title,
-    ...buttonProps
-  } = props;
-  const theme = useTheme();
-  const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics);
-  const resolvedDelayLongPress =
-    delayLongPress ?? (props.onLongPress == null ? DISABLED_LONG_PRESS_DELAY : undefined);
-  const handlePress: NonNullable<ButtonProps["onPress"]> = (event) => {
-    onPress?.(event);
-
-    if (event.defaultPrevented) {
-      return;
-    }
-
-    triggerNativeHaptics(resolvedNativeHaptics);
-  };
-
-  const resolvedOpacity = buttonProps.disabled ? DISABLED_BUTTON_OPACITY : ENABLED_BUTTON_OPACITY;
-  const nativeOpacity =
-    typeof buttonProps.opacity === "number" ? buttonProps.opacity : resolvedOpacity;
-  const resolvedButtonSize = buttonSize ?? nativeSwiftButtonSize;
-  const buttonSizeProps =
+    variant,
+    ...props
+  },
+  ref,
+) {
+  const theme = useUiTheme();
+  const resolvedButtonSize = buttonSize;
+  const buttonSizeStyle =
     resolvedButtonSize == null
-      ? {}
+      ? null
       : {
-          ...(resolvedButtonSize.height == null ? {} : { height: resolvedButtonSize.height }),
           ...(resolvedButtonSize.width == null ? {} : { width: resolvedButtonSize.width }),
+          ...(resolvedButtonSize.height == null ? {} : { height: resolvedButtonSize.height }),
         };
-  // Tamagui's circular variant derives all dimensions from `size`, including
-  // min/max constraints. Mapping height to it prevents the default token size
-  // from overriding the shared Button size API.
-  const tamaguiButtonSizeProps =
-    resolvedButtonSize == null
-      ? {}
-      : {
-          ...((resolvedButtonSize.height ??
-            (buttonProps.circular ? resolvedButtonSize.width : undefined)) == null
-            ? {}
-            : {
-                size:
-                  resolvedButtonSize.height ??
-                  (buttonProps.circular ? resolvedButtonSize.width : undefined),
-              }),
-          ...(buttonProps.circular || resolvedButtonSize.width == null
-            ? {}
-            : { width: resolvedButtonSize.width }),
-        };
-  const useSwiftUIButton = native === "swift-ui" && os() === "ios";
-  const useNativeButton = native === true && (os() === "ios" || os() === "android");
   const resolvedTitle =
     title ??
-    (typeof children === "string"
-      ? children
-      : typeof children === "number"
-        ? String(children)
-        : undefined) ??
+    (typeof children === "string" || typeof children === "number" ? String(children) : "") ??
     "";
+  const resolvedChildren = title ?? children;
+  const isDisabled = props.disabled || loading;
+  const handlePress: NonNullable<ButtonProps["onPress"]> = (event) => {
+    onPress?.(event);
+    if (!event.defaultPrevented) triggerNativeHaptics(nativeHaptics);
+  };
 
-  if (useSwiftUIButton) {
-    return (
-      <ButtonSwift
-        accessibilityLabel={props["aria-label"]}
-        disabled={buttonProps.disabled ?? false}
-        nativeButtonStyle={nativeButtonStyle}
-        nativeOpacity={nativeOpacity}
-        nativeSystemImage={nativeSystemImage}
-        nativeSystemImageSize={nativeSystemImageSize}
-        nativeSwiftButtonSize={resolvedButtonSize}
-        nativeSwiftProps={nativeSwiftProps}
-        onPress={() => handlePress({} as Parameters<typeof handlePress>[0])}
-        style={buttonProps.style as StyleProp<ViewStyle>}
-        title={resolvedTitle}
-      />
-    );
-  }
-
-  if (useNativeButton) {
-    if (resolvedButtonSize != null) {
-      const nativeColor = theme.color10?.val ?? theme.color6?.val ?? theme.color?.val;
-      const isAndroid = os() === "android";
+  if (native === true && Platform.OS !== "web") {
+    if (Platform.OS === "android") {
       return (
-        <Pressable
-          accessibilityLabel={props["aria-label"]}
-          disabled={buttonProps.disabled}
-          onPress={handlePress}
-          style={({ pressed }) => [
-            {
-              alignItems: "center",
-              backgroundColor: isAndroid ? nativeColor : "transparent",
-              justifyContent: "center",
-              opacity: pressed ? nativeOpacity * 0.65 : nativeOpacity,
-            },
-            buttonSizeProps,
-            buttonProps.style as StyleProp<ViewStyle>,
-          ]}
-        >
-          <RNText style={{ color: isAndroid ? "#ffffff" : nativeColor, textAlign: "center" }}>
-            {resolvedTitle}
-          </RNText>
-        </Pressable>
+        <ButtonNative
+          androidColors={{
+            destructive: theme.destructive,
+            primary: theme.primary,
+            primaryForeground: theme.primaryForeground,
+            secondary: theme.secondary,
+            secondaryForeground: theme.secondaryForeground,
+          }}
+          buttonSize={resolvedButtonSize}
+          children={
+            title == null && (typeof children === "string" || typeof children === "number")
+              ? children
+              : undefined
+          }
+          disabled={isDisabled}
+          nativeComposeProps={nativeComposeProps}
+          onPress={() =>
+            handlePress({ defaultPrevented: false } as Parameters<typeof handlePress>[0])
+          }
+          style={
+            (typeof style === "function"
+              ? style({ pressed: false } as never)
+              : style) as StyleProp<ViewStyle>
+          }
+          title={resolvedTitle}
+          variant={variant}
+        />
       );
     }
 
     return (
-      <View style={{ opacity: nativeOpacity }}>
-        <RNButton
-          accessibilityLabel={props["aria-label"]}
-          color={theme.color10?.val ?? theme.color6?.val ?? theme.color?.val}
-          disabled={buttonProps.disabled}
-          onPress={handlePress}
-          title={resolvedTitle}
-        />
-      </View>
-    );
-  }
-
-  if (isWeb()) {
-    let webTitle = children ?? resolvedTitle;
-    if (webTitle === "") {
-      webTitle = undefined;
-    }
-    return (
-      <TamaguiButton
-        opacity={resolvedOpacity}
-        {...buttonProps}
-        {...tamaguiButtonSizeProps}
-        onPress={handlePress}
-        ref={ref}
-      >
-        {webTitle}
-      </TamaguiButton>
+      <ButtonNative
+        accessibilityLabel={props["aria-label"]}
+        androidColors={{
+          destructive: theme.destructive,
+          primary: theme.primary,
+          primaryForeground: theme.primaryForeground,
+          secondary: theme.secondary,
+          secondaryForeground: theme.secondaryForeground,
+        }}
+        buttonSize={resolvedButtonSize}
+        children={
+          title == null && (typeof children === "string" || typeof children === "number")
+            ? children
+            : undefined
+        }
+        disabled={isDisabled}
+        nativeButtonStyle={nativeButtonStyle}
+        nativeOpacity={isDisabled ? 0.5 : 1}
+        nativeSystemImage={nativeSystemImage}
+        nativeSystemImageSize={nativeSystemImageSize}
+        nativeSwiftProps={nativeSwiftProps}
+        onPress={() =>
+          handlePress({ defaultPrevented: false } as Parameters<typeof handlePress>[0])
+        }
+        style={
+          (typeof style === "function"
+            ? style({ pressed: false } as never)
+            : style) as StyleProp<ViewStyle>
+        }
+        title={resolvedTitle}
+        variant={variant}
+      />
     );
   }
 
   return (
-    <TamaguiButtonWithLongPressDelay
-      opacity={resolvedOpacity}
-      {...buttonProps}
-      {...tamaguiButtonSizeProps}
-      delayLongPress={resolvedDelayLongPress}
-      onPress={handlePress}
-      ref={ref}
+    <TextClassContext.Provider
+      value={cn(
+        buttonTextVariants({ variant, size }),
+        isDisabled && "group-hover:text-foreground group-active:text-foreground",
+      )}
     >
-      {children ?? resolvedTitle}
-    </TamaguiButtonWithLongPressDelay>
+      <Pressable
+        {...props}
+        disabled={isDisabled}
+        className={cn(
+          isDisabled && "opacity-50",
+          buttonVariants({ variant, size }),
+          circular && "rounded-full",
+          className,
+        )}
+        onPress={handlePress}
+        ref={ref}
+        role="button"
+        style={({ pressed }) => [
+          buttonSizeStyle,
+          isDisabled && variant === "outline" ? { backgroundColor: theme.background } : null,
+          typeof style === "function" ? style({ pressed } as never) : style,
+          variant === "link" && pressed ? { opacity: 0.7 } : null,
+          variant === "secondary" && pressed ? { backgroundColor: theme.input } : null,
+        ]}
+      >
+        {loading ? (
+          <ButtonLoadingIcon>
+            {loadingIcon ?? <Icon as={Loader2} className="size-4" />}
+          </ButtonLoadingIcon>
+        ) : null}
+        {
+          (typeof resolvedChildren === "function"
+            ? resolvedChildren
+            : normalizeButtonChildren(resolvedChildren)) as React.ReactNode
+        }
+      </Pressable>
+    </TextClassContext.Provider>
   );
 });
+
+export { Button, buttonTextVariants, buttonVariants };

@@ -11,7 +11,7 @@ import {
   Pause,
   Play,
   Plus,
-} from "@tamagui/lucide-icons-2";
+} from "lucide-react-native";
 import { useCallback, useState, type ReactNode } from "react";
 import {
   Platform,
@@ -134,12 +134,12 @@ function ExampleToolbarButton({
   return (
     <Button
       aria-label={accessibilityLabel}
-      chromeless={!native && appearance === "plain"}
       circular={!native}
       native={native}
       onPress={onPress}
       style={[styles.nativeIconButton, style]}
       title={native ? title : undefined}
+      variant={appearance === "plain" ? "ghost" : undefined}
     >
       {native ? undefined : fallbackIcon}
     </Button>
@@ -258,12 +258,13 @@ function GlassEffectPreview({
         unfocusedTrailing={
           <Button
             aria-label="新建内容"
-            native={isIos26Plus() ? "swift-ui" : false}
+            native={isIos26Plus()}
             circular
+            variant="secondary"
             nativeButtonStyle="glass"
             buttonSize={{
               height: isIos26Plus() ? 40 : 50,
-              width: isIos26Plus() ? 40 : 50,
+              width: isIos26Plus() ? 40 : 60,
             }}
             onPress={() => onAction("新建内容")}
             title="新建"
@@ -306,9 +307,9 @@ function GlassEffectPreview({
       >
         <Button
           aria-label="加粗"
-          buttonSize={{ height: 48, width: 48 }}
-          circular
-          native={usesNativeEditorToolbar ? "swift-ui" : false}
+          variant="secondary"
+          buttonSize={{ height: 48, width: 60 }}
+          native={usesNativeEditorToolbar}
           nativeButtonStyle="glass"
           nativeSystemImage="bold"
           onPress={() => onAction("切换加粗")}
@@ -318,9 +319,9 @@ function GlassEffectPreview({
         </Button>
         <Button
           aria-label="斜体"
-          buttonSize={{ height: 48, width: 48 }}
-          circular
-          native={usesNativeEditorToolbar ? "swift-ui" : false}
+          variant="secondary"
+          buttonSize={{ height: 48, width: 60 }}
+          native={usesNativeEditorToolbar}
           nativeButtonStyle="glass"
           nativeSystemImage="italic"
           onPress={() => onAction("切换斜体")}
@@ -329,10 +330,10 @@ function GlassEffectPreview({
           <Italic color={foregroundColor} size={21} />
         </Button>
         <Button
+          variant="secondary"
           aria-label="插入列表"
-          buttonSize={{ height: 48, width: 48 }}
-          circular
-          native={usesNativeEditorToolbar ? "swift-ui" : false}
+          buttonSize={{ height: 48, width: 60 }}
+          native={usesNativeEditorToolbar}
           nativeButtonStyle="glass"
           nativeSystemImage="list.bullet"
           onPress={() => onAction("插入列表")}
@@ -342,10 +343,10 @@ function GlassEffectPreview({
         </Button>
         <View style={styles.flexSpacer} />
         <Button
+          variant="secondary"
           aria-label="插入链接"
-          buttonSize={{ height: 48, width: 48 }}
-          circular
-          native={usesNativeEditorToolbar ? "swift-ui" : false}
+          buttonSize={{ height: 48, width: 60 }}
+          native={usesNativeEditorToolbar}
           nativeButtonStyle="glass"
           nativeSystemImage="link"
           onPress={() => onAction("插入链接")}
@@ -381,11 +382,11 @@ function GlassEffectPreview({
           <Music2 color="#ffffff" size={compact ? 20 : 26} />
         </View>
         <View style={styles.musicCopy}>
-          <Text fontSize={compact ? 15 : 17} fontWeight="600" numberOfLines={1}>
+          <Text numberOfLines={1} style={{ fontSize: compact ? 15 : 17, fontWeight: "600" }}>
             Liquid Glass Radio
           </Text>
           {showSubtitle ? (
-            <Text fontSize={13} numberOfLines={1} opacity={0.58}>
+            <Text numberOfLines={1} style={{ fontSize: 13, opacity: 0.58 }}>
               任意 React Native 自定义内容
             </Text>
           ) : null}
@@ -474,9 +475,7 @@ function GlassEffectPreview({
             onLayout={styleName === "regular" ? handleLayout : undefined}
             style={[styles.galleryGlass, fallbackStyle]}
           >
-            <Text fontSize={12} fontWeight="600">
-              {styleName}
-            </Text>
+            <Text style={{ fontSize: 12, fontWeight: "600" }}>{styleName}</Text>
           </GlassEffect>
         ))}
       </View>

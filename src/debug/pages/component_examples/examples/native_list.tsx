@@ -14,7 +14,7 @@ import {
   SquareCheckBig,
   Timer,
   Users,
-} from "@tamagui/lucide-icons-2";
+} from "lucide-react-native";
 
 import { useEffect, useState } from "react";
 
@@ -24,12 +24,13 @@ import {
   NativeList,
   NativeListInputItem,
   NativeListItem,
-  NativeListMenuItem,
+  NativeListDropdownItem,
   NativeListNavigationItem,
   NativeListSection,
   NativeListSelectItem,
   NativeListSwitchItem,
   NativeListTextAreaItem,
+  type NativeListBasicStyle,
   type NativeListIosStyle,
   Select,
   type SelectItemData,
@@ -37,7 +38,10 @@ import {
   Text,
   isIos15,
   os,
+  useUiTheme,
   useNativeListEditMode,
+  NATIVE_TRIGGER_LABEL_OPACITY,
+  NativeListSectionRenderContext,
 } from "rn-ui-kit/core";
 
 const NATIVE_LIST_ICON_COLOR = "#7c3aed";
@@ -71,8 +75,14 @@ const NATIVE_LIST_IOS_STYLE_OPTIONS: SelectItemData[] = [
   { value: "sidebar", label: "侧边栏" },
 ];
 
-function NativeListSortTrailing() {
-  const editMode = useNativeListEditMode();
+const NATIVE_LIST_BASIC_STYLE_OPTIONS: SelectItemData[] = [
+  { value: "rounded", label: "圆角" },
+  { value: "plain", label: "非圆角" },
+  { value: "plainFullWidth", label: "非圆角 + 通栏" },
+];
+
+function renderNativeListSortTrailing(context: NativeListSectionRenderContext) {
+  const { editMode } = context;
   return (
     <Select
       disabled={editMode}
@@ -81,9 +91,7 @@ function NativeListSortTrailing() {
       options={NATIVE_LIST_SORT_LIST}
       nativeTrigger
       nativeTriggerLabelProps={{
-        fontSize: 14,
-        color: "$accent11",
-        opacity: 1,
+        style: { fontSize: 14, color: "#7c3aed", opacity: 0.8 },
       }}
       nativeTriggerContainerStyle={{
         alignItems: "center",
@@ -124,6 +132,7 @@ const styles = StyleSheet.create({
 });
 
 export function NativeListExample() {
+  const uiTheme = useUiTheme();
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
   const [customEditModeIcon, setCustomEditModeIcon] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -131,6 +140,7 @@ export function NativeListExample() {
   const [selectedIds, setSelectedIds] = useState<Array<string | number>>([]);
   const [fallbackMounted, setFallbackMounted] = useState(true);
   const [iosListStyle, setIosListStyle] = useState<NativeListIosStyle>("insetGrouped");
+  const [basicListStyle, setBasicListStyle] = useState<NativeListBasicStyle>("rounded");
   const [theme, setTheme] = useState<string | null>("system");
   const [syncInterval, setSyncInterval] = useState<string | null>("hourly");
   const [backupInterval, setBackupInterval] = useState("four-hours");
@@ -158,7 +168,7 @@ export function NativeListExample() {
         <Switch
           checked={native}
           label="使用原生 List 外观"
-          labelPosition="end"
+          labelPosition="right"
           onCheckedChange={(nextNative) => {
             setFallbackMounted(false);
             setNative(nextNative);
@@ -167,7 +177,7 @@ export function NativeListExample() {
         <Switch
           checked={editMode}
           label={`编辑模式（已选 ${selectedIds.length} 项）`}
-          labelPosition="end"
+          labelPosition="right"
           onCheckedChange={(nextEditMode) => {
             setEditMode(nextEditMode);
             if (!nextEditMode) {
@@ -179,15 +189,13 @@ export function NativeListExample() {
           checked={customEditModeIcon}
           disabled={os() === "ios" && native}
           label="自定义编辑模式图标"
-          labelPosition="end"
+          labelPosition="right"
           onCheckedChange={setCustomEditModeIcon}
         />
         {os() === "ios" ? (
           <View style={styles.exampleControlRow}>
             <View style={styles.exampleControlCopy}>
-              <Text fontSize={15} opacity={native ? 1 : 0.5}>
-                iOS List 样式
-              </Text>
+              <Text style={{ fontSize: 15, opacity: native ? 1 : 0.5 }}>iOS List 样式</Text>
             </View>
             <Select
               disabled={!native}
@@ -210,10 +218,33 @@ export function NativeListExample() {
             />
           </View>
         ) : null}
+        {os() !== "ios" || !native ? (
+          <View style={styles.exampleControlRow}>
+            <View style={styles.exampleControlCopy}>
+              <Text style={{ fontSize: 15 }}>Basic List 样式</Text>
+            </View>
+            <Select
+              native
+              nativeDropdownAnchorWidth={180}
+              nativeTrigger
+              nativeTriggerContainerStyle={styles.exampleIosStyleTrigger}
+              nativeTriggerLabelProps={{ fontSize: 14, numberOfLines: 1 }}
+              onValueChange={(nextStyle) => {
+                if (nextStyle != null) {
+                  setBasicListStyle(nextStyle as NativeListBasicStyle);
+                }
+              }}
+              options={NATIVE_LIST_BASIC_STYLE_OPTIONS}
+              value={basicListStyle}
+            />
+          </View>
+        ) : null}
       </View>
       <View style={styles.nativeListFrame}>
         {native || fallbackMounted ? (
           <NativeList
+            nativeHaptics
+            dismissKeyboardOnTap
             contextMenuProps={{
               items: [
                 {
@@ -242,13 +273,16 @@ export function NativeListExample() {
               ],
             }}
             editMode={editMode}
-            editModeIcon={customEditModeIcon ? <Square color="$color10" size={24} /> : undefined}
+            editModeIcon={
+              customEditModeIcon ? <Square color={uiTheme.primary} size={24} /> : undefined
+            }
             editModeSelectedIcon={
-              customEditModeIcon ? <SquareCheckBig color="$color10" size={24} /> : undefined
+              customEditModeIcon ? <SquareCheckBig color={uiTheme.primary} size={24} /> : undefined
             }
             refreshEnabledInEditMode={false}
             fixesIOS26NestedScrollIndicatorSafeArea
             iosListStyle={iosListStyle}
+            listStyle={basicListStyle}
             key={native ? `native-list-${iosListStyle}` : "fallback-list"}
             native={native}
             nestedScrollEnabled
@@ -298,7 +332,7 @@ export function NativeListExample() {
               footer="导航行适合跳转到更深层的设置页。"
               title="工作区"
               titleColor="#7c3aed"
-              trailing={NativeListSortTrailing}
+              trailing={renderNativeListSortTrailing}
             >
               <NativeListNavigationItem
                 chevronColor={NATIVE_LIST_ICON_COLOR}
@@ -398,11 +432,11 @@ export function NativeListExample() {
                 }}
                 title="同步频率"
               />
-              <NativeListMenuItem
+              <NativeListDropdownItem
                 icon={
                   <MoreHorizontal color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />
                 }
-                menuProps={{
+                dropdownProps={{
                   items: [
                     {
                       label: "立即同步",
@@ -421,11 +455,11 @@ export function NativeListExample() {
                 title="同步操作"
                 value="更多"
               />
-              <NativeListMenuItem
+              <NativeListDropdownItem
                 icon={
                   <MoreHorizontal color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />
                 }
-                menuProps={{
+                dropdownProps={{
                   items: [
                     {
                       label: "立即同步",
@@ -484,33 +518,58 @@ export function NativeListExample() {
                 title="默认 Select"
               />
               {os() === "ios" ? (
-                <NativeListSelectItem
-                  icon={
-                    <SlidersHorizontal
-                      color={NATIVE_LIST_ICON_COLOR}
-                      size={NATIVE_LIST_ICON_SIZE}
-                    />
-                  }
-                  sfSymbol="slider.horizontal.3"
-                  selectProps={{
-                    nativePickerMode: "wheel",
-                    onValueChange: setTheme,
-                    options: [
-                      { label: "浅色", value: "light" },
-                      { label: "深色", value: "dark" },
-                      { label: "跟随系统", value: "system" },
-                    ],
-                    placeholder: "选择主题模式",
-                    value: theme ?? undefined,
-                  }}
-                  title="iOS Wheel"
-                />
+                <>
+                  <NativeListSelectItem
+                    icon={
+                      <SlidersHorizontal
+                        color={NATIVE_LIST_ICON_COLOR}
+                        size={NATIVE_LIST_ICON_SIZE}
+                      />
+                    }
+                    sfSymbol="slider.horizontal.3"
+                    selectProps={{
+                      native: "wheel",
+                      onValueChange: setTheme,
+                      options: [
+                        { label: "浅色", value: "light" },
+                        { label: "深色", value: "dark" },
+                        { label: "跟随系统", value: "system" },
+                      ],
+                      placeholder: "选择主题模式",
+                      value: theme ?? undefined,
+                    }}
+                    title="iOS Wheel"
+                  />
+                  <NativeListSelectItem
+                    contextMenuProps={false}
+                    icon={
+                      <SlidersHorizontal
+                        color={NATIVE_LIST_ICON_COLOR}
+                        size={NATIVE_LIST_ICON_SIZE}
+                      />
+                    }
+                    sfSymbol="slider.horizontal.3"
+                    selectProps={{
+                      native: "wheel",
+                      onValueChange: setTheme,
+                      options: [
+                        { label: "浅色", value: "light" },
+                        { label: "深色", value: "dark" },
+                        { label: "跟随系统", value: "system" },
+                      ],
+                      placeholder: "选择主题模式",
+                      value: theme ?? undefined,
+                    }}
+                    title="iOS Wheel2"
+                    subtitle="禁用 context_menu"
+                  />
+                </>
               ) : null}
               {os() === "android" ? (
                 <NativeListSelectItem
                   icon={<Smartphone color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
                   selectProps={{
-                    nativePickerMode: "dialog",
+                    native: "dialog",
                     onValueChange: setTheme,
                     options: [
                       { label: "浅色", value: "light" },
@@ -539,7 +598,7 @@ export function NativeListExample() {
           </NativeList>
         ) : null}
       </View>
-      <Text numberOfLines={2} opacity={0.6}>
+      <Text numberOfLines={2} style={{ opacity: 0.6 }}>
         编辑模式：{editMode ? `已选 ${selectedIds.length} 项` : "关闭"} · iOS 实现： 编辑图标：
         {customEditModeIcon ? "自定义" : "默认"} · 最近动作：{lastAction} · 自动同步：
         {autoSyncEnabled ? "开启" : "关闭"} · 主题：{theme ?? "未选择"} · 频率：

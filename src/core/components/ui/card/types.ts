@@ -1,21 +1,32 @@
-import type { ComponentProps, ReactNode } from "react";
-import type { Card as TamaguiCard, View } from "tamagui";
+import type { ComponentProps, ReactNode, RefAttributes } from "react";
+import type { Text, View } from "react-native";
 
-type CardRootProps = Omit<ComponentProps<typeof TamaguiCard>, "background" | "children">;
+import type { RenderProp } from "../utils";
 
-export interface CardProps extends CardRootProps {
-  backgroundContent?: ReactNode;
-  backgroundProps?: CardBackgroundProps;
-  children?: ReactNode;
-  description?: ReactNode;
-  footer?: ReactNode;
-  footerProps?: CardFooterProps;
-  header?: ReactNode;
-  headerProps?: CardHeaderProps;
-  contentProps?: CardContentProps;
-  title?: ReactNode;
-}
-export type CardHeaderProps = ComponentProps<typeof TamaguiCard.Header>;
-export type CardContentProps = ComponentProps<typeof View>;
-export type CardFooterProps = ComponentProps<typeof TamaguiCard.Footer>;
-export type CardBackgroundProps = ComponentProps<typeof TamaguiCard.Background>;
+export type CardRenderContext = Record<string, never>;
+
+export type CardHeaderProps = ComponentProps<typeof View> & RefAttributes<View>;
+export type CardContentProps = ComponentProps<typeof View> & RefAttributes<View>;
+export type CardFooterProps = ComponentProps<typeof View> & RefAttributes<View>;
+export type CardTitleProps = ComponentProps<typeof Text> & RefAttributes<Text>;
+export type CardDescriptionProps = ComponentProps<typeof Text> & RefAttributes<Text>;
+
+export type CardProps = Omit<ComponentProps<typeof View>, "children"> &
+  RefAttributes<View> & {
+    children?: ReactNode;
+    content?: RenderProp<CardRenderContext>;
+    contentProps?: CardContentProps;
+    contentClassName?: string;
+    description?: RenderProp<CardRenderContext>;
+    descriptionProps?: CardDescriptionProps;
+    descriptionClassName?: string;
+    footer?: RenderProp<CardRenderContext>;
+    footerProps?: CardFooterProps;
+    footerClassName?: string;
+    header?: RenderProp<CardRenderContext>;
+    headerProps?: CardHeaderProps;
+    headerClassName?: string;
+    title?: RenderProp<CardRenderContext>;
+    titleProps?: CardTitleProps;
+    titleClassName?: string;
+  };

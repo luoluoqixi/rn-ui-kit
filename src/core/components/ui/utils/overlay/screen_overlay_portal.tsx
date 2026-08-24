@@ -1,11 +1,11 @@
-import * as TamaguiPortal from "@tamagui/portal";
+import { PortalHost } from "@rn-primitives/portal";
 import {
-  type ComponentType,
   type ReactNode,
   createContext,
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { Dimensions, type LayoutChangeEvent, StyleSheet, View, type ViewStyle } from "react-native";
@@ -27,6 +27,8 @@ import { Toaster } from "../../toast/toaster";
 import { ScreenOverlayFloatingProvider } from "./screen_overlay_floating";
 
 const ScreenOverlayPortalContext = createContext<string | null>(null);
+export type ScreenOverlayPortalOffset = { x: number; y: number };
+const ScreenOverlayPortalOffsetContext = createContext<ScreenOverlayPortalOffset | null>(null);
 const ScreenOverlayModalLockContext = createContext(0);
 
 type ScreenOverlayModalLockApi = {
@@ -38,30 +40,9 @@ const ScreenOverlayModalLockApiContext = createContext<ScreenOverlayModalLockApi
 
 export type ScreenOverlayPortalLayout = "wrap" | "scroll-sibling";
 
-type PortalRootHostProviderProps = {
-  children: ReactNode;
-  hostName: string;
-};
-
-const RuntimePortalRootHostProvider = (
-  TamaguiPortal as typeof TamaguiPortal & {
-    PortalRootHostProvider?: ComponentType<PortalRootHostProviderProps>;
-  }
-).PortalRootHostProvider;
-
-function PortalRootHostProviderCompat({ children, hostName }: PortalRootHostProviderProps) {
-  if (RuntimePortalRootHostProvider == null) {
-    return <>{children}</>;
-  }
-
-  return (
-    <RuntimePortalRootHostProvider hostName={hostName}>{children}</RuntimePortalRootHostProvider>
-  );
-}
-
 /**
  * 在独立原生层（iOS pageSheet VC、Android True Sheet 等）内挂载 overlay Portal。
- * Tamagui modal 默认 teleport 到 app root 会落在 sheet 下面；此处用 react-native-teleport 抬到当前层之上。
+ * modal 默认传送到 app root 会落在 sheet 下面；此处用 react-native-teleport 抬到当前层之上。
  *
  * - `wrap`：子内容与 teleport 层包在同一 flex 容器（默认）。
  * - `scroll-sibling`：子内容（通常为 ScrollView）与 teleport 层并列，避免 TrueSheet 无法钉住滚动视图（iOS 嵌套 Sheet）。
@@ -76,6 +57,7 @@ export function ScreenOverlayPortalProvider({
   overlayLayout?: ScreenOverlayPortalLayout;
 }) {
   const [modalLockCount, setModalLockCount] = useState(0);
+  const [portalOffset, setPortalOffset] = useState<ScreenOverlayPortalOffset | null>(null);
   const [teleportHostNode, setTeleportHostNode] = useState<View | null>(null);
   const handleTeleportHostNode = useCallback((node: View | null) => {
     setTeleportHostNode(node);
@@ -94,7 +76,11 @@ export function ScreenOverlayPortalProvider({
   );
 
   const portalHost = (
-    <ScreenOverlayPortalHost hostName={hostName} onTeleportHostNode={handleTeleportHostNode} />
+    <ScreenOverlayPortalHost
+      hostName={hostName}
+      onPortalOffsetChange={setPortalOffset}
+      onTeleportHostNode={handleTeleportHostNode}
+    />
   );
 
   const portalBody =
@@ -112,15 +98,15 @@ export function ScreenOverlayPortalProvider({
 
   return (
     <ScreenOverlayPortalContext.Provider value={hostName}>
-      <ScreenOverlayModalLockApiContext.Provider value={lockApi}>
-        <ScreenOverlayModalLockContext.Provider value={modalLockCount}>
-          <ScreenOverlayFloatingProvider teleportHostNode={teleportHostNode}>
-            <PortalRootHostProviderCompat hostName={hostName}>
+      <ScreenOverlayPortalOffsetContext.Provider value={portalOffset}>
+        <ScreenOverlayModalLockApiContext.Provider value={lockApi}>
+          <ScreenOverlayModalLockContext.Provider value={modalLockCount}>
+            <ScreenOverlayFloatingProvider teleportHostNode={teleportHostNode}>
               {portalBody}
-            </PortalRootHostProviderCompat>
-          </ScreenOverlayFloatingProvider>
-        </ScreenOverlayModalLockContext.Provider>
-      </ScreenOverlayModalLockApiContext.Provider>
+            </ScreenOverlayFloatingProvider>
+          </ScreenOverlayModalLockContext.Provider>
+        </ScreenOverlayModalLockApiContext.Provider>
+      </ScreenOverlayPortalOffsetContext.Provider>
     </ScreenOverlayPortalContext.Provider>
   );
 }
@@ -204,21 +190,59 @@ function OverlayTeleportLayer({
 
 export function ScreenOverlayPortalHost({
   hostName,
+  onPortalOffsetChange,
   onTeleportHostNode,
 }: {
   hostName: string;
+  onPortalOffsetChange: (offset: ScreenOverlayPortalOffset | null) => void;
   onTeleportHostNode: (node: View | null) => void;
 }) {
+  const hostStackRef = useRef<View | null>(null);
   const [hostStackHeight, setHostStackHeight] = useState(0);
-  const handleHostStackLayout = useCallback((event: LayoutChangeEvent) => {
-    setHostStackHeight(event.nativeEvent.layout.height);
-  }, []);
+  const handleHostStackLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      setHostStackHeight(event.nativeEvent.layout.height);
+      if (isWeb()) {
+        onPortalOffsetChange(null);
+        return;
+      }
+
+      // Use the same page-coordinate API as @rn-primitives' trigger measurement.
+      hostStackRef.current?.measure((_x, _y, _width, _height, pageX, pageY) => {
+        onPortalOffsetChange({ x: pageX, y: pageY });
+      });
+    },
+    [onPortalOffsetChange],
+  );
+
+  const handleHostStackRef = useCallback(
+    (node: View | null) => {
+      hostStackRef.current = node;
+      if (node == null) {
+        onPortalOffsetChange(null);
+      }
+    },
+    [onPortalOffsetChange],
+  );
+
+  const handleTeleportHostNode = useCallback(
+    (node: View | null) => {
+      onTeleportHostNode(node);
+    },
+    [onTeleportHostNode],
+  );
 
   return (
-    <View pointerEvents="box-none" style={styles.hostStack} onLayout={handleHostStackLayout}>
+    <View
+      ref={handleHostStackRef}
+      pointerEvents="box-none"
+      style={styles.hostStack}
+      onLayout={handleHostStackLayout}
+    >
+      <PortalHost name={hostName} />
       <OverlayToastLayer hostName={hostName} hostStackHeight={hostStackHeight} />
       {!isWeb() && (
-        <OverlayTeleportLayer hostName={hostName} onTeleportHostNode={onTeleportHostNode} />
+        <OverlayTeleportLayer hostName={hostName} onTeleportHostNode={handleTeleportHostNode} />
       )}
     </View>
   );
@@ -234,7 +258,11 @@ export function useScopedOverlayPortalHostName(): string | undefined {
   return host ?? undefined;
 }
 
-/** overlay 子树内 Tamagui modal Sheet 打开时为 true，用于冻结底层 ScrollView（如 iOS pageSheet）。 */
+export function useScreenOverlayPortalOffset(): ScreenOverlayPortalOffset | null {
+  return useContext(ScreenOverlayPortalOffsetContext);
+}
+
+/** overlay 子树内 modal Sheet 打开时为 true，用于冻结底层 ScrollView（如 iOS pageSheet）。 */
 export function useScreenOverlayModalLockActive(): boolean {
   const modalLockCount = useContext(ScreenOverlayModalLockContext);
   const host = useScreenOverlayPortalHost();

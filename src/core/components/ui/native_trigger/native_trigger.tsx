@@ -1,27 +1,44 @@
-import { ChevronDown, ChevronUp, ChevronsUpDown } from "@tamagui/lucide-icons-2";
+import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react-native";
 import React from "react";
+import { Platform, Pressable, StyleSheet, View } from "react-native";
+import { Text } from "../text";
+import { cn } from "../utils/cn";
+import { useUiTheme } from "../utils/theme";
 import {
-  Pressable,
-  type PressableProps,
-  type StyleProp,
-  StyleSheet,
-  View,
-  type ViewStyle,
-} from "react-native";
-import { Text, getFontSize } from "tamagui";
+  NATIVE_TRIGGER_DISABLE_OPACITY,
+  NATIVE_TRIGGER_LABEL_OPACITY,
+  NATIVE_TRIGGER_PRESS_OPACITY,
+  NATIVE_TRIGGER_WEB_HOVER_OPACITY,
+  NATIVE_TRIGGER_WEB_PRESS_OPACITY,
+} from "./constants";
 
 import type { TextProps } from "../text";
-
-export type NativeTriggerIcon = "stacked" | "chevrons-up-down" | "none";
-
-type TriggerIconColor = React.ComponentProps<typeof ChevronDown>["color"];
+import {
+  NativeTriggerFaceProps,
+  NativeTriggerIcon,
+  NativeTriggerProps,
+  TriggerIconColor,
+} from "./types";
 
 function renderTriggerLabel(label: React.ReactNode, labelProps?: TextProps) {
-  const resolvedOpacity = typeof labelProps?.opacity === "number" ? labelProps.opacity : 0.58;
+  const { color, opacity, style, ...textProps } = (labelProps ?? {}) as TextProps & {
+    color?: string;
+    opacity?: number;
+  };
 
   if (typeof label === "string" || typeof label === "number") {
     return (
-      <Text color="$color" fontSize={getFontSize("$4")} opacity={resolvedOpacity} {...labelProps}>
+      <Text
+        style={[
+          {
+            color,
+            fontSize: 16,
+            opacity: opacity ?? NATIVE_TRIGGER_LABEL_OPACITY,
+          },
+          style,
+        ]}
+        {...textProps}
+      >
         {label}
       </Text>
     );
@@ -47,64 +64,51 @@ function renderTriggerIcon(icon: NativeTriggerIcon, color: TriggerIconColor) {
   );
 }
 
-/** 通用原生风格 trigger 的纯视觉部分，用于组合到已有的点击容器中。 */
-export type NativeTriggerFaceProps = {
-  /** 完全替换默认 label 与图标结构的内容。 */
-  content?: React.ReactNode;
-  /** 默认 trigger 内容容器的样式。 */
-  containerStyle?: StyleProp<ViewStyle>;
-  /** 右侧图标样式。 */
-  icon?: NativeTriggerIcon;
-  /** 默认 label 的文本属性。 */
-  labelProps?: TextProps;
-  /** 要显示的 label。 */
-  label: React.ReactNode;
-  /** 整个 trigger 的不透明度。 */
-  opacity?: number;
-};
+export const NativeTriggerFace = React.forwardRef<View, NativeTriggerFaceProps>(
+  function NativeTriggerFace(
+    {
+      content,
+      containerStyle,
+      icon = "stacked",
+      iconColor: iconColorProp,
+      labelProps,
+      label,
+      opacity = 1,
+    },
+    forwardedRef,
+  ) {
+    const theme = useUiTheme();
+    if (content != null) {
+      return (
+        <View ref={forwardedRef} pointerEvents="none" style={[styles.customContent, { opacity }]}>
+          {content}
+        </View>
+      );
+    }
 
-export const NativeTriggerFace = React.forwardRef<View, NativeTriggerFaceProps>(function NativeTriggerFace(
-  { content, containerStyle, icon = "stacked", labelProps, label, opacity = 1 },
-  forwardedRef,
-) {
-  if (content != null) {
+    const iconColor: TriggerIconColor = iconColorProp ?? theme.foreground;
+    // 图标跟随显式设置的文字透明度，避免文字已经恢复为 1 时右侧箭头仍然偏淡。
+    const configuredLabelOpacity = (labelProps as (TextProps & { opacity?: number }) | undefined)
+      ?.opacity;
+    const iconOpacity =
+      typeof configuredLabelOpacity === "number"
+        ? configuredLabelOpacity
+        : NATIVE_TRIGGER_LABEL_OPACITY;
+
     return (
-      <View ref={forwardedRef} pointerEvents="none" style={[styles.customContent, { opacity }]}>
-        {content}
+      <View
+        ref={forwardedRef}
+        pointerEvents="none"
+        style={{ alignSelf: "center", flexGrow: 0, flexShrink: 0, opacity, width: "auto" }}
+      >
+        <View style={[styles.defaultTrigger, containerStyle]}>
+          {renderTriggerLabel(label, labelProps)}
+          <View style={{ opacity: iconOpacity }}>{renderTriggerIcon(icon, iconColor)}</View>
+        </View>
       </View>
     );
-  }
-
-  const iconColor: TriggerIconColor =
-    typeof labelProps?.color === "string" ? (labelProps.color as TriggerIconColor) : "$color";
-  const iconOpacity = typeof labelProps?.opacity === "number" ? labelProps.opacity : 0.58;
-
-  return (
-    <View ref={forwardedRef} pointerEvents="none" style={{ opacity }}>
-      <View style={[styles.defaultTrigger, containerStyle]}>
-        {renderTriggerLabel(label, labelProps)}
-        <View style={{ opacity: iconOpacity }}>{renderTriggerIcon(icon, iconColor)}</View>
-      </View>
-    </View>
-  );
-});
-
-/**
- * 带默认按压反馈的通用原生风格 trigger。
- *
- * 除 `children` 外，全部 React Native `Pressable` props 都可直接传入；未传时保留默认布局和按压反馈。
- */
-export type NativeTriggerProps = Omit<NativeTriggerFaceProps, "opacity"> &
-  Omit<PressableProps, "children"> & {
-    /** 关联的菜单或选择器打开时，保持按压态透明度。 */
-    active?: boolean;
-    /** 是否在按住时显示透明度反馈；原生菜单可关闭以避免与打开事件竞争。 */
-    pressedOpacity?: boolean;
-    /** 按下后保持透明度，直到关联菜单关闭。 */
-    keepPressedOpacity?: boolean;
-  };
-
-const NATIVE_MENU_HANDOFF_GRACE_PERIOD = 500;
+  },
+);
 
 export const NativeTrigger = React.forwardRef<View, NativeTriggerProps>(
   (
@@ -113,33 +117,43 @@ export const NativeTrigger = React.forwardRef<View, NativeTriggerProps>(
       content,
       containerStyle,
       disabled,
+      feedbackOpacity,
       icon,
+      iconColor,
       keepPressedOpacity = false,
       labelProps,
       label,
       onPressIn,
+      onLongPress,
       onPressOut,
       pressedOpacity = true,
       style,
+      className,
+      onHoverIn,
+      onHoverOut,
       ...pressableProps
     },
     forwardedRef,
   ) => {
     const [stickyPressed, setStickyPressed] = React.useState(false);
+    const [hovered, setHovered] = React.useState(false);
+    const hasCursorOverride = className?.split(/\s+/).some((token) => token.startsWith("cursor-"));
     const wasActiveRef = React.useRef(active);
-    const handoffTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    const clearHandoffTimeout = () => {
-      if (handoffTimeoutRef.current != null) {
-        clearTimeout(handoffTimeoutRef.current);
-        handoffTimeoutRef.current = null;
-      }
+    const disabledOpacity = feedbackOpacity?.disabled ?? NATIVE_TRIGGER_DISABLE_OPACITY;
+    const pressOpacity = feedbackOpacity?.press ?? NATIVE_TRIGGER_PRESS_OPACITY;
+    const webHoverOpacity = feedbackOpacity?.webHover ?? NATIVE_TRIGGER_WEB_HOVER_OPACITY;
+    const webPressOpacity = feedbackOpacity?.webPress ?? NATIVE_TRIGGER_WEB_PRESS_OPACITY;
+    const resolvedPressableProps = {
+      ...(pressableProps as any),
+      onContextMenu: (event: any) => {
+        event.stopPropagation?.();
+        (pressableProps as any).onContextMenu?.(event);
+      },
     };
 
     React.useEffect(() => {
       if (active) {
         wasActiveRef.current = true;
-        clearHandoffTimeout();
         return;
       }
 
@@ -149,20 +163,39 @@ export const NativeTrigger = React.forwardRef<View, NativeTriggerProps>(
       }
     }, [active]);
 
-    React.useEffect(() => clearHandoffTimeout, []);
-
     return (
       <Pressable
         ref={forwardedRef}
-        {...pressableProps}
+        {...(resolvedPressableProps as any)}
+        className={cn(Platform.OS === "web" && "cursor-default", className)}
         disabled={disabled}
+        onHoverIn={(event) => {
+          setHovered(true);
+          onHoverIn?.(event);
+        }}
+        onHoverOut={(event) => {
+          setHovered(false);
+          onHoverOut?.(event);
+        }}
+        onPress={(event) => {
+          // A NativeTrigger may be hosted inside a NativeList row. Its click
+          // must not bubble into the row, otherwise both the trigger and the
+          // row call present/open and iOS reports an already-visible menu.
+          event.stopPropagation?.();
+          (pressableProps as any).onPress?.(event);
+        }}
         onPressIn={(event) => {
           if (keepPressedOpacity) {
-            clearHandoffTimeout();
             setStickyPressed(true);
           }
 
           onPressIn?.(event);
+        }}
+        onLongPress={(event) => {
+          // NativeList 行可能托管 ContextMenu；直接交互的 trigger 不应
+          // 将长按继续冒泡成行级菜单。
+          event.stopPropagation?.();
+          onLongPress?.(event);
         }}
         onPressOut={(event) => {
           onPressOut?.(event);
@@ -171,24 +204,28 @@ export const NativeTrigger = React.forwardRef<View, NativeTriggerProps>(
             return;
           }
 
-          // iOS 原生 Menu 会在松手后才派发 willOpen；未收到该信号则视为拖出等取消操作。
-          clearHandoffTimeout();
-          handoffTimeoutRef.current = setTimeout(() => {
-            if (!wasActiveRef.current) {
-              setStickyPressed(false);
-            }
-            handoffTimeoutRef.current = null;
-          }, NATIVE_MENU_HANDOFF_GRACE_PERIOD);
+          setStickyPressed(false);
         }}
         style={(state) => [
           content != null ? styles.customTrigger : undefined,
-          {
-            opacity: disabled
-              ? 0.5
-              : active || stickyPressed || (pressedOpacity && state.pressed)
-                ? 0.6
-                : 1,
-          },
+          Platform.OS === "web"
+            ? [
+                hasCursorOverride ? undefined : ({ cursor: "default" } as any),
+                disabled
+                  ? { opacity: disabledOpacity }
+                  : active || stickyPressed || (pressedOpacity && state.pressed)
+                    ? { opacity: webPressOpacity }
+                    : hovered
+                      ? { opacity: webHoverOpacity }
+                      : undefined,
+              ]
+            : {
+                opacity: disabled
+                  ? disabledOpacity
+                  : active || stickyPressed || (pressedOpacity && state.pressed)
+                    ? pressOpacity
+                    : 1,
+              },
           typeof style === "function" ? style(state) : style,
         ]}
       >
@@ -196,6 +233,7 @@ export const NativeTrigger = React.forwardRef<View, NativeTriggerProps>(
           content={content}
           containerStyle={containerStyle}
           icon={icon}
+          iconColor={iconColor}
           label={label}
           labelProps={labelProps}
         />
@@ -223,11 +261,14 @@ const styles = StyleSheet.create({
   },
   defaultTrigger: {
     alignItems: "center",
-    alignSelf: "center",
+    alignSelf: "flex-start",
     flexDirection: "row",
+    flexGrow: 0,
     gap: 4,
     justifyContent: "center",
-    minHeight: 44,
-    minWidth: 180,
+    minHeight: 36,
+    flexShrink: 0,
+    width: "auto",
+    paddingHorizontal: 4,
   },
 });

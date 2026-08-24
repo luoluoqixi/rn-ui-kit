@@ -1,5 +1,4 @@
 import { useRef, useState } from "react";
-
 import { StyleSheet, View } from "react-native";
 
 import {
@@ -30,7 +29,6 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 12,
   },
-  tabContent: { padding: 16 },
 });
 
 export function SplitLayoutExample() {
@@ -47,13 +45,18 @@ export function SplitLayoutExample() {
   return (
     <View style={[styles.splitRoot, { backgroundColor: colors.screen }]}>
       <View style={styles.splitToolbar}>
-        <Button onPress={toggleSidebar} size="$3" variant="outlined">
-          {sidebarVisible ? "隐藏侧栏" : "显示侧栏"}
+        <Button className="border-primary" onPress={toggleSidebar} size="sm" variant="outline">
+          <Text className="text-primary">{sidebarVisible ? "隐藏侧栏" : "显示侧栏"}</Text>
         </Button>
-        <Button onPress={() => layoutRef.current?.reset()} size="$3" variant="outlined">
-          重置尺寸
+        <Button
+          className="border-primary"
+          onPress={() => layoutRef.current?.reset()}
+          size="sm"
+          variant="outline"
+        >
+          <Text className="text-primary">重置尺寸</Text>
         </Button>
-        <Text opacity={0.6}>拖动中间分隔条调整宽度</Text>
+        <Text className="text-muted-foreground">拖动中间分隔条调整宽度</Text>
       </View>
       <View style={styles.splitHost}>
         <SplitLayout
@@ -67,16 +70,16 @@ export function SplitLayoutExample() {
         >
           <SplitLayout.Pane minSize={120} preferredSize={220} snap>
             <View style={[styles.splitPane, { backgroundColor: colors.card }]}>
-              <Text fontWeight="700">侧栏</Text>
-              <Text opacity={0.6}>Pane 1</Text>
+              <Text className="font-bold">侧栏</Text>
+              <Text className="text-muted-foreground">Pane 1</Text>
             </View>
           </SplitLayout.Pane>
           <SplitLayout.Pane minSize={180}>
             <View style={[styles.splitPane, { backgroundColor: colors.screen }]}>
-              <Text fontSize="$7" fontWeight="700">
-                主内容
+              <Text variant="h3">主内容</Text>
+              <Text className="text-muted-foreground">
+                此示例没有传 storageKey 或 storageAdapter，不会持久化。
               </Text>
-              <Text opacity={0.6}>此示例没有传 storageKey 或 storageAdapter，不会持久化。</Text>
             </View>
           </SplitLayout.Pane>
         </SplitLayout>

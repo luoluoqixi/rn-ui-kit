@@ -2,7 +2,7 @@
 // 避免消费者的源码级 typecheck 偶然依赖某个组件的导入顺序。
 import type {} from "expo-modules-core";
 import type {} from "./types/external";
-import type {} from "./types/tamagui";
+import type {} from "./types/uniwind";
 
 export * from "./consts";
 export * from "./components/ui";

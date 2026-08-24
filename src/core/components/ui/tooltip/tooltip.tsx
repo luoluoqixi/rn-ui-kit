@@ -1,112 +1,138 @@
-import {
-  Tooltip as TamaguiTooltip,
-  TooltipGroup as TamaguiTooltipGroup,
-  Text,
-  closeOpenTooltips,
-} from "tamagui";
+import { NativeOnlyAnimatedView } from "../utils/native_only_animated_view";
+import { TextClassContext } from "../text";
+import { Text } from "../text";
+import { cn } from "../utils/cn";
+import { OverlayPortalWindow, useOverlayPortalContentStyle } from "../utils/overlay/overlay_portal";
+import { useScopedOverlayPortalHostName } from "../utils/overlay";
+import { resolveRenderProp } from "../utils/render";
+import * as TooltipPrimitive from "@rn-primitives/tooltip";
+import * as React from "react";
+import { Platform, StyleSheet } from "react-native";
+import { FadeInDown, FadeInUp, FadeOut, ReduceMotion } from "react-native-reanimated";
+import type { TooltipProps } from "./types";
 
-import type {
-  TooltipAnchorProps,
-  TooltipArrowProps,
-  TooltipContentProps,
-  TooltipGroupProps,
-  TooltipProps,
-  TooltipRootProps,
-  TooltipTriggerProps,
-} from "./types";
+const TooltipRoot = TooltipPrimitive.Root;
+const TooltipTrigger = TooltipPrimitive.Trigger;
 
-const DEFAULT_TOOLTIP_ENTER_STYLE = { opacity: 0, scale: 0.96, y: -4 };
-const DEFAULT_TOOLTIP_EXIT_STYLE = { opacity: 0, scale: 0.98, y: -2 };
+function normalizeTooltipChildren(children: React.ReactNode) {
+  return React.Children.map(children, (child) =>
+    typeof child === "string" || typeof child === "number" ? <Text>{child}</Text> : child,
+  );
+}
 
-function TooltipSimple(props: TooltipProps) {
-  const {
-    anchor,
-    anchorProps,
-    arrow,
-    arrowProps,
-    children,
-    content,
-    contentProps,
-    triggerProps,
-    ...rootProps
-  } = props;
+function TooltipRootComponent({
+  children,
+  content,
+  contentProps,
+  triggerProps,
+  ...props
+}: TooltipProps) {
+  if (content === undefined) {
+    return <TooltipRoot {...props}>{children}</TooltipRoot>;
+  }
+  const renderedContent = resolveRenderProp(content, {});
+
+  const triggerChildren = React.Children.toArray(children);
+  const trigger = triggerChildren.length === 1 ? triggerChildren[0] : null;
+  const triggerElement = React.isValidElement(trigger) ? (
+    <TooltipTrigger {...triggerProps} asChild>
+      {trigger}
+    </TooltipTrigger>
+  ) : (
+    <TooltipTrigger {...triggerProps}>{normalizeTooltipChildren(children)}</TooltipTrigger>
+  );
 
   return (
-    <TooltipRoot {...rootProps}>
-      {anchor != null ? <TooltipAnchor {...anchorProps}>{anchor}</TooltipAnchor> : null}
-      <TooltipTrigger {...triggerProps}>{children}</TooltipTrigger>
-      <TooltipContent {...contentProps}>
-        {arrow ? <TooltipArrow {...arrowProps} /> : null}
-        {typeof content === "string" ? <Text>{content}</Text> : content}
-      </TooltipContent>
+    <TooltipRoot {...props}>
+      {triggerElement}
+      <TooltipContent {...contentProps}>{renderedContent}</TooltipContent>
     </TooltipRoot>
   );
 }
 
-function TooltipRootBase(props: TooltipRootProps) {
-  return <TamaguiTooltip {...props} />;
-}
+function TooltipContent({
+  className,
+  children,
+  sideOffset = 4,
+  portalHost,
+  side = "top",
+  style,
+  ...props
+}: import("./types").TooltipContentProps) {
+  const scopedPortalHost = useScopedOverlayPortalHostName();
+  const resolvedPortalHost = portalHost ?? scopedPortalHost;
+  const contentStyle = useOverlayPortalContentStyle(style);
 
-function TooltipAnchor(props: TooltipAnchorProps) {
-  return <TamaguiTooltip.Anchor {...props} />;
-}
-
-function TooltipArrow(props: TooltipArrowProps) {
   return (
-    <TamaguiTooltip.Arrow
-      {...props}
-      background={props.background ?? "$background"}
-      borderColor={props.borderColor ?? "$borderColor"}
-    />
+    <TooltipPrimitive.Portal hostName={resolvedPortalHost}>
+      <OverlayPortalWindow portalHost={resolvedPortalHost}>
+        <TooltipPrimitive.Overlay
+          style={Platform.select({ native: StyleSheet.absoluteFill })}
+          asChild={Platform.OS !== "web"}
+        >
+          <NativeOnlyAnimatedView
+            entering={
+              side === "top"
+                ? FadeInDown.withInitialValues({
+                    transform: [{ translateY: 3 }],
+                  })
+                    .duration(150)
+                    .reduceMotion(ReduceMotion.System)
+                : FadeInUp.withInitialValues({
+                    transform: [{ translateY: -5 }],
+                  }).reduceMotion(ReduceMotion.System)
+            }
+            exiting={FadeOut.reduceMotion(ReduceMotion.System)}
+            as="Pressable"
+          >
+            <TextClassContext.Provider value="text-xs text-primary-foreground">
+              <TooltipPrimitive.Content
+                sideOffset={sideOffset}
+                style={contentStyle as any}
+                className={cn(
+                  "bg-primary z-50 rounded-md px-3 py-2 sm:py-1.5",
+                  Platform.select({
+                    web: cn(
+                      "animate-in fade-in-0 zoom-in-95 origin-(--radix-tooltip-content-transform-origin) w-fit text-balance",
+                      side === "bottom" && "slide-in-from-top-2",
+                      side === "left" && "slide-in-from-right-2",
+                      side === "right" && "slide-in-from-left-2",
+                      side === "top" && "slide-in-from-bottom-2",
+                    ),
+                  }),
+                  className,
+                )}
+                side={side}
+                {...props}
+              >
+                {React.Children.map(children, (child) =>
+                  typeof child === "string" || typeof child === "number" ? (
+                    <Text>{child}</Text>
+                  ) : (
+                    child
+                  ),
+                )}
+              </TooltipPrimitive.Content>
+            </TextClassContext.Provider>
+          </NativeOnlyAnimatedView>
+        </TooltipPrimitive.Overlay>
+      </OverlayPortalWindow>
+    </TooltipPrimitive.Portal>
   );
 }
 
-function TooltipTrigger(props: TooltipTriggerProps) {
-  return <TamaguiTooltip.Trigger asChild={props.asChild ?? true} {...props} />;
-}
-
-function TooltipContent(props: TooltipContentProps) {
-  const {
-    background,
-    borderColor,
-    borderWidth,
-    boxShadow,
-    enterStyle,
-    exitStyle,
-    size,
-    transition,
-    ...contentProps
-  } = props;
-
-  return (
-    <TamaguiTooltip.Content
-      {...contentProps}
-      background={background ?? "$background"}
-      borderColor={borderColor ?? "$borderColor"}
-      borderWidth={borderWidth ?? 1}
-      boxShadow={boxShadow ?? "0 8px 24px $shadowColor"}
-      enterStyle={enterStyle ?? DEFAULT_TOOLTIP_ENTER_STYLE}
-      exitStyle={exitStyle ?? DEFAULT_TOOLTIP_EXIT_STYLE}
-      size={size ?? "$3"}
-      transition={transition ?? "100ms"}
-    />
-  );
-}
-
-function TooltipGroup(props: TooltipGroupProps) {
-  return <TamaguiTooltipGroup {...props} />;
-}
-
-const TooltipRoot = Object.assign(TooltipRootBase, {
-  Anchor: TooltipAnchor,
-  Arrow: TooltipArrow,
-  Trigger: TooltipTrigger,
+const Tooltip = Object.assign(TooltipRootComponent, {
   Content: TooltipContent,
-  Group: TooltipGroup,
-});
-
-export const Tooltip = Object.assign(TooltipSimple, {
+  Overlay: TooltipPrimitive.Overlay,
+  Portal: function TooltipPortal({
+    hostName,
+    ...props
+  }: React.ComponentProps<typeof TooltipPrimitive.Portal>) {
+    const scopedPortalHost = useScopedOverlayPortalHostName();
+    return <TooltipPrimitive.Portal {...props} hostName={hostName ?? scopedPortalHost} />;
+  },
   Root: TooltipRoot,
+  Trigger: TooltipTrigger,
 });
 
-export { closeOpenTooltips, TooltipGroup, TooltipRoot };
+export { Tooltip };

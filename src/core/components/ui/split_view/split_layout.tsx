@@ -19,8 +19,7 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { runOnJS } from "react-native-reanimated";
 
 import { isMobile, isWeb } from "../utils/platform";
-import { getVariableValue, useTheme } from "../theme";
-import { useSeparatorColor } from "../utils/theme/use_separator_color";
+import { useSeparatorColor, useUiTheme } from "../utils/theme";
 
 import { LayoutService } from "./layout_service";
 import { PaneView } from "./pane_view";
@@ -52,11 +51,6 @@ const FALLBACK_SASH_ACTIVE_COLOR = "#2563eb";
 
 const getWebClassNameProps = (className: string | undefined) =>
   IS_WEB && className ? ({ className } as { className?: string }) : {};
-
-const resolveThemeColor = (value: unknown, fallback: string) => {
-  const resolvedColor = getVariableValue(value);
-  return typeof resolvedColor === "string" && resolvedColor.length > 0 ? resolvedColor : fallback;
-};
 
 const getPointerCoordinate = (
   event: Pick<PointerEvent, "clientX" | "clientY">,
@@ -202,12 +196,9 @@ const SplitLayoutInner = forwardRef<SplitLayoutHandle, SplitLayoutProps>(
       defaultSizes,
     );
     const stableDefaultSizes = stableDefaultSizesRef.current;
-    const theme = useTheme();
+    const theme = useUiTheme();
     const separatorColor = useSeparatorColor();
-    const sashActiveColor = resolveThemeColor(
-      theme.accent10 ?? theme.accent8 ?? theme.borderColorHover ?? theme.borderColor,
-      FALLBACK_SASH_ACTIVE_COLOR,
-    );
+    const sashActiveColor = theme.primary || FALLBACK_SASH_ACTIVE_COLOR;
     const {
       ready: storageReady,
       state: storedState,
@@ -685,19 +676,13 @@ const SplitLayoutInner = forwardRef<SplitLayoutHandle, SplitLayoutProps>(
             runOnJS(finalizeNativeSashDrag)(index, movement, succeeded);
           }),
       );
-    }, [
-      finalizeNativeSashDrag,
-      moveNativeSashDrag,
-      panes.length,
-      startNativeSashDrag,
-      vertical,
-    ]);
+    }, [finalizeNativeSashDrag, moveNativeSashDrag, panes.length, startNativeSashDrag, vertical]);
 
     return (
       <View
         {...getWebClassNameProps(className)}
         onLayout={handleLayout}
-        style={[styles.root, styles.webRoot, style]}
+        style={[styles.root, { backgroundColor: theme.background }, styles.webRoot, style]}
       >
         <View style={styles.container}>
           {panes.map((pane, index) => {
@@ -977,7 +962,7 @@ const styles = StyleSheet.create({
     position: "absolute",
   },
   root: {
-    backgroundColor: "var(--background)",
+    backgroundColor: "transparent",
     height: "100%",
     overflow: "hidden",
     position: "relative",

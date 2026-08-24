@@ -74,9 +74,9 @@ export function NativeListEditModeProvider({
   onSelectedIdsChange,
   selectedIds,
 }: NativeListEditModeProviderProps) {
-  const [uncontrolledSelectedIds, setUncontrolledSelectedIds] = useState<
-    NativeListSelectionId[]
-  >(() => [...(defaultSelectedIds ?? [])]);
+  const [uncontrolledSelectedIds, setUncontrolledSelectedIds] = useState<NativeListSelectionId[]>(
+    () => [...(defaultSelectedIds ?? [])],
+  );
   const isControlled = selectedIds != null;
   const resolvedSelectedIds = isControlled ? selectedIds : uncontrolledSelectedIds;
   const selectedIdSet = useMemo(() => new Set(resolvedSelectedIds), [resolvedSelectedIds]);
@@ -132,13 +132,14 @@ export function useNativeListEditMode() {
   return useContext(NativeListEditModeContext).editMode;
 }
 
+/** Section RenderProp 使用的完整编辑态选择上下文。 */
+export function useNativeListEditContext() {
+  return useContext(NativeListEditModeContext);
+}
+
 export function useNativeListEditIcons() {
-  const {
-    editModeIcon,
-    editModeSelectedIcon,
-    editModeSelectedSfSymbol,
-    editModeSfSymbol,
-  } = useContext(NativeListEditModeContext);
+  const { editModeIcon, editModeSelectedIcon, editModeSelectedSfSymbol, editModeSfSymbol } =
+    useContext(NativeListEditModeContext);
 
   return {
     editModeIcon,

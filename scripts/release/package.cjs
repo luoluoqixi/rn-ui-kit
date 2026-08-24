@@ -158,6 +158,12 @@ function validateExtractedPackage(packageDir) {
       throw new Error(`Unexpected react-native entry for ${exportName}: ${actualEntry || "(missing)"}`);
     }
   }
+
+  if (manifest.exports?.["./styles.css"] !== "./src/styles.css") {
+    throw new Error(
+      `Unexpected styles export: ${manifest.exports?.["./styles.css"] || "(missing)"}`,
+    );
+  }
 }
 
 function ensureGitIdentity(cwd) {

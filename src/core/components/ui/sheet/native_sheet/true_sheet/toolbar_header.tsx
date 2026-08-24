@@ -1,10 +1,9 @@
-import { ChevronLeft } from "@tamagui/lucide-icons-2";
+import { ChevronLeft } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-import { useTheme } from "tamagui";
 
 import { Text } from "../../../text";
-import { useAppBackgroundColors } from "../../../utils/theme";
+import { useAppBackgroundColors, useUiTheme } from "../../../utils/theme";
 
 export type TrueSheetToolbarHeaderProps = {
   /** 是否显示返回箭头（子页为 true，根页为 false）。 */
@@ -26,11 +25,11 @@ export function TrueSheetToolbarHeader({
   onBack,
   title,
 }: TrueSheetToolbarHeaderProps) {
-  const theme = useTheme();
+  const theme = useUiTheme();
   const appBackgroundColors = useAppBackgroundColors();
   const background = appBackgroundColors.sheet;
-  const borderColor = theme.borderColor.val;
-  const titleColor = theme.gray12.val;
+  const borderColor = theme.border;
+  const titleColor = theme.foreground;
 
   return (
     <View
@@ -50,7 +49,7 @@ export function TrueSheetToolbarHeader({
           onPress={onBack}
           style={styles.backButton}
         >
-          <ChevronLeft color="$color10" size={28} strokeWidth={2} />
+          <ChevronLeft color={theme.primary} size={28} strokeWidth={2} />
         </Pressable>
       ) : (
         <View style={styles.backPlaceholder} />

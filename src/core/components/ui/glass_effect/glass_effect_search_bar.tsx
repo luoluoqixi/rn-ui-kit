@@ -1,11 +1,5 @@
-import { Search, X } from "@tamagui/lucide-icons-2";
-import {
-  createElement,
-  forwardRef,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from "react";
+import { Search, X } from "lucide-react-native";
+import { createElement, forwardRef, useImperativeHandle, useRef, useState } from "react";
 import {
   Keyboard,
   Platform,
@@ -135,10 +129,11 @@ export const GlassEffectSearchBar = forwardRef<TextInput, GlassEffectSearchBarPr
           circular={!usesNativeCancelButton}
           {...cancelButtonProps}
           aria-label={cancelButtonAccessibilityLabel}
-          native={usesNativeCancelButton ? "swift-ui" : false}
+          native={usesNativeCancelButton}
           nativeButtonStyle={usesNativeCancelButton ? (cancelButtonStyle ?? "glass") : undefined}
           nativeSystemImage={usesNativeCancelButton ? "xmark" : undefined}
           nativeSystemImageSize={cancelButtonProps?.nativeSystemImageSize ?? 22}
+          variant="secondary"
           buttonSize={
             cancelButtonProps?.buttonSize ?? {
               height: usesNativeCancelButton ? 40 : 50,
@@ -147,7 +142,7 @@ export const GlassEffectSearchBar = forwardRef<TextInput, GlassEffectSearchBarPr
           }
           onPress={handleCancel}
           style={cancelButtonProps?.style}
-          title={cancelButtonProps?.title ?? "×"}
+          title={usesNativeCancelButton ? (cancelButtonProps?.title ?? "×") : undefined}
         >
           {usesNativeCancelButton ? undefined : <X size={24} />}
         </Button>

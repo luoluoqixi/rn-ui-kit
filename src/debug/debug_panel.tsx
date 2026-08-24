@@ -16,7 +16,7 @@ import {
 } from "@react-navigation/native-stack";
 import { type ComponentProps, useLayoutEffect, useMemo, useState } from "react";
 import { Platform, View } from "react-native";
-import { YStack, useTheme } from "tamagui";
+import { useUiTheme } from "../core/components/ui/utils/theme";
 import {
   NativeSheet,
   NativeSheetStack,
@@ -29,7 +29,7 @@ import {
   withNativeStackGestureOptions,
   RN_UI_KIT_PACKAGE_NAME,
   RN_UI_KIT_PACKAGE_VERSION,
-} from "rn-ui-kit/core";
+} from "../core";
 
 import { RnUiKitDebugHomePage } from "./pages/debug_home_page";
 import { RnUiKitDebugSectionPage } from "./pages/debug_section_page";
@@ -74,8 +74,8 @@ const DEBUG_LARGE_TITLE_OPTIONS: NativeStackNavigationOptions =
 // ios26 中如果 Sheet 太高, 背景颜色会发生变化
 // 默认的背景颜色会变的和 NativeList 一样
 // 所以这里 ios26 示例默认限制最大高度
-const DEBUG_SECTION_SHEET_SNAP_POINTS = isIos26Plus() ? [50, 75, 85] : [50, 75, 100];
-const DEBUG_DEFAULT_SNAP_POINT = ["85%"];
+const DEBUG_SECTION_SHEET_SNAP_POINTS = isIos26Plus() ? [0.5, 0.75, 0.85] : [0.5, 0.75, 1];
+const DEBUG_DEFAULT_SNAP_POINT = ["85%" as const];
 
 const onRefreshHome = () => new Promise((r) => setTimeout(r, 1000));
 
@@ -86,11 +86,10 @@ function getDebugPages(pages?: RnUiKitDebugRouteDefinition[]) {
     ).values(),
   );
 }
-
 function useDebugStackScreenOptions(overrides?: RnUiKitDebugPanelPageScreenOptions) {
   const appBackgroundColors = useAppBackgroundColors();
   const { resolvedColorScheme } = useColorSchemeSettings();
-  const theme = useTheme();
+  const theme = useUiTheme();
 
   return useMemo(
     () =>
@@ -101,16 +100,16 @@ function useDebugStackScreenOptions(overrides?: RnUiKitDebugPanelPageScreenOptio
           headerBackgroundColor: appBackgroundColors.header,
           screenBackgroundColor: appBackgroundColors.screen,
         }),
-        headerTintColor: theme.color10.val,
-        headerTitleStyle: { color: theme.gray12.val },
+        headerTintColor: theme.primary,
+        headerTitleStyle: { color: theme.foreground },
         ...overrides,
       }),
     [
       appBackgroundColors.header,
       appBackgroundColors.screen,
       resolvedColorScheme,
-      theme.color10.val,
-      theme.gray12.val,
+      theme.primary,
+      theme.foreground,
       overrides,
     ],
   );
@@ -118,7 +117,7 @@ function useDebugStackScreenOptions(overrides?: RnUiKitDebugPanelPageScreenOptio
 
 function useDebugSheetStackScreenOptions(overrides?: RnUiKitDebugPanelNativeSheetScreenOptions) {
   const appBackgroundColors = useAppBackgroundColors();
-  const theme = useTheme();
+  const theme = useUiTheme();
   const transparentHeader = isIos26Plus();
   const nativeScrollEdgeHeader = Platform.OS === "ios" && !transparentHeader;
 
@@ -152,8 +151,8 @@ function useDebugSheetStackScreenOptions(overrides?: RnUiKitDebugPanelNativeShee
     // iOS 15–25 必须保持 translucent，内容才能延伸到导航栏下方并触发
     // scrollEdgeAppearance / standardAppearance 原生切换。
     headerTransparent: transparentHeader || nativeScrollEdgeHeader,
-    headerTintColor: theme.color10.val,
-    headerTitleStyle: { color: theme.gray12.val },
+    headerTintColor: theme.primary,
+    headerTitleStyle: { color: theme.foreground },
     ...overrides,
   };
 }
@@ -232,7 +231,7 @@ function RnUiKitDebugHostPanel({
   pages,
   panelSheetProps,
   ...props
-}: ComponentProps<typeof YStack> & {
+}: ComponentProps<typeof View> & {
   backButtonLabel?: string;
   nativeSheetScreenOptions?: RnUiKitDebugPanelNativeSheetScreenOptions;
   pageScreenOptions?: RnUiKitDebugPanelPageScreenOptions;
@@ -333,9 +332,9 @@ function RnUiKitDebugHostPanel({
   }
 
   return (
-    <YStack background="$background" flex={1} {...props}>
+    <View className="bg-background flex-1" {...props}>
       {content}
-    </YStack>
+    </View>
   );
 }
 
@@ -345,7 +344,7 @@ function RnUiKitDebugHostHomePage({
   pages: pagesProp,
   panelSheetProps,
   ...props
-}: ComponentProps<typeof YStack> & {
+}: ComponentProps<typeof View> & {
   nativeSheetScreenOptions?: RnUiKitDebugPanelNativeSheetScreenOptions;
   onOpenSection: (key: RnUiKitDebugRouteKey) => void;
   pages?: RnUiKitDebugRouteDefinition[];
@@ -358,7 +357,7 @@ function RnUiKitDebugHostHomePage({
   const [openSectionSheets, setOpenSectionSheets] = useState<Set<RnUiKitDebugRouteKey>>(new Set());
 
   return (
-    <YStack background="$background" flex={1} {...props}>
+    <View className="bg-background flex-1" {...props}>
       <RnUiKitDebugHomePage
         onRefresh={onRefreshHome}
         onOpenPanelSheet={() => setPanelSheetOpen(true)}
@@ -396,7 +395,7 @@ function RnUiKitDebugHostHomePage({
         panelSheetProps={panelSheetProps}
         sheetMode
       />
-    </YStack>
+    </View>
   );
 }
 
@@ -434,7 +433,6 @@ function RnUiKitDebugPanelSheet({
         screenOptions={debugSheetStackScreenOptions}
         sheetProps={{
           snapPoints: DEBUG_DEFAULT_SNAP_POINT,
-          snapPointsMode: "percent",
           ...panelSheetProps,
         }}
       >
@@ -525,7 +523,7 @@ function RnUiKitDebugPanelContent({
   const [openSectionSheets, setOpenSectionSheets] = useState<Set<RnUiKitDebugRouteKey>>(new Set());
 
   return (
-    <YStack background="$background" flex={1} {...props}>
+    <View className="bg-background flex-1" {...props}>
       <NavigationContainer theme={navigationTheme}>
         <Stack.Navigator
           id="rn-ui-kit-debug-stack"
@@ -615,7 +613,7 @@ function RnUiKitDebugPanelContent({
         panelSheetProps={panelSheetProps}
         sheetMode
       />
-    </YStack>
+    </View>
   );
 }
 
@@ -702,7 +700,6 @@ function RnUiKitDebugSectionSheets({
           sheetProps={{
             initialDetentIndex: position,
             snapPoints: DEBUG_SECTION_SHEET_SNAP_POINTS,
-            snapPointsMode: "percent",
           }}
         >
           <NativeSheetStack.Screen name="index" options={{ title: definition.label }}>
@@ -742,7 +739,6 @@ function RnUiKitDebugSectionSheets({
         overlayPortalHostName={overlayPortalHostName}
         position={position}
         snapPoints={DEBUG_SECTION_SHEET_SNAP_POINTS}
-        snapPointsMode="percent"
       >
         <View style={{ flex: 1 }}>
           <RnUiKitDebugSectionPage

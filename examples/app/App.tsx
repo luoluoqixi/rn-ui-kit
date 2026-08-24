@@ -1,13 +1,17 @@
 import "rn-ui-kit/initialize";
 
-import "./tamagui.generated.css";
+import "./global.css";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { AppStatusBar, RootProvider, type UiPreferences, useColorSchemeSettings } from "rn-ui-kit";
+import {
+  accentThemeNames,
+  AppStatusBar,
+  RootProvider,
+  type UiPreferences,
+  useColorSchemeSettings,
+} from "rn-ui-kit";
 import { RnUiKitDebugPanel } from "rn-ui-kit/debug";
 import { useEffect, useMemo, useState } from "react";
 
-import config from "./tamagui.config";
-import { accentThemeNames } from "./themes";
 import { createAppDebugPages } from "./debug_pages";
 
 const PREFERENCES_STORAGE_KEY = "rn-ui-kit_example.preferences.v1";
@@ -103,11 +107,7 @@ export default function App() {
   );
 
   return (
-    <RootProvider
-      accentThemeNames={accentThemeNames}
-      preferences={currentPreferences}
-      tamaguiConfig={config}
-    >
+    <RootProvider accentThemeNames={accentThemeNames} preferences={currentPreferences}>
       <DemoStatusBar />
       <RnUiKitDebugPanel pages={pages} />
     </RootProvider>

@@ -1,17 +1,42 @@
-import type { CSSProperties } from "react";
-import { Label as TamaguiLabel } from "tamagui";
+import { cn } from "../utils/cn";
+import * as LabelPrimitive from "@rn-primitives/label";
+import { Platform } from "react-native";
+import { LabelProps } from "./types";
 
-import { isWeb } from "../utils/platform";
-
-import type { LabelProps } from "./types";
-
-const DEFAULT_LABEL_WEB_STYLE = { userSelect: "text" } as CSSProperties;
-
-export function Label(props: LabelProps) {
+function Label({
+  className,
+  onPress,
+  onLongPress,
+  onPressIn,
+  onPressOut,
+  disabled,
+  ...props
+}: LabelProps) {
   return (
-    <TamaguiLabel
-      {...props}
-      style={isWeb() ? ([DEFAULT_LABEL_WEB_STYLE, props.style] as const) : props.style}
-    />
+    <LabelPrimitive.Root
+      className={cn(
+        "flex select-none flex-row items-center gap-2",
+        Platform.select({
+          web: "cursor-default leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50 group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50",
+        }),
+        disabled && "opacity-50",
+      )}
+      onPress={onPress}
+      onLongPress={onLongPress}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      disabled={disabled}
+    >
+      <LabelPrimitive.Text
+        className={cn(
+          "text-foreground text-sm font-medium",
+          Platform.select({ web: "leading-none" }),
+          className,
+        )}
+        {...props}
+      />
+    </LabelPrimitive.Root>
   );
 }
+
+export { Label };

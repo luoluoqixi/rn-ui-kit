@@ -1,20 +1,19 @@
 import { type AppBackgroundColors, getStandardAppBackgroundColors } from "./app_background";
 import { useResolvedeColorScheme, useUiPreferences } from "./settings";
-import { useTheme } from "./use_theme";
+import { useUiTheme } from "./ui_theme";
 
 export function useAppBackgroundColors(): AppBackgroundColors {
-  const theme = useTheme();
+  const theme = useUiTheme();
   const resolvedColorScheme = useResolvedeColorScheme();
   const { preferences } = useUiPreferences();
 
   if (preferences.appearance.backgroundFollowsTheme) {
-    const screen =
-      theme.background?.val ?? getStandardAppBackgroundColors(resolvedColorScheme).screen;
+    const screen = theme.background;
     return {
       screen,
       sheet: screen,
-      card: theme.color2?.val ?? screen,
-      header: theme.color1?.val ?? screen,
+      card: theme.card,
+      header: theme.muted,
     };
   }
 

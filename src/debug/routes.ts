@@ -1,7 +1,6 @@
-import { RnUiKitUiComponentsDebugPage } from "./pages/sections/ui_components_debug_page";
 import { RnUiKitComponentExamplesDebugPage } from "./pages/component_examples/component_examples_page";
 import { RnUiKitAboutDebugPage } from "./pages/sections/about_debug_page";
-
+import { RnUiKitUiComponentsDebugPage } from "./pages/sections/ui_components_debug_page";
 import type { RnUiKitDebugRouteDefinition, RnUiKitDebugRouteKey } from "./types";
 
 export const rnUiKitDebugRouteDefinitions = [
@@ -31,19 +30,17 @@ export const rnUiKitDebugRouteDefinitions = [
   },
 ] satisfies RnUiKitDebugRouteDefinition[];
 
-const routeKeys = new Set<RnUiKitDebugRouteKey>(
-  rnUiKitDebugRouteDefinitions.map((definition) => definition.key),
-);
-
 export function isRnUiKitDebugRouteKey(value: string | undefined): value is RnUiKitDebugRouteKey {
-  return value != null && routeKeys.has(value);
+  return (
+    value != null && rnUiKitDebugRouteDefinitions.some((definition) => definition.key === value)
+  );
 }
 
 export function getRnUiKitDebugRouteDefinition(
   key: RnUiKitDebugRouteKey,
   definitions: RnUiKitDebugRouteDefinition[] = rnUiKitDebugRouteDefinitions,
-): RnUiKitDebugRouteDefinition {
-  const routeDefinition = definitions.find((definition) => definition.key === key);
-  if (!routeDefinition) throw new Error(`Unknown rn-ui-kit debug route: ${key}`);
-  return routeDefinition;
+) {
+  const route = definitions.find((definition) => definition.key === key);
+  if (route == null) throw new Error(`Unknown rn-ui-kit debug route: ${key}`);
+  return route;
 }

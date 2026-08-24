@@ -1,43 +1,26 @@
 import type { ComponentProps, ReactNode } from "react";
-import type { ToggleGroup as TamaguiToggleGroup } from "tamagui";
+import type * as ToggleGroupPrimitive from "@rn-primitives/toggle-group";
+import type { VariantProps } from "class-variance-authority";
 
-import type { NativeHapticsSetting } from "../utils";
+import type { NativeHapticsSetting, RenderProp } from "../utils";
+import type { toggleVariants } from "../toggle";
 
-export interface ToggleGroupItemData {
-  "aria-label"?: string;
-  disabled?: boolean;
-  label: ReactNode;
+export type ToggleGroupItemRenderContext = {
+  pressed: boolean;
   value: string;
-}
-
-type ToggleGroupBaseProps = Omit<
-  ComponentProps<typeof TamaguiToggleGroup>,
-  "children" | "items" | "type" | "value" | "defaultValue" | "onValueChange" | "disableDeactivation"
->;
-
-export type ToggleGroupSingleProps = ToggleGroupBaseProps & {
-  children?: ReactNode;
-  defaultValue?: string;
-  disableDeactivation?: boolean;
-  itemProps?: Omit<ToggleGroupItemProps, "value">;
-  items?: ToggleGroupItemData[];
-  nativeHaptics?: NativeHapticsSetting;
-  onValueChange?(value: string): void;
-  type?: "single";
-  value?: string;
 };
 
-export type ToggleGroupMultipleProps = ToggleGroupBaseProps & {
+export type ToggleGroupItemData = {
   children?: ReactNode;
-  defaultValue?: string[];
-  disableDeactivation?: never;
-  itemProps?: Omit<ToggleGroupItemProps, "value">;
-  items?: ToggleGroupItemData[];
-  nativeHaptics?: NativeHapticsSetting;
-  onValueChange?(value: string[]): void;
-  type: "multiple";
-  value?: string[];
+  disabled?: boolean;
+  itemProps?: Omit<ComponentProps<typeof ToggleGroupPrimitive.Item>, "value" | "children">;
+  title?: RenderProp<ToggleGroupItemRenderContext>;
+  value: string;
 };
 
-export type ToggleGroupProps = ToggleGroupSingleProps | ToggleGroupMultipleProps;
-export type ToggleGroupItemProps = ComponentProps<typeof TamaguiToggleGroup.Item>;
+export type ToggleGroupProps = Omit<ComponentProps<typeof ToggleGroupPrimitive.Root>, "children"> &
+  VariantProps<typeof toggleVariants> & {
+    children?: ReactNode;
+    items?: ToggleGroupItemData[];
+    nativeHaptics?: NativeHapticsSetting;
+  };

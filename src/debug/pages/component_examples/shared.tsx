@@ -1,6 +1,60 @@
-import type { ReactNode } from "react";
-import { StyleSheet, View } from "react-native";
-import { Text } from "rn-ui-kit/core";
+import { type ReactNode } from "react";
+import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
+
+import {
+  Card,
+  Input,
+  NativeList,
+  NativeListNavigationItem,
+  NativeListSection,
+  Text,
+  Textarea,
+} from "../../../core/components/ui";
+
+export function ComponentExamplePlaceholder({
+  children,
+  name,
+  status = "迁移占位",
+}: {
+  children?: ReactNode;
+  name: string;
+  status?: string;
+}) {
+  return (
+    <View className="gap-4 p-4">
+      <Text variant="muted">
+        {name} 示例：{status}
+      </Text>
+      <Card
+        content={children ?? <Text>此示例保留独立文件和路由，具体交互将在后续迁移阶段补齐。</Text>}
+        contentProps={{ className: "gap-3" }}
+        header={<Card.Title>{name}</Card.Title>}
+      />
+    </View>
+  );
+}
+
+export function InputExampleContent() {
+  return (
+    <>
+      <Input placeholder="Input" />
+      <Textarea placeholder="TextArea" />
+    </>
+  );
+}
+
+export function NativeListExampleContent() {
+  return (
+    <NativeList>
+      <NativeListSection title="NativeList">
+        <NativeListNavigationItem
+          title="Navigation item"
+          subtitle="NativeList remains available."
+        />
+      </NativeListSection>
+    </NativeList>
+  );
+}
 
 export function ExampleStack({ children }: { children: ReactNode }) {
   return <View style={styles.stack}>{children}</View>;
@@ -16,31 +70,26 @@ export function ExampleBlock({
   title?: ReactNode;
 }) {
   return (
-    <View style={styles.block}>
-      {title != null ? (
-        <Text fontSize="$5" fontWeight="600">
-          {title}
-        </Text>
-      ) : null}
-      {description != null ? <Text opacity={0.6}>{description}</Text> : null}
-      <View style={styles.blockContent}>{children}</View>
-    </View>
+    <Card
+      contentProps={{ className: "gap-3" }}
+      description={description}
+      content={children}
+      title={title}
+    />
   );
 }
 
-export function ExampleRow({ children }: { children: ReactNode }) {
-  return <View style={styles.row}>{children}</View>;
+export function ExampleRow({
+  children,
+  style,
+}: {
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+}) {
+  return <View style={[styles.row, style]}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
-  block: {
-    borderColor: "rgba(128, 128, 128, 0.28)",
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-    gap: 6,
-    padding: 16,
-  },
-  blockContent: { gap: 12, paddingTop: 6 },
   row: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: 12 },
   stack: { gap: 16, width: "100%" },
 });

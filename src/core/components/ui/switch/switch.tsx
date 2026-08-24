@@ -1,182 +1,120 @@
-import { useId, useState } from "react";
-import type { SwitchProps as NativeSwitchProps } from "react-native";
-import {
-  Label as TamaguiLabel,
-  Switch as TamaguiSwitch,
-  XStack,
-  YStack,
-  getThemes,
-  getVariableValue,
-  useTheme,
-  useThemeName,
-} from "tamagui";
-
-import { isIos15, isWeb, os, supportsImpactHaptics } from "../utils/platform";
+import { Text } from "../text";
+import { cn } from "../utils/cn";
 import { triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
+import { isIos15 } from "../utils/platform";
+import { resolveRenderProp } from "../utils/render";
+import * as SwitchPrimitives from "@rn-primitives/switch";
+import * as React from "react";
+import { Platform, Pressable, View } from "react-native";
 
-import type { SwitchProps, SwitchThumbProps } from "./types";
+import { SwitchNative } from "./switch_native";
+import type { SwitchProps } from "./types";
 
-const platform = os();
-const web = isWeb();
-const ios = platform === "ios";
-const DISABLED_OPACITY = 0.5;
-
-type ThemeRecord = Record<string, unknown>;
-
-function resolveThemeColor(values: unknown[]) {
-  for (const value of values) {
-    const resolved = getVariableValue(value);
-
-    if (typeof resolved === "string" && resolved.length > 0) {
-      return resolved;
-    }
-  }
-  return undefined;
-}
-
-function getComponentTheme(themeName: string, componentName: string): ThemeRecord | undefined {
-  const themes = getThemes() as Record<string, ThemeRecord | undefined>;
-  return themes[`${themeName}_${componentName}`];
-}
-
-function SwitchRoot(props: SwitchProps) {
-  const generatedId = useId();
-  const theme = useTheme();
-  const themeName = useThemeName();
-  const {
-    checked: checkedProp,
-    children,
-    defaultChecked,
-    id,
-    label,
-    labelPosition = "start",
-    labelProps,
-    native = !web,
-    nativeHaptics = true,
-    nativeProps,
-    onCheckedChange,
-    overflow,
-    size = "$4",
-    thumbProps,
-    ...rootProps
-  } = props;
-
-  const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics);
-  const controlId = id ?? generatedId;
-  const [uncontrolledChecked, setUncontrolledChecked] = useState(defaultChecked ?? false);
-  const checked = checkedProp ?? uncontrolledChecked;
-  const shouldHandleLabelPress = ios;
-  const switchTheme = getComponentTheme(themeName, "Switch");
-  const switchThumbTheme = getComponentTheme(themeName, "SwitchThumb");
-  const colorBackground = resolveThemeColor([switchThumbTheme?.background, theme.background]);
-  const nativeTrackOffColor = resolveThemeColor([switchTheme?.background, theme.background]);
-  const nativeTrackOnColor = ios
-    ? colorBackground
-    : resolveThemeColor([switchTheme?.color6, theme.color6]);
-  const nativeThumbColor = ios ? undefined : colorBackground;
-  const disabled = rootProps.disabled ?? nativeProps?.disabled;
-  const nativeSwitchProps: NativeSwitchProps | undefined = native
-    ? {
-        ...nativeProps,
-        disabled,
-        ios_backgroundColor: nativeProps?.ios_backgroundColor,
-        style:
-          platform === "android" && disabled
-            ? [nativeProps?.style, { opacity: DISABLED_OPACITY }]
-            : nativeProps?.style,
-        thumbColor: nativeProps?.thumbColor ?? nativeThumbColor,
-        trackColor: {
-          false: nativeTrackOffColor,
-          true: nativeTrackOnColor,
-          ...nativeProps?.trackColor,
-        },
-      }
-    : nativeProps;
-
-  // iOS 原生 UISwitch 作为 flex container 直接子节点时无法正确垂直居中，
-  // 套一层 YStack 容器让 flexbox 对齐机制正常工作
-
-  const handleCheckedChange = (nextChecked: boolean, isLabel?: boolean) => {
-    if (checkedProp === undefined) {
-      setUncontrolledChecked(nextChecked);
-    }
-
-    onCheckedChange?.(nextChecked);
-
-    const iosDefaultHaptics = native && ios && supportsImpactHaptics();
-    if (!iosDefaultHaptics || isLabel || isIos15()) {
-      // ios 中, 原生 Switch 交互默认是有震动的 (除了iPhone6s或以下)
-      // 所以 ios 原生 Switch 不需要自己调用震动 api.
+function Switch({
+  className,
+  containerClassName,
+  defaultChecked = false,
+  label,
+  labelClassName,
+  labelPosition = "right",
+  native = Platform.OS !== "web",
+  nativeComposeProps,
+  nativeHaptics,
+  nativeSwiftProps,
+  onCheckedChange,
+  ...props
+}: SwitchProps) {
+  const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics, {
+    defaultEnabled: true,
+  });
+  const [uncontrolledChecked, setUncontrolledChecked] = React.useState(defaultChecked);
+  const checked = props.checked ?? uncontrolledChecked;
+  // Native iOS switches provide their own haptics from iOS 16 onward.
+  const shouldTriggerDirectHaptics = native !== true || Platform.OS !== "ios" || isIos15();
+  const handleCheckedChange = (nextChecked: boolean, fromLabel = false) => {
+    if (fromLabel || shouldTriggerDirectHaptics) {
       triggerNativeHaptics(resolvedNativeHaptics);
     }
+    if (props.checked === undefined) setUncontrolledChecked(nextChecked);
+    onCheckedChange?.(nextChecked);
   };
+  const handleLabelPress = () => {
+    if (props.disabled) return;
+    handleCheckedChange(!checked, true);
+  };
+  const renderedLabel = resolveRenderProp(label, {
+    checked,
+    disabled: props.disabled,
+  });
 
-  const control = (
-    <TamaguiSwitch
-      native={native}
-      activeStyle={{
-        backgroundColor: "$color6",
-      }}
-      {...rootProps}
-      borderWidth={rootProps.borderWidth ?? 0}
-      checked={checked}
-      cursor={rootProps.cursor ?? "pointer"}
-      disabled={disabled}
-      id={controlId}
-      onCheckedChange={handleCheckedChange}
-      nativeProps={nativeSwitchProps}
-      opacity={!native && disabled ? DISABLED_OPACITY : rootProps.opacity}
-      overflow={overflow ?? "hidden"}
-      padding={rootProps.padding ?? 0}
-      size={size}
-    >
-      {children ?? <SwitchThumb {...thumbProps} transition={thumbProps?.transition ?? "bouncy"} />}
-    </TamaguiSwitch>
-  );
+  const switchControl =
+    native === true && Platform.OS !== "web" ? (
+      <SwitchNative
+        disabled={props.disabled}
+        nativeComposeProps={nativeComposeProps}
+        nativeSwiftProps={nativeSwiftProps}
+        onValueChange={handleCheckedChange}
+        style={props.style as never}
+        value={checked}
+      />
+    ) : (
+      <SwitchPrimitives.Root
+        className={cn(
+          "flex h-[1.15rem] w-8 shrink-0 flex-row items-center rounded-full border border-transparent shadow-sm shadow-black/5",
+          Platform.select({
+            web: "focus-visible:border-ring focus-visible:ring-ring/50 peer inline-flex outline-none transition-all focus-visible:ring-[3px] disabled:cursor-not-allowed",
+          }),
+          checked ? "bg-primary" : "bg-input dark:bg-input/80",
+          props.disabled && "opacity-50",
+          className,
+        )}
+        {...props}
+        checked={checked}
+        onCheckedChange={handleCheckedChange}
+      >
+        <SwitchPrimitives.Thumb
+          className={cn(
+            "bg-background size-4 rounded-full transition-transform",
+            Platform.select({
+              web: "pointer-events-none block ring-0",
+            }),
+            checked
+              ? "dark:bg-primary-foreground translate-x-3.5"
+              : "dark:bg-foreground translate-x-0",
+          )}
+        />
+      </SwitchPrimitives.Root>
+    );
 
-  // iOS 原生 UISwitch 作为 flex container 直接子节点时无法正确垂直居中，
-  // 套一层 YStack 容器让 flexbox 对齐机制正常工作
-  const wrappedControl = ios && native ? <YStack>{control}</YStack> : control;
-
-  if (label == null) {
-    return wrappedControl;
-  }
-
-  const labelElement = shouldHandleLabelPress ? (
-    <XStack
-      onPress={(event) => {
-        labelProps?.onPress?.(event);
-
-        if (disabled || event.defaultPrevented) {
-          return;
-        }
-
-        handleCheckedChange(!checked, true);
-      }}
-    >
-      <TamaguiLabel {...labelProps} pointerEvents="none">
-        {label}
-      </TamaguiLabel>
-    </XStack>
-  ) : (
-    <TamaguiLabel {...labelProps} htmlFor={labelProps?.htmlFor ?? controlId}>
-      {label}
-    </TamaguiLabel>
-  );
+  if (renderedLabel == null) return switchControl;
 
   return (
-    <XStack gap="$2" items="center">
-      {labelPosition === "start" ? labelElement : null}
-      {wrappedControl}
-      {labelPosition === "end" ? labelElement : null}
-    </XStack>
+    <View
+      className={cn(
+        "flex-row items-center self-start",
+        labelPosition === "left" && "flex-row-reverse",
+        props.disabled && "opacity-50",
+        containerClassName,
+      )}
+    >
+      {switchControl}
+      <Pressable
+        className={cn("self-stretch justify-center", labelPosition === "left" ? "pr-3" : "pl-3")}
+        disabled={props.disabled}
+        onPress={handleLabelPress}
+      >
+        {typeof renderedLabel === "string" || typeof renderedLabel === "number" ? (
+          <Text className={cn("text-sm font-medium", labelClassName)}>{renderedLabel}</Text>
+        ) : (
+          renderedLabel
+        )}
+      </Pressable>
+    </View>
   );
 }
 
-function SwitchThumb(props: SwitchThumbProps) {
-  return <TamaguiSwitch.Thumb {...props} />;
-}
-
-export const Switch = Object.assign(SwitchRoot, {
-  Thumb: SwitchThumb,
+const SwitchComponent = Object.assign(Switch, {
+  Root: Switch,
 });
+
+export { SwitchComponent as Switch };

@@ -15,9 +15,7 @@
     "App.tsx",
     "styles.d.ts",
     "app.config.ts",
-    "tamagui.config.ts",
-    "tamagui.build.ts",
-    "themes.ts",
+    "uniwind-types.d.ts",
     "*.js",
     "../../src/**/*.ts",
     "../../src/**/*.tsx"

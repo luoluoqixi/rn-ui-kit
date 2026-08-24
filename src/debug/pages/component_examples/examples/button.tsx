@@ -1,13 +1,12 @@
 import { useState } from "react";
-
-import { Button, Text } from "rn-ui-kit/core";
-
+import { Button, Icon, Text } from "rn-ui-kit/core";
+import { LoaderCircle, Mail } from "lucide-react-native";
 import { ExampleBlock, ExampleRow, ExampleStack } from "../shared";
 
 export function ButtonExample() {
   const [count, setCount] = useState(0);
   const [saving, setSaving] = useState(false);
-
+  const [nativeHaptics, setNativeHaptics] = useState(true);
   const save = () => {
     setSaving(true);
     setTimeout(() => {
@@ -15,30 +14,79 @@ export function ButtonExample() {
       setSaving(false);
     }, 700);
   };
-
   return (
     <ExampleStack>
-      <ExampleBlock description="把按钮变体放进一个有明确状态的保存操作中。" title="保存工作区">
+      <ExampleBlock title="保存工作区">
         <ExampleRow>
-          <Button disabled={saving} onPress={save} theme="accent">
-            {saving ? "正在保存…" : "保存更改"}
+          <Button nativeHaptics={nativeHaptics} onPress={save} loading={saving}>
+            {saving ? "正在保存..." : "保存更改"}
           </Button>
-          <Button disabled={saving} onPress={() => setCount(0)} variant="outlined">
-            重置计数
+          <Button
+            nativeHaptics={nativeHaptics}
+            disabled={saving}
+            onPress={() => setCount(0)}
+            variant="outline"
+          >
+            重置
           </Button>
-          <Button chromeless onPress={() => setCount((current) => current + 1)}>
+          <Button
+            nativeHaptics={nativeHaptics}
+            onPress={() => setCount((current) => current + 1)}
+            variant="ghost"
+          >
             仅更新
           </Button>
         </ExampleRow>
-        <Text opacity={0.6}>已完成 {count} 次保存；提交期间其他操作会被禁用。</Text>
+        <Text className="text-muted-foreground">已完成 {count} 次保存</Text>
       </ExampleBlock>
-      <ExampleBlock description="同一 API 的语义色、轮廓与禁用状态。" title="操作层级">
+      <ExampleBlock title="操作层级">
         <ExampleRow>
-          <Button theme="green">确认</Button>
-          <Button theme="red">删除</Button>
-          <Button variant="outlined">次要操作</Button>
+          <Button nativeHaptics>确认</Button>
+          <Button nativeHaptics={nativeHaptics} variant="destructive">
+            删除
+          </Button>
+          <Button nativeHaptics={nativeHaptics} variant="outline">
+            次要操作
+          </Button>
+          <Button nativeHaptics={nativeHaptics} variant="secondary">
+            辅助操作
+          </Button>
           <Button disabled>不可用</Button>
-          <Button native>Native</Button>
+          <Button variant="destructive" disabled>
+            不可用
+          </Button>
+        </ExampleRow>
+      </ExampleBlock>
+      <ExampleBlock title="扩展状态">
+        <ExampleRow>
+          <Button loading title="请稍候" />
+          <Button
+            loading
+            loadingIcon={<Icon as={LoaderCircle} className="size-4 text-primary-foreground" />}
+            title="自定义加载图标"
+          />
+          <Button nativeHaptics={nativeHaptics}>
+            <Icon as={Mail} className="text-primary-foreground" />
+            <Text>邮件登录</Text>
+          </Button>
+          <Button nativeHaptics={nativeHaptics} aria-label="打开邮件" size="icon">
+            <Icon as={Mail} className="text-primary-foreground" />
+          </Button>
+          <Button nativeHaptics={nativeHaptics} title="Button Link" variant="link" />
+          <Button nativeHaptics={nativeHaptics} native>
+            Native Button
+          </Button>
+          <Button
+            native
+            nativeHaptics={nativeHaptics}
+            nativeButtonStyle="glass"
+            buttonSize={{
+              width: 150,
+              height: 80,
+            }}
+          >
+            Native Button Size
+          </Button>
         </ExampleRow>
       </ExampleBlock>
     </ExampleStack>

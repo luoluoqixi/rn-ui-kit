@@ -1,60 +1,107 @@
-import type { ComponentProps, ReactNode } from "react";
-import type { ContextMenu as TamaguiContextMenu } from "tamagui";
+import type { ComponentProps, ReactNode, RefObject } from "react";
+import type * as ContextMenuPrimitive from "@rn-primitives/context-menu";
+import type { StyleProp, TextProps, ViewStyle } from "react-native";
 
 import type { NativeHapticsSetting } from "../utils";
+import type { RenderProp } from "../utils/render";
 
-export interface ContextMenuItemData {
+export type ContextMenuRenderContext = {
+  native: boolean;
+  open: boolean;
+};
+
+export type ContextMenuItemData = {
   "aria-label"?: string;
-  destructive?: boolean;
-  disabled?: boolean;
-  /** 菜单项右侧的自定义图标。原生平台图标能力取决于传入的 ItemIcon。 */
-  icon?: ReactNode;
-  indicator?: ReactNode;
-  label?: ReactNode;
-  onPress?: ContextMenuItemProps["onSelect"];
-  onSelect?: ContextMenuItemProps["onSelect"];
-  separator?: boolean;
-  /** 原生 ContextMenu 中标识当前项。 */
-  selected?: boolean;
-  /** 原生菜单项副标题。 */
-  subtitle?: string;
-  /** 子菜单条目。Android 原生 ContextMenu 仅支持一级子菜单。 */
-  subMenu?: ContextMenuItemData[];
-  /** Web 子菜单标题。默认使用当前项名称；传 `false` 可隐藏标题。 */
-  subMenuTitle?: ReactNode | false;
-  textValue?: string;
-  value: string;
-}
+  "checked"?: boolean;
+  "destructive"?: boolean;
+  "disabled"?: boolean;
+  "icon"?: RenderProp<ContextMenuItemData>;
+  "iconProps"?: Record<string, unknown>;
+  "indicator"?: RenderProp<ContextMenuItemData>;
+  "itemProps"?: Record<string, unknown>;
+  "label"?: RenderProp<ContextMenuItemData>;
+  "nativeHaptics"?: NativeHapticsSetting;
+  "onPress"?: () => void;
+  "onCheckedChange"?: (checked: boolean) => void;
+  "onSelect"?: () => void;
+  "selected"?: boolean;
+  "separator"?: boolean;
+  "subMenu"?: ContextMenuItemData[];
+  "subMenuTitle"?: RenderProp<ContextMenuItemData> | false;
+  "triggerProps"?: Record<string, unknown>;
+  "subMenuProps"?: Record<string, unknown>;
+  "contentProps"?: Record<string, unknown>;
+  "subtitle"?: string;
+  "textValue"?: string;
+  "value": string;
+};
 
-export interface ContextMenuProps extends ComponentProps<typeof TamaguiContextMenu> {
-  arrow?: boolean;
-  arrowProps?: ContextMenuArrowProps;
-  contentProps?: ContextMenuContentProps;
-  itemProps?: Omit<ContextMenuItemProps, "children" | "onPress" | "onSelect">;
-  items?: ContextMenuItemData[];
+export type ContextMenuItemProps = Partial<ContextMenuItemData> & Record<string, unknown>;
+
+export type ContextMenuSubTriggerProps = ComponentProps<typeof ContextMenuPrimitive.SubTrigger> & {
+  iconClassName?: string;
+  inset?: boolean;
   nativeHaptics?: NativeHapticsSetting;
-  portalProps?: ContextMenuPortalProps;
-  trigger?: ReactNode;
-  triggerProps?: ContextMenuTriggerProps;
-}
+};
 
-export type ContextMenuTriggerProps = ComponentProps<typeof TamaguiContextMenu.Trigger>;
-export type ContextMenuPortalProps = ComponentProps<typeof TamaguiContextMenu.Portal>;
-export type ContextMenuContentProps = ComponentProps<typeof TamaguiContextMenu.Content>;
-export type ContextMenuGroupProps = ComponentProps<typeof TamaguiContextMenu.Group>;
-export type ContextMenuLabelProps = ComponentProps<typeof TamaguiContextMenu.Label>;
-export type ContextMenuItemProps = ComponentProps<typeof TamaguiContextMenu.Item>;
-export type ContextMenuItemTitleProps = ComponentProps<typeof TamaguiContextMenu.ItemTitle>;
-export type ContextMenuItemSubtitleProps = ComponentProps<typeof TamaguiContextMenu.ItemSubtitle>;
-export type ContextMenuItemIconProps = ComponentProps<typeof TamaguiContextMenu.ItemIcon>;
-export type ContextMenuItemImageProps = ComponentProps<typeof TamaguiContextMenu.ItemImage>;
-export type ContextMenuCheckboxItemProps = ComponentProps<typeof TamaguiContextMenu.CheckboxItem>;
-export type ContextMenuRadioGroupProps = ComponentProps<typeof TamaguiContextMenu.RadioGroup>;
-export type ContextMenuRadioItemProps = ComponentProps<typeof TamaguiContextMenu.RadioItem>;
-export type ContextMenuItemIndicatorProps = ComponentProps<typeof TamaguiContextMenu.ItemIndicator>;
-export type ContextMenuSeparatorProps = ComponentProps<typeof TamaguiContextMenu.Separator>;
-export type ContextMenuArrowProps = ComponentProps<typeof TamaguiContextMenu.Arrow>;
-export type ContextMenuSubProps = ComponentProps<typeof TamaguiContextMenu.Sub>;
-export type ContextMenuSubTriggerProps = ComponentProps<typeof TamaguiContextMenu.SubTrigger>;
-export type ContextMenuSubContentProps = ComponentProps<typeof TamaguiContextMenu.SubContent>;
-export type ContextMenuPreviewProps = ComponentProps<typeof TamaguiContextMenu.Preview>;
+export type ContextMenuSubContentProps = ComponentProps<typeof ContextMenuPrimitive.SubContent>;
+
+export type ContextMenuContentProps = ComponentProps<typeof ContextMenuPrimitive.Content> & {
+  overlayStyle?: StyleProp<ViewStyle>;
+  overlayClassName?: string;
+  portalHost?: string;
+  itemNativeHaptics?: NativeHapticsSetting;
+};
+
+export type ContextMenuItemComponentProps = ComponentProps<typeof ContextMenuPrimitive.Item> & {
+  inset?: boolean;
+  nativeHaptics?: NativeHapticsSetting;
+  variant?: "default" | "destructive";
+};
+
+export type ContextMenuCheckboxItemProps = ComponentProps<
+  typeof ContextMenuPrimitive.CheckboxItem
+> & {
+  nativeHaptics?: NativeHapticsSetting;
+};
+
+export type ContextMenuRadioItemProps = ComponentProps<typeof ContextMenuPrimitive.RadioItem> & {
+  nativeHaptics?: NativeHapticsSetting;
+};
+
+export type ContextMenuLabelProps = ComponentProps<typeof ContextMenuPrimitive.Label> & {
+  inset?: boolean;
+};
+export type ContextMenuSeparatorProps = ComponentProps<typeof ContextMenuPrimitive.Separator>;
+export type ContextMenuShortcutProps = TextProps;
+export type ContextMenuItemTitleProps = ContextMenuShortcutProps;
+export type ContextMenuItemSubtitleProps = ContextMenuShortcutProps;
+export type ContextMenuItemIconProps = { children?: ReactNode };
+export type ContextMenuItemImageProps = { children?: ReactNode };
+export type ContextMenuArrowProps = { children?: ReactNode };
+export type ContextMenuPreviewProps = { children?: ReactNode };
+export type ContextMenuAuxiliaryProps = { children?: ReactNode };
+export type ContextMenuNativeIosProps = {
+  shouldWaitForMenuToHideBeforeFiringOnPressMenuItem?: boolean;
+  [key: string]: unknown;
+};
+
+export type ContextMenuProps = ComponentProps<typeof ContextMenuPrimitive.Root> &
+  ContextMenuRootExtensions;
+
+export type ContextMenuRootExtensions = {
+  /** Internal handle used by NativeList's Android programmatic anchor. */
+  __menuRef?: RefObject<{ presentMenu: () => void } | null>;
+  __unsafeIosProps?: ContextMenuNativeIosProps;
+  items?: ContextMenuItemData[];
+  itemProps?: ContextMenuItemProps;
+  itemNativeHaptics?: NativeHapticsSetting;
+  native?: boolean;
+  nativeHaptics?: NativeHapticsSetting;
+  /** iOS native only. Defaults to false so item callbacks run before menu-dismiss animation. */
+  nativeShouldWaitForMenuToHideBeforeFiringOnPressMenuItem?: boolean;
+  onOpenWillChange?: (open: boolean) => void;
+  trigger?: RenderProp<ContextMenuRenderContext>;
+  triggerProps?: Omit<ComponentProps<typeof ContextMenuPrimitive.Trigger>, "children"> &
+    Record<string, unknown>;
+};

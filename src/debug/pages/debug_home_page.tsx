@@ -1,6 +1,8 @@
-import { Maximize2, Minimize2 } from "@tamagui/lucide-icons-2";
+import { Maximize2, Minimize2 } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { Platform, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import {
   NativeList,
   NativeListButtonItem,
@@ -9,12 +11,10 @@ import {
   NativeListSection,
   NativeListSwitchItem,
   Slider,
-} from "rn-ui-kit/core";
-
+} from "../../core/components/ui";
 import type { RnUiKitDebugRouteDefinition, RnUiKitDebugRouteKey } from "../types";
 
 export function RnUiKitDebugHomePage({
-  layoutHost = "default",
   openSectionsInSheet,
   onRefresh,
   pages,
@@ -37,9 +37,11 @@ export function RnUiKitDebugHomePage({
   onOpenSectionsInSheetChange?: (openInSheet: boolean) => void;
 }) {
   const isNativeIosPage = Platform.OS === "ios";
-  const usesNativeIosScrollEdgeHeader = isNativeIosPage;
+  const insets = useSafeAreaInsets();
   const tracksScrollEdgeHeader =
-    Platform.OS === "android" || Platform.OS === "web" || usesNativeIosScrollEdgeHeader;
+    Platform.OS === "android" || Platform.OS === "web" || isNativeIosPage;
+  const horizontalContentInset =
+    Platform.OS === "ios" ? undefined : { paddingLeft: insets.left, paddingRight: insets.right };
   const sections = Array.from(
     pages.reduce((groups, page) => {
       const section = page.section ?? "调试分区";
@@ -54,7 +56,8 @@ export function RnUiKitDebugHomePage({
     <NativeList
       onRefresh={onRefresh}
       automaticallyAdjustsScrollIndicatorInsets={isNativeIosPage ? true : undefined}
-      contentInsetAdjustmentBehavior={usesNativeIosScrollEdgeHeader ? "automatic" : undefined}
+      contentInsetAdjustmentBehavior={isNativeIosPage ? "automatic" : undefined}
+      contentContainerStyle={horizontalContentInset}
       tracksNavigationBarScrollEdge={tracksScrollEdgeHeader}
     >
       {sections.map(([section, sectionPages]) => (
@@ -76,7 +79,7 @@ export function RnUiKitDebugHomePage({
         <NativeListSwitchItem
           switchProps={{
             checked: openSectionsInSheet,
-            onCheckedChange: onOpenSectionsInSheetChange,
+            onCheckedChange: onOpenSectionsInSheetChange ?? (() => undefined),
           }}
           title="分区嵌套 NativeSheet"
         />
@@ -106,8 +109,6 @@ function SectionSheetPositionSlider({
   onPositionChange?: (position: number) => void;
   position: number;
 }) {
-  // Changing a nested TrueSheet detent during the native control's drag makes
-  // the sheet transition cancel that active touch stream on iOS and Android.
   const [draftPosition, setDraftPosition] = useState(position);
   const draftPositionRef = useRef(position);
 
@@ -118,7 +119,7 @@ function SectionSheetPositionSlider({
 
   return (
     <View style={styles.detentSliderRow}>
-      <Minimize2 color="$color10" size={18} />
+      <Minimize2 color="#71717a" size={18} />
       <View style={styles.detentSliderControl}>
         <Slider
           max={2}
@@ -133,7 +134,7 @@ function SectionSheetPositionSlider({
           value={[draftPosition]}
         />
       </View>
-      <Maximize2 color="$color10" size={18} />
+      <Maximize2 color="#71717a" size={18} />
     </View>
   );
 }

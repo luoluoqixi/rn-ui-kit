@@ -7,11 +7,10 @@ import {
   type GlassEffectSearchBarProps,
   type GlassEffectSearchBarCancelButtonProps,
   type GlassEffectSearchBarTrailingContext,
-  type ContextMenuItemData,
-  Menu,
+  Dropdown,
   type NativeListContextMenuProps,
   type NativeListInputItemProps,
-  NativeListMenuItem,
+  NativeListDropdownItem,
   useNativeListEditMode,
   type NativeListRootProps,
   type NativeListSelectionId,
@@ -24,12 +23,11 @@ import {
   type KeyboardHiddenConfirmation,
   type KeyboardVisibilityOptions,
   type KeyboardVisibilityPhase,
-  type MenuProps,
-  type NativeListMenuItemProps,
+  type NativeListDropdownItemProps,
   type NativeTriggerPressableProps,
   type NativeTriggerProps,
-  type SelectNativeTriggerPressableProps,
-  type SelectNativeTriggerProps,
+  type SelectProps,
+  Textarea,
 } from "rn-ui-kit";
 import {
   RnUiKitDebugPanel,
@@ -42,13 +40,12 @@ import {
 void Button;
 void GlassEffect;
 void GlassEffectSearchBar;
-void Menu;
-void NativeListMenuItem;
+void Dropdown;
+void NativeListDropdownItem;
 void useNativeListEditMode;
 void NativeTrigger;
 void NativeTriggerPressable;
-void Select.NativeTrigger;
-void Select.NativeTriggerPressable;
+void Textarea;
 void useKeyboardAvoidance;
 void useKeyboardVisibility;
 void RnUiKitDebugPanel;
@@ -58,15 +55,13 @@ type PublicGlassEffectProps = GlassEffectProps;
 type PublicGlassEffectSearchBarProps = GlassEffectSearchBarProps;
 type PublicGlassEffectSearchBarCancelButtonProps = GlassEffectSearchBarCancelButtonProps;
 type PublicGlassEffectSearchBarTrailingContext = GlassEffectSearchBarTrailingContext;
-type PublicContextMenuItemData = ContextMenuItemData;
 type PublicNativeListContextMenuProps = NativeListContextMenuProps;
 type PublicNativeTriggerProps = NativeTriggerProps;
 type PublicNativeTriggerPressableProps = NativeTriggerPressableProps;
-type PublicNativeListMenuItemProps = NativeListMenuItemProps;
+type PublicNativeListDropdownItemProps = NativeListDropdownItemProps;
 type PublicNativeListRootProps = NativeListRootProps;
 type PublicNativeListSelectionId = NativeListSelectionId;
-type PublicSelectNativeTriggerProps = SelectNativeTriggerProps;
-type PublicSelectNativeTriggerPressableProps = SelectNativeTriggerPressableProps;
+type PublicSelectProps = SelectProps;
 type PublicDebugProps = RnUiKitDebugPanelProps;
 type PublicDebugPageScreenOptions = RnUiKitDebugPanelPageScreenOptions;
 type PublicDebugNativeSheetScreenOptions = RnUiKitDebugPanelNativeSheetScreenOptions;
@@ -80,7 +75,7 @@ const hostPanelProps = {
   navigationMode: "host",
   nativeSheetScreenOptions: { headerShown: false },
   pageScreenOptions: { headerShown: false },
-  panelSheetProps: { snapPoints: [92], snapPointsMode: "percent" },
+  panelSheetProps: { snapPoints: [0.92] },
 } satisfies RnUiKitDebugPanelProps;
 
 void hostPanelProps;
@@ -120,9 +115,7 @@ void ({} as PublicKeyboardVisibilityPhase);
 
 const searchBarCancelButtonProps = {
   cancelButtonProps: {
-    chromeless: true,
     nativeSystemImageSize: 24,
-    opacity: 0.8,
     title: "关闭",
   },
   cancelButtonStyle: "glassProminent",
@@ -131,7 +124,7 @@ const searchBarCancelButtonProps = {
 void searchBarCancelButtonProps;
 
 const nativeIconButtonProps = {
-  native: "swift-ui",
+  native: true,
   nativeButtonStyle: "glass",
   nativeSystemImage: "xmark",
   nativeSystemImageSize: 22,
@@ -148,34 +141,11 @@ const nativeIconButtonProps = {
 void nativeIconButtonProps;
 
 const nativeTextButtonProps = {
-  native: "swift-ui",
+  native: true,
   title: "完成",
 } satisfies ButtonProps;
 
 void nativeTextButtonProps;
-
-const nativeMenuProps = {
-  nativeTrigger: true,
-  nativeTriggerIcon: "chevrons-up-down",
-  nativeTriggerLabel: "菜单操作",
-  items: [
-    {
-      icon: "更多操作图标",
-      iconProps: {
-        androidIconName: "ic_menu_more",
-        ios: { name: "ellipsis.circle", weight: "semibold" },
-      },
-      label: "更多操作",
-      subMenu: [
-        { label: "编辑", value: "edit" },
-        { label: "分隔线", separator: true, value: "nested-separator" },
-        { destructive: true, label: "删除", value: "delete" },
-      ],
-      subMenuTitle: "操作",
-      value: "more",
-    },
-  ],
-} satisfies MenuProps;
 
 const nativeTriggerProps = {
   accessibilityHint: "打开菜单",
@@ -185,15 +155,22 @@ const nativeTriggerProps = {
   onLongPress: () => {},
 } satisfies NativeTriggerProps;
 
-void nativeMenuProps;
 void nativeTriggerProps;
 
+const selectProps = {
+  items: [{ label: "选项", value: "option" }],
+  onValueChange: (_value: string | null) => {},
+  value: "option",
+} satisfies SelectProps;
+
+void selectProps;
+
 const nativeListMenuItemProps = {
-  menuProps: {
+  dropdownProps: {
     items: [{ label: "编辑", value: "edit" }],
   },
   title: "更多操作",
-} satisfies NativeListMenuItemProps;
+} satisfies NativeListDropdownItemProps;
 
 void nativeListMenuItemProps;
 
@@ -233,17 +210,15 @@ void nativeListContextMenuProps;
 
 export type {
   PublicCoreProps,
-  PublicContextMenuItemData,
   PublicDebugNativeSheetScreenOptions,
   PublicDebugPageScreenOptions,
   PublicDebugProps,
   PublicDebugSheetProps,
   PublicNativeTriggerPressableProps,
   PublicNativeTriggerProps,
-  PublicNativeListMenuItemProps,
+  PublicNativeListDropdownItemProps,
   PublicNativeListContextMenuProps,
   PublicNativeListRootProps,
   PublicNativeListSelectionId,
-  PublicSelectNativeTriggerPressableProps,
-  PublicSelectNativeTriggerProps,
+  PublicSelectProps,
 };

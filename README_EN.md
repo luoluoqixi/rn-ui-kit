@@ -4,174 +4,80 @@
 
 [Live demo (web)](https://rn-ui-kit.luoluoqixi.com/)
 
-A cross-platform UI wrapper kit for Expo, React Native, and React Native Web.
-Built on Tamagui, `rn-ui-kit` exposes a shared API over web implementations,
-React Native implementations, and native platform capabilities. It also provides
-theming, overlays, gestures, safe-area handling, toasts, and navigation helpers.
-
+A cross-platform UI kit for the maintainer's Expo apps. Base components use React Native Reusables source and APIs with Uniwind styling. Components that need system capabilities keep dedicated iOS, Android, and Web implementations in rn-ui-kit.
 
 > [!WARNING]
-> This library is currently used only in some of my own apps and is not intended
-> to be a general-purpose UI library for everyone. Do not assume that its APIs,
-> compatibility, or release process will suit other projects.
-
-## Features
-
-- A shared component API for iOS, Android, and Web
-- Tamagui themes, tokens, responsive styles, and animations
-- A `RootProvider` that wires up gestures, safe areas, sheets, toasts, themes,
-  and native dialogs
-- Light, dark, system, and custom accent theme support
-- Native implementations or cross-platform fallbacks for menus, pickers, sheets,
-  toasts, haptics, and more
-- A component debug catalog and an Expo example app
-- Bun patch synchronization for required upstream fixes
-- Complete TypeScript type exports
+> This is a personal UI library. It does not promise the API stability or compatibility range expected from a general-purpose package.
 
 ## Runtime
-
-The repository currently targets these major versions:
 
 | Technology | Version |
 | --- | --- |
 | Expo | 55 |
 | React Native | 0.83.9 |
 | React / React DOM | 19.2.5 |
-| Tamagui | 2.7.7 |
+| Uniwind | 1.x |
+| Tailwind CSS | 4.x |
 | TypeScript | 5.9.2 |
 | Package manager | Bun |
 
-`rn-ui-kit` is now a single package. Its default entry exports only core APIs,
-while debug APIs are opt-in through `rn-ui-kit/debug`. Runtime frameworks and
-native modules are declared in
-the root [`package.json`](./package.json) under
-`peerDependencies`. Use that file as the source of truth and keep Expo, React
-Native, Tamagui, and native module versions compatible.
-
-## Quick start
-
-### Run the example app
-
-```bash
-bun install
-bun install --cwd examples/app
-bun run typecheck
-
-# Start the Expo development server
-bun run --cwd examples/app start
-
-# Or launch a specific platform
-bun run --cwd examples/app web
-bun run --cwd examples/app android
-bun run --cwd examples/app ios
-```
-
-The Android and iOS commands require their respective native development
-toolchains. The Web example can run directly in a browser.
-
-### Use the package in the local example
-
-The repository root is the `rn-ui-kit` package. The example app is an
-independent Bun project and consumes it through a local directory dependency:
-
-```json
-{
-  "dependencies": {
-    "rn-ui-kit": "file:../.."
-  }
-}
-```
-
-### Add the package to an external app
-
-Compiled standalone packages are stored in `rn-ui-kit-<version>` release
-branches. These branches contain no workspace and do not require the consuming
-app to compile TypeScript:
-
-```bash
-bun add github:luoluoqixi/rn-ui-kit#rn-ui-kit-<version>
-```
-
-For a private repository, use SSH:
-
-```bash
-bun add "git+ssh://git@github.com/luoluoqixi/rn-ui-kit.git#rn-ui-kit-<version>"
-```
-
-The consuming app must still satisfy the
-[`peerDependencies`](./package.json) for Expo, React Native,
-Tamagui, and the required native modules.
-
-## Screenshots
-
-| Android | iOS 18 | iOS 26 |
-| :---: | :---: | :---: |
-| <a href="./docs/SCREENSHOTS.md"><img src="./docs/screenshots/android/001.jpg" alt="rn-ui-kit example home screen on Android" width="280"></a> | <a href="./docs/SCREENSHOTS.md"><img src="./docs/screenshots/ios18/001.jpg" alt="rn-ui-kit example home screen on iOS 18" width="280"></a> | <a href="./docs/SCREENSHOTS.md"><img src="./docs/screenshots/ios26/001.jpg" alt="rn-ui-kit example home screen on iOS 26" width="280"></a> |
-
-<p align="center">
-  <a href="./docs/SCREENSHOTS.md">View the complete Android, iOS 18, and iOS 26 screenshot comparison</a>
-</p>
+Only Expo apps are supported; bare React Native CLI apps are out of scope. React Native and native dependencies are pinned in the root [`package.json`](./package.json). `@rn-primitives/*` packages are internal dependencies and do not need to be declared by consuming apps.
 
 ## App setup
 
-### 1. Initialize platform integrations
+Install a release branch together with Uniwind:
 
-Load the initialization module before other UI imports in the app entry point:
-
-```tsx
-import "rn-ui-kit/initialize";
+```bash
+bun add github:luoluoqixi/rn-ui-kit#rn-ui-kit-<version>
+bun add uniwind tailwindcss
 ```
 
-This initializes the Tamagui integrations for gestures, Zeego menus, native
-toasts, gradients, keyboard control, Teleport portals, and Worklets.
+Create `global.css` in the app:
 
-### 2. Configure Tamagui
+```css
+@import "tailwindcss";
+@import "uniwind";
+@import "rn-ui-kit/styles.css";
 
-```tsx
-// tamagui.config.ts
-import { defaultConfig } from "@tamagui/config/v5";
-import { animations } from "@tamagui/config/v5-css";
-import { animations as animationsReanimated } from "@tamagui/config/v5-reanimated";
-import { createTamagui, isWeb } from "tamagui";
+@source "./src";
+@source "./node_modules/rn-ui-kit/src";
+@source "./node_modules/rn-ui-kit/dist";
+```
 
-import { themes } from "./themes";
+Adjust the source paths when using a local source dependency. The repository example scans `../../src` and `../../dist`.
 
-const config = createTamagui({
-  ...defaultConfig,
-  animations: isWeb ? animations : animationsReanimated,
-  themes,
+Configure Metro:
+
+```js
+const { getDefaultConfig } = require("expo/metro-config");
+const { withUniwindConfig } = require("uniwind/metro");
+
+const config = getDefaultConfig(__dirname);
+
+module.exports = withUniwindConfig(config, {
+  cssEntryFile: "./global.css",
+  dtsFile: "./uniwind-types.d.ts",
 });
-
-export default config;
-
-type AppConfig = typeof config;
-
-declare module "tamagui" {
-  interface TamaguiCustomConfig extends AppConfig {}
-}
 ```
 
-See the example
-[`tamagui.config.ts`](./examples/app/tamagui.config.ts),
-[`themes.ts`](./examples/app/themes.ts), and
-[`tamagui.build.ts`](./examples/app/tamagui.build.ts) for a complete setup.
-
-### 3. Add the root provider
+Load initialization and CSS before the UI:
 
 ```tsx
 import "rn-ui-kit/initialize";
+import "./global.css";
+```
 
-import { Button, RootProvider, Text } from "rn-ui-kit";
-import { YStack } from "tamagui";
+See [`examples/app`](./examples/app) for the complete configuration. Apps do not need the RNR CLI, `components.json`, or registry configuration.
 
-import config from "./tamagui.config";
+## Provider and themes
+
+```tsx
+import { RootProvider, Text } from "rn-ui-kit";
+import { View } from "react-native";
 
 export default function App() {
   return (
     <RootProvider
-      tamaguiConfig={config}
-      accentThemeName="ocean"
-      accentThemeNames={["ocean", "sakura", "forest"]}
       preferences={{
         appearance: {
           accentColor: "ocean",
@@ -180,392 +86,64 @@ export default function App() {
         },
       }}
     >
-      <YStack flex={1} items="center" justify="center" gap="$4">
+      <View className="bg-background flex-1 items-center justify-center">
         <Text>Hello, rn-ui-kit</Text>
-        <Button onPress={() => console.log("pressed")}>Get started</Button>
-      </YStack>
+      </View>
     </RootProvider>
   );
 }
 ```
 
-`RootProvider` provides:
+Themes follow the RNR New York semantic variable model: `background`, `foreground`, `primary`, `accent`, `muted`, `card`, `popover`, `border`, and `ring`. rn-ui-kit changes semantic accent colors only and does not expose numbered color scales.
 
-- `GestureHandlerRootView` and `SafeAreaProvider`
-- The Tamagui theme context
-- Sheet and portal support
-- The toast viewport
-- Native dialog and haptics contexts
-- Color-scheme and accent-theme preferences
+Built-in accents: `mono`, `ocean`, `sakura`, `lavender`, `sunset`, `forest`, `ruby`, `golden`, and `aqua`.
 
-### 4. Configure Babel and Web styles
-
-The example uses `babel-preset-expo`, `@tamagui/babel-plugin`, and
-`react-native-worklets/plugin`. See
-[`babel.config.js`](./examples/app/babel.config.js) for the complete
-configuration.
-
-After generating the Tamagui CSS for Web, import it from the app entry point:
-
-```tsx
-import "./tamagui.generated.css";
-```
-
-Generate it with:
-
-```bash
-bun --cwd examples/app generate:tamagui
-```
-
-## Usage
-
-### Toast
-
-```tsx
-import { Button, useToast } from "rn-ui-kit";
-
-export function SaveButton() {
-  const { toast } = useToast();
-
-  return (
-    <Button
-      onPress={() =>
-        toast.success("Saved", {
-          description: "The configuration was stored locally.",
-        })
-      }
-    >
-      Save
-    </Button>
-  );
-}
-```
-
-### Dialog
-
-```tsx
-import { Button, Dialog, Text } from "rn-ui-kit";
-
-export function ConfirmDialog() {
-  return (
-    <Dialog
-      title="Delete this project?"
-      description="This action cannot be undone."
-      trigger={<Button>Open dialog</Button>}
-      actions={
-        <Dialog.Close asChild>
-          <Button>Confirm</Button>
-        </Dialog.Close>
-      }
-    >
-      <Text>Confirm that you want to continue.</Text>
-    </Dialog>
-  );
-}
-```
-
-### NativeList: native iOS lists
-
-On iOS, `NativeList` uses the native `List` and `Section` components from
-`@expo/ui/swift-ui` by default, with the system `insetGrouped` list style.
-Navigation rows, selection indicators, switches, and selects use SwiftUI
-controls where possible, naturally following system typography, colors,
-feedback, and scrolling behavior.
-
-```tsx
-import { useState } from "react";
-import {
-  NativeList,
-  NativeListInputItem,
-  NativeListItem,
-  NativeListNavigationItem,
-  NativeListSection,
-  NativeListSelectItem,
-  NativeListSwitchItem,
-  NativeListTextAreaItem,
-  Text,
-} from "rn-ui-kit";
-
-export function SettingsList() {
-  const [autoSync, setAutoSync] = useState(true);
-  const [themeMode, setThemeMode] = useState<string | null>("system");
-  const [workspaceName, setWorkspaceName] = useState("rn-ui-kit");
-  const [workspaceNote, setWorkspaceNote] = useState("");
-
-  return (
-    <NativeList>
-      <NativeListSection title="Name" footer="A native clear button appears while editing.">
-        <NativeListInputItem
-          subtitle="A single-line field displayed at the trailing edge"
-          title="Workspace name"
-          inputProps={{
-            autoCapitalize: "none",
-            onChangeText: setWorkspaceName,
-            value: workspaceName,
-          }}
-        />
-      </NativeListSection>
-      <NativeListSection
-        title="Workspace"
-        footer="Changes are saved automatically."
-        trailing={<Text color="$blue10">Show all</Text>}
-      >
-        <NativeListNavigationItem
-          sfSymbol="person.2.fill"
-          iconColor="#7c3aed"
-          title="Members"
-          subtitle="Invitations, roles, and access"
-          titleFontSize={17}
-          subtitleFontSize={13}
-          onPress={() => console.log("open members")}
-        />
-        <NativeListItem
-          chevron
-          title="Storage"
-          trailing={<Text color="$color10">27.74 GB</Text>}
-        />
-        <NativeListSwitchItem
-          title="Automatic sync"
-          switchProps={{
-            checked: autoSync,
-            onCheckedChange: setAutoSync,
-          }}
-        />
-        <NativeListSelectItem
-          title="Theme mode"
-          selectProps={{
-            value: themeMode ?? undefined,
-            onValueChange: setThemeMode,
-            options: [
-              { label: "Light", value: "light" },
-              { label: "Dark", value: "dark" },
-              { label: "System", value: "system" },
-            ],
-          }}
-        />
-      </NativeListSection>
-      <NativeListSection title="Notes">
-        <NativeListTextAreaItem
-          textAreaProps={{
-            numberOfLines: 4,
-            onChangeText: setWorkspaceNote,
-            value: workspaceNote,
-          }}
-        />
-      </NativeListSection>
-    </NativeList>
-  );
-}
-```
-
-Notes:
-
-- Android and Web automatically use the cross-platform implementation built
-  with `FlashList` and React Native views.
-- Pass `<NativeList native={false}>` on iOS to opt into the same fallback
-  appearance.
-- `NativeList`, `NativeListSection`, and every item accept `contextMenuProps`,
-  including `items`, `contentProps`, `itemProps`, and open-state callbacks.
-  Resolution follows Item > Section > NativeList; pass `contextMenuProps={false}`
-  on an item or section to stop inheritance. Long press opens it on iOS/Android,
-  while right click opens it on Web. Context menus are temporarily disabled in
-  edit mode to avoid conflicting with multi-selection. `ContextMenuItemData`
-  supports `icon`, `indicator`, `selected`, `subtitle`, `subMenu`, and
-  `subMenuTitle`; native Android menus support one submenu level.
-- Pass `editMode` to `NativeList` to enable Notes-style multi-selection on iOS,
-  Android, and Web. Row actions are replaced with selection toggles. Use
-  `selectedIds` / `onSelectedIdsChange` for controlled state, `defaultSelectedIds`
-  for uncontrolled state, and a row `selectionId` for a stable identifier. A native
-  iOS List defaults to `iosEditModeVariant="native"`, allowing SwiftUI List to own
-  its system selection indicators, selected background, and fast drag selection.
-  Set `iosEditModeVariant="custom"` to retain the existing theme pressed background
-  and custom selection implementation. Only that iOS variant uses `editModeIcon` /
-  `editModeSelectedIcon` or the preferred `editModeSfSymbol` /
-  `editModeSelectedSfSymbol`. Android, Web, and fallback always use the custom
-  implementation and continue to support React Native custom icons.
-  Pass `selectionDisabled` to an item that must not participate in multi-selection;
-  it hides that row's selection indicator in edit mode and prevents changes to
-  `selectedIds`.
-- Plain strings or numbers are recommended for a native row's `title`,
-  `subtitle`, and `value`. Complex React nodes that cannot map directly to
-  SwiftUI fall back to the cross-platform row implementation.
-- Every base item supports `titleColor` / `titleFontSize`, `subtitleColor` /
-  `subtitleFontSize`, and `valueColor` / `valueFontSize`. A
-  `NativeListSelectItem` also applies the value styles to its selected label.
-- Navigation rows and other items with an enabled chevron support
-  `chevronColor`; when omitted, the platform's default assist color is used.
-- Fallback items, including `NativeListCustomItem`, support `backgroundColor`,
-  `hoverBackgroundColor`, and `pressBackgroundColor`; native iOS lists ignore
-  these background props. When omitted, the existing fallback theme colors are
-  preserved.
-- Every item, including `NativeListCustomItem`, supports `paddingHorizontal`,
-  `paddingVertical`, `paddingTop`, `paddingBottom`, `paddingLeft`, and
-  `paddingRight`; individual-edge props take precedence over horizontal or
-  vertical values.
-- Use `icon` for a custom React Native icon and `sfSymbol` for a native iOS
-  SF Symbol. Use `iconColor` and `iconSize` for SF Symbols. `sfSymbol` is not
-  rendered in fallback mode. Both props can be provided: native iOS mode
-  prefers `sfSymbol`, while other platforms and fallback mode use `icon`.
-- `iconSlotWidth` controls both the native iOS SF Symbol column and the fallback
-  custom-icon column. Native iOS defaults to `Math.max(24, iconSize ?? 20)`;
-  fallback mode keeps the custom icon's intrinsic width when omitted. Give rows
-  the same `iconSlotWidth` to keep their title leading edges aligned.
-- `NativeListSection` supports `titleColor` and `titleFontSize`. Style complex
-  React-node headers directly.
-- On iOS, `NativeListSelectItem` now passes every picker prop declared by the
-  existing `NativePickerSwiftUI` interface, including dropdown
-  alignment/offset, native-trigger customization, and `onOpenChange`; behavior
-  remains defined by the existing picker implementation. Web-, Tamagui
-  viewport-, and custom-sheet props do not apply to this native picker path.
-- `NativeListCustomItem` can host custom React Native content inside the native
-  list.
-- `NativeListInputItem` provides a single-line text field that fills a list row.
-  Pass normal `Input` props such as `value`, `onChangeText`, `placeholder`, and
-  `autoFocus` through `inputProps`. With `title` or `subtitle`, the text is shown
-  on the leading edge and the input on the trailing edge. On iOS it shows a clear
-  button while editing by default; use `inputProps.clearButtonMode` to override it.
-  The Web fallback input background is transparent by default and can be overridden
-  with `inputProps.style.backgroundColor`. In NativeList edit mode, native iOS
-  single-line and multiline inputs render as read-only SwiftUI text snapshots,
-  preserving the current value or placeholder while row taps remain dedicated to selection.
-- `NativeListItem.trailing` renders custom row-end content, while
-  `NativeListSection.trailing` renders content on the right of a section header,
-  such as a “Show all” action. On iOS 15, headers containing complex React Native
-  trailing content are rendered as the Section's transparent first row, while
-  the first content row receives restored top corners to avoid the system reuse bug.
-- `NativeListTextAreaItem` provides a full-row multiline text field. Pass normal
-  `TextArea` props through `textAreaProps`.
-- Use `initialScrollTarget` with a row's `nativeScrollId` for initial scroll
-  positioning in the native iOS list.
-
-See
-[`collection_examples.tsx`](./src/debug/pages/component_examples/examples/collection_examples.tsx)
-for a complete interactive example.
+`RootProvider` installs gesture, safe-area, color scheme, navigation theme, sheet, portal, toast, native dialog, and haptics contexts.
 
 ## Components
 
 | Category | Components |
 | --- | --- |
-| Actions and feedback | `Button`, `Checkbox`, `Switch`, `ToggleGroup`, `Slider`, `Spinner`, `Progress`, `Toast`, `NativeDialog` |
-| Forms | `Input`, `TextArea`, `Select`, `RadioGroup`, `Form`, `Label` |
-| Layout and composition | `Accordion`, `Tabs`, `SplitView` / `SplitLayout`, `Card` |
-| Overlays | `Dialog`, `AlertDialog`, `ContextMenu`, `Menu`, `Popover`, `Sheet` / `NativeSheet`, `Tooltip` |
-| Lists and scrolling | `NativeList`, `ListGroup`, `ListItem`, `FlashList`, `ScrollView` |
-| Display | `Avatar`, `Text`, `Image`, `Separator`, `Link` |
-| Infrastructure | `RootProvider`, `UIProvider`, theme helpers, navigation helpers, portals, and platform utilities |
+| Actions and feedback | `Button`, `Checkbox`, `Switch`, `Toggle`, `ToggleGroup`, `Slider`, `Spinner`, `Progress`, `Toast`, `NativeDialog` |
+| Forms | `Input`, `Textarea`, `Select`, `RadioGroup`, `Label` |
+| Layout | `Accordion`, `AspectRatio`, `Collapsible`, `Tabs`, `SplitView` / `SplitLayout`, `Card`, `Separator` |
+| Overlays | `Dialog`, `AlertDialog`, `ContextMenu`, `Dropdown`, `Menubar`, `Popover`, `Sheet` / `NativeSheet`, `Tooltip` |
+| Lists | `NativeList`, `ScrollView` |
+| Display | `Alert`, `Avatar`, `Badge`, `Skeleton`, `Text`, `Icon`, `Link`, `GlassEffect` |
 
-All public exports are listed in
-[`src/core/components/ui/index.ts`](./src/core/components/ui/index.ts).
-Each component directory also exports its prop types.
+`Form`, `Image`, `ListGroup`, `ListItem`, `FlashList`, `HoverCard`, and the old `Menu` API were removed. `TextArea` is now `Textarea`, and `Menu` is now `Dropdown`.
+
+In the first migration baseline, `Select`, `Slider`, and `Spinner` are compile-safe placeholders. Select and Slider source references live under `legacy/` for later focused migrations. Non-native Toast UI is also a no-op; native Toast continues to use Burnt.
+
+`Dropdown` and `ContextMenu` use RNR primitives on Web and a shared Zeego-backed native data model on iOS and Android. Both compound APIs and rn-ui-kit extensions such as `items`, native icons, haptics, and native triggers are available.
+
+`NativeList` keeps its SwiftUI implementation on iOS. Android and Web use a React Native fallback with sections, input rows, switch rows, menus, context menus, refresh, and edit-mode selection.
 
 ## Patch synchronization
 
-The kit relies on a small set of upstream patches. After installing app
-dependencies, run:
+Use the existing patch workflow:
 
 ```bash
 bun run sync-patches
 ```
 
-Add the corresponding app script:
-
-```json
-{
-  "scripts": {
-    "sync-patches": "rn-ui-sync-patches"
-  }
-}
-```
-
-The command copies the kit patches into the app's `patches/` directory and
-registers them in `package.json` under `patchedDependencies`. If the app needs
-to keep its own patch for a dependency, exclude the matching kit patch:
-
-```json
-{
-  "rnUiKitSyncPatches": {
-    "exclude": ["@expo/cli@55.0.32"]
-  }
-}
-```
-
-Excluded dependencies are neither copied nor registered.
-
-## Repository structure
-
-```text
-rn-ui-kit/
-├─ src/
-│  ├─ core/               # Components, providers, themes, and platform adapters
-│  ├─ debug/              # Component catalog, debug pages, and examples
-│  ├─ index.ts            # Default entry; exports core only
-│  ├─ debug.ts            # rn-ui-kit/debug subpath
-│  └─ initialize.ts       # rn-ui-kit/initialize subpath
-├─ patches/               # Upstream patches synchronized into consuming apps
-├─ deprecated_patches/    # Archived patches that are no longer active
-├─ test/                  # Tests and public API type checks
-├─ examples/
-│  └─ app/                # Expo app for iOS, Android, and Web
-├─ scripts/
-│  ├─ sync-patches.mjs    # rn-ui-sync-patches
-│  ├─ android/            # Builds and publishes the Android example APK
-│  └─ release/            # Version, package, and release branch scripts
-├─ package.json           # Library manifest, build, and release commands
-└─ bun.lock
-```
+The synchronizer copies active patches from `patches/` and updates the app's `patchedDependencies`. Use `rnUiKitSyncPatches.exclude` for app-owned patches. Run `bun run clear-patch-cache --dry-run` before clearing Bun's patched package cache when needed.
 
 ## Development
 
 ```bash
-# Compile rn-ui-kit into dist
-bun run build
-
-# Type-check the package and example app
+bun install
+bun install --cwd examples/app
 bun run typecheck
-
-# Type-check rn-ui-kit only
-bun run typecheck:library
-
-# Type-check the example app
-bun run --cwd examples/app typecheck
+bun run build
+bun run test
 ```
 
-When adding or changing a component, consider adding a matching entry to the
-`src/debug` component catalog so its behavior and visuals
-can be checked on iOS, Android, and Web.
+The one-time RNR CLI source snapshot lives in the Git-ignored `.temp/rnr-source` directory. Production source has no CLI dependency; future updates should be reviewed against the registry source manually.
 
-## Build and release
+Package entries:
 
-```bash
-# Update versions and synchronize bun.lock
-bun run set-version 1.0.1
-
-# Update versions, create a signed commit, and create the tag
-# Requires a clean worktree
-bun run set-version 1.0.1 --commit
-
-# Explicitly include pre-existing worktree changes in the release commit
-bun run set-version 1.0.1 --commit --force
-
-# Also build the release branch and push to existing origin/nas remotes
-bun run set-version 1.0.1 --push
-
-# Generate only the release directory and tarball
-bun run package-release --pack-only
-
-# Generate the release directory, tarball, and local rn-ui-kit-1.0.1 branch
-bun run package-release
-
-# Push the release branch after verifying it
-git push -u origin rn-ui-kit-1.0.1
-```
-
-The release build compiles the root package directly; it
-does not merge packages dynamically. A release branch contains only compiled
-`dist` output, package.json, README, LICENSE, patches, and runtime scripts. See
-[`scripts/release/README.md`](./scripts/release/README.md) for the complete
-release process.
-
-## License
-
-[MIT](./LICENSE) © 2026 luoluoqixi
+- `rn-ui-kit`: core API
+- `rn-ui-kit/debug`: debug pages
+- `rn-ui-kit/initialize`: platform initialization
+- `rn-ui-kit/styles.css`: semantic variables and RNR style foundation

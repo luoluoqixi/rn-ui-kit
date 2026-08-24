@@ -11,6 +11,7 @@ import { SheetProvider } from "../sheet/provider";
 import {
   resolveAccentThemeName,
   resolveColorSchemeSettings,
+  resolveUiColors,
   resolveUiPreferences,
 } from "../utils/theme";
 import type { RootProviderProps } from "./types";
@@ -32,12 +33,13 @@ export function RootProvider({
   const resolvedAccentThemeName = resolveAccentThemeName(
     accentThemeName ?? resolvedPreferences.appearance.accentColor,
   );
+  const semanticColors = resolveUiColors(resolvedColorScheme, resolvedAccentThemeName);
   const resolvedNavigationTheme =
     navigationTheme ?? (resolvedColorScheme === "dark" ? DarkTheme : DefaultTheme);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
+    <GestureHandlerRootView style={{ backgroundColor: semanticColors.background, flex: 1 }}>
+      <SafeAreaProvider style={{ backgroundColor: semanticColors.background }}>
         <UIProvider
           {...providerProps}
           accentThemeName={resolvedAccentThemeName}

@@ -1,4 +1,4 @@
-import { ArrowLeft } from "@tamagui/lucide-icons-2";
+import { ArrowLeft } from "lucide-react-native";
 import { createElement } from "react";
 import { Platform } from "react-native";
 

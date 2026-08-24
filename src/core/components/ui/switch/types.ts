@@ -1,14 +1,31 @@
-import type { ComponentProps, ReactNode } from "react";
-import type { Label as TamaguiLabel, Switch as TamaguiSwitch } from "tamagui";
+import type { ComponentProps } from "react";
+import type * as SwitchPrimitives from "@rn-primitives/switch";
+import type { StyleProp, ViewStyle } from "react-native";
 
-import type { NativeHapticsSetting } from "../utils";
+import type { NativeHapticsSetting, RenderProp } from "../utils";
 
-export interface SwitchProps extends ComponentProps<typeof TamaguiSwitch> {
-  label?: ReactNode;
-  labelPosition?: "start" | "end";
-  labelProps?: ComponentProps<typeof TamaguiLabel>;
-  nativeHaptics?: NativeHapticsSetting;
-  thumbProps?: SwitchThumbProps;
+export type SwitchRenderContext = {
+  checked: boolean;
+  disabled?: boolean;
+};
+
+export type SwitchProps = ComponentProps<typeof SwitchPrimitives.Root> & {
+  containerClassName?: string;
+  defaultChecked?: boolean;
+  label?: RenderProp<SwitchRenderContext>;
+  labelClassName?: string;
+  labelPosition?: "left" | "right";
   native?: boolean;
-}
-export type SwitchThumbProps = ComponentProps<typeof TamaguiSwitch.Thumb>;
+  nativeComposeProps?: Record<string, unknown>;
+  nativeHaptics?: NativeHapticsSetting;
+  nativeSwiftProps?: Record<string, unknown>;
+};
+
+export type SwitchNativeProps = {
+  disabled?: boolean;
+  nativeComposeProps?: Record<string, unknown>;
+  nativeSwiftProps?: Record<string, unknown>;
+  onValueChange: (value: boolean) => void;
+  style?: StyleProp<ViewStyle>;
+  value: boolean;
+};

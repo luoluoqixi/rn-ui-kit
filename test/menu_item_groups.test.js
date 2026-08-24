@@ -4,7 +4,7 @@ import {
   resolveAndroidMenuItems,
   resolveIosMenuItemGroups,
   splitMenuItemsBySeparators,
-} from "../src/core/components/ui/menu/item_groups";
+} from "../src/core/components/ui/dropdown/dropdown_native_helpers";
 
 describe("splitMenuItemsBySeparators", () => {
   test("按 separator 保留菜单项顺序并切分分组", () => {
@@ -39,7 +39,7 @@ describe("splitMenuItemsBySeparators", () => {
 });
 
 describe("resolveIosMenuItemGroups", () => {
-  test("只反转分组顺序并保持每组内部条目顺序", () => {
+  test("保持分组顺序和每组内部条目顺序", () => {
     const items = [
       { value: "select-workspace" },
       { value: "create-workspace" },
@@ -50,9 +50,9 @@ describe("resolveIosMenuItemGroups", () => {
     ];
 
     expect(resolveIosMenuItemGroups(items)).toEqual([
-      [{ value: "settings" }],
-      [{ value: "sort-workspaces" }],
       [{ value: "select-workspace" }, { value: "create-workspace" }],
+      [{ value: "sort-workspaces" }],
+      [{ value: "settings" }],
     ]);
   });
 

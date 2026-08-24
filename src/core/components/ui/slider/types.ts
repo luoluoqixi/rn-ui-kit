@@ -1,40 +1,51 @@
-import type { ComponentProps, ReactNode } from "react";
-import type { ColorValue } from "react-native";
+import type { ColorValue, StyleProp, ViewProps, ViewStyle } from "react-native";
 
 import type { NativeHapticsSetting } from "../utils";
-import type { Slider as ReplicaSlider } from "./slider/Slider";
-import type { SliderProps as ReplicaSliderProps } from "./slider/types";
 
-export type Direction = "ltr" | "rtl";
-
-/** Material3 Slider 颜色配置，仅 Android native 模式生效 */
+/** Slider colors. Android native uses all fields; non-native uses track and thumb colors. */
 export type SliderColors = {
-  thumbColor?: ColorValue;
-  activeTrackColor?: ColorValue;
-  inactiveTrackColor?: ColorValue;
   activeTickColor?: ColorValue;
+  activeTrackColor?: ColorValue;
   inactiveTickColor?: ColorValue;
+  inactiveTrackColor?: ColorValue;
+  thumbColor?: ColorValue;
 };
 
-export interface SliderProps extends ReplicaSliderProps {
-  children?: ReactNode;
-  /** 使用 @expo/ui 原生平台的 Slider（iOS: SwiftUI, Android: Material3）。
-   * web 端此参数无效，会退回非原生实现。 */
-  native?: boolean;
-  /** 原生模式下传入 0 使用连续值；不传时维持默认步进 1。 */
-  step?: number;
-  /** Android Material3 Slider 颜色（仅 native 模式生效）。不传则从 Tamagui 主题自动获取。 */
-  colors?: SliderColors;
-  nativeHaptics?: NativeHapticsSetting;
-  nativeHapticsInterval?: number;
-  /** Called after the user finishes a drag. */
-  onValueChangeFinished?(value: number[]): void;
-  thumbCount?: number;
-  thumbProps?: Partial<SliderThumbProps>;
-  trackProps?: Partial<SliderTrackProps>;
-  trackActiveProps?: Partial<SliderTrackActiveProps>;
+export type SliderValue = number[] | number;
+
+export function resolveSliderValues(value: SliderValue | undefined): number[] | undefined {
+  if (value == null) return undefined;
+  return Array.isArray(value) ? value : [value];
 }
 
-export type SliderTrackProps = ComponentProps<(typeof ReplicaSlider)["Track"]>;
-export type SliderTrackActiveProps = ComponentProps<(typeof ReplicaSlider)["TrackActive"]>;
-export type SliderThumbProps = ComponentProps<(typeof ReplicaSlider)["Thumb"]>;
+export function resolveSliderFirstValue(value: SliderValue | undefined, fallback: number) {
+  return resolveSliderValues(value)?.[0] ?? fallback;
+}
+
+export interface SliderProps extends ViewProps {
+  className?: string;
+  defaultValue?: SliderValue;
+  disabled?: boolean;
+  max?: number;
+  min?: number;
+  native?: boolean;
+  colors?: SliderColors;
+  /** Slider-specific tick feedback; enabled by default, or disable with false. */
+  nativeHaptics?: NativeHapticsSetting;
+  nativeHapticsInterval?: number;
+  /** Convenience callback for single-value sliders; receives the first thumb value. */
+  onChange?: (value: number) => void;
+  /** Convenience callback after a single-value slider finishes changing. */
+  onChangeFinished?: (value: number) => void;
+  onValueChange?: (value: number[]) => void;
+  onValueChangeFinished?: (value: number[]) => void;
+  step?: number;
+  /** Overrides the track container style. */
+  trackStyle?: StyleProp<ViewStyle>;
+  /** Overrides each active track segment style. */
+  activeTrackStyle?: StyleProp<ViewStyle>;
+  /** Overrides each thumb style. */
+  thumbStyle?: StyleProp<ViewStyle>;
+  thumbCount?: number;
+  value?: SliderValue;
+}

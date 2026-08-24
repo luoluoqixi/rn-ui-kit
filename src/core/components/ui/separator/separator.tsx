@@ -1,34 +1,25 @@
-import { Separator as TamaguiSeparator } from "tamagui";
+import { cn } from "../utils/cn";
+import * as SeparatorPrimitive from "@rn-primitives/separator";
+import { SeparatorProps } from "./types";
 
-import type { SeparatorProps } from "./types";
-
-export function Separator(props: SeparatorProps) {
-  if (!props.vertical) {
-    return <TamaguiSeparator {...props} borderColor={props.borderColor ?? "$borderColor"} />;
-  }
-
-  const {
-    borderColor = "$borderColor",
-    borderRightWidth,
-    height,
-    maxH,
-    maxW,
-    width,
-    x,
-    ...restProps
-  } = props;
-  const lineWidth = 1;
-
+function Separator({
+  className,
+  orientation = "horizontal",
+  decorative = true,
+  ...props
+}: SeparatorProps) {
   return (
-    <TamaguiSeparator
-      {...restProps}
-      borderColor={borderColor}
-      borderRightWidth={borderRightWidth ?? 1}
-      height={height ?? "100%"}
-      maxH={maxH ?? "100%"}
-      maxW={maxW ?? lineWidth}
-      width={width ?? lineWidth}
-      x={x ?? 0}
+    <SeparatorPrimitive.Root
+      decorative={decorative}
+      orientation={orientation}
+      className={cn(
+        "bg-border shrink-0",
+        orientation === "horizontal" ? "h-[1px] w-full" : "h-full w-[1px]",
+        className,
+      )}
+      {...props}
     />
   );
 }
+
+export { Separator };

@@ -1,137 +1,143 @@
-import React from "react";
+import { GestureDetector } from "react-native-gesture-handler";
+import { Platform, StyleSheet, View, type ColorValue, type ViewStyle } from "react-native";
+import { useRef } from "react";
 
+import { useUiTheme } from "../utils";
 import { isWeb } from "../utils/platform";
-import {
-  getSliderHapticsBuckets,
-  triggerSliderNativeHaptics,
-  useResolvedNativeHaptics,
-} from "../utils";
-
 import { NativeSlider } from "./native_slider";
-import { Slider as ReplicaSlider } from "./slider/Slider";
-import type {
-  SliderProps,
-  SliderThumbProps,
-  SliderTrackActiveProps,
-  SliderTrackProps,
-} from "./types";
+import { useSliderBehavior } from "./slider/slider";
+import type { SliderProps } from "./types";
 
-const web = isWeb();
-const DEFAULT_NATIVE = !web;
+function resolveColor(color: ColorValue | undefined, fallback: string) {
+  return color == null ? fallback : String(color);
+}
 
-function SliderRoot(props: SliderProps) {
-  const {
-    children,
-    native = DEFAULT_NATIVE,
+function NonNativeSlider({
+  activeTrackStyle,
+  className,
+  colors,
+  defaultValue,
+  disabled = false,
+  hitSlop,
+  max,
+  min,
+  nativeHaptics,
+  nativeHapticsInterval,
+  onChange,
+  onChangeFinished,
+  onLayout,
+  onValueChange,
+  onValueChangeFinished,
+  step,
+  style,
+  thumbCount,
+  thumbStyle,
+  trackStyle,
+  value,
+  ...props
+}: SliderProps) {
+  const sliderRef = useRef<View>(null);
+  const theme = useUiTheme();
+  const { handleLayout, nativeGesture, values } = useSliderBehavior({
+    defaultValue,
+    disabled,
+    max,
+    min,
     nativeHaptics,
     nativeHapticsInterval,
+    onChange,
+    onChangeFinished,
+    onLayout,
     onValueChange,
     onValueChangeFinished,
-    onSlideEnd,
+    step,
+    sliderRef,
     thumbCount,
-    thumbProps,
-    trackActiveProps,
-    trackProps,
-    orientation = "horizontal",
-    size = "$4",
-    ...rootProps
-  } = props;
-  if (!web && native) {
-    return <NativeSlider {...props} />;
-  }
-
-  const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics);
-  const lastHapticsBucketsRef = React.useRef(
-    getSliderHapticsBuckets(rootProps.value ?? rootProps.defaultValue, {
-      interval: nativeHapticsInterval,
-      max: rootProps.max,
-      min: rootProps.min,
-      step: rootProps.step,
-    }),
+    value,
+  });
+  const resolvedMin = min ?? 0;
+  const resolvedMax = max ?? 100;
+  const range = resolvedMax - resolvedMin;
+  const activeTrackColor = resolveColor(colors?.activeTrackColor, theme.primary);
+  const inactiveTrackColor = resolveColor(colors?.inactiveTrackColor, theme.muted);
+  const thumbColor = resolveColor(colors?.thumbColor, theme.primary);
+  const percentages = values.map((item) =>
+    range <= 0
+      ? 0
+      : ((Math.min(Math.max(item, resolvedMin), resolvedMax) - resolvedMin) / range) * 100,
   );
+  const activeTrackStart = percentages.length > 1 ? percentages[0] ?? 0 : 0;
+  const activeTrackEnd = percentages[percentages.length - 1] ?? 0;
 
-  React.useEffect(() => {
-    if (rootProps.value == null) {
-      return;
-    }
-
-    lastHapticsBucketsRef.current = getSliderHapticsBuckets(rootProps.value, {
-      interval: nativeHapticsInterval,
-      max: rootProps.max,
-      min: rootProps.min,
-      step: rootProps.step,
-    });
-  }, [nativeHapticsInterval, rootProps.max, rootProps.min, rootProps.step, rootProps.value]);
-
-  const resolvedThumbCount =
-    thumbCount ?? rootProps.value?.length ?? rootProps.defaultValue?.length ?? 1;
-  const handleValueChange: NonNullable<SliderProps["onValueChange"]> = (nextValue) => {
-    onValueChange?.(nextValue);
-    const nextBuckets = getSliderHapticsBuckets(nextValue, {
-      interval: nativeHapticsInterval,
-      max: rootProps.max,
-      min: rootProps.min,
-      step: rootProps.step,
-    });
-    const previousBuckets = lastHapticsBucketsRef.current;
-    const hasBucketChanged =
-      previousBuckets.length !== nextBuckets.length ||
-      nextBuckets.some((bucket, index) => bucket !== previousBuckets[index]);
-
-    lastHapticsBucketsRef.current = nextBuckets;
-
-    if (!hasBucketChanged) {
-      return;
-    }
-
-    triggerSliderNativeHaptics(resolvedNativeHaptics);
-  };
-
-  return (
-    <ReplicaSlider
-      {...rootProps}
-      onSlideEnd={(event, value) => {
-        onSlideEnd?.(event, value);
-        onValueChangeFinished?.([value]);
-      }}
-      onValueChange={handleValueChange}
-      orientation={orientation}
-      size={size}
+  const sliderView = (
+    <View
+      {...props}
+      className={className}
+      hitSlop={hitSlop ?? (isWeb() ? undefined : { bottom: 24, top: 12 })}
+      onLayout={handleLayout}
+      ref={sliderRef}
+      style={[
+        styles.root,
+        isWeb() && ({ userSelect: "none" } as unknown as ViewStyle),
+        isWeb() && ({ touchAction: "none" } as unknown as ViewStyle),
+        disabled && styles.disabled,
+        style,
+      ]}
     >
-      {children ?? (
-        <>
-          <ReplicaSlider.Track {...trackProps}>
-            <ReplicaSlider.TrackActive {...trackActiveProps} />
-          </ReplicaSlider.Track>
-          {Array.from({ length: resolvedThumbCount }).map((_, index) => (
-            <ReplicaSlider.Thumb
-              size={30}
-              {...thumbProps}
-              circular={thumbProps?.circular ?? true}
-              index={index}
-              key={index}
-            />
-          ))}
-        </>
-      )}
-    </ReplicaSlider>
+      <View style={[styles.track, { backgroundColor: inactiveTrackColor }, trackStyle]}>
+        <View
+          style={[
+            styles.activeTrack,
+            {
+              backgroundColor: activeTrackColor,
+              left: `${activeTrackStart}%`,
+              width: `${Math.max(0, activeTrackEnd - activeTrackStart)}%`,
+            },
+            activeTrackStyle,
+          ]}
+        />
+      </View>
+      {values.map((_item, index) => {
+        const percent = percentages[index] ?? 0;
+        return (
+          <View
+            key={`thumb-${index}`}
+            pointerEvents="none"
+            style={[
+              styles.thumb,
+              { backgroundColor: thumbColor, borderColor: theme.background, left: `${percent}%` },
+              thumbStyle,
+            ]}
+          />
+        );
+      })}
+    </View>
+  );
+
+  return nativeGesture ? (
+    <GestureDetector gesture={nativeGesture}>{sliderView}</GestureDetector>
+  ) : (
+    sliderView
   );
 }
 
-function SliderTrackWrapper(props: SliderTrackProps) {
-  return <ReplicaSlider.Track {...props} />;
+export function Slider({ native = true, ...props }: SliderProps) {
+  // Web has no native Expo slider host; always use the pointer/gesture implementation there.
+  if (!native || Platform.OS === "web") return <NonNativeSlider {...props} />;
+  return <NativeSlider {...props} />;
 }
 
-function SliderTrackActiveWrapper(props: SliderTrackActiveProps) {
-  return <ReplicaSlider.TrackActive {...props} />;
-}
-
-function SliderThumbWrapper(props: SliderThumbProps) {
-  return <ReplicaSlider.Thumb {...props} />;
-}
-
-export const Slider = Object.assign(SliderRoot, {
-  Track: SliderTrackWrapper,
-  TrackActive: SliderTrackActiveWrapper,
-  Thumb: SliderThumbWrapper,
+const styles = StyleSheet.create({
+  activeTrack: { borderRadius: 3, height: "100%", position: "absolute" },
+  disabled: { opacity: 0.5 },
+  root: { height: 28, justifyContent: "center", minWidth: 100, width: "100%" },
+  thumb: {
+    borderRadius: 12,
+    borderWidth: 2,
+    height: 24,
+    marginLeft: -12,
+    position: "absolute",
+    width: 24,
+  },
+  track: { borderRadius: 3, height: 6, overflow: "hidden", width: "100%" },
 });

@@ -64,6 +64,7 @@ function createReleaseManifest() {
     "./core": releaseEntry("core"),
     "./debug": releaseEntry("debug"),
     "./initialize": releaseEntry("initialize"),
+    "./styles.css": "./src/styles.css",
     "./package.json": "./package.json",
   };
   manifest.files = [

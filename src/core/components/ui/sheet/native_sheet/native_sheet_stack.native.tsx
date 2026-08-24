@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useWindowDimensions } from "react-native";
 
 import { clampDetentIndex, resolveNativeDetents } from "./native_sheet.native";
 import { dismissTrueSheet } from "./true_sheet";
@@ -21,7 +20,6 @@ function TrueSheetNativeSheetStackRoot({
   screenOptions,
   sheetProps,
 }: NativeSheetStackProps) {
-  const { height: windowHeight } = useWindowDimensions();
   const [sheetName] = useState(() => name ?? "native-sheet-stack");
   const [generatedOverlayPortalHostName] = useState(() =>
     createTrueSheetOverlayPortalHostName(`${sheetName}-overlay`),
@@ -34,13 +32,13 @@ function TrueSheetNativeSheetStackRoot({
   const presentedRef = useRef(false);
   const dismissingRef = useRef(false);
   const resolvedSheetProps = useMemo(() => {
-    const { snapPoints, snapPointsMode, ...trueSheetProps } = sheetProps ?? {};
+    const { snapPoints, ...trueSheetProps } = sheetProps ?? {};
 
-    if (snapPoints == null && snapPointsMode == null) {
+    if (snapPoints == null && trueSheetProps.detents == null) {
       return { initialDetentIndex: 0, ...trueSheetProps };
     }
 
-    const normalization = resolveNativeDetents(snapPoints, snapPointsMode, windowHeight);
+    const normalization = resolveNativeDetents(trueSheetProps.detents, snapPoints);
     const sourceIndex = clampDetentIndex(
       trueSheetProps.initialDetentIndex,
       normalization.sourceDetentCount,
@@ -55,7 +53,7 @@ function TrueSheetNativeSheetStackRoot({
       detents: normalization.detents,
       initialDetentIndex: nativeIndex,
     };
-  }, [sheetProps, windowHeight]);
+  }, [sheetProps]);
 
   useEffect(() => {
     if (open) {

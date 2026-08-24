@@ -2,7 +2,7 @@ import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import type { TrueSheetProps } from "@lodev09/react-native-true-sheet";
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationOptions } from "@react-navigation/native-stack";
-import { ArrowLeft } from "@tamagui/lucide-icons-2";
+import { ArrowLeft } from "lucide-react-native";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { BackHandler, Platform, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -56,9 +56,17 @@ export type TrueSheetStackHostProps<ParamList extends ParamListBase = ParamListB
 
 const defaultSheetProps: Pick<
   TrueSheetProps,
-  "detents" | "dismissible" | "disableStackingTranslation" | "grabber" | "insetAdjustment"
+  | "androidHideFriction"
+  | "androidSignificantVelocityThreshold"
+  | "detents"
+  | "dismissible"
+  | "disableStackingTranslation"
+  | "grabber"
+  | "insetAdjustment"
 > &
   Pick<TrueSheetProps, "scrollable" | "scrollableOptions"> = {
+  androidHideFriction: 2,
+  androidSignificantVelocityThreshold: 10,
   detents: [1],
   dismissible: true,
   disableStackingTranslation: platform === "android",
@@ -135,8 +143,16 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
 
       onDidDismiss?.();
       overlayLayoutSync.onDidDismiss(event);
+      sheetProps?.onDidDismiss?.(event);
     },
-    [initialRouteName, navigationRef, onDidDismiss, overlayLayoutSync, scrollableBinding],
+    [
+      initialRouteName,
+      navigationRef,
+      onDidDismiss,
+      overlayLayoutSync,
+      scrollableBinding,
+      sheetProps?.onDidDismiss,
+    ],
   );
 
   const handleDidPresent = useCallback<NonNullable<TrueSheetProps["onDidPresent"]>>(
@@ -145,8 +161,45 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
       setPresented(true);
       onDidPresent?.();
       overlayLayoutSync.onDidPresent(event);
+      sheetProps?.onDidPresent?.(event);
     },
-    [onDidPresent, overlayLayoutSync, scrollableBinding],
+    [onDidPresent, overlayLayoutSync, scrollableBinding, sheetProps?.onDidPresent],
+  );
+
+  const handleDetentChange = useCallback<NonNullable<TrueSheetProps["onDetentChange"]>>(
+    (event) => {
+      overlayLayoutSync.onDetentChange(event);
+      sheetProps?.onDetentChange?.(event);
+    },
+    [overlayLayoutSync, sheetProps?.onDetentChange],
+  );
+  const handleDragChange = useCallback<NonNullable<TrueSheetProps["onDragChange"]>>(
+    (event) => {
+      overlayLayoutSync.onDragChange(event);
+      sheetProps?.onDragChange?.(event);
+    },
+    [overlayLayoutSync, sheetProps?.onDragChange],
+  );
+  const handleDragEnd = useCallback<NonNullable<TrueSheetProps["onDragEnd"]>>(
+    (event) => {
+      overlayLayoutSync.onDragEnd(event);
+      sheetProps?.onDragEnd?.(event);
+    },
+    [overlayLayoutSync, sheetProps?.onDragEnd],
+  );
+  const handlePositionChange = useCallback<NonNullable<TrueSheetProps["onPositionChange"]>>(
+    (event) => {
+      overlayLayoutSync.onPositionChange(event);
+      sheetProps?.onPositionChange?.(event);
+    },
+    [overlayLayoutSync, sheetProps?.onPositionChange],
+  );
+  const handleWillPresent = useCallback<NonNullable<TrueSheetProps["onWillPresent"]>>(
+    (event) => {
+      overlayLayoutSync.onWillPresent(event);
+      sheetProps?.onWillPresent?.(event);
+    },
+    [overlayLayoutSync, sheetProps?.onWillPresent],
   );
 
   const mergedScreenOptions: TrueSheetInnerStackScreenOptions = {
@@ -184,7 +237,14 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
   const resolvedSheetProps = {
     ...sheetProps,
     backgroundColor: resolvedBackgroundColor,
-    style: [sheetProps?.style, backgroundStyle],
+    style: [
+      sheetProps?.style,
+      backgroundStyle,
+      // React Navigation's web stack has no intrinsic height. TrueSheet Web
+      // renders its scrollable content inside a flex container, so the stack
+      // content must fill that container explicitly or the sheet appears blank.
+      Platform.OS === "web" && styles.webStackContent,
+    ],
   };
 
   const stackNavigation = (
@@ -223,13 +283,13 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
       {...defaultSheetProps}
       {...resolvedSheetProps}
       onBackPress={customSheetBackHandler}
-      onDetentChange={overlayLayoutSync.onDetentChange}
+      onDetentChange={handleDetentChange}
       onDidDismiss={handleDidDismiss}
       onDidPresent={handleDidPresent}
-      onDragChange={overlayLayoutSync.onDragChange}
-      onDragEnd={overlayLayoutSync.onDragEnd}
-      onPositionChange={overlayLayoutSync.onPositionChange}
-      onWillPresent={overlayLayoutSync.onWillPresent}
+      onDragChange={handleDragChange}
+      onDragEnd={handleDragEnd}
+      onPositionChange={handlePositionChange}
+      onWillPresent={handleWillPresent}
     >
       {sheetBody}
     </TrueSheet>
@@ -248,4 +308,10 @@ export function TrueSheetStackHost<ParamList extends ParamListBase = ParamListBa
 
 const styles = StyleSheet.create({
   gestureRoot: getTrueSheetGestureRootStyle(),
+  webStackContent: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+    minHeight: 0,
+  },
 });

@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import { Appearance, useColorScheme } from "react-native";
+import { useColorScheme } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import {
@@ -13,6 +12,7 @@ import {
   getAppWindowBackgroundColor,
   resolveAccentThemeName,
   resolveColorSchemeSettings,
+  resolveUiColors,
   resolveUiPreferences,
 } from "../utils/theme";
 import type { RootProviderProps } from "./types";
@@ -34,18 +34,13 @@ export function RootProvider({
   const resolvedAccentThemeName = resolveAccentThemeName(
     accentThemeName ?? resolvedPreferences.appearance.accentColor,
   );
-  const rootBackgroundColor = getAppWindowBackgroundColor(resolvedColorScheme);
+  const semanticColors = resolveUiColors(resolvedColorScheme, resolvedAccentThemeName);
+  const rootBackgroundColor = resolvedPreferences.appearance.backgroundFollowsTheme
+    ? semanticColors.background
+    : getAppWindowBackgroundColor(resolvedColorScheme);
 
   const resolvedNavigationTheme =
     navigationTheme ?? (resolvedColorScheme === "dark" ? DarkTheme : DefaultTheme);
-
-  useEffect(() => {
-    Appearance.setColorScheme(
-      colorScheme == null && preferredColorScheme === "system"
-        ? "unspecified"
-        : resolvedColorScheme,
-    );
-  }, [colorScheme, preferredColorScheme, resolvedColorScheme]);
 
   return (
     <GestureHandlerRootView style={{ backgroundColor: rootBackgroundColor, flex: 1 }}>

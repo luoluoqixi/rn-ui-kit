@@ -26,7 +26,7 @@ function getWindowHeight(): number {
 
 /**
  * Dialog / AlertDialog：teleport 按整窗高度居中，嵌套 Sheet 偏低 detent 时需额外上移。
- * 返回加到 Tamagui `y` 上的增量（负值 = 上移）。
+ * 返回加到 overlay `y` 坐标上的增量（负值 = 上移）。
  */
 export function getTrueSheetCenteredModalDetentOffsetY(
   sheetTopPosition: number | null,

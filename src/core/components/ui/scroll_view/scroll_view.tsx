@@ -1,6 +1,8 @@
 import { forwardRef } from "react";
-import { ScrollView as ReactNativeScrollView } from "react-native";
-import { ScrollView as TamaguiScrollView } from "tamagui";
+import {
+  ScrollView as ReactNativeScrollView,
+  type ScrollViewProps as ReactNativeScrollViewProps,
+} from "react-native";
 
 import { useTrueSheetScrollLayout } from "../sheet/native_sheet/true_sheet/true_sheet_scroll_context";
 import { useNavigationBarScrollEdge } from "../utils/navigation";
@@ -36,14 +38,12 @@ AndroidTrackedScrollView.displayName = "AndroidTrackedScrollView";
 
 const WebTrackedScrollView = forwardRef<any, ScrollViewProps>((props, ref) => {
   const {
-    bottomSheetScrollable: _bottomSheetScrollable,
     navigationBarScrollEdgeOptions,
     onScroll,
     scrollEventThrottle,
     tracksNavigationBarScrollEdge,
     ...webProps
   } = props;
-  void _bottomSheetScrollable;
   const trackedOnScroll = useNavigationBarScrollEdge({
     navigationBarScrollEdgeOptions,
     onScroll: onScroll as any,
@@ -51,11 +51,11 @@ const WebTrackedScrollView = forwardRef<any, ScrollViewProps>((props, ref) => {
   });
 
   return (
-    <TamaguiScrollView
+    <ReactNativeScrollView
       ref={ref}
       onScroll={trackedOnScroll as any}
       scrollEventThrottle={scrollEventThrottle ?? (trackedOnScroll == null ? undefined : 16)}
-      {...webProps}
+      {...(webProps as ReactNativeScrollViewProps)}
     />
   );
 });
@@ -70,7 +70,7 @@ export const ScrollView = forwardRef<any, ScrollViewProps>((props, ref) => {
 
   const {
     automaticallyAdjustsScrollIndicatorInsets,
-    bottomSheetScrollable = true,
+    iosEmptyViewportScrollEnabled = true,
     navigationBarScrollEdgeOptions,
     nestedScrollEnabled,
     scrollIndicatorInsets,
@@ -79,7 +79,6 @@ export const ScrollView = forwardRef<any, ScrollViewProps>((props, ref) => {
   } = props as ScrollViewProps & {
     nestedScrollEnabled?: boolean;
   };
-  void bottomSheetScrollable;
 
   if (os() === "android" && tracksNavigationBarScrollEdge) {
     return (
@@ -107,6 +106,7 @@ export const ScrollView = forwardRef<any, ScrollViewProps>((props, ref) => {
       automaticallyAdjustsScrollIndicatorInsets={
         manuallyAdjustNormalPageIndicator ? false : automaticallyAdjustsScrollIndicatorInsets
       }
+      iosEmptyViewportScrollEnabled={os() === "ios" ? iosEmptyViewportScrollEnabled : undefined}
       nestedScrollEnabled={nestedScrollEnabled ?? true}
       scrollIndicatorInsets={scrollIndicatorInsets}
       {...(restProps as any)}

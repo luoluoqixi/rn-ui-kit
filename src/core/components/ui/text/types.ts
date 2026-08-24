@@ -1,12 +1,13 @@
-import type { ComponentProps } from "react";
-import type {
-  H1 as TamaguiH1,
-  Paragraph as TamaguiParagraph,
-  SizableText as TamaguiSizableText,
-  Text as TamaguiText,
-} from "tamagui";
+import type { VariantProps } from "class-variance-authority";
+import type { Text as RNText } from "react-native";
+import type { textVariants } from "./variants";
 
-export type TextProps = ComponentProps<typeof TamaguiText>;
-export type SizableTextProps = ComponentProps<typeof TamaguiSizableText>;
-export type ParagraphProps = ComponentProps<typeof TamaguiParagraph>;
-export type HeadingProps = ComponentProps<typeof TamaguiH1>;
+export type TextVariantProps = VariantProps<typeof textVariants>;
+
+export type TextProps = React.ComponentProps<typeof RNText> &
+  React.RefAttributes<RNText> &
+  TextVariantProps & {
+    asChild?: boolean;
+  };
+
+export type TextVariant = NonNullable<TextVariantProps["variant"]>;

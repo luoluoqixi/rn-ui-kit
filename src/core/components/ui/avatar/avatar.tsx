@@ -1,66 +1,83 @@
-import { Children, isValidElement } from "react";
-import { SizableText, Avatar as TamaguiAvatar } from "tamagui";
+import { cn } from "../utils/cn";
+import { resolveRenderProp } from "../utils/render";
+import { Text } from "../text";
+import * as AvatarPrimitive from "@rn-primitives/avatar";
+import { Children } from "react";
 
 import type { AvatarFallbackProps, AvatarImageProps, AvatarProps } from "./types";
 
 function normalizeAvatarChildren(children: React.ReactNode) {
-  return Children.map(children, (child) => {
-    if (typeof child === "string" || typeof child === "number") {
-      return <SizableText>{child}</SizableText>;
-    }
-
-    if (isValidElement(child)) {
-      return child;
-    }
-
-    return child;
-  });
+  return Children.map(children, (child) =>
+    typeof child === "string" || typeof child === "number" ? <Text>{child}</Text> : child,
+  );
 }
 
-function AvatarRoot(props: AvatarProps) {
-  const { alt, children, circular, fallback, fallbackProps, imageProps, src, ...rootProps } = props;
-  const shouldRenderFallback = fallback != null || fallbackProps != null || src != null;
-  const resolvedFallbackProps = shouldRenderFallback
-    ? {
-        ...fallbackProps,
-        bg: fallbackProps?.bg ?? "$gray10",
-        delayMs: src ? (fallbackProps?.delayMs ?? 600) : fallbackProps?.delayMs,
-      }
-    : undefined;
+function Avatar({
+  alt,
+  children,
+  fallback,
+  fallbackClassName,
+  fallbackProps,
+  imageClassName,
+  imageProps,
+  src,
+  className,
+  ...props
+}: AvatarProps) {
+  const hasFallback = fallback != null || fallbackProps != null || src != null;
+  const renderedFallback = resolveRenderProp(fallback, { alt, src });
 
   return (
-    <TamaguiAvatar {...rootProps} circular={circular ?? true}>
+    <AvatarPrimitive.Root
+      alt={alt ?? ""}
+      className={cn("relative flex size-8 shrink-0 overflow-hidden rounded-full", className)}
+      {...props}
+    >
       {children ?? (
         <>
-          {src ? (
-            <AvatarImage {...imageProps} aria-label={imageProps?.["aria-label"] ?? alt} src={src} />
+          {src != null ? (
+            <AvatarImage
+              {...imageProps}
+              className={cn(imageClassName, imageProps?.className)}
+              source={{ uri: src }}
+            />
           ) : null}
-          {shouldRenderFallback ? (
-            <AvatarFallback items="center" justify="center" {...resolvedFallbackProps}>
-              {fallback}
+          {hasFallback ? (
+            <AvatarFallback
+              {...fallbackProps}
+              className={cn(fallbackClassName, fallbackProps?.className)}
+            >
+              {renderedFallback}
             </AvatarFallback>
           ) : null}
         </>
       )}
-    </TamaguiAvatar>
+    </AvatarPrimitive.Root>
   );
 }
 
-function AvatarImage(props: AvatarImageProps) {
-  return <TamaguiAvatar.Image {...props} />;
+function AvatarImage({ className, ...props }: AvatarImageProps) {
+  return <AvatarPrimitive.Image className={cn("aspect-square size-full", className)} {...props} />;
 }
 
-function AvatarFallback(props: AvatarFallbackProps) {
-  const { children, ...fallbackProps } = props;
-
+function AvatarFallback({ className, ...props }: AvatarFallbackProps) {
   return (
-    <TamaguiAvatar.Fallback {...fallbackProps}>
-      {normalizeAvatarChildren(children)}
-    </TamaguiAvatar.Fallback>
+    <AvatarPrimitive.Fallback
+      className={cn(
+        "bg-muted flex size-full flex-row items-center justify-center rounded-full",
+        className,
+      )}
+      {...props}
+    >
+      {normalizeAvatarChildren(props.children)}
+    </AvatarPrimitive.Fallback>
   );
 }
 
-export const Avatar = Object.assign(AvatarRoot, {
-  Image: AvatarImage,
+const AvatarComponent = Object.assign(Avatar, {
   Fallback: AvatarFallback,
+  Image: AvatarImage,
+  Root: Avatar,
 });
+
+export { AvatarComponent as Avatar };

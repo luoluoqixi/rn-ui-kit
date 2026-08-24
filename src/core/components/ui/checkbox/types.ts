@@ -1,14 +1,31 @@
-import type { ComponentProps, ReactNode } from "react";
-import type { Checkbox as TamaguiCheckbox, Label as TamaguiLabel } from "tamagui";
-import type { CheckedState } from "tamagui";
+import type { ComponentProps } from "react";
+import type * as CheckboxPrimitive from "@rn-primitives/checkbox";
 
-import type { NativeHapticsSetting } from "../utils";
+import type { IconProps } from "../icon";
+import type { NativeHapticsSetting, RenderProp } from "../utils";
 
-export interface CheckboxProps extends ComponentProps<typeof TamaguiCheckbox> {
-  indicatorProps?: CheckboxIndicatorProps;
-  label?: ReactNode;
-  labelProps?: ComponentProps<typeof TamaguiLabel>;
+type PrimitiveCheckboxProps = ComponentProps<typeof CheckboxPrimitive.Root>;
+
+export type CheckboxRenderContext = {
+  card: boolean;
+  checked: boolean;
+  disabled?: boolean;
+};
+
+export type CheckboxProps = Omit<PrimitiveCheckboxProps, "checked" | "onCheckedChange"> & {
+  checked?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
+  checkedClassName?: string;
+  indicatorClassName?: string;
+  indicatorProps?: ComponentProps<typeof CheckboxPrimitive.Indicator>;
+  iconClassName?: string;
+  iconProps?: Omit<IconProps, "as">;
   nativeHaptics?: NativeHapticsSetting;
-}
-export type CheckboxIndicatorProps = ComponentProps<typeof TamaguiCheckbox.Indicator>;
-export type { CheckedState };
+  label?: RenderProp<CheckboxRenderContext>;
+  description?: RenderProp<CheckboxRenderContext>;
+  labelPosition?: "left" | "right";
+  card?: boolean;
+  containerClassName?: string;
+  labelClassName?: string;
+  descriptionClassName?: string;
+};

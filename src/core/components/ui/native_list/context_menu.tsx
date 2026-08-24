@@ -13,13 +13,20 @@ export function NativeListContextMenuProvider({
   disabledStyle,
 }: {
   children: ReactNode;
-  contextMenuProps?: NativeListContextMenuProps;
+  contextMenuProps?: NativeListContextMenuProps | false;
   disabledStyle?: boolean;
 }) {
+  const inheritedContextMenuProps = useContext(NativeListContextMenuContext);
   const inheritedDisabledStyle = useContext(NativeListDisabledStyleContext);
+  const resolvedContextMenuProps =
+    contextMenuProps === undefined
+      ? inheritedContextMenuProps
+      : contextMenuProps === false
+        ? undefined
+        : contextMenuProps;
 
   return (
-    <NativeListContextMenuContext.Provider value={contextMenuProps}>
+    <NativeListContextMenuContext.Provider value={resolvedContextMenuProps}>
       <NativeListDisabledStyleContext.Provider value={disabledStyle ?? inheritedDisabledStyle}>
         {children}
       </NativeListDisabledStyleContext.Provider>

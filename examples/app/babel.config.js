@@ -31,14 +31,6 @@ module.exports = function babelConfig(api) {
       // 则说明 rn-ui-kit 并没有成功使用 reactCompiler 编译
       // 需要打开此注释解决卡顿问题
       // babelPluginReactCompiler,
-      [
-        "@tamagui/babel-plugin",
-        {
-          components: ["tamagui"],
-          config: "./tamagui.config.ts",
-          disableExtraction: process.env.NODE_ENV === "development",
-        },
-      ],
       "@babel/plugin-proposal-export-namespace-from",
       "react-native-worklets/plugin",
     ],

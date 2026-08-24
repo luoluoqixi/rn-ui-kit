@@ -1,23 +1,29 @@
 import { useMemo } from "react";
 import { Platform, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { type RnUiKitDebugRouteDefinition } from "rn-ui-kit/debug";
 import {
   NativeList,
   NativeListSection,
   NativeListSelectItem,
   NativeListSwitchItem,
+  accentThemeNames,
+  accentThemeSwatchColors,
   type UiPreferences,
 } from "rn-ui-kit";
-
-import { accentThemeNames, accentThemeSwatchColors } from "./themes";
 
 type UpdatePreferences = (updater: (current: UiPreferences) => UiPreferences) => void;
 
 function createThemeDebugPage(preferences: UiPreferences, updatePreferences: UpdatePreferences) {
   return function AppThemeDebugPage() {
     const usesNativeIosScrollEdgeHeader = Platform.OS === "ios";
+    const insets = useSafeAreaInsets();
     const tracksScrollEdgeHeader =
       Platform.OS === "android" || Platform.OS === "web" || usesNativeIosScrollEdgeHeader;
+    const horizontalContentInset =
+      Platform.OS === "ios"
+        ? undefined
+        : { paddingLeft: insets.left, paddingRight: insets.right };
     const accentOptions = useMemo(
       () =>
         accentThemeNames.map((value) => ({
@@ -35,13 +41,14 @@ function createThemeDebugPage(preferences: UiPreferences, updatePreferences: Upd
             usesNativeIosScrollEdgeHeader ? true : undefined
           }
           contentInsetAdjustmentBehavior={usesNativeIosScrollEdgeHeader ? "automatic" : undefined}
+          contentContainerStyle={horizontalContentInset}
           tracksNavigationBarScrollEdge={tracksScrollEdgeHeader}
         >
           <NativeListSection title="主题">
             <NativeListSelectItem
               selectProps={{
                 options: accentOptions,
-                onValueChange: (value) => {
+                onValueChange: (value: string | null) => {
                   if (value == null) return;
                   updatePreferences((current) => ({
                     ...current,
@@ -62,7 +69,7 @@ function createThemeDebugPage(preferences: UiPreferences, updatePreferences: Upd
                   { label: "深色", value: "dark" },
                   { label: "跟随系统", value: "system" },
                 ],
-                onValueChange: (value) => {
+                onValueChange: (value: string | null) => {
                   if (value == null) return;
                   updatePreferences((current) => ({
                     ...current,

@@ -1,21 +1,19 @@
 import type { ComponentProps, ReactNode } from "react";
-import type { Tooltip as TamaguiTooltip, TooltipGroup as TamaguiTooltipGroup } from "tamagui";
+import type * as TooltipPrimitive from "@rn-primitives/tooltip";
 
-export type TooltipRootProps = ComponentProps<typeof TamaguiTooltip>;
+import type { RenderProp } from "../utils";
 
-export interface TooltipProps extends Omit<TooltipRootProps, "children"> {
-  anchor?: ReactNode;
-  anchorProps?: TooltipAnchorProps;
-  arrow?: boolean;
-  arrowProps?: TooltipArrowProps;
-  children: ReactNode;
-  content: ReactNode;
-  contentProps?: TooltipContentProps;
-  triggerProps?: TooltipTriggerProps;
-}
+export type TooltipRenderContext = {
+  open?: boolean;
+};
 
-export type TooltipAnchorProps = ComponentProps<typeof TamaguiTooltip.Anchor>;
-export type TooltipArrowProps = ComponentProps<typeof TamaguiTooltip.Arrow>;
-export type TooltipContentProps = ComponentProps<typeof TamaguiTooltip.Content>;
-export type TooltipTriggerProps = ComponentProps<typeof TamaguiTooltip.Trigger>;
-export type TooltipGroupProps = ComponentProps<typeof TamaguiTooltipGroup>;
+export type TooltipContentProps = ComponentProps<typeof TooltipPrimitive.Content> & {
+  portalHost?: string;
+};
+
+export type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> & {
+  content?: RenderProp<TooltipRenderContext>;
+  contentProps?: Omit<TooltipContentProps, "children">;
+  triggerProps?: Omit<ComponentProps<typeof TooltipPrimitive.Trigger>, "children">;
+  children?: ReactNode;
+};

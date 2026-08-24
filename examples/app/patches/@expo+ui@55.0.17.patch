@@ -2,6 +2,8 @@
 # - iOS 26+ SwiftUI Slider: 始终接受 JS `value` 更新，避免拖拽后 editing 状态阻断受控值同步。
 # - iOS 26: 当没有 label slot 时，改用不带标签的 Slider 初始化方式。
 # - RNHostView: 允许横向和纵向内容分别独立匹配。
+# - SwiftUI Host: 为 matchContents 使用 fixedSize，恢复 iOS intrinsic size 测量。
+#   来源：Expo PR https://github.com/expo/expo/pull/44642
 # - SwiftUI List: 补充 viewport clipping、content margins、初始滚动目标、原生 inset 调整，以及 UIKit 顶部 content scroll view 注册。
 # - SwiftUI List: 页面仍位于同一导航栈时，暂时脱离 window 不注销 content scroll view，避免 iOS 18 返回动画错误展开大标题。
 # - SwiftUI List: iOS 15 大标题滚动时补齐导航栏布局失效通知，保留 UIKit 原生过渡与回弹动画。
@@ -2448,6 +2450,17 @@ diff --git a/src/swift-ui/List/index.tsx b/src/swift-ui/List/index.tsx
     * Requests restoration of the native list's last recorded scroll offset.
     * Increment this after a state transition that causes SwiftUI List to reset its offset.
     */
+diff --git a/ios/HostView.swift b/ios/HostView.swift
+--- a/ios/HostView.swift
++++ b/ios/HostView.swift
+@@ -66,1 +66,2 @@ struct HostView: ExpoSwiftUI.View, ExpoSwiftUI.WithHostingView {
+-      }
++      }
++      .fixedSize(horizontal: props.matchContentsHorizontal, vertical: props.matchContentsVertical)
+@@ -74,1 +75,2 @@ struct HostView: ExpoSwiftUI.View, ExpoSwiftUI.WithHostingView {
+-    }
++    }
++    .fixedSize(horizontal: props.matchContentsHorizontal, vertical: props.matchContentsVertical)
 diff --git a/build/swift-ui/List/index.d.ts b/build/swift-ui/List/index.d.ts
 --- a/build/swift-ui/List/index.d.ts
 +++ b/build/swift-ui/List/index.d.ts

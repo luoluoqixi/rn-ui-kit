@@ -1,7 +1,9 @@
-import { HeaderHeightContext } from "@react-navigation/elements";
-import { type NavigationProp, useIsFocused, useNavigation } from "@react-navigation/native";
 import { useContext } from "react";
 import { Platform, StyleSheet, View } from "react-native";
+import { HeaderHeightContext } from "@react-navigation/elements";
+import { type NavigationProp, useIsFocused, useNavigation } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import {
   NativeList,
   NativeListNavigationItem,
@@ -12,10 +14,8 @@ import {
   Text,
   isIos26Plus,
   useAppBackgroundColors,
-} from "rn-ui-kit/core";
-
+} from "../../../core/components/ui";
 import type { RnUiKitDebugSectionContentProps } from "../../types";
-import { blurActiveElementOnWeb } from "../../web_focus";
 import { componentExampleDefinitions } from "./catalog";
 import type { ComponentExampleDefinition } from "./types";
 
@@ -41,27 +41,36 @@ export function getRnUiKitComponentExampleTitle(key: string) {
   return getComponentExampleDefinition(key).label;
 }
 
-/** The examples list lives on the debug panel stack; only its detail routes are separate screens. */
 export function RnUiKitComponentExamplesDebugPage({
   header,
-  layoutHost = "default",
   onOpenComponentExample,
 }: RnUiKitDebugSectionContentProps) {
-  const appBackgroundColors = useAppBackgroundColors();
   const navigation = useNavigation<NavigationProp<DebugPanelNavigationParamList>>();
   const isNativeIosPage = Platform.OS === "ios";
-  const usesNativeIosScrollEdgeHeader = isNativeIosPage;
+  const insets = useSafeAreaInsets();
   const tracksScrollEdgeHeader =
-    Platform.OS === "android" || Platform.OS === "web" || usesNativeIosScrollEdgeHeader;
-  const pageBackgroundColor =
-    layoutHost === "nativeSheet" && isIos26Plus() ? "transparent" : appBackgroundColors.screen;
-
+    Platform.OS === "android" || Platform.OS === "web" || isNativeIosPage;
+  const horizontalContentInset =
+    Platform.OS === "ios" ? undefined : { paddingLeft: insets.left, paddingRight: insets.right };
   return (
-    <View style={[styles.root, { backgroundColor: pageBackgroundColor }]}>
-      {header != null ? <View style={styles.routeHeader}>{header}</View> : null}
+    <View style={styles.root}>
+      {header != null ? (
+        <View
+          style={[
+            styles.routeHeader,
+            Platform.OS !== "ios" && {
+              paddingLeft: 20 + insets.left,
+              paddingRight: 20 + insets.right,
+            },
+          ]}
+        >
+          {header}
+        </View>
+      ) : null}
       <NativeList
         automaticallyAdjustsScrollIndicatorInsets={isNativeIosPage ? true : undefined}
-        contentInsetAdjustmentBehavior={usesNativeIosScrollEdgeHeader ? "automatic" : undefined}
+        contentInsetAdjustmentBehavior={isNativeIosPage ? "automatic" : undefined}
+        contentContainerStyle={horizontalContentInset}
         tracksNavigationBarScrollEdge={tracksScrollEdgeHeader}
       >
         <NativeListSection>
@@ -69,14 +78,9 @@ export function RnUiKitComponentExamplesDebugPage({
             <NativeListNavigationItem
               key={definition.key}
               onPress={() => {
-                blurActiveElementOnWeb();
-                if (onOpenComponentExample != null) {
-                  onOpenComponentExample(definition.key);
-                  return;
-                }
-                navigation.navigate(getComponentExampleRouteName(definition.key));
+                if (onOpenComponentExample != null) onOpenComponentExample(definition.key);
+                else navigation.navigate(getComponentExampleRouteName(definition.key));
               }}
-              subtitle={definition.description}
               title={definition.label}
             />
           ))}
@@ -95,11 +99,9 @@ export function RnUiKitComponentExampleDebugPage({
   headerTransparent?: boolean;
   layoutHost?: "default" | "nativeSheet";
 }) {
-  const definition = getComponentExampleDefinition(exampleKey);
-
   return (
     <RnUiKitComponentExampleDetailPage
-      definition={definition}
+      definition={getComponentExampleDefinition(exampleKey)}
       headerTransparent={headerTransparent}
       layoutHost={layoutHost}
     />
@@ -115,18 +117,22 @@ export function RnUiKitComponentExampleDetailPage({
   headerTransparent?: boolean;
   layoutHost?: "default" | "nativeSheet";
 }) {
-  const appBackgroundColors = useAppBackgroundColors();
   const headerHeight = useContext(HeaderHeightContext) ?? 0;
   const isFocused = useIsFocused();
+  const insets = useSafeAreaInsets();
+  const appBackgroundColors = useAppBackgroundColors();
   const ActiveExample = definition.Component;
-  const adjustsForNativeIosHeader = layoutHost === "default" && Platform.OS === "ios";
-  const pageBackgroundColor =
-    layoutHost === "nativeSheet" && isIos26Plus() ? "transparent" : appBackgroundColors.screen;
 
   if (definition.layout === "fill") {
+    const pageBackgroundColor =
+      layoutHost === "nativeSheet" && isIos26Plus() ? "transparent" : appBackgroundColors.screen;
     const fillBodyStyle = [
       styles.detailBody,
-      { backgroundColor: pageBackgroundColor },
+      {
+        backgroundColor: pageBackgroundColor,
+        paddingLeft: insets.left,
+        paddingRight: insets.right,
+      },
       headerTransparent &&
         !definition.handlesHeaderInsets && { paddingTop: headerHeight },
     ];
@@ -146,41 +152,43 @@ export function RnUiKitComponentExampleDetailPage({
     );
   }
 
-  const contents = (
-    <View style={[styles.scrollContent, { backgroundColor: pageBackgroundColor }]}>
-      <Text opacity={0.6}>{definition.description}</Text>
+  const page = (
+    <View
+      style={[
+        styles.scrollContent,
+        { paddingLeft: 16 + insets.left, paddingRight: 16 + insets.right },
+      ]}
+    >
+      <Text className="text-muted-foreground">
+        {definition.description ?? `${definition.label} 示例`}
+      </Text>
       <ActiveExample />
     </View>
   );
 
-  const scrollStyle = [styles.detailBody, { backgroundColor: pageBackgroundColor }];
   if (layoutHost === "nativeSheet") {
     return (
       <NativeSheetScrollContent
         bindToNativeSheet={isFocused}
-        // @ts-ignore
         iosEmptyViewportScrollEnabled={Platform.OS === "ios" ? true : undefined}
-        nestedScrollEnabled
-        showsVerticalScrollIndicator
-        style={scrollStyle}
+        style={styles.detailBody}
         tracksNavigationBarScrollEdge={Platform.OS === "android" || Platform.OS === "web"}
       >
-        {contents}
+        {page}
       </NativeSheetScrollContent>
     );
   }
-
   return (
     <ScrollView
-      automaticallyAdjustsScrollIndicatorInsets={adjustsForNativeIosHeader ? true : undefined}
-      contentInsetAdjustmentBehavior={adjustsForNativeIosHeader ? "automatic" : undefined}
+      automaticallyAdjustsScrollIndicatorInsets={Platform.OS === "ios" ? true : undefined}
+      contentInsetAdjustmentBehavior={Platform.OS === "ios" ? "automatic" : undefined}
       iosEmptyViewportScrollEnabled={Platform.OS === "ios" ? true : undefined}
       nestedScrollEnabled
       showsVerticalScrollIndicator
-      style={scrollStyle}
+      style={styles.detailBody}
       tracksNavigationBarScrollEdge={Platform.OS === "android" || Platform.OS === "web"}
     >
-      {contents}
+      {page}
     </ScrollView>
   );
 }

@@ -1,4 +1,3 @@
-import type { ComponentProps } from "react";
-import type { Separator as TamaguiSeparator } from "tamagui";
+import type { Root } from "@rn-primitives/separator";
 
-export type SeparatorProps = ComponentProps<typeof TamaguiSeparator>;
+export type SeparatorProps = React.ComponentProps<typeof Root>;

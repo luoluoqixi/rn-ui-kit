@@ -1,28 +1,31 @@
-// iOS 原生 Slider：使用 @expo/ui/swift-ui 的 SwiftUI Slider
-import { Slider as ExpoSlider, Host } from "@expo/ui/swift-ui";
+import { Host, Slider as ExpoSlider } from "@expo/ui/swift-ui";
 import { tint } from "@expo/ui/swift-ui/modifiers";
-import { useTheme } from "@tamagui/core";
-import React from "react";
+import { useEffect, useRef } from "react";
 import { View } from "react-native";
 
-import { supportsImpactHaptics } from "../utils/platform";
-import { toSwiftUIHexColor, triggerSliderNativeHaptics, useResolvedNativeHaptics } from "../utils";
+import {
+  supportsImpactHaptics,
+  toSwiftUIHexColor,
+  triggerSliderNativeHaptics,
+  useResolvedNativeHaptics,
+  useUiTheme,
+} from "../utils";
+import { resolveSliderFirstValue, type SliderProps } from "./types";
 
-import type { SliderProps } from "./types";
-
-export function NativeSlider(props: SliderProps) {
-  const {
-    value,
-    onValueChange,
-    onValueChangeFinished,
-    min,
-    max,
-    step: stepProp,
-    style,
-    nativeHaptics,
-  } = props;
-  const theme = useTheme();
-
+export function NativeSlider({
+  defaultValue,
+  max,
+  min,
+  nativeHaptics,
+  onChange,
+  onChangeFinished,
+  onValueChange,
+  onValueChangeFinished,
+  step: stepProp,
+  style,
+  value,
+}: SliderProps) {
+  const theme = useUiTheme();
   const safeMin = min ?? 0;
   const safeMax = max ?? 100;
   const safeStep =
@@ -31,47 +34,42 @@ export function NativeSlider(props: SliderProps) {
       : typeof stepProp === "number" && Number.isFinite(stepProp) && stepProp > 0
         ? stepProp
         : 1;
+  const currentValue = resolveSliderFirstValue(value ?? defaultValue, safeMin);
+  const trackTintColor = toSwiftUIHexColor(theme.primary);
 
-  const currentValue = value?.[0] ?? safeMin;
-  const trackTintColor = toSwiftUIHexColor(theme.color10?.val) ?? theme.color6?.val;
-
-  // 触感反馈
-  const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics);
+  // 触感反馈：iOS 原生 Slider 在边界位置可能已有系统反馈，因此边界值不重复触发。
+  const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics, {
+    defaultEnabled: true,
+  });
   const hasNativeSystemEdgeHaptics = supportsImpactHaptics();
-  const lastHapticsValueRef = React.useRef(currentValue);
-  const latestValueRef = React.useRef(currentValue);
+  const lastHapticsValueRef = useRef(currentValue);
+  const latestValueRef = useRef(currentValue);
 
-  React.useEffect(() => {
+  useEffect(() => {
     lastHapticsValueRef.current = currentValue;
     latestValueRef.current = currentValue;
   }, [currentValue]);
 
   const handleValueChange = (nextValue: number) => {
     const stepped =
-      safeStep != null
-        ? Math.min(
+      safeStep == null
+        ? Math.min(safeMax, Math.max(safeMin, nextValue))
+        : Math.min(
             safeMax,
             Math.max(safeMin, Math.round((nextValue - safeMin) / safeStep) * safeStep + safeMin),
-          )
-        : Math.min(safeMax, Math.max(safeMin, nextValue));
+          );
     latestValueRef.current = stepped;
+    onChange?.(stepped);
     onValueChange?.([stepped]);
 
-    if (stepped === lastHapticsValueRef.current) {
-      return;
-    }
-
+    if (stepped === lastHapticsValueRef.current) return;
     lastHapticsValueRef.current = stepped;
-
-    if (hasNativeSystemEdgeHaptics && (stepped === safeMin || stepped === safeMax)) {
-      return;
-    }
-
+    if (hasNativeSystemEdgeHaptics && (stepped === safeMin || stepped === safeMax)) return;
     triggerSliderNativeHaptics(resolvedNativeHaptics);
   };
 
   return (
-    <View style={[{ height: 48, width: "100%" }, style] as any}>
+    <View style={[{ height: 48, width: "100%" }, style]}>
       <Host
         // 嵌套 TrueSheet 中，SwiftUI Host 会把当前可见 safe area 当作宿主约束，
         // 导致原生 Slider 在滚到视口上/下边缘时出现反向“自动避让”偏移。
@@ -84,17 +82,18 @@ export function NativeSlider(props: SliderProps) {
         style={{ flex: 1, width: "100%" }}
       >
         <ExpoSlider
-          value={currentValue}
+          max={safeMax}
+          min={safeMin}
+          modifiers={trackTintColor == null ? undefined : [tint(trackTintColor)]}
           onEditingChanged={(isEditing) => {
             if (!isEditing) {
+              onChangeFinished?.(latestValueRef.current);
               onValueChangeFinished?.([latestValueRef.current]);
             }
           }}
           onValueChange={handleValueChange}
-          min={safeMin}
-          max={safeMax}
           step={safeStep}
-          modifiers={trackTintColor != null ? [tint(trackTintColor)] : undefined}
+          value={currentValue}
         />
       </Host>
     </View>

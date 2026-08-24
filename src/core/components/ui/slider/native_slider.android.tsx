@@ -1,32 +1,31 @@
-// Android 原生 Slider：使用 @expo/ui/jetpack-compose 的 Material3 Slider
-import { Slider as ExpoSlider, Host } from "@expo/ui/jetpack-compose";
-import { useTheme } from "@tamagui/core";
-import React from "react";
+import { Host, Slider as ExpoSlider } from "@expo/ui/jetpack-compose";
+import { useEffect, useRef } from "react";
 
 import {
   getSliderHapticsBuckets,
   toARGB,
   triggerSliderNativeHaptics,
   useResolvedNativeHaptics,
+  useUiTheme,
 } from "../utils";
+import { resolveSliderFirstValue, type SliderProps } from "./types";
 
-import type { SliderProps } from "./types";
-
-export function NativeSlider(props: SliderProps) {
-  const {
-    value,
-    onValueChange,
-    onValueChangeFinished,
-    min,
-    max,
-    step: stepProp,
-    style,
-    colors: colorsProp,
-    nativeHaptics,
-    nativeHapticsInterval,
-  } = props;
-  const theme = useTheme();
-
+export function NativeSlider({
+  colors: colorsProp,
+  defaultValue,
+  max,
+  min,
+  nativeHaptics,
+  nativeHapticsInterval,
+  onChange,
+  onChangeFinished,
+  onValueChange,
+  onValueChangeFinished,
+  step: stepProp,
+  style,
+  value,
+}: SliderProps) {
+  const theme = useUiTheme();
   const safeMin = min ?? 0;
   const safeMax = max ?? 100;
   const safeStep =
@@ -35,29 +34,22 @@ export function NativeSlider(props: SliderProps) {
       : typeof stepProp === "number" && Number.isFinite(stepProp) && stepProp > 0
         ? stepProp
         : 1;
+  const currentValue = resolveSliderFirstValue(value ?? defaultValue, safeMin);
 
-  const currentValue = value?.[0] ?? safeMin;
+  // 无用户颜色时从 UI 主题读取默认色，所有值转换为 Android ARGB 整数。
+  const resolvedColors = {
+    activeTickColor: toARGB(colorsProp?.activeTickColor ?? theme.primary),
+    activeTrackColor: toARGB(colorsProp?.activeTrackColor ?? theme.primary),
+    inactiveTickColor: toARGB(colorsProp?.inactiveTickColor ?? theme.mutedForeground),
+    inactiveTrackColor: toARGB(colorsProp?.inactiveTrackColor ?? theme.muted),
+    thumbColor: toARGB(colorsProp?.thumbColor ?? theme.primary),
+  };
 
-  // 无用户颜色时从 Tamagui 主题获取默认色，所有值转 ARGB int
-  const resolvedColors = colorsProp
-    ? {
-        thumbColor: toARGB(colorsProp.thumbColor),
-        activeTrackColor: toARGB(colorsProp.activeTrackColor),
-        inactiveTrackColor: toARGB(colorsProp.inactiveTrackColor),
-        activeTickColor: toARGB(colorsProp.activeTickColor),
-        inactiveTickColor: toARGB(colorsProp.inactiveTickColor),
-      }
-    : {
-        thumbColor: toARGB(theme.color6?.val),
-        activeTrackColor: toARGB(theme.color6?.val),
-        inactiveTrackColor: toARGB(theme.color3?.val),
-        activeTickColor: toARGB(theme.color6?.val),
-        inactiveTickColor: toARGB(theme.color6?.val),
-      };
-
-  // 触感反馈
-  const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics);
-  const lastHapticsBucketsRef = React.useRef(
+  // 触感反馈按 interval / step 计算 bucket，仅在跨 bucket 时触发，避免拖动过程中连续震动。
+  const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics, {
+    defaultEnabled: true,
+  });
+  const lastHapticsBucketsRef = useRef(
     getSliderHapticsBuckets([currentValue], {
       interval: nativeHapticsInterval,
       max: safeMax,
@@ -65,13 +57,13 @@ export function NativeSlider(props: SliderProps) {
       step: safeStep,
     }),
   );
-  const latestValueRef = React.useRef(currentValue);
+  const latestValueRef = useRef(currentValue);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (value == null) return;
-    const v = value[0] ?? safeMin;
-    latestValueRef.current = v;
-    lastHapticsBucketsRef.current = getSliderHapticsBuckets([v], {
+    const nextValue = resolveSliderFirstValue(value, safeMin);
+    latestValueRef.current = nextValue;
+    lastHapticsBucketsRef.current = getSliderHapticsBuckets([nextValue], {
       interval: nativeHapticsInterval,
       max: safeMax,
       min: safeMin,
@@ -80,17 +72,17 @@ export function NativeSlider(props: SliderProps) {
   }, [nativeHapticsInterval, safeMax, safeMin, safeStep, value]);
 
   const resolvedSteps =
-    safeStep != null ? Math.max(0, Math.round((safeMax - safeMin) / safeStep) - 1) : 0;
+    safeStep == null ? 0 : Math.max(0, Math.round((safeMax - safeMin) / safeStep) - 1);
 
   const handleValueChange = (nextValue: number) => {
     const stepped =
-      safeStep != null
-        ? Math.round((nextValue - safeMin) / safeStep) * safeStep + safeMin
-        : nextValue;
+      safeStep == null
+        ? nextValue
+        : Math.round((nextValue - safeMin) / safeStep) * safeStep + safeMin;
     latestValueRef.current = stepped;
+    onChange?.(stepped);
     onValueChange?.([stepped]);
 
-    // 触感反馈：Bucket 变化时才触发
     const nextBuckets = getSliderHapticsBuckets([stepped], {
       interval: nativeHapticsInterval,
       max: safeMax,
@@ -103,21 +95,22 @@ export function NativeSlider(props: SliderProps) {
       nextBuckets.some((bucket, index) => bucket !== previousBuckets[index]);
     lastHapticsBucketsRef.current = nextBuckets;
 
-    if (hasBucketChanged) {
-      triggerSliderNativeHaptics(resolvedNativeHaptics);
-    }
+    if (hasBucketChanged) triggerSliderNativeHaptics(resolvedNativeHaptics);
   };
 
   return (
-    <Host style={[{ height: 48, justifyContent: "center", width: "100%" }, style] as any}>
+    <Host style={[{ height: 48, justifyContent: "center", width: "100%" }, style]}>
       <ExpoSlider
-        value={currentValue}
-        onValueChange={handleValueChange}
-        onValueChangeFinished={() => onValueChangeFinished?.([latestValueRef.current])}
-        min={safeMin}
-        max={safeMax}
-        steps={resolvedSteps}
         colors={resolvedColors as any}
+        max={safeMax}
+        min={safeMin}
+        onValueChange={handleValueChange}
+        onValueChangeFinished={() => {
+          onChangeFinished?.(latestValueRef.current ?? safeMin);
+          onValueChangeFinished?.([latestValueRef.current]);
+        }}
+        steps={resolvedSteps}
+        value={currentValue}
       />
     </Host>
   );

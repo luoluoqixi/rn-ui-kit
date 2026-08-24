@@ -4,166 +4,103 @@
 
 [在线示例 (web)](https://rn-ui-kit.luoluoqixi.com/)
 
-面向 Expo、React Native 与 React Native Web 的跨平台 UI 封装库。`rn-ui-kit`
-以 Tamagui 为基础，在同一套 API 下组合 Web 实现、React Native 实现与平台原生能力，
-并提供主题、弹层、手势、安全区、Toast 和导航辅助能力。
+面向个人 Expo 项目的跨平台 UI 组件库。基础组件采用 React Native Reusables 的源码与 API，样式由 Uniwind 驱动；需要系统能力的组件继续由 rn-ui-kit 提供 iOS、Android 与 Web 平台实现。
 
 > [!WARNING]
-> 此库目前仅在我自己的部分 App 中使用，尚未准备作为面向所有人的通用 UI 库。
-> 请勿假设其 API、兼容性或发布方式适用于其他项目。
-
-## 特性
-
-- 一套组件 API 覆盖 iOS、Android 和 Web
-- 基于 Tamagui 的主题、Token、响应式样式与动画能力
-- `RootProvider` 统一装配手势、安全区、Sheet、Toast、主题和原生对话框
-- 支持浅色、深色、跟随系统以及自定义强调色主题
-- 对 Menu、Select、Sheet、Toast、Haptics 等能力提供原生实现或跨平台降级
-- 内置组件调试目录与 Expo 示例应用
-- 通过 Bun patch 同步项目所需的上游依赖补丁
-- 完整 TypeScript 类型导出
+> 此库只服务于维护者自己的 App，不承诺通用组件库所需的 API 稳定性或版本兼容范围。
 
 ## 运行环境
-
-本仓库当前锁定的主要技术版本如下：
 
 | 技术 | 版本 |
 | --- | --- |
 | Expo | 55 |
 | React Native | 0.83.9 |
 | React / React DOM | 19.2.5 |
-| Tamagui | 2.7.7 |
+| Uniwind | 1.x |
+| Tailwind CSS | 4.x |
 | TypeScript | 5.9.2 |
 | 包管理器 | Bun |
 
-`rn-ui-kit` 现在是单一 package：默认入口仅导出 core，debug API 需从
-`rn-ui-kit/debug` 显式导入。运行时框架和原生模块统一声明在
-根目录 [`package.json`](./package.json) 的
-`peerDependencies` 中。接入已有应用时，请以该文件为准，并确保 Expo、React Native、
-Tamagui 及原生模块版本兼容。
+当前仅支持 Expo App，不支持裸 React Native CLI。React Native 及强相关原生依赖固定在根目录 [`package.json`](./package.json)；`@rn-primitives/*` 是 rn-ui-kit 的内部依赖，App 不需要直接声明。
 
+## 接入 App
 
-## 快速开始
+### 1. 安装
 
-### 运行仓库示例
+发布分支可以直接作为 Git 依赖安装：
 
 ```bash
-bun install
-bun install --cwd examples/app
-bun run typecheck
-
-# 启动 Expo 开发服务器
-bun run --cwd examples/app start
-
-# 或直接启动指定平台
-bun run --cwd examples/app web
-bun run --cwd examples/app android
-bun run --cwd examples/app ios
+bun add github:luoluoqixi/rn-ui-kit#rn-ui-kit-<version>
+bun add uniwind tailwindcss
 ```
 
-Android 与 iOS 命令需要本机已配置相应的原生开发环境；Web 示例可以直接通过浏览器运行。
-
-### 运行本地示例
-
-仓库根目录就是 `rn-ui-kit` package；示例应用是独立 Bun 项目，通过本地目录依赖使用它：
+源码开发时可使用目录依赖：
 
 ```json
 {
   "dependencies": {
-    "rn-ui-kit": "file:../.."
+    "rn-ui-kit": "link:../..",
+    "tailwindcss": "^4.3.2",
+    "uniwind": "^1.11.0"
   }
 }
 ```
 
-### 在外部项目中接入
+App 仍需安装 [`peerDependencies`](./package.json) 中列出的 Expo、React Native 和原生模块，以便 Expo autolinking 与原生 patch 正常工作。
 
-本仓库使用 `rn-ui-kit-<version>` 分支保存编译后的独立发布包。发布分支不包含
-workspace，也不要求外部 App 编译 TypeScript。推送发布分支后可以直接安装：
+### 2. 配置 Uniwind
 
-```bash
-bun add github:luoluoqixi/rn-ui-kit#rn-ui-kit-<version>
+在 App 根目录创建 `global.css`：
+
+```css
+@import "tailwindcss";
+@import "uniwind";
+@import "rn-ui-kit/styles.css";
+
+@source "./src";
+@source "./node_modules/rn-ui-kit/src";
+@source "./node_modules/rn-ui-kit/dist";
 ```
 
-私有仓库可以使用 SSH：
+源码目录依赖需要把后两条路径调整到实际位置。仓库示例使用：
 
-```bash
-bun add "git+ssh://git@github.com/luoluoqixi/rn-ui-kit.git#rn-ui-kit-<version>"
+```css
+@source "../../src";
+@source "../../dist";
 ```
 
-外部项目仍需满足
-[`peerDependencies`](./package.json) 中声明的 Expo、React Native、
-Tamagui 和原生模块版本。
+Metro 配置：
 
-## 屏幕截图
+```js
+const { getDefaultConfig } = require("expo/metro-config");
+const { withUniwindConfig } = require("uniwind/metro");
 
-| Android | iOS 18 | iOS 26 |
-| :---: | :---: | :---: |
-| <a href="./docs/SCREENSHOTS.md"><img src="./docs/screenshots/android/001.jpg" alt="rn-ui-kit 在 Android 上的示例首页" width="280"></a> | <a href="./docs/SCREENSHOTS.md"><img src="./docs/screenshots/ios18/001.jpg" alt="rn-ui-kit 在 iOS 18 上的示例首页" width="280"></a> | <a href="./docs/SCREENSHOTS.md"><img src="./docs/screenshots/ios26/001.jpg" alt="rn-ui-kit 在 iOS 26 上的示例首页" width="280"></a> |
+const config = getDefaultConfig(__dirname);
 
-<p align="center">
-  <a href="./docs/SCREENSHOTS.md">查看 Android、iOS 18 与 iOS 26 完整截图对比</a>
-</p>
-
-## 应用配置
-
-### 1. 初始化平台能力
-
-在应用入口的其他 UI 导入之前加载初始化模块：
-
-```tsx
-import "rn-ui-kit/initialize";
-```
-
-它会初始化 Tamagui 所需的手势、Zeego 菜单、原生 Toast、渐变、键盘控制、
-Teleport Portal 和 Worklets 适配。
-
-### 2. 配置 Tamagui
-
-```tsx
-// tamagui.config.ts
-import { defaultConfig } from "@tamagui/config/v5";
-import { animations } from "@tamagui/config/v5-css";
-import { animations as animationsReanimated } from "@tamagui/config/v5-reanimated";
-import { createTamagui, isWeb } from "tamagui";
-
-import { themes } from "./themes";
-
-const config = createTamagui({
-  ...defaultConfig,
-  animations: isWeb ? animations : animationsReanimated,
-  themes,
+module.exports = withUniwindConfig(config, {
+  cssEntryFile: "./global.css",
+  dtsFile: "./uniwind-types.d.ts",
 });
-
-export default config;
-
-type AppConfig = typeof config;
-
-declare module "tamagui" {
-  interface TamaguiCustomConfig extends AppConfig {}
-}
 ```
 
-可直接参考示例中的
-[`tamagui.config.ts`](./examples/app/tamagui.config.ts)、
-[`themes.ts`](./examples/app/themes.ts) 和
-[`tamagui.build.ts`](./examples/app/tamagui.build.ts)。
-
-### 3. 添加根 Provider
+在 App 入口最先加载初始化模块和 CSS：
 
 ```tsx
 import "rn-ui-kit/initialize";
+import "./global.css";
+```
 
-import { Button, RootProvider, Text } from "rn-ui-kit";
-import { YStack } from "tamagui";
+完整配置见 [`examples/app`](./examples/app)。项目不需要 RNR CLI、`components.json` 或其他 registry 配置。
 
-import config from "./tamagui.config";
+### 3. Provider 与主题
+
+```tsx
+import { RootProvider, Text } from "rn-ui-kit";
+import { View } from "react-native";
 
 export default function App() {
   return (
     <RootProvider
-      tamaguiConfig={config}
-      accentThemeName="ocean"
-      accentThemeNames={["ocean", "sakura", "forest"]}
       preferences={{
         appearance: {
           accentColor: "ocean",
@@ -172,396 +109,80 @@ export default function App() {
         },
       }}
     >
-      <YStack flex={1} items="center" justify="center" gap="$4">
+      <View className="bg-background flex-1 items-center justify-center">
         <Text>你好，rn-ui-kit</Text>
-        <Button onPress={() => console.log("pressed")}>开始使用</Button>
-      </YStack>
+      </View>
     </RootProvider>
   );
 }
 ```
 
-`RootProvider` 会统一提供：
+主题使用 RNR New York 风格的语义变量，如 `background`、`foreground`、`primary`、`accent`、`muted`、`card`、`popover`、`border` 与 `ring`。rn-ui-kit 只在这些语义变量上叠加强调色，不提供旧式编号色阶。
 
-- `GestureHandlerRootView` 与 `SafeAreaProvider`
-- Tamagui 主题上下文
-- Sheet 与 Portal 支持
-- Toast 渲染容器
-- 原生对话框与触觉反馈上下文
-- 颜色模式与强调色偏好
+内置强调色：`mono`、`ocean`、`sakura`、`lavender`、`sunset`、`forest`、`ruby`、`golden`、`aqua`。
 
-### 4. 配置 Babel 与 Web 样式
-
-示例项目使用 `babel-preset-expo`、`@tamagui/babel-plugin` 和
-`react-native-worklets/plugin`。完整配置见
-[`babel.config.js`](./examples/app/babel.config.js)。
-
-Web 端生成 Tamagui CSS 后，在入口导入：
-
-```tsx
-import "./tamagui.generated.css";
-```
-
-生成命令：
-
-```bash
-bun --cwd examples/app generate:tamagui
-```
-
-## 使用示例
-
-### Toast
-
-```tsx
-import { Button, useToast } from "rn-ui-kit";
-
-export function SaveButton() {
-  const { toast } = useToast();
-
-  return (
-    <Button
-      onPress={() =>
-        toast.success("保存成功", {
-          description: "配置已写入本地。",
-        })
-      }
-    >
-      保存
-    </Button>
-  );
-}
-```
-
-### Dialog
-
-```tsx
-import { Button, Dialog, Text } from "rn-ui-kit";
-
-export function ConfirmDialog() {
-  return (
-    <Dialog
-      title="删除项目？"
-      description="此操作无法撤销。"
-      trigger={<Button>打开对话框</Button>}
-      actions={
-        <Dialog.Close asChild>
-          <Button>确认</Button>
-        </Dialog.Close>
-      }
-    >
-      <Text>请确认你希望继续。</Text>
-    </Dialog>
-  );
-}
-```
-
-### NativeList：iOS 原生列表
-
-`NativeList` 在 iOS 上默认使用 `@expo/ui/swift-ui` 的原生 `List` 与 `Section`
-渲染，并采用系统 `insetGrouped` 列表样式。导航行、选中标记、Switch 和 Select
-会尽量使用 SwiftUI 控件，因此能够自然适配系统字体、颜色、交互反馈与滚动行为。
-
-```tsx
-import { useState } from "react";
-import {
-  NativeList,
-  NativeListInputItem,
-  NativeListItem,
-  NativeListNavigationItem,
-  NativeListSection,
-  NativeListSelectItem,
-  NativeListSwitchItem,
-  NativeListTextAreaItem,
-  Text,
-} from "rn-ui-kit";
-
-export function SettingsList() {
-  const [autoSync, setAutoSync] = useState(true);
-  const [themeMode, setThemeMode] = useState<string | null>("system");
-  const [workspaceName, setWorkspaceName] = useState("rn-ui-kit");
-  const [workspaceNote, setWorkspaceNote] = useState("");
-
-  return (
-    <NativeList>
-      <NativeListSection title="名称" footer="编辑时会显示系统清除按钮。">
-        <NativeListInputItem
-          subtitle="显示在行尾的单行输入框"
-          title="工作区名称"
-          inputProps={{
-            autoCapitalize: "none",
-            onChangeText: setWorkspaceName,
-            value: workspaceName,
-          }}
-        />
-      </NativeListSection>
-      <NativeListSection
-        title="工作区"
-        footer="更改会自动保存。"
-        trailing={<Text color="$blue10">全部显示</Text>}
-      >
-        <NativeListNavigationItem
-          sfSymbol="person.2.fill"
-          iconColor="#7c3aed"
-          title="成员"
-          subtitle="邀请、角色与访问权限"
-          titleFontSize={17}
-          subtitleFontSize={13}
-          onPress={() => console.log("open members")}
-        />
-        <NativeListItem
-          chevron
-          title="存储空间"
-          trailing={<Text color="$color10">27.74 GB</Text>}
-        />
-        <NativeListSwitchItem
-          title="自动同步"
-          switchProps={{
-            checked: autoSync,
-            onCheckedChange: setAutoSync,
-          }}
-        />
-        <NativeListSelectItem
-          title="主题模式"
-          selectProps={{
-            value: themeMode ?? undefined,
-            onValueChange: setThemeMode,
-            options: [
-              { label: "浅色", value: "light" },
-              { label: "深色", value: "dark" },
-              { label: "跟随系统", value: "system" },
-            ],
-          }}
-        />
-      </NativeListSection>
-      <NativeListSection title="备注">
-        <NativeListTextAreaItem
-          textAreaProps={{
-            numberOfLines: 4,
-            onChangeText: setWorkspaceNote,
-            value: workspaceNote,
-          }}
-        />
-      </NativeListSection>
-    </NativeList>
-  );
-}
-```
-
-需要注意：
-
-- Android 和 Web 会自动使用基于 `FlashList` / React Native 视图的跨平台实现。
-- 在 iOS 上传入 `<NativeList native={false}>`，可主动使用相同的 fallback 外观。
-- `NativeList` 的 fallback 下拉刷新可用 `refreshColor` 设置指示器颜色；未传时使用当前主题色。iOS 原生 SwiftUI List 会忽略此项。
-- `NativeList` 进入编辑模式后默认禁用下拉刷新；如需在编辑模式中保留刷新，可显式传入
-  `refreshEnabledInEditMode`。iOS 原生 List 直接持有稳定的 `UIRefreshControl`，不会使用或动态增删
-  `refreshable` modifier；切换编辑模式只在原生 `UIScrollView` 上挂载或解绑该控件，因此不会重建列表或改变滚动位置。
-- `NativeList`、`NativeListSection` 与每个 Item 都支持 `contextMenuProps`，可直接传入
-  `items`、`contentProps`、`itemProps`、打开事件等 `ContextMenu` 配置。解析优先级为
-  Item > Section > NativeList；Item 或 Section 传 `contextMenuProps={false}` 可停止继承。
-  iOS/Android 长按打开，Web 右键打开；编辑模式和 `disabled` Item 中会暂时停用，避免与多选或禁用状态冲突。
-  iOS 原生 Item 默认在禁用时以 50% 透明度显示。
-  `disabledStyle` 同样按 NativeList > Section > Item 继承，默认启用；传入 `false` 可关闭对应层级的禁用视觉。
-  `ContextMenuItemData` 支持 `icon`、`indicator`、`selected`、`subtitle`、`subMenu` 与
-  `subMenuTitle`，其中 Android 原生菜单只支持一级子菜单。
-- 向 `NativeList` 传入 `editMode` 可在 iOS、Android 与 Web 开启备忘录式多选：每行左侧
-  显示选择标记，并将原行操作切换为选择/取消选择。列表可通过 `selectedIds` /
-  `onSelectedIdsChange` 受控，也可仅传 `defaultSelectedIds` 使用内部状态；行可传
-  `selectionId` 提供稳定标识。iOS 原生 List 始终使用 SwiftUI `List` 原生多选，负责系统
-  选择圆标、选中背景及滑动快速选择。`editModeIcon` 和 `editModeSelectedIcon` 在 iOS 原生
-  List 中会被忽略；Android、Web 与 fallback 继续使用原有自定义实现并支持 React Native 图标。
-  若某一行不应参与多选，可在该 Item 上传入 `selectionDisabled`；编辑模式中该行不会显示选择
-  标记，也不会变更 `selectedIds`。
-- 原生文本行的 `title`、`subtitle` 和 `value` 适合传入字符串或数字；无法直接映射到
-  SwiftUI 的复杂 ReactNode 会按行降级渲染。
-- 所有基础 Item 都支持 `titleColor` / `titleFontSize`、`subtitleColor` /
-  `subtitleFontSize`、`valueColor` / `valueFontSize`。`NativeListSelectItem` 的已选值也会沿用
-  `valueColor` 与 `valueFontSize`。
-- 导航行及其他启用 chevron 的 Item 可通过 `chevronColor` 设置行尾箭头颜色；
-  未指定时继续使用平台默认辅助色。
-- fallback Item（包括 `NativeListCustomItem`）支持 `backgroundColor`、
-  `hoverBackgroundColor` 与 `pressBackgroundColor`；iOS 原生 List 会忽略这些背景属性。
-  未指定时继续使用原有的 fallback 主题颜色。
-- 所有 Item（包括 `NativeListCustomItem`）支持 `paddingHorizontal`、
-  `paddingVertical`、`paddingTop`、`paddingBottom`、`paddingLeft` 与
-  `paddingRight`；单边属性优先于 Horizontal / Vertical。
-- `icon` 用于自定义 React Native 图标；`sfSymbol` 用于 iOS 原生 SF Symbol，
-  并可通过 `iconColor`、`iconSize` 调整。`sfSymbol` 在 fallback 模式中不渲染，
-  两个字段可以同时传入：iOS 原生模式优先使用 `sfSymbol`，其他平台和 fallback
-  模式使用 `icon`。
-- `iconSlotWidth` 同时控制 iOS SF Symbol 和 fallback 自定义图标的列宽。iOS 原生模式
-  默认取 `Math.max(24, iconSize ?? 20)`；fallback 未指定时保留自定义图标自身宽度。
-  多行可设置相同的 `iconSlotWidth` 以保持标题左边缘对齐。
-- `NativeListSection` 支持 `titleColor` 与 `titleFontSize`；复杂 ReactNode 标题仍由调用方
-  自行设置文本样式。
-- iOS `NativeListSelectItem` 会把 `NativePickerSwiftUI` 接口已声明的 picker 属性完整传入，
-  包括 dropdown 对齐/偏移、原生 trigger 样式与内容、`onOpenChange`；具体行为沿用
-  `NativePickerSwiftUI` 的现有实现。仅属于 Web、Tamagui viewport 或自定义 Sheet 的
-  `SelectProps` 不适用于这条原生 picker 路径。
-- `NativeListCustomItem` 可在原生列表中承载自定义 React Native 内容。
-- `NativeListInputItem` 提供占满一行的单行输入框，使用 `inputProps` 传入 `Input` 的
-  `value`、`onChangeText`、`placeholder`、`autoFocus` 等属性；传入 `title` 或 `subtitle`
-  时，文本显示在左侧、输入框显示在右侧。默认在 iOS 编辑时显示清除按钮；传入
-  `inputProps.clearButtonMode` 可以覆盖该行为。Web fallback 的输入框背景默认透明，可通过
-  `inputProps.style.backgroundColor` 显式覆盖。带标题时可通过 `inputWidth` 调整右侧输入框容器宽度，
-  默认保持列表原有宽度。NativeList 编辑模式会将 iOS 单行与多行输入框
-  显示为只读的 SwiftUI 文本快照，保留当前值或占位文字，同时将整行点击交给多选行为。
-- `NativeListItem.trailing` 可渲染自定义行尾内容；`NativeListSection.trailing` 可渲染分组
-  标题右侧内容，例如“全部显示”。iOS 15 会将包含复杂 React Native trailing 的 header
-  放入 Section 的透明首行，并为首个内容行恢复顶部圆角，以绕开系统 section header 的复用问题。
-- `NativeListTextAreaItem` 提供占满一行的多行文本框，使用 `textAreaProps` 传入 `TextArea`
-  的属性。
-- `initialScrollTarget` 与行上的 `nativeScrollId` 可用于 iOS 原生列表的初始滚动定位。
-
-完整交互示例见
-[`collection_examples.tsx`](./src/debug/pages/component_examples/examples/collection_examples.tsx)。
+`RootProvider` 负责手势根节点、安全区、颜色模式、语义颜色、导航主题、Sheet、Portal、Toast、原生对话框和触觉反馈上下文。
 
 ## 组件
 
 | 分类 | 组件 |
 | --- | --- |
-| 操作与反馈 | `Button`、`Checkbox`、`Switch`、`ToggleGroup`、`Slider`、`Spinner`、`Progress`、`Toast`、`NativeDialog` |
-| 表单 | `Input`、`TextArea`、`Select`、`RadioGroup`、`Form`、`Label` |
-| 布局与组合 | `Accordion`、`Tabs`、`SplitView` / `SplitLayout`、`Card` |
-| 弹层 | `Dialog`、`AlertDialog`、`ContextMenu`、`Menu`、`Popover`、`Sheet` / `NativeSheet`、`Tooltip` |
-| 列表与滚动 | `NativeList`、`ListGroup`、`ListItem`、`FlashList`、`ScrollView` |
-| 展示 | `Avatar`、`Text`、`Image`、`Separator`、`Link` |
+| 操作与反馈 | `Button`、`Checkbox`、`Switch`、`Toggle`、`ToggleGroup`、`Slider`、`Spinner`、`Progress`、`Toast`、`NativeDialog` |
+| 表单 | `Input`、`Textarea`、`Select`、`RadioGroup`、`Label` |
+| 布局与组合 | `Accordion`、`AspectRatio`、`Collapsible`、`Tabs`、`SplitView` / `SplitLayout`、`Card`、`Separator` |
+| 弹层 | `Dialog`、`AlertDialog`、`ContextMenu`、`Dropdown`、`Menubar`、`Popover`、`Sheet` / `NativeSheet`、`Tooltip` |
+| 列表与滚动 | `NativeList`、`ScrollView` |
+| 展示 | `Alert`、`Avatar`、`Badge`、`Skeleton`、`Text`、`Icon`、`Link`、`GlassEffect` |
 | 基础设施 | `RootProvider`、`UIProvider`、主题工具、导航工具、Portal 与平台工具 |
 
-所有公开导出可在
-[`src/core/components/ui/index.ts`](./src/core/components/ui/index.ts)
-中查看。各组件目录同时导出 Props 类型。
+`Form`、`Image`、`ListGroup`、`ListItem`、`FlashList`、`HoverCard` 和旧 `Menu` API 已删除。`TextArea` 已更名为 `Textarea`，`Menu` 已更名为 `Dropdown`。
+
+第一版迁移中，`Select`、`Slider` 与 `Spinner` 是保证公开类型和编译稳定的占位实现；Select/Slider 的旧源码保留在 `legacy/`，后续单独重构。非原生 Toast UI 同样暂不渲染，native Toast 继续使用 Burnt。
+
+`Dropdown` 和 `ContextMenu` 在 Web 使用 RNR primitives，在 iOS/Android 使用共享的 Zeego 数据模型与原生实现。两者支持 compound API，也支持 rn-ui-kit 的 `items`、原生图标、haptics 与 native trigger 扩展。
+
+## NativeList
+
+`NativeList` 在 iOS 保留基于 `@expo/ui/swift-ui` 的系统列表实现；Android 和 Web 使用去框架化的 React Native fallback。列表仍支持 Section、输入项、开关项、菜单项、上下文菜单、下拉刷新和编辑模式多选。
+
+Select 第一版为空实现，因此 `NativeListSelectItem` 只保留当前值展示和既有 iOS 系统菜单可覆盖的路径；完整 Select 行为会随 Select 独立重构补齐。
 
 ## 补丁同步
 
-该库依赖少量上游补丁。应用安装依赖后运行：
+保留的原生 patch 通过现有命令同步到 App：
 
 ```bash
 bun run sync-patches
 ```
 
-对应的应用脚本为：
+App 可注册脚本：
 
 ```json
 {
   "scripts": {
+    "clear-patch-cache": "rn-ui-clear-patch-cache",
     "sync-patches": "rn-ui-sync-patches"
   }
 }
 ```
 
-命令会将库内补丁复制到应用的 `patches/` 目录，并注册到应用
-`package.json` 的 `patchedDependencies`。如果应用需要保留自己的某个补丁，可以排除
-同名依赖：
-
-```json
-{
-  "rnUiKitSyncPatches": {
-    "exclude": ["@expo/cli@55.0.32"]
-  }
-}
-```
-
-被排除的依赖不会被复制或注册。
-
-## 清除补丁缓存
-
-Bun 会缓存应用补丁后的依赖目录。修改补丁后，如需确保下一次安装不复用旧缓存，可运行：
-
-```bash
-bun run clear-patch-cache
-bun i --force
-```
-
-命令读取当前目录的 `package.json`，只删除 `patchedDependencies` 中当前包名和版本对应的
-`_patch_hash` 缓存，不会清空其他 Bun 依赖缓存。先查看将要删除的内容可使用：
-
-```bash
-bun run clear-patch-cache --dry-run
-```
-
-也可以在应用的 `package.json` 中注册：
-
-```json
-{
-  "scripts": {
-    "clear-patch-cache": "rn-ui-clear-patch-cache"
-  }
-}
-```
-
-## 项目结构
-
-```text
-rn-ui-kit/
-├─ src/
-│  ├─ core/               # 核心组件、Provider、主题与平台适配
-│  ├─ debug/              # 组件目录、调试页面与示例界面
-│  ├─ index.ts            # 默认入口，仅导出 core
-│  ├─ debug.ts            # rn-ui-kit/debug 子路径
-│  └─ initialize.ts       # rn-ui-kit/initialize 子路径
-├─ patches/               # 需要同步到 App 的上游补丁
-├─ deprecated_patches/    # 已停用补丁归档
-├─ test/                  # 测试与公开 API 类型检查
-├─ examples/
-│  └─ app/                # Expo iOS / Android / Web 示例应用
-├─ scripts/
-│  ├─ clear-patch-cache.mjs # rn-ui-clear-patch-cache
-│  ├─ sync-patches.mjs    # rn-ui-sync-patches
-│  ├─ android/            # 构建并发布 Android 示例 APK
-│  └─ release/            # 版本同步、发布包与发布分支脚本
-├─ package.json           # 库 manifest、构建与发布命令
-└─ bun.lock
-```
+同步器读取 rn-ui-kit 的 `patches/`，复制补丁并更新 App 的 `patchedDependencies`。可通过 `rnUiKitSyncPatches.exclude` 排除由 App 自己维护的同名 patch。清除 Bun patch 缓存前可运行 `bun run clear-patch-cache --dry-run` 查看目标。
 
 ## 开发
 
 ```bash
-# 编译 rn-ui-kit 到 dist
-bun run build
-
-# 检查 package 和示例 App
+bun install
+bun install --cwd examples/app
 bun run typecheck
-
-# 仅检查 rn-ui-kit
-bun run typecheck:library
-
-# 仅检查示例应用
-bun run --cwd examples/app typecheck
+bun run build
+bun run test
 ```
 
-新增或修改组件时，建议同时在 `src/debug` 的组件目录中添加示例，
-以便在 iOS、Android 和 Web 上核对交互与视觉表现。
+RNR CLI 的一次性源码快照位于被 Git 忽略的 `.temp/rnr-source`。正式源码不依赖 CLI；后续组件升级应从快照或 registry 源码人工对照。
 
-## 构建与发布
+主要入口：
 
-```bash
-# 修改版本并同步 bun.lock
-bun run set-version 1.0.1
-
-# 更新版本、创建签名 commit 和 tag
-# 要求执行前工作区干净
-bun run set-version 1.0.1 --commit
-
-# 明确允许将已有工作区改动一并提交
-bun run set-version 1.0.1 --commit --force
-
-# 完成上述步骤、生成发布分支并推送到 origin/nas
-bun run set-version 1.0.1 --push
-
-# 只生成发布目录和 tarball
-bun run package-release --pack-only
-
-# 生成发布目录、tarball 和本地 rn-ui-kit-1.0.1 分支
-bun run package-release
-
-# 确认后推送发布分支
-git push -u origin rn-ui-kit-1.0.1
-```
-
-发布阶段直接编译根目录 package，不会动态合并 package。发布分支根目录只包含
-编译后的 `dist`、package.json、README、LICENSE、patches 和运行时脚本。完整说明见
-[`scripts/release/README.md`](./scripts/release/README.md)。
-
-## License
-
-[MIT](./LICENSE) © 2026 luoluoqixi
+- `rn-ui-kit`：core API
+- `rn-ui-kit/debug`：调试页面
+- `rn-ui-kit/initialize`：平台初始化
+- `rn-ui-kit/styles.css`：语义变量与 RNR 样式基础

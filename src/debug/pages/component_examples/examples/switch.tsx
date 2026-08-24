@@ -1,37 +1,57 @@
 import { useState } from "react";
-
-import { Switch } from "rn-ui-kit/core";
-
+import { isWeb, Separator, Switch } from "rn-ui-kit/core";
 import { ExampleBlock, ExampleStack } from "../shared";
 
 export function SwitchExample() {
-  const [syncEnabled, setSyncEnabled] = useState(true);
-  const [wifiOnly, setWifiOnly] = useState(false);
-
+  const [checked, setChecked] = useState(false);
+  const [checkedLeft, setCheckedLeft] = useState(false);
+  const [checkedNative, setCheckedNative] = useState(false);
+  const [checkedNativeLeft, setCheckedNativeLeft] = useState(false);
   return (
     <ExampleStack>
-      <ExampleBlock description="开关适合即时生效的独立偏好。" title="同步设置">
+      <ExampleBlock description={checked ? "已开启" : "已关闭"} title="飞行模式">
+        <Switch checked={checked} label="飞行模式" onCheckedChange={setChecked} />
+
         <Switch
-          checked={syncEnabled}
-          label="自动同步"
-          labelPosition="end"
-          onCheckedChange={setSyncEnabled}
+          labelPosition="left"
+          checked={checkedLeft}
+          label="飞行模式"
+          onCheckedChange={setCheckedLeft}
         />
         <Switch
-          checked={wifiOnly}
-          disabled={!syncEnabled}
-          label="仅 Wi-Fi 同步"
-          labelPosition="end"
-          onCheckedChange={setWifiOnly}
+          disabled
+          labelPosition="left"
+          checked={checkedLeft}
+          label="飞行模式"
+          onCheckedChange={setCheckedLeft}
         />
-        <Switch
-          checked={wifiOnly}
-          disabled={!syncEnabled}
-          label="仅 Wi-Fi 同步（native=false）"
-          labelPosition="end"
-          onCheckedChange={setWifiOnly}
-          native={false}
-        />
+
+        {!isWeb() && (
+          <>
+            <Separator />
+            <Switch
+              native
+              checked={checkedNative}
+              label="飞行模式"
+              onCheckedChange={setCheckedNative}
+            />
+            <Switch
+              labelPosition="left"
+              native
+              checked={checkedNativeLeft}
+              label="飞行模式"
+              onCheckedChange={setCheckedNativeLeft}
+            />
+            <Switch
+              disabled
+              labelPosition="left"
+              native
+              checked={checkedNativeLeft}
+              label="飞行模式"
+              onCheckedChange={setCheckedNativeLeft}
+            />
+          </>
+        )}
       </ExampleBlock>
     </ExampleStack>
   );

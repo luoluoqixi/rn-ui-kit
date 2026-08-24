@@ -1,4 +1,3 @@
-import type { ComponentProps } from "react";
-import type { Spinner as TamaguiSpinner } from "tamagui";
+import type { ActivityIndicatorProps } from "react-native";
 
-export type SpinnerProps = ComponentProps<typeof TamaguiSpinner>;
+export type SpinnerProps = ActivityIndicatorProps;

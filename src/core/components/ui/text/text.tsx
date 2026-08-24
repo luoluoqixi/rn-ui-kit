@@ -1,49 +1,44 @@
-import {
-  H1 as TamaguiH1,
-  H2 as TamaguiH2,
-  H3 as TamaguiH3,
-  H4 as TamaguiH4,
-  H5 as TamaguiH5,
-  H6 as TamaguiH6,
-  Paragraph as TamaguiParagraph,
-  SizableText as TamaguiSizableText,
-  Text as TamaguiText,
-} from "tamagui";
+import { cn } from "../utils/cn";
+import { Slot } from "@rn-primitives/slot";
+import * as React from "react";
+import { Platform, Text as RNText, type Role } from "react-native";
 
-import type { HeadingProps, ParagraphProps, SizableTextProps, TextProps } from "./types";
+import { TextProps, TextVariant } from "./types";
+import { textVariants } from "./variants";
 
-export function Text(props: TextProps) {
-  return <TamaguiText {...props} />;
-}
+const ROLE: Partial<Record<TextVariant, Role>> = {
+  h1: "heading",
+  h2: "heading",
+  h3: "heading",
+  h4: "heading",
+  blockquote: Platform.select({ web: "blockquote" as Role }),
+  code: Platform.select({ web: "code" as Role }),
+};
 
-export function SizableText(props: SizableTextProps) {
-  return <TamaguiSizableText {...props} />;
-}
+const ARIA_LEVEL: Partial<Record<TextVariant, string>> = {
+  h1: "1",
+  h2: "2",
+  h3: "3",
+  h4: "4",
+};
 
-export function Paragraph(props: ParagraphProps) {
-  return <TamaguiParagraph {...props} />;
-}
+const TextClassContext = React.createContext<string | undefined>(undefined);
 
-export function H1(props: HeadingProps) {
-  return <TamaguiH1 {...props} />;
-}
+const Text = React.forwardRef<RNText, TextProps>(function Text(
+  { className, asChild = false, variant = "default", ...props },
+  ref,
+) {
+  const textClass = React.useContext(TextClassContext);
+  const Component = asChild ? Slot : RNText;
+  return (
+    <Component
+      className={cn(textVariants({ variant }), textClass, className)}
+      role={variant ? ROLE[variant] : undefined}
+      aria-level={variant ? ARIA_LEVEL[variant] : undefined}
+      ref={ref}
+      {...props}
+    />
+  );
+});
 
-export function H2(props: HeadingProps) {
-  return <TamaguiH2 {...props} />;
-}
-
-export function H3(props: HeadingProps) {
-  return <TamaguiH3 {...props} />;
-}
-
-export function H4(props: HeadingProps) {
-  return <TamaguiH4 {...props} />;
-}
-
-export function H5(props: HeadingProps) {
-  return <TamaguiH5 {...props} />;
-}
-
-export function H6(props: HeadingProps) {
-  return <TamaguiH6 {...props} />;
-}
+export { Text, TextClassContext, textVariants };

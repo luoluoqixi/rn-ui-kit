@@ -42,3 +42,11 @@ export function resolveSelectItemGroups(options: {
       };
     });
 }
+
+export function flattenSelectItems(options: {
+  itemGroups?: SelectItemGroupData[];
+  items?: SelectItemData[];
+  options?: SelectItemData[];
+}) {
+  return resolveSelectItemGroups(options).flatMap((group) => group.items);
+}

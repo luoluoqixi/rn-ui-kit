@@ -1,9 +1,7 @@
 import { Platform, StyleSheet, View } from "react-native";
-import { YStack } from "tamagui";
-import { NativeSheetScrollContent, ScrollView, Text } from "rn-ui-kit/core";
 
+import { NativeSheetScrollContent, ScrollView, Text } from "../../core/components/ui";
 import { getRnUiKitDebugRouteDefinition } from "../routes";
-
 import type { RnUiKitDebugRouteDefinition, RnUiKitDebugRouteKey } from "../types";
 
 export function RnUiKitDebugSectionPage({
@@ -29,10 +27,8 @@ export function RnUiKitDebugSectionPage({
   const SectionPage = definition.Page;
   const adjustsForNativeIosHeader = layoutHost === "default" && Platform.OS === "ios";
   const header =
-    contentTitle == null ? undefined : (
-      <Text fontSize="$7" fontWeight="700" pb="$2">
-        {contentTitle}
-      </Text>
+    contentTitle == null ? null : (
+      <Text className="px-5 pt-2 text-xl font-bold">{contentTitle}</Text>
     );
 
   if (layoutHost === "nativeSheet" && definition.presentation === "static") {
@@ -43,7 +39,7 @@ export function RnUiKitDebugSectionPage({
         style={styles.staticScrollView}
         tracksNavigationBarScrollEdge={Platform.OS === "android" || Platform.OS === "web"}
       >
-        {header != null ? <View style={styles.staticContentHeader}>{header}</View> : null}
+        {header}
         <SectionPage
           headerTransparent={headerTransparent}
           instanceId={instanceId}
@@ -76,7 +72,7 @@ export function RnUiKitDebugSectionPage({
   }
 
   return (
-    <YStack flex={1} gap="$3" style={styles.scrollPage}>
+    <View style={styles.scrollPage}>
       <SectionPage
         header={header}
         headerTransparent={headerTransparent}
@@ -84,13 +80,12 @@ export function RnUiKitDebugSectionPage({
         layoutHost={layoutHost}
         onOpenComponentExample={onOpenComponentExample}
       />
-    </YStack>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  staticContentHeader: { paddingHorizontal: 20, paddingTop: 8 },
   staticScrollContent: { paddingBottom: 12 },
   staticScrollView: { flex: 1, minHeight: 0 },
-  scrollPage: { minHeight: 0 },
+  scrollPage: { flex: 1, minHeight: 0 },
 });

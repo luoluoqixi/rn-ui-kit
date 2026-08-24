@@ -1,11 +1,11 @@
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { TamaguiProvider, Theme } from "tamagui";
+import { PortalHost } from "@rn-primitives/portal";
 import { KeyboardProvider } from "react-native-keyboard-controller";
+import { PortalProvider as TeleportPortalProvider } from "react-native-teleport";
 
 import { NativeDialogProvider } from "../native_dialog";
 import { Toaster } from "../toast/toaster";
 import { NativeHapticsProvider } from "../utils";
-import { resolveAccentThemeName, UiPreferencesProvider } from "../utils/theme";
+import { resolveAccentThemeName, UiPreferencesProvider, UiThemeProvider } from "../utils/theme";
 import type { UIProviderProps } from "./types";
 
 export function UIProvider({
@@ -16,27 +16,30 @@ export function UIProvider({
   defaultNativeHapticsEnabled = false,
   keyboardAnimationProviderProps,
   preferences,
-  tamaguiConfig,
 }: UIProviderProps) {
-  const insets = useSafeAreaInsets();
   const resolvedAccentThemeName = resolveAccentThemeName(
     accentThemeName ?? preferences?.appearance?.accentColor,
   );
 
   return (
     <KeyboardProvider {...keyboardAnimationProviderProps}>
-      <TamaguiProvider config={tamaguiConfig} defaultTheme={colorScheme} insets={insets}>
-        <UiPreferencesProvider accentThemeNames={accentThemeNames} preferences={preferences}>
-          <Theme name={resolvedAccentThemeName as never}>
+      <UiPreferencesProvider accentThemeNames={accentThemeNames} preferences={preferences}>
+        <UiThemeProvider
+          accentThemeName={resolvedAccentThemeName}
+          colorScheme={colorScheme ?? "light"}
+          followsSystem={preferences?.appearance?.themeMode === "system"}
+        >
+          <TeleportPortalProvider>
             <NativeDialogProvider>
               <NativeHapticsProvider enabledByDefault={defaultNativeHapticsEnabled}>
                 {children}
+                <PortalHost />
                 <Toaster accentThemeName={resolvedAccentThemeName} />
               </NativeHapticsProvider>
             </NativeDialogProvider>
-          </Theme>
-        </UiPreferencesProvider>
-      </TamaguiProvider>
+          </TeleportPortalProvider>
+        </UiThemeProvider>
+      </UiPreferencesProvider>
     </KeyboardProvider>
   );
 }

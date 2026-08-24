@@ -1,133 +1,188 @@
-import { Children, type ReactNode, isValidElement } from "react";
-import { SizableText, ToggleGroup as TamaguiToggleGroup, XGroup, XStack, YGroup } from "tamagui";
-
-import { os } from "../utils/platform";
+import { Icon } from "../icon";
+import { TextClassContext } from "../text";
+import { Text } from "../text";
+import { toggleVariants } from "../toggle";
+import { cn } from "../utils/cn";
 import {
-  resolveAriaLabel,
   triggerNativeHaptics,
   useResolvedNativeHaptics,
+  type NativeHapticsSetting,
 } from "../utils";
+import { resolveRenderProp, type RenderProp } from "../utils/render";
+import * as ToggleGroupPrimitive from "@rn-primitives/toggle-group";
+import type { VariantProps } from "class-variance-authority";
+import * as React from "react";
+import { Platform, StyleSheet } from "react-native";
+import type { ToggleGroupItemData, ToggleGroupItemRenderContext, ToggleGroupProps } from "./types";
 
-import type { ToggleGroupItemData, ToggleGroupItemProps, ToggleGroupProps } from "./types";
-
-const ToggleGroupPrimitive = TamaguiToggleGroup;
-const DEFAULT_ACTIVE_STYLE = {
-  backgroundColor: "$color5",
-  borderColor: undefined,
-} as const;
-
-function wrapToggleChildForIos(child: ReactNode) {
-  if (os() !== "ios") {
-    return child;
-  }
-
-  return (
-    <XStack accessible={false} pointerEvents="none">
-      {child}
-    </XStack>
-  );
-}
-
-function normalizeToggleChildren(children: ReactNode) {
-  return Children.map(children, (child) => {
-    if (typeof child === "string" || typeof child === "number") {
-      return wrapToggleChildForIos(<SizableText accessible={false}>{child}</SizableText>);
-    }
-
-    if (isValidElement(child)) {
-      return wrapToggleChildForIos(child);
-    }
-
-    return child;
-  });
-}
-
-function ToggleGroupRoot(props: ToggleGroupProps) {
-  if (props.type === "multiple") {
-    return <ToggleGroupMultipleRoot {...props} />;
-  }
-
-  return <ToggleGroupSingleRoot {...props} />;
-}
-
-const getItemsContent = (
-  children: ReactNode,
-  items: ToggleGroupItemData[] | undefined,
-  itemProps: Omit<ToggleGroupItemProps, "value"> | undefined,
-  orientation: "horizontal" | "vertical",
-) => {
-  const Group = orientation === "vertical" ? YGroup : XGroup;
-  const content =
-    children ??
-    items?.map((item) => (
-      <Group.Item key={item.value}>
-        <ToggleGroupItem
-          {...itemProps}
-          aria-label={resolveAriaLabel(item["aria-label"] ?? itemProps?.["aria-label"], item.label)}
-          disabled={item.disabled ?? itemProps?.disabled}
-          borderRadius="$4"
-          value={item.value}
-        >
-          {item.label}
-        </ToggleGroupItem>
-      </Group.Item>
-    ));
-  return <Group>{content}</Group>;
+type ToggleGroupContextValue = VariantProps<typeof toggleVariants> & {
+  nativeHaptics: NativeHapticsSetting | undefined;
 };
 
-function ToggleGroupSingleRoot(props: Extract<ToggleGroupProps, { type?: "single" }>) {
-  const { children, itemProps, items, nativeHaptics, onValueChange, orientation, ...rootProps } =
-    props;
-  const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics);
-  const resolvedOrientation = orientation || "horizontal";
-  const content = getItemsContent(children, items, itemProps, resolvedOrientation);
+const ToggleGroupContext = React.createContext<ToggleGroupContextValue | null>(null);
+
+function hasExplicitItemSizing(className: string | undefined, style: unknown) {
+  const hasSizingClass = className
+    ?.split(/\s+/)
+    .some(
+      (token) =>
+        token.startsWith("w-") ||
+        token.startsWith("basis-") ||
+        token.startsWith("[width:") ||
+        token.startsWith("[flex-basis:"),
+    );
+  if (hasSizingClass) return true;
+
+  const flattenedStyle = StyleSheet.flatten(style as never) as
+    | { width?: unknown; flexBasis?: unknown }
+    | undefined;
+  return flattenedStyle?.width != null || flattenedStyle?.flexBasis != null;
+}
+
+function ToggleGroup({
+  className,
+  variant,
+  size,
+  nativeHaptics,
+  children,
+  items,
+  ...props
+}: ToggleGroupProps) {
+  const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics, {
+    defaultEnabled: true,
+  });
+
   return (
-    <ToggleGroupPrimitive
-      disableDeactivation={true}
-      {...rootProps}
-      onValueChange={(nextValue) => {
-        onValueChange?.(nextValue);
-        triggerNativeHaptics(resolvedNativeHaptics);
-      }}
-      orientation={resolvedOrientation}
-      type="single"
+    <ToggleGroupPrimitive.Root
+      className={cn(
+        "flex flex-row items-center rounded-md shadow-none",
+        Platform.select({ web: "w-fit" }),
+        variant === "outline" && "shadow-sm shadow-black/5",
+        className,
+      )}
+      {...(props as ToggleGroupPrimitive.RootProps)}
     >
-      {content}
-    </ToggleGroupPrimitive>
+      <ToggleGroupContext.Provider value={{ nativeHaptics: resolvedNativeHaptics, variant, size }}>
+        {children ??
+          items?.map((item, index) => (
+            <ToggleGroupItem
+              {...item.itemProps}
+              key={item.value}
+              value={item.value}
+              disabled={item.disabled ?? item.itemProps?.disabled}
+              isFirst={index === 0}
+              isLast={index === items.length - 1}
+              title={item.title}
+            >
+              {item.children}
+            </ToggleGroupItem>
+          ))}
+      </ToggleGroupContext.Provider>
+    </ToggleGroupPrimitive.Root>
   );
 }
 
-function ToggleGroupMultipleRoot(props: Extract<ToggleGroupProps, { type: "multiple" }>) {
-  const { children, itemProps, items, nativeHaptics, onValueChange, orientation, ...rootProps } =
-    props;
-  const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics);
-  const resolvedOrientation = orientation || "horizontal";
-  const content = getItemsContent(children, items, itemProps, resolvedOrientation);
+function useToggleGroupContext() {
+  const context = React.useContext(ToggleGroupContext);
+  if (context === null) {
+    throw new Error(
+      "ToggleGroup compound components cannot be rendered outside the ToggleGroup component",
+    );
+  }
+  return context;
+}
+
+function ToggleGroupItem({
+  className,
+  children,
+  variant,
+  size,
+  isFirst,
+  isLast,
+  nativeHaptics,
+  title,
+  onPress,
+  ...props
+}: React.ComponentProps<typeof ToggleGroupPrimitive.Item> &
+  VariantProps<typeof toggleVariants> & {
+    isFirst?: boolean;
+    isLast?: boolean;
+    nativeHaptics?: NativeHapticsSetting;
+    title?: RenderProp<ToggleGroupItemRenderContext>;
+  }) {
+  const context = useToggleGroupContext();
+  const { value } = ToggleGroupPrimitive.useRootContext();
+  const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics ?? context.nativeHaptics);
+  const pressed = ToggleGroupPrimitive.utils.getIsSelected(value, props.value);
+  const hasCustomSizing = hasExplicitItemSizing(className, props.style);
+  const renderedTitle = resolveRenderProp(title, {
+    pressed,
+    value: String(props.value ?? ""),
+  });
+
   return (
-    <ToggleGroupPrimitive
-      {...rootProps}
-      onValueChange={(nextValue) => {
-        onValueChange?.(nextValue);
-        triggerNativeHaptics(resolvedNativeHaptics);
-      }}
-      orientation={resolvedOrientation}
-      type="multiple"
+    <TextClassContext.Provider
+      value={cn(
+        "text-sm text-foreground font-medium",
+        ToggleGroupPrimitive.utils.getIsSelected(value, props.value)
+          ? "text-accent-foreground"
+          : Platform.select({ web: "group-hover:text-muted-foreground" }),
+      )}
     >
-      {content}
-    </ToggleGroupPrimitive>
+      <ToggleGroupPrimitive.Item
+        {...props}
+        className={cn(
+          toggleVariants({
+            variant: context.variant || variant,
+            size: context.size || size,
+          }),
+          props.disabled && "opacity-50",
+          pressed && "bg-accent",
+          "min-w-0 shrink-0 rounded-none shadow-none",
+          isFirst && "rounded-l-md",
+          isLast && "rounded-r-md",
+          (context.variant === "outline" || variant === "outline") && "border-l-0",
+          (context.variant === "outline" || variant === "outline") && isFirst && "border-l",
+          Platform.select({
+            web: cn(
+              "flex-1 focus:z-10 focus-visible:z-10",
+              hasCustomSizing && "flex-none",
+            ),
+          }),
+          className,
+        )}
+        onPress={(event) => {
+          onPress?.(event);
+          if (!event.defaultPrevented) triggerNativeHaptics(resolvedNativeHaptics);
+        }}
+      >
+        {renderedTitle != null ? (
+          typeof renderedTitle === "string" || typeof renderedTitle === "number" ? (
+            <Text>{renderedTitle}</Text>
+          ) : (
+            renderedTitle
+          )
+        ) : typeof children === "function" ? (
+          children
+        ) : (
+          React.Children.map(children, (child) =>
+            typeof child === "string" || typeof child === "number" ? <Text>{child}</Text> : child,
+          )
+        )}
+      </ToggleGroupPrimitive.Item>
+    </TextClassContext.Provider>
   );
 }
 
-function ToggleGroupItem(props: ToggleGroupItemProps) {
-  const { activeStyle, children, ...itemProps } = props;
-
-  return (
-    <TamaguiToggleGroup.Item {...itemProps} activeStyle={activeStyle ?? DEFAULT_ACTIVE_STYLE}>
-      {normalizeToggleChildren(children)}
-    </TamaguiToggleGroup.Item>
-  );
+function ToggleGroupIcon({ className, ...props }: React.ComponentProps<typeof Icon>) {
+  const textClass = React.useContext(TextClassContext);
+  return <Icon className={cn("size-4 shrink-0", textClass, className)} {...props} />;
 }
 
-export const ToggleGroup = Object.assign(ToggleGroupRoot, {
+const ToggleGroupComponent = Object.assign(ToggleGroup, {
+  Icon: ToggleGroupIcon,
   Item: ToggleGroupItem,
+  Root: ToggleGroup,
 });
+
+export { ToggleGroupComponent as ToggleGroup };

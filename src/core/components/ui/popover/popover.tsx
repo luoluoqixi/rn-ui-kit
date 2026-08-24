@@ -1,143 +1,115 @@
-import { usePopoverContext } from "@tamagui/popover";
-import { useEffect } from "react";
-import { BackHandler } from "react-native";
-import { Popover as TamaguiPopover } from "tamagui";
+import { NativeOnlyAnimatedView } from "../utils/native_only_animated_view";
+import { TextClassContext } from "../text";
+import { Text } from "../text";
+import { cn } from "../utils/cn";
+import { OverlayPortalWindow, useOverlayPortalContentStyle } from "../utils/overlay/overlay_portal";
+import { useScopedOverlayPortalHostName } from "../utils/overlay";
+import { resolveRenderProp } from "../utils/render";
+import * as PopoverPrimitive from "@rn-primitives/popover";
+import * as React from "react";
+import { Platform, StyleSheet } from "react-native";
+import { FadeIn, FadeOut, ReduceMotion } from "react-native-reanimated";
+import type { PopoverProps } from "./types";
 
-import { os } from "../utils/platform";
+const PopoverRoot = PopoverPrimitive.Root;
+const PopoverTrigger = PopoverPrimitive.Trigger;
 
-import type {
-  PopoverAnchorProps,
-  PopoverArrowProps,
-  PopoverCloseProps,
-  PopoverContentProps,
-  PopoverProps,
-  PopoverTriggerProps,
-} from "./types";
+function normalizePopoverChildren(children: React.ReactNode) {
+  return React.Children.map(children, (child) =>
+    typeof child === "string" || typeof child === "number" ? (
+      <Text>{child}</Text>
+    ) : (
+      child
+    ),
+  );
+}
 
-const DEFAULT_POPOVER_ENTER_STYLE = { opacity: 0, scale: 0.96, y: -8 };
-const DEFAULT_POPOVER_EXIT_STYLE = { opacity: 0, scale: 0.96, y: -8 };
-
-type PopoverBackPressBehaviorProps = {
-  dismissOnBackPress?: boolean;
-  scope?: string;
-};
-
-function PopoverRoot(props: PopoverProps) {
-  const scope = (props as { scope?: string }).scope;
-  const {
-    arrow,
-    arrowProps,
-    children,
-    content,
-    contentProps,
-    dismissOnBackPress = true,
-    trigger,
-    triggerProps,
-    ...rootProps
-  } = props;
-  const hasDefaultStructure = trigger != null || content != null || arrow != null;
-
-  if (!hasDefaultStructure) {
-    return (
-      <TamaguiPopover {...rootProps}>
-        <PopoverBackHandler dismissOnBackPress={dismissOnBackPress} scope={scope} />
-        {children}
-      </TamaguiPopover>
-    );
+function PopoverRootComponent({
+  children,
+  content,
+  contentProps,
+  triggerProps,
+  ...props
+}: PopoverProps) {
+  if (content === undefined) {
+    return <PopoverRoot {...props}>{children}</PopoverRoot>;
   }
+  const renderedContent = resolveRenderProp(content, {});
+
+  const triggerChildren = React.Children.toArray(children);
+  const trigger = triggerChildren.length === 1 ? triggerChildren[0] : null;
+  const triggerElement = React.isValidElement(trigger) ? (
+    <PopoverTrigger {...triggerProps} asChild>
+      {trigger}
+    </PopoverTrigger>
+  ) : (
+    <PopoverTrigger {...triggerProps}>
+      {normalizePopoverChildren(children)}
+    </PopoverTrigger>
+  );
 
   return (
-    <TamaguiPopover {...rootProps}>
-      <PopoverBackHandler dismissOnBackPress={dismissOnBackPress} scope={scope} />
-      {trigger != null ? <PopoverTrigger {...triggerProps}>{trigger}</PopoverTrigger> : null}
-      <PopoverContent {...contentProps}>
-        {arrow ? <PopoverArrow {...arrowProps} /> : null}
-        {content ?? children}
-      </PopoverContent>
-    </TamaguiPopover>
+    <PopoverRoot {...props}>
+      {triggerElement}
+      <PopoverContent {...contentProps}>{renderedContent}</PopoverContent>
+    </PopoverRoot>
   );
 }
 
-function PopoverAnchor(props: PopoverAnchorProps) {
-  return <TamaguiPopover.Anchor {...props} />;
-}
+function PopoverContent({
+  className,
+  align = "center",
+  sideOffset = 4,
+  portalHost,
+  style,
+  ...props
+}: import("./types").PopoverContentProps) {
+  const scopedPortalHost = useScopedOverlayPortalHostName();
+  const resolvedPortalHost = portalHost ?? scopedPortalHost;
+  const contentStyle = useOverlayPortalContentStyle(style);
 
-function PopoverArrow(props: PopoverArrowProps) {
   return (
-    <TamaguiPopover.Arrow
-      {...props}
-      background={props.background ?? "$background"}
-      borderColor={props.borderColor ?? "$borderColor"}
-    />
+    <PopoverPrimitive.Portal hostName={resolvedPortalHost}>
+      <OverlayPortalWindow portalHost={resolvedPortalHost}>
+        <PopoverPrimitive.Overlay
+          style={Platform.select({ native: StyleSheet.absoluteFill })}
+          asChild={Platform.OS !== "web"}
+        >
+          <NativeOnlyAnimatedView
+            entering={FadeIn.duration(200).reduceMotion(ReduceMotion.System)}
+            exiting={FadeOut.reduceMotion(ReduceMotion.System)}
+            as="Pressable"
+          >
+            <TextClassContext.Provider value="text-popover-foreground">
+              <PopoverPrimitive.Content
+                align={align}
+                sideOffset={sideOffset}
+                style={contentStyle as any}
+                className={cn(
+                  "bg-popover border-border outline-hidden z-50 w-72 rounded-md border p-4 shadow-md shadow-black/5",
+                  Platform.select({
+                    web: cn(
+                      "animate-in fade-in-0 zoom-in-95 origin-(--radix-popover-content-transform-origin) cursor-auto",
+                      props.side === "bottom" && "slide-in-from-top-2",
+                      props.side === "top" && "slide-in-from-bottom-2",
+                    ),
+                  }),
+                  className,
+                )}
+                {...props}
+              />
+            </TextClassContext.Provider>
+          </NativeOnlyAnimatedView>
+        </PopoverPrimitive.Overlay>
+      </OverlayPortalWindow>
+    </PopoverPrimitive.Portal>
   );
 }
 
-function PopoverTrigger(props: PopoverTriggerProps) {
-  // Android measureInWindow 依赖非 collapsable 节点，否则锚点会偏
-  const measureProps = os() === "android" ? { collapsable: false as const } : {};
-  return <TamaguiPopover.Trigger asChild={props.asChild ?? true} {...measureProps} {...props} />;
-}
-
-function PopoverContent(props: PopoverContentProps) {
-  const {
-    background,
-    borderColor,
-    borderWidth,
-    boxShadow,
-    enterStyle,
-    exitStyle,
-    size,
-    style,
-    transition,
-    ...contentProps
-  } = props;
-
-  return (
-    <TamaguiPopover.Content
-      {...contentProps}
-      background={background ?? "$background"}
-      borderColor={borderColor ?? "$borderColor"}
-      borderWidth={borderWidth ?? 1}
-      boxShadow={boxShadow ?? "0 8px 24px $shadowColor"}
-      enterStyle={enterStyle ?? DEFAULT_POPOVER_ENTER_STYLE}
-      exitStyle={exitStyle ?? DEFAULT_POPOVER_EXIT_STYLE}
-      size={size ?? "$4"}
-      style={style}
-      transition={transition ?? "100ms"}
-    />
-  );
-}
-
-function PopoverClose(props: PopoverCloseProps) {
-  return <TamaguiPopover.Close {...props} />;
-}
-
-function PopoverBackHandler(props: PopoverBackPressBehaviorProps) {
-  const { dismissOnBackPress = true, scope } = props;
-  const context = usePopoverContext(scope);
-  const { open, onOpenChange } = context;
-  useEffect(() => {
-    if (os() !== "android" || !dismissOnBackPress || !open) {
-      return;
-    }
-
-    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
-      onOpenChange(false, "press");
-      return true;
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [dismissOnBackPress, onOpenChange, open]);
-
-  return null;
-}
-
-export const Popover = Object.assign(PopoverRoot, {
-  Anchor: PopoverAnchor,
-  Arrow: PopoverArrow,
-  Trigger: PopoverTrigger,
+const PopoverComponent = Object.assign(PopoverRootComponent, {
   Content: PopoverContent,
-  Close: PopoverClose,
+  Root: PopoverRoot,
+  Trigger: PopoverTrigger,
 });
+
+export { PopoverComponent as Popover };

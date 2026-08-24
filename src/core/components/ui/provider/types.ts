@@ -1,5 +1,4 @@
-import type { ComponentProps, ReactNode } from "react";
-import type { TamaguiProvider } from "tamagui";
+import type { ReactNode } from "react";
 import type { Theme as NavigationTheme } from "@react-navigation/native";
 import type { KeyboardProviderProps } from "react-native-keyboard-controller";
 
@@ -19,7 +18,6 @@ export interface UIProviderProps {
   defaultNativeHapticsEnabled?: boolean;
   keyboardAnimationProviderProps?: Omit<KeyboardProviderProps, "children">;
   preferences?: Partial<UiPreferences>;
-  tamaguiConfig: ComponentProps<typeof TamaguiProvider>["config"];
 }
 
 export interface RootProviderProps extends Omit<UIProviderProps, "children"> {

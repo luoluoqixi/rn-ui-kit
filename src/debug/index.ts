@@ -9,14 +9,4 @@ export {
   isRnUiKitDebugRouteKey,
   rnUiKitDebugRouteDefinitions,
 } from "./routes";
-export type {
-  RnUiKitDebugPanelNativeSheetScreenOptions,
-  RnUiKitDebugPanelPageScreenOptions,
-  RnUiKitDebugPanelSheetProps,
-  RnUiKitDebugPanelProps,
-  RnUiKitDebugRouteDefinition,
-  RnUiKitDebugRouteKey,
-  RnUiKitDebugSectionContentProps,
-  RnUiKitDebugSectionPresentation,
-  RnUiKitUiComponentsDebugPageProps,
-} from "./types";
+export type * from "./types";

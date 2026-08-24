@@ -1,49 +1,31 @@
-import { Portal } from "@tamagui/portal";
-import type { PortalProps } from "@tamagui/portal";
-import type { ReactNode } from "react";
+import { Portal } from "@rn-primitives/portal";
+import { type ReactNode, useId } from "react";
 
-import { isWeb } from "../platform";
-
-import { SheetPortal } from "../../sheet/sheet/replica_sheet/sheet_portal";
 import { useScopedOverlayPortalHostName } from "./screen_overlay_portal";
 
-export type OverlayScopedPortalProps = PortalProps & {
+export type OverlayScopedPortalProps = {
   active?: boolean;
   children?: ReactNode;
+  hostName?: string;
+  name?: string;
 };
 
-/**
- * 在 ScreenOverlayPortalProvider 子树内替代 Tamagui Portal / Dialog.Portal 的 root 硬编码。
- * Toast 走 Toaster viewport；Dialog / Menu 等须显式使用本组件。
- */
 export function OverlayScopedPortal({
   active = true,
   children,
-  passThrough,
-  stackZIndex,
-  zIndex,
-  ...rest
+  hostName,
+  name,
 }: OverlayScopedPortalProps) {
-  const host = useScopedOverlayPortalHostName();
+  const generatedName = useId();
+  const scopedHostName = useScopedOverlayPortalHostName();
 
-  if (host == null || isWeb()) {
-    return (
-      <Portal passThrough={passThrough} stackZIndex={stackZIndex} zIndex={zIndex} {...rest}>
-        {children}
-      </Portal>
-    );
+  if (!active) {
+    return null;
   }
 
   return (
-    <SheetPortal
-      active={active}
-      hostName={host}
-      passThrough={passThrough}
-      stackZIndex={stackZIndex}
-      zIndex={zIndex}
-      {...rest}
-    >
+    <Portal hostName={hostName ?? scopedHostName} name={name ?? generatedName}>
       {children}
-    </SheetPortal>
+    </Portal>
   );
 }

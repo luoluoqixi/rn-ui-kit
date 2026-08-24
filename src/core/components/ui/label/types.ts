@@ -1,4 +1,4 @@
+import type { Text } from "@rn-primitives/label";
 import type { ComponentProps } from "react";
-import type { Label as TamaguiLabel } from "tamagui";
 
-export type LabelProps = ComponentProps<typeof TamaguiLabel>;
+export type LabelProps = ComponentProps<typeof Text>;

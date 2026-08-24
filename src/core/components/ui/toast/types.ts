@@ -1,37 +1,37 @@
-import { ExternalToast, PromiseData, PromiseT } from "@tamagui/toast/v2";
+import type { ReactElement, ReactNode } from "react";
 
-export type ToastShowOptions = ExternalToast & {
+export type TitleToast = ReactNode | (() => ReactNode);
+
+export type ToastShowOptions = {
+  burntOptions?: Record<string, unknown>;
+  description?: TitleToast;
+  duration?: number;
+  id?: string | number;
   native?: boolean;
+  variant?: string;
   viewportName?: string | "default";
 };
-export type ToastPromiseData<ToastData = unknown> = PromiseData<ToastData> & {
-  native?: boolean;
-};
-export type TitleToast = React.ReactNode | (() => React.ReactNode);
 
+export type ToastPromiseData<ToastData = unknown> = {
+  description?: ReactNode | ((data: ToastData | unknown) => ReactNode);
+  error?: ReactNode | ((error: unknown) => ReactNode | Promise<ReactNode>);
+  finally?: () => void;
+  loading?: ReactNode;
+  native?: boolean;
+  success?: ReactNode | ((data: ToastData) => ReactNode | Promise<ReactNode>);
+};
+
+export type ToastPromise<ToastData> = PromiseLike<ToastData> | (() => PromiseLike<ToastData>);
 export type ToastFunc = (title: TitleToast, options?: ToastShowOptions) => string | number;
-export type ToastVariantFunc = (
-  title: TitleToast,
-  options?: Omit<ToastShowOptions, "variant">,
-) => string | number;
+export type ToastVariantFunc = ToastFunc;
 export type ToastCustomFunc = (
-  jsx: (id: string | number) => React.ReactElement,
+  jsx: (id: string | number) => ReactElement,
   data?: ToastShowOptions,
 ) => string | number;
 export type ToastPromiseFunc = <ToastData>(
-  promise: PromiseT<ToastData>,
+  promise: ToastPromise<ToastData>,
   data?: ToastPromiseData<ToastData>,
-) =>
-  | (string & {
-      unwrap: () => Promise<ToastData>;
-    })
-  | (number & {
-      unwrap: () => Promise<ToastData>;
-    })
-  | {
-      unwrap: () => Promise<ToastData>;
-    }
-  | undefined;
+) => { unwrap: () => Promise<ToastData> };
 
 export interface ToastInterface {
   message: ToastVariantFunc;

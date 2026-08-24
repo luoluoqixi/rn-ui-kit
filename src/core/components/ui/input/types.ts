@@ -1,4 +1,9 @@
-import type { ComponentProps } from "react";
-import type { Input as TamaguiInput } from "tamagui";
+import type { TextInput } from "react-native";
 
-export type InputProps = ComponentProps<typeof TamaguiInput>;
+export type InputProps = React.ComponentProps<typeof TextInput> &
+  React.RefAttributes<TextInput> & {
+    autoFocusNative?: boolean;
+    disabled?: boolean;
+    placeholderClassName?: string;
+    unstyled?: boolean;
+  };

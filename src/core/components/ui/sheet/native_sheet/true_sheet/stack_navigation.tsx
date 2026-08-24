@@ -93,7 +93,10 @@ function TrueSheetStackNavigationInner({
       <NavigationContainer ref={ref} theme={navigationTheme}>
         <View style={styles.stackRoot}>
           <JsStack.Navigator
-            detachInactiveScreens={false}
+            // Web 的 react-native-screens 在 disabled 分支不会转发 Screen 的
+            // absoluteFill style，导致当前卡片高度为 0；原生 Android 仍需
+            // 保持 false，避免 TrueSheet 内嵌 Stack 的 screens 容器干预布局。
+            detachInactiveScreens={Platform.OS === "web" ? true : false}
             initialRouteName={initialRouteName}
             screenOptions={screenOptions as StackNavigationOptions}
           >
@@ -122,6 +125,8 @@ const styles = StyleSheet.create({
   },
   stackRoot: {
     flex: 1,
+    width: "100%",
+    height: "100%",
     minHeight: 0,
   },
 });

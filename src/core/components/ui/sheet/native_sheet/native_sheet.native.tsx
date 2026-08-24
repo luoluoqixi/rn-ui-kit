@@ -1,6 +1,5 @@
 import type { TrueSheetProps } from "@lodev09/react-native-true-sheet";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useWindowDimensions } from "react-native";
 
 import { iosMajorVersion, isIos26Plus, os } from "../../utils/platform";
 import { useAppBackgroundColors } from "../../utils/theme";
@@ -11,9 +10,6 @@ import { TrueSheetPanel } from "./true_sheet/panel";
 import type { NativeSheetProps } from "./types";
 
 let nativeSheetCounter = 0;
-
-// Android TrueSheet 的 auto detent 会在打开动画期间追随内容测量，改用稳定最大百分比避免抖动。
-const ANDROID_FIT_DETENT = 1;
 
 type NativeSheetDetent = NonNullable<TrueSheetProps["detents"]>[number];
 export type NativeDetentNormalization = {
@@ -27,12 +23,12 @@ function useControllableNativeSheetState({
   defaultOpen = false,
   defaultPosition = 0,
   onOpenChange,
-  onPositionChange,
+  onSnapPointChange,
   open: openProp,
   position: positionProp,
 }: Pick<
   NativeSheetProps,
-  "defaultOpen" | "defaultPosition" | "onOpenChange" | "onPositionChange" | "open" | "position"
+  "defaultOpen" | "defaultPosition" | "onOpenChange" | "onSnapPointChange" | "open" | "position"
 >) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
   const [uncontrolledPosition, setUncontrolledPosition] = useState(defaultPosition);
@@ -52,7 +48,7 @@ function useControllableNativeSheetState({
       setUncontrolledPosition(nextPosition);
     }
 
-    onPositionChange?.(nextPosition);
+    onSnapPointChange?.(nextPosition);
   };
 
   return {
@@ -67,37 +63,11 @@ function normalizePercentDetent(point: number) {
   return Math.max(0.01, Math.min(1, point / 100));
 }
 
-function normalizeConstantDetent(point: number, windowHeight: number) {
-  if (!Number.isFinite(windowHeight) || windowHeight <= 0) {
-    return null;
-  }
-
-  return Math.max(0.01, Math.min(1, point / windowHeight));
-}
-
-function resolveAndroidFitDetent(): NativeSheetDetent {
-  return ANDROID_FIT_DETENT;
-}
-
-function resolveNativeDetent(
-  point: string | number,
-  snapPointsMode: NativeSheetProps["snapPointsMode"],
-  windowHeight: number,
-): NativeSheetDetent | null {
-  if (point === "fit") {
-    if (os() === "android") {
-      return resolveAndroidFitDetent();
-    }
-
-    return "auto";
-  }
-
+function resolveSnapPoint(
+  point: NonNullable<NativeSheetProps["snapPoints"]>[number],
+): number | null {
   if (typeof point === "number") {
-    if (snapPointsMode === "constant") {
-      return normalizeConstantDetent(point, windowHeight);
-    }
-
-    return normalizePercentDetent(point);
+    return Number.isFinite(point) ? Math.max(0.01, Math.min(1, point)) : null;
   }
 
   const matchedPercent = point.trim().match(/^(\d+(?:\.\d+)?)%$/);
@@ -158,31 +128,37 @@ function normalizeIos15Detents(
 }
 
 export function resolveNativeDetents(
+  detents: NativeSheetProps["detents"],
   snapPoints: NativeSheetProps["snapPoints"],
-  snapPointsMode: NativeSheetProps["snapPointsMode"],
-  windowHeight: number,
 ): NativeDetentNormalization {
-  if (snapPointsMode === "fit") {
-    return {
-      detents: [os() === "android" ? resolveAndroidFitDetent() : "auto"],
-      sourceDetentCount: 1,
-      fromNativeIndex: (index: number) => index,
-      toNativeIndex: (index: number) => index,
-    };
-  }
-
-  const sourceSnapPoints = snapPoints == null || snapPoints.length === 0 ? [100] : snapPoints;
-  const detents = sourceSnapPoints
-    .slice(0, 3)
-    .map((point) => resolveNativeDetent(point, snapPointsMode, windowHeight))
-    .filter((point): point is NativeSheetDetent => point != null);
-  const indexedDetents = detents.map((detent, originalIndex) => ({
-    detent,
-    originalIndex,
-  }));
+  const hasDirectDetents = detents != null && detents.length > 0;
+  const sourceDetentsCandidate: NativeSheetDetent[] =
+    hasDirectDetents
+      ? detents
+      : snapPoints == null || snapPoints.length === 0
+        ? [1]
+        : snapPoints
+            .map((point) => resolveSnapPoint(point))
+            .filter((point): point is number => point != null);
+  const sourceDetents = sourceDetentsCandidate.length > 0 ? sourceDetentsCandidate : [1];
+  const limitedSourceDetents = sourceDetents.slice(0, 3);
+  const indexedDetents = limitedSourceDetents
+    .map((detent, originalIndex) => ({
+      detent: typeof detent === "number" ? Math.max(0.01, Math.min(1, detent)) : detent,
+      originalIndex,
+    }));
 
   if (!supportsCustomDetents()) {
     return normalizeIos15Detents(indexedDetents);
+  }
+
+  if (hasDirectDetents) {
+    return {
+      detents: indexedDetents.map((entry) => entry.detent),
+      sourceDetentCount: indexedDetents.length,
+      fromNativeIndex: (index: number) => index,
+      toNativeIndex: (index: number) => index,
+    };
   }
 
   const normalizedDetents = [...indexedDetents].sort((left, right) =>
@@ -198,7 +174,7 @@ export function resolveNativeDetents(
 
   return {
     detents: normalizedDetents.map((entry) => entry.detent),
-    sourceDetentCount: sourceSnapPoints.length,
+    sourceDetentCount: limitedSourceDetents.length,
     fromNativeIndex: (index: number) => nativeToOriginal.get(index) ?? index,
     toNativeIndex: (index: number) => originalToNative.get(index) ?? index,
   };
@@ -213,29 +189,42 @@ export function clampDetentIndex(index: number | undefined, detentCount: number)
 }
 
 export function NativeSheet({
-  backgroundColor,
-  children,
-  content,
-  defaultOpen,
-  defaultPosition,
-  dismissOnBackPress = true,
-  dismissOnOverlayPress = true,
-  disableDrag,
-  grabberContentInsetTop,
-  handle,
-  modal,
-  name,
-  onAnimationComplete,
-  onOpenChange,
-  onPositionChange,
-  open: openProp,
-  overlay,
-  overlayPortalHostName: overlayPortalHostNameProp,
-  position: positionProp,
-  snapPoints,
-  snapPointsMode,
+  ...props
 }: NativeSheetProps) {
-  const { height: windowHeight } = useWindowDimensions();
+  const {
+    backgroundColor,
+    children,
+    content,
+    defaultOpen,
+    defaultPosition,
+    detents,
+    dismissOnBackPress = true,
+    dismissOnOverlayPress = true,
+    disableDrag,
+    dismissible,
+    draggable,
+    dimmed,
+    grabberContentInsetTop,
+    grabber,
+    handle,
+    initialDetentIndex,
+    modal,
+    name,
+    onAnimationComplete,
+    onBackPress,
+    onDetentChange,
+    onDidDismiss,
+    onDidPresent,
+    onOpenChange,
+    onPositionChange,
+    onSnapPointChange,
+    open: openProp,
+    overlay,
+    overlayPortalHostName: overlayPortalHostNameProp,
+    position: positionProp,
+    snapPoints,
+    ...trueSheetProps
+  } = props;
   const appBackgroundColors = useAppBackgroundColors();
   const [generatedSheetName] = useState(() => `ui-sheet-native-${++nativeSheetCounter}`);
   const sheetName = name ?? generatedSheetName;
@@ -249,7 +238,7 @@ export function NativeSheet({
     defaultOpen,
     defaultPosition,
     onOpenChange,
-    onPositionChange,
+    onSnapPointChange,
     open: openProp,
     position: positionProp,
   });
@@ -260,8 +249,8 @@ export function NativeSheet({
   const initialDetentIndexRef = useRef<number | null>(null);
   const lastRequestedPositionRef = useRef<number | null>(null);
   const detentNormalization = useMemo(
-    () => resolveNativeDetents(snapPoints, snapPointsMode, windowHeight),
-    [snapPoints, snapPointsMode, windowHeight],
+    () => resolveNativeDetents(detents, snapPoints),
+    [detents, snapPoints],
   );
   const resolvedDetentIndex = detentNormalization.toNativeIndex(
     clampDetentIndex(sheetState.position, detentNormalization.sourceDetentCount),
@@ -316,25 +305,39 @@ export function NativeSheet({
   const resolvedBackgroundColor =
     backgroundColor ?? (isIos26Plus() ? undefined : appBackgroundColors.sheet);
   const sheetProps: Omit<TrueSheetProps, "children" | "header" | "name"> = {
+    ...trueSheetProps,
     detents: detentNormalization.detents,
-    dimmed: overlay ?? true,
-    dismissible: dismissOnOverlayPress !== false,
-    draggable: disableDrag !== true,
-    grabber: handle ?? false,
-    initialDetentIndex: initialDetentIndexRef.current ?? resolvedDetentIndex,
-    onBackPress: dismissOnBackPress
-      ? () => {
-          dismissingRef.current = true;
-          sheetState.setOpen(false);
-          return true;
-        }
-      : undefined,
+    dimmed: dimmed ?? overlay ?? true,
+    dismissible: dismissible ?? dismissOnOverlayPress !== false,
+    draggable: draggable ?? disableDrag !== true,
+    grabber: grabber ?? handle ?? false,
+    initialDetentIndex: initialDetentIndex ?? initialDetentIndexRef.current ?? resolvedDetentIndex,
+    onBackPress:
+      onBackPress != null || dismissOnBackPress
+        ? () => {
+            const customResult = onBackPress?.();
+            if (customResult === false) {
+              return false;
+            }
+
+            if (dismissOnBackPress) {
+              dismissingRef.current = true;
+              sheetState.setOpen(false);
+              return true;
+            }
+
+            return customResult;
+          }
+        : undefined,
+    onPositionChange,
     onDetentChange: (event) => {
+      onDetentChange?.(event);
       const sourceIndex = detentNormalization.fromNativeIndex(event.nativeEvent.index);
       lastRequestedPositionRef.current = event.nativeEvent.index;
       sheetState.setPosition(sourceIndex);
     },
-    onDidDismiss: () => {
+    onDidDismiss: (event) => {
+      onDidDismiss?.(event);
       presentedRef.current = false;
       dismissingRef.current = false;
       initialDetentIndexRef.current = null;
@@ -344,6 +347,7 @@ export function NativeSheet({
       onAnimationComplete?.({ open: false });
     },
     onDidPresent: (event) => {
+      onDidPresent?.(event);
       presentedRef.current = true;
       dismissingRef.current = false;
       lastRequestedPositionRef.current = event.nativeEvent.index;

@@ -1,297 +1,384 @@
-import { useDialogContext } from "@tamagui/dialog";
-import { type ReactElement, useEffect } from "react";
-import { BackHandler } from "react-native";
-import {
-  AlertDialog as TamaguiAlertDialog,
-  Dialog as TamaguiDialog,
-  XStack,
-  YStack,
-} from "tamagui";
-
-import { isWeb, os } from "../utils/platform";
-import { Button } from "../button";
-import {
-  type OutsideInteractionEvent,
-  preventDialogDismissForDragRegion,
-} from "../dialog/dialog_outside_interaction";
-import { useTrueSheetCenteredModalContentOffsetY } from "../sheet/native_sheet/true_sheet/use_true_sheet_centered_modal_layout";
-import { resolveAriaLabel } from "../utils";
+import { buttonTextVariants, buttonVariants } from "../button";
+import { NativeOnlyAnimatedView } from "../utils/native_only_animated_view";
+import { TextClassContext } from "../text";
+import { Text } from "../text";
+import { cn } from "../utils/cn";
+import { OverlayPortalWindow } from "../utils/overlay/overlay_portal";
+import { resolveRenderProp } from "../utils/render";
+import { resolveAriaLabel } from "../utils/accessibility";
+import { useScopedOverlayPortalHostName } from "../utils/overlay";
+import * as AlertDialogPrimitive from "@rn-primitives/alert-dialog";
+import * as React from "react";
+import { Platform, View, type PressableStateCallbackType, type ViewProps } from "react-native";
+import { FadeIn, FadeOut, ReduceMotion } from "react-native-reanimated";
 
 import type {
   AlertDialogActionProps,
   AlertDialogCancelProps,
   AlertDialogContentProps,
-  AlertDialogDescriptionProps,
   AlertDialogDestructiveProps,
+  AlertDialogDescriptionProps,
   AlertDialogOverlayProps,
-  AlertDialogPortalProps,
   AlertDialogProps,
   AlertDialogTitleProps,
   AlertDialogTriggerProps,
 } from "./types";
 
-const DEFAULT_OVERLAY_TRANSITION = "100ms";
+const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
 
-type AlertDialogOverlayBehaviorProps = AlertDialogOverlayProps & {
-  dismissOnOverlayPress?: boolean;
-};
+function AlertDialogPortal({
+  hostName,
+  ...props
+}: React.ComponentProps<typeof AlertDialogPrimitive.Portal>) {
+  const scopedPortalHost = useScopedOverlayPortalHostName();
+  return <AlertDialogPrimitive.Portal {...props} hostName={hostName ?? scopedPortalHost} />;
+}
 
-type AlertDialogContentBaseProps = AlertDialogContentProps & {
-  dismissOnBackPress?: boolean;
-  dismissOnOverlayPress?: boolean;
-  onInteractOutside?: (event: OutsideInteractionEvent) => void;
-  onPointerDownOutside?: (event: OutsideInteractionEvent) => void;
-};
+type AlertDialogChildren =
+  | React.ReactNode
+  | ((state: PressableStateCallbackType) => React.ReactNode);
 
-type AlertDialogBackPressBehaviorProps = {
-  dismissOnBackPress?: boolean;
-  scope?: string;
-};
+function normalizeAlertDialogChildren(children: AlertDialogChildren): AlertDialogChildren {
+  if (typeof children === "function") return children;
+  return React.Children.map(children, (child) =>
+    typeof child === "string" || typeof child === "number" ? <Text>{child}</Text> : child,
+  ) as React.ReactNode;
+}
 
-const AlertDialogContentBase = TamaguiDialog.Content as unknown as (
-  props: AlertDialogContentBaseProps,
-) => ReactElement | null;
+function normalizeAlertDialogRenderValue(value: React.ReactNode | undefined) {
+  const normalized = React.Children.map(value, (child) =>
+    typeof child === "string" || typeof child === "number" ? <Text>{child}</Text> : child,
+  );
+  return normalized != null && normalized.length === 1 ? normalized[0] : normalized;
+}
 
-function AlertDialogRoot(props: AlertDialogProps) {
-  const scope = (props as { scope?: string }).scope;
-  const {
-    actionAriaLabel,
-    actionLabel,
-    actionProps,
-    actions,
-    cancelAriaLabel,
-    cancelLabel,
-    cancelProps,
-    children,
-    contentProps,
-    dismissOnBackPress = true,
-    dismissOnOverlayPress = false,
-    description,
-    descriptionProps,
-    destructiveAriaLabel,
-    destructiveLabel,
-    destructiveProps,
-    overlayProps,
-    portalProps,
-    title,
-    titleProps,
-    trigger,
-    triggerProps,
-    disableRemoveScroll,
-    ...rootProps
-  } = props;
+function AlertDialogRoot({
+  actionAriaLabel,
+  actionLabel,
+  actionClassName,
+  actionProps,
+  actions,
+  cancelAriaLabel,
+  cancelLabel,
+  cancelClassName,
+  cancelProps,
+  children,
+  contentClassName,
+  contentProps,
+  dismissOnBackPress,
+  dismissOnOverlayPress,
+  disableRemoveScroll,
+  description,
+  descriptionClassName,
+  descriptionProps,
+  destructiveAriaLabel,
+  destructiveLabel,
+  destructiveClassName,
+  destructiveProps,
+  footerClassName,
+  headerClassName,
+  overlayProps,
+  portalProps,
+  title,
+  titleClassName,
+  titleProps,
+  trigger,
+  triggerClassName,
+  triggerProps,
+  ...rootProps
+}: AlertDialogProps) {
+  void dismissOnBackPress;
+  void disableRemoveScroll;
+  const renderContext = { open: rootProps.open };
+  const renderedActionLabel = normalizeAlertDialogRenderValue(
+    resolveRenderProp(actionLabel, renderContext),
+  );
+  const renderedActions = normalizeAlertDialogRenderValue(
+    resolveRenderProp(actions, renderContext),
+  );
+  const renderedCancelLabel = normalizeAlertDialogRenderValue(
+    resolveRenderProp(cancelLabel, renderContext),
+  );
+  const renderedDescription = normalizeAlertDialogRenderValue(
+    resolveRenderProp(description, renderContext),
+  );
+  const renderedDestructiveLabel = normalizeAlertDialogRenderValue(
+    resolveRenderProp(destructiveLabel, renderContext),
+  );
+  const renderedTitle = normalizeAlertDialogRenderValue(resolveRenderProp(title, renderContext));
+  const renderedTrigger = normalizeAlertDialogRenderValue(
+    resolveRenderProp(trigger, renderContext),
+  );
   const hasDefaultStructure =
-    trigger != null ||
-    title != null ||
-    description != null ||
-    actions != null ||
-    cancelLabel != null ||
-    actionLabel != null ||
-    destructiveLabel != null;
+    renderedTrigger != null ||
+    renderedTitle != null ||
+    renderedDescription != null ||
+    renderedActions != null ||
+    renderedCancelLabel != null ||
+    renderedActionLabel != null ||
+    renderedDestructiveLabel != null;
 
   if (!hasDefaultStructure) {
-    return (
-      <TamaguiAlertDialog {...rootProps}>
-        <AlertDialogBackHandler dismissOnBackPress={dismissOnBackPress} scope={scope} />
-        {children}
-      </TamaguiAlertDialog>
-    );
+    return <AlertDialogPrimitive.Root {...rootProps}>{children}</AlertDialogPrimitive.Root>;
   }
 
   return (
-    <TamaguiAlertDialog disableRemoveScroll={disableRemoveScroll ?? isWeb()} {...rootProps}>
-      <AlertDialogBackHandler dismissOnBackPress={dismissOnBackPress} scope={scope} />
-      {trigger != null ? (
-        <AlertDialogTrigger {...triggerProps}>{trigger}</AlertDialogTrigger>
-      ) : null}
-      <AlertDialogPortal {...portalProps}>
-        <AlertDialogOverlay
-          opacity={0.5}
-          animateOnly={["transform", "opacity"]}
-          enterStyle={{ opacity: 0 }}
-          exitStyle={{ opacity: 0 }}
-          transition={DEFAULT_OVERLAY_TRANSITION}
-          {...overlayProps}
-          dismissOnOverlayPress={dismissOnOverlayPress}
-        />
-        <AlertDialogContent
-          transition={[
-            "quicker",
-            {
-              opacity: {
-                overshootClamping: true,
-              },
-            },
-          ]}
-          enterStyle={{ x: 0, y: 20, opacity: 0 }}
-          exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
-          {...contentProps}
-          dismissOnOverlayPress={dismissOnOverlayPress}
+    <AlertDialogPrimitive.Root {...rootProps}>
+      {renderedTrigger != null ? (
+        <AlertDialogTrigger
+          {...triggerProps}
+          className={cn(triggerClassName, triggerProps?.className)}
+          asChild
         >
-          <YStack gap="$3">
-            {title != null ? <AlertDialogTitle {...titleProps}>{title}</AlertDialogTitle> : null}
-            {description != null ? (
-              <AlertDialogDescription {...descriptionProps}>{description}</AlertDialogDescription>
+          {renderedTrigger}
+        </AlertDialogTrigger>
+      ) : null}
+      <AlertDialogContent
+        {...contentProps}
+        className={cn(contentClassName, contentProps?.className)}
+        overlayProps={{
+          ...contentProps?.overlayProps,
+          ...overlayProps,
+          dismissOnOverlayPress,
+        }}
+        portalProps={portalProps ?? contentProps?.portalProps}
+      >
+        {renderedTitle != null || renderedDescription != null ? (
+          <AlertDialogHeader className={headerClassName}>
+            {renderedTitle != null ? (
+              <AlertDialogTitle
+                {...titleProps}
+                className={cn(titleClassName, titleProps?.className)}
+              >
+                {renderedTitle}
+              </AlertDialogTitle>
             ) : null}
-            {children}
-            {actions != null ||
-            cancelLabel != null ||
-            actionLabel != null ||
-            destructiveLabel != null ? (
-              <XStack gap="$2" style={{ justifyContent: "flex-end" }}>
-                {actions}
-                {cancelLabel != null ? (
-                  <AlertDialogCancel {...cancelProps} asChild>
-                    <Button aria-label={resolveAriaLabel(cancelAriaLabel, cancelLabel)}>
-                      {cancelLabel}
-                    </Button>
-                  </AlertDialogCancel>
-                ) : null}
-                {actionLabel != null ? (
-                  <AlertDialogAction {...actionProps} asChild>
-                    <Button aria-label={resolveAriaLabel(actionAriaLabel, actionLabel)}>
-                      {actionLabel}
-                    </Button>
-                  </AlertDialogAction>
-                ) : null}
-                {destructiveLabel != null ? (
-                  <AlertDialogDestructive {...destructiveProps} asChild>
-                    <Button
-                      aria-label={resolveAriaLabel(destructiveAriaLabel, destructiveLabel)}
-                      theme="red"
-                    >
-                      {destructiveLabel}
-                    </Button>
-                  </AlertDialogDestructive>
-                ) : null}
-              </XStack>
+            {renderedDescription != null ? (
+              <AlertDialogDescription
+                {...descriptionProps}
+                className={cn(descriptionClassName, descriptionProps?.className)}
+              >
+                {renderedDescription}
+              </AlertDialogDescription>
             ) : null}
-          </YStack>
-        </AlertDialogContent>
-      </AlertDialogPortal>
-    </TamaguiAlertDialog>
+          </AlertDialogHeader>
+        ) : null}
+        {children}
+        {renderedActions != null ||
+        renderedCancelLabel != null ||
+        renderedActionLabel != null ||
+        renderedDestructiveLabel != null ? (
+          <AlertDialogFooter className={footerClassName}>
+            {renderedActions}
+            {renderedCancelLabel != null ? (
+              <AlertDialogCancel
+                {...cancelProps}
+                className={cn(cancelClassName, cancelProps?.className)}
+                aria-label={resolveAriaLabel(
+                  cancelAriaLabel ?? cancelProps?.["aria-label"],
+                  renderedCancelLabel,
+                )}
+              >
+                {renderedCancelLabel}
+              </AlertDialogCancel>
+            ) : null}
+            {renderedActionLabel != null ? (
+              <AlertDialogAction
+                {...actionProps}
+                className={cn(actionClassName, actionProps?.className)}
+                aria-label={resolveAriaLabel(
+                  actionAriaLabel ?? actionProps?.["aria-label"],
+                  renderedActionLabel,
+                )}
+              >
+                {renderedActionLabel}
+              </AlertDialogAction>
+            ) : null}
+            {renderedDestructiveLabel != null ? (
+              <AlertDialogDestructive
+                {...destructiveProps}
+                className={cn(destructiveClassName, destructiveProps?.className)}
+                aria-label={resolveAriaLabel(
+                  destructiveAriaLabel ?? destructiveProps?.["aria-label"],
+                  renderedDestructiveLabel,
+                )}
+              >
+                {renderedDestructiveLabel}
+              </AlertDialogDestructive>
+            ) : null}
+          </AlertDialogFooter>
+        ) : null}
+      </AlertDialogContent>
+    </AlertDialogPrimitive.Root>
   );
 }
 
-function AlertDialogTrigger(props: AlertDialogTriggerProps) {
-  return <TamaguiAlertDialog.Trigger {...props} asChild />;
-}
+function AlertDialogOverlay({
+  className,
+  children,
+  dismissOnOverlayPress = false,
+  portalHost,
+  onPress,
+  ...props
+}: Omit<AlertDialogOverlayProps, "asChild"> & {
+  children?: React.ReactNode;
+  portalHost?: string;
+}) {
+  const { onOpenChange } = AlertDialogPrimitive.useRootContext();
 
-function AlertDialogPortal(props: AlertDialogPortalProps) {
-  return <TamaguiAlertDialog.Portal {...props} />;
-}
-
-function AlertDialogOverlay(props: AlertDialogOverlayBehaviorProps) {
-  const { dismissOnOverlayPress = false, ...overlayProps } = props;
-  const context = useDialogContext((overlayProps as { scope?: string }).scope);
-
-  if (isWeb() && !context.open) {
-    return null;
+  function handlePress(event: Parameters<NonNullable<typeof onPress>>[0]) {
+    onPress?.(event);
+    if (
+      !event.isDefaultPrevented() &&
+      dismissOnOverlayPress &&
+      event.target === event.currentTarget
+    ) {
+      onOpenChange(false);
+    }
   }
 
   return (
-    <TamaguiAlertDialog.Overlay
-      {...overlayProps}
-      onPress={(event) => {
-        overlayProps.onPress?.(event);
-
-        if (!event.defaultPrevented && dismissOnOverlayPress && !isWeb()) {
-          context.onOpenChange(false);
-        }
-      }}
-      transition={overlayProps.transition ?? DEFAULT_OVERLAY_TRANSITION}
-    />
+    <OverlayPortalWindow
+      forceFullScreen
+      onRequestClose={() => onOpenChange(false)}
+      portalHost={portalHost}
+    >
+      <AlertDialogPrimitive.Overlay
+        className={cn(
+          "absolute bottom-0 left-0 right-0 top-0 z-50 flex items-center justify-center bg-black/50 p-2",
+          Platform.select({
+            web: "animate-in fade-in-0 fixed",
+          }),
+          className,
+        )}
+        {...props}
+        {...({ onPress: handlePress } as object)}
+        asChild={Platform.OS !== "web"}
+      >
+        <NativeOnlyAnimatedView
+          entering={FadeIn.duration(200).delay(50).reduceMotion(ReduceMotion.System)}
+          exiting={FadeOut.duration(150).reduceMotion(ReduceMotion.System)}
+          as="Pressable"
+        >
+          <>{children}</>
+        </NativeOnlyAnimatedView>
+      </AlertDialogPrimitive.Overlay>
+    </OverlayPortalWindow>
   );
 }
 
-function AlertDialogContent(props: AlertDialogContentBaseProps) {
-  const contentProps = props;
-  const {
-    dismissOnOverlayPress = false,
-    onInteractOutside,
-    onPointerDownOutside,
-    y: yProp,
-    ...restProps
-  } = contentProps;
-  const trueSheetCenterY = useTrueSheetCenteredModalContentOffsetY();
+function AlertDialogContent({
+  className,
+  portalHost,
+  portalProps,
+  overlayProps,
+  ...props
+}: AlertDialogContentProps) {
+  const scopedPortalHost = useScopedOverlayPortalHostName();
+  const resolvedPortalHost = portalHost ?? portalProps?.hostName ?? scopedPortalHost;
 
   return (
-    <AlertDialogContentBase
-      role="alertdialog"
-      aria-modal={true}
-      {...restProps}
-      y={yProp ?? (trueSheetCenterY !== 0 ? trueSheetCenterY : undefined)}
-      onPointerDownOutside={(event) => {
-        onPointerDownOutside?.(event);
-        preventDialogDismissForDragRegion(event);
+    <AlertDialogPortal {...portalProps} hostName={resolvedPortalHost}>
+      <AlertDialogOverlay {...overlayProps} portalHost={resolvedPortalHost}>
+        <AlertDialogPrimitive.Content
+          className={cn(
+            "bg-background border-border z-50 flex flex-col gap-4 rounded-lg border p-6 shadow-lg shadow-black/5 sm:max-w-lg",
+            Platform.select({
+              web: "animate-in fade-in-0 zoom-in-95 web:max-w-[calc(100%-2rem)] duration-200",
+            }),
+            className,
+          )}
+          {...props}
+        />
+      </AlertDialogOverlay>
+    </AlertDialogPortal>
+  );
+}
 
-        if (!event.defaultPrevented && !dismissOnOverlayPress) {
-          event.preventDefault();
-        }
-      }}
-      onInteractOutside={(event) => {
-        onInteractOutside?.(event);
-        preventDialogDismissForDragRegion(event);
+function AlertDialogHeader({ className, ...props }: ViewProps) {
+  return (
+    <TextClassContext.Provider value="text-center sm:text-left">
+      <View className={cn("flex flex-col gap-2", className)} {...props} />
+    </TextClassContext.Provider>
+  );
+}
 
-        if (!event.defaultPrevented && !dismissOnOverlayPress) {
-          event.preventDefault();
-        }
-      }}
+function AlertDialogFooter({ className, ...props }: ViewProps) {
+  return (
+    <View
+      className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end", className)}
+      {...props}
     />
   );
 }
 
-function AlertDialogBackHandler(props: AlertDialogBackPressBehaviorProps) {
-  const { dismissOnBackPress = true, scope } = props;
-  const context = useDialogContext(scope);
-  const { open, onOpenChange } = context;
-
-  useEffect(() => {
-    if (os() !== "android" || !dismissOnBackPress || !open) {
-      return;
-    }
-
-    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
-      onOpenChange(false);
-      return true;
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [dismissOnBackPress, onOpenChange, open]);
-
-  return null;
+function AlertDialogTitle({ className, ...props }: AlertDialogTitleProps) {
+  return (
+    <AlertDialogPrimitive.Title
+      className={cn("text-foreground text-lg font-semibold", className)}
+      {...props}
+    />
+  );
 }
 
-function AlertDialogAction(props: AlertDialogActionProps) {
-  return <TamaguiAlertDialog.Action {...props} />;
+function AlertDialogDescription({ className, ...props }: AlertDialogDescriptionProps) {
+  return (
+    <AlertDialogPrimitive.Description
+      className={cn("text-muted-foreground text-sm", className)}
+      {...props}
+    />
+  );
 }
 
-function AlertDialogCancel(props: AlertDialogCancelProps) {
-  return <TamaguiAlertDialog.Cancel {...props} />;
+function AlertDialogAction({ className, ...props }: AlertDialogActionProps) {
+  return (
+    <TextClassContext.Provider value={buttonTextVariants({ className })}>
+      <AlertDialogPrimitive.Action className={cn(buttonVariants(), className)} {...props}>
+        {normalizeAlertDialogChildren(props.children)}
+      </AlertDialogPrimitive.Action>
+    </TextClassContext.Provider>
+  );
 }
 
-function AlertDialogDestructive(props: AlertDialogDestructiveProps) {
-  return <TamaguiAlertDialog.Destructive {...props} />;
+function AlertDialogCancel({ className, ...props }: AlertDialogCancelProps) {
+  return (
+    <TextClassContext.Provider value={buttonTextVariants({ className, variant: "outline" })}>
+      <AlertDialogPrimitive.Cancel
+        className={cn(buttonVariants({ variant: "outline" }), className)}
+        {...props}
+      >
+        {normalizeAlertDialogChildren(props.children)}
+      </AlertDialogPrimitive.Cancel>
+    </TextClassContext.Provider>
+  );
 }
 
-function AlertDialogTitle(props: AlertDialogTitleProps) {
-  return <TamaguiAlertDialog.Title {...props} />;
+function AlertDialogDestructive({ className, ...props }: AlertDialogDestructiveProps) {
+  return (
+    <TextClassContext.Provider value={buttonTextVariants({ className, variant: "destructive" })}>
+      <AlertDialogPrimitive.Action
+        className={cn(buttonVariants({ variant: "destructive" }), className)}
+        {...props}
+      >
+        {normalizeAlertDialogChildren(props.children)}
+      </AlertDialogPrimitive.Action>
+    </TextClassContext.Provider>
+  );
 }
 
-function AlertDialogDescription(props: AlertDialogDescriptionProps) {
-  return <TamaguiAlertDialog.Description {...props} />;
-}
-
-export const AlertDialog = Object.assign(AlertDialogRoot, {
-  Trigger: AlertDialogTrigger,
-  Portal: AlertDialogPortal,
-  Overlay: AlertDialogOverlay,
-  Content: AlertDialogContent,
+const AlertDialog = Object.assign(AlertDialogRoot, {
   Action: AlertDialogAction,
   Cancel: AlertDialogCancel,
-  Destructive: AlertDialogDestructive,
-  Title: AlertDialogTitle,
+  Content: AlertDialogContent,
   Description: AlertDialogDescription,
+  Destructive: AlertDialogDestructive,
+  Footer: AlertDialogFooter,
+  Header: AlertDialogHeader,
+  Overlay: AlertDialogOverlay,
+  Portal: AlertDialogPortal,
+  Root: AlertDialogRoot,
+  Title: AlertDialogTitle,
+  Trigger: AlertDialogTrigger,
 });
+
+export { AlertDialog };

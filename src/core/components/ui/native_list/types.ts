@@ -3,16 +3,14 @@ import type { ColorValue, ScrollViewProps, ViewStyle } from "react-native";
 import type { SFSymbol } from "sf-symbols-typescript";
 
 import type { SelectProps } from "../select";
-import type { MenuProps } from "../menu";
 import type { ContextMenuProps } from "../context_menu";
+import type { DropdownProps } from "../dropdown";
 import type { SwitchProps } from "../switch";
 import type { InputProps } from "../input";
-import type { TextAreaProps } from "../text_area";
+import type { TextareaProps } from "../textarea";
 import type { NativeHapticsSetting } from "../utils";
 import type { NavigationBarScrollEdgeTrackingProps } from "../utils/navigation";
-import type { NativeListSectionContent } from "./section_content";
-
-export type { NativeListSectionContent } from "./section_content";
+import type { RenderProp } from "../utils/render";
 
 export type NativeListSelectionId = string | number;
 
@@ -24,6 +22,33 @@ export type NativeListIosStyle =
   | "insetGrouped"
   | "grouped"
   | "sidebar";
+
+/** Basic NativeList 的通用列表样式。 */
+export type NativeListBasicStyle = "rounded" | "plain" | "plainFullWidth";
+
+/** Basic NativeList 样式的可选覆盖配置。 */
+export type NativeListBasicStyleOptions = {
+  /** Section 容器圆角；传入后优先于 listStyle 的圆角规则。 */
+  borderRadius?: number;
+  /** Section 外框颜色；仅在 showBorder 生效时使用。 */
+  borderColor?: ViewStyle["borderColor"];
+  /** 行分割线颜色；未传时使用主题中性色并自动降低透明度。 */
+  dividerColor?: ViewStyle["borderBottomColor"];
+  /** 行分割线左侧内缩距离；默认不内缩。 */
+  dividerPaddingLeft?: number;
+  /** 行分割线右侧内缩距离；默认不内缩。 */
+  dividerPaddingRight?: number;
+  /** 行分割线粗细；默认 1。 */
+  dividerWidth?: number;
+  /** Section 阴影；传 `false` 关闭，传 `true` 使用默认阴影，也可传 ViewStyle 自定义。 */
+  sectionShadow?: boolean | ViewStyle;
+  /** 所有 Basic 行的默认背景色；单行 backgroundColor 优先级更高。 */
+  rowBackgroundColor?: ViewStyle["backgroundColor"];
+  /** 是否绘制 Section 外框；未传时 rounded 开启、plain/plainFullWidth 关闭。 */
+  showBorder?: boolean;
+  /** 是否显示行分割线；默认开启。 */
+  showDivider?: boolean;
+};
 
 /**
  * NativeList 行使用的 ContextMenu 配置。trigger 由列表行自身提供；其余 ContextMenu
@@ -113,22 +138,21 @@ export type NativeListSwitchItemProps = NativeListItemBaseProps & {
 };
 
 export type NativeListSelectItemProps = NativeListItemBaseProps & {
-  /** iOS dropdown 打开时是否让 title/subtitle 跟随 trigger 降低透明度；默认开启，wheel 模式忽略。 */
+  /** iOS Select 打开时是否让 title/subtitle 跟随 trigger 降低透明度；默认开启。 */
   fadeTitleOnOpen?: boolean;
   selectProps: Omit<SelectProps, "nativeTrigger">;
 };
 
-/** 使用 `Menu` + native trigger 的列表行；Menu 本身不维护选中值。 */
-export type NativeListMenuItemProps = NativeListItemBaseProps & {
-  /** iOS Menu 打开时是否让 title/subtitle 跟随 trigger 降低透明度；默认开启。 */
+/** 使用 Dropdown + native trigger 的列表行；Dropdown 本身不维护选中值。 */
+export type NativeListDropdownItemProps = NativeListItemBaseProps & {
+  /** iOS Dropdown 打开时是否让 title/subtitle 跟随 trigger 降低透明度；默认开启。 */
   fadeTitleOnOpen?: boolean;
-  menuProps: Omit<
-    MenuProps,
+  dropdownProps: Omit<
+    DropdownProps,
     | "nativeTrigger"
     | "nativeTriggerContainerStyle"
     | "nativeTriggerContent"
     | "nativeTriggerIcon"
-    | "nativeTriggerLabel"
     | "nativeTriggerLabelProps"
     | "trigger"
   >;
@@ -183,7 +207,25 @@ export type NativeListCustomItemProps = NativeListItemPaddingProps & {
 /** 一个占满列表行的多行文本输入框。 */
 export type NativeListTextAreaItemProps = Omit<NativeListCustomItemProps, "children"> & {
   /** 传递给 `TextArea` 的属性，例如 `value`、`onChangeText`、`placeholder` 与 `numberOfLines`。 */
-  textAreaProps: TextAreaProps;
+  textAreaProps: TextareaProps;
+};
+
+/** Section 各 RenderProp 可读取的 NativeList 状态。 */
+export type NativeListSectionRenderContext = {
+  /** 当前列表是否处于编辑模式。 */
+  editMode: boolean;
+  /** 当前 Section 解析后的 disabled 样式策略。 */
+  disabledStyle: boolean;
+  /** 当前 Section 解析后的震动设置。 */
+  nativeHaptics?: NativeHapticsSetting;
+  /** 当前 Section 解析后的 ContextMenu 配置。 */
+  contextMenuProps?: NativeListContextMenuProps;
+  /** 查询一行是否已选中。 */
+  isSelected: (selectionId: NativeListSelectionId) => boolean;
+  /** 切换一行的编辑态选中状态。 */
+  toggleSelection: (selectionId: NativeListSelectionId) => void;
+  /** 当前平台是否启用了原生编辑态选择控件。 */
+  nativeSelectionEnabled: boolean;
 };
 
 /** Section props */
@@ -193,12 +235,14 @@ export type NativeListSectionProps = {
   contextMenuProps?: NativeListContextMenuProps | false;
   /** Section 内 disabled 行是否显示禁用视觉；覆盖 NativeList 设置，默认继承。 */
   disabledStyle?: boolean;
-  /** Footer 内容；也可传入无参数函数组件。 */
-  footer?: NativeListSectionContent;
-  /** 显示在分组标题右侧的内容，例如“全部显示”按钮；也可传入无参数函数组件。 */
-  trailing?: NativeListSectionContent;
-  /** Section 标题；也可传入无参数函数组件。 */
-  title?: NativeListSectionContent;
+  /** Section 内行默认使用的震动设置；覆盖 NativeList 根节点。 */
+  nativeHaptics?: NativeHapticsSetting;
+  /** Footer RenderProp；需要使用 Hook 时请传入已包裹 Hook 的 React 元素。 */
+  footer?: RenderProp<NativeListSectionRenderContext>;
+  /** 标题右侧内容的 RenderProp，例如“全部显示”按钮。 */
+  trailing?: RenderProp<NativeListSectionRenderContext>;
+  /** Section 标题 RenderProp。 */
+  title?: RenderProp<NativeListSectionRenderContext>;
   /** Section 标题文本颜色；复杂 ReactNode 标题请直接在节点上设置样式。 */
   titleColor?: string;
   /** Section 标题字体大小；复杂 ReactNode 标题请直接在节点上设置样式。 */
@@ -215,6 +259,8 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
     contextMenuProps?: NativeListContextMenuProps;
     /** 所有 disabled 行是否显示禁用视觉；Section 或 item 可逐级覆盖，默认 true。 */
     disabledStyle?: boolean;
+    /** 所有行默认使用的震动设置；Section 或 item 可逐级覆盖。 */
+    nativeHaptics?: NativeHapticsSetting;
     /** 原生 List 内容顶部内边距。 */
     contentMarginTop?: number;
     /** 原生 List 内容底部内边距。 */
@@ -256,12 +302,19 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
      * 使用 `plain` 可显示为无分组圆角、横向铺满的列表；fallback、Android 与 Web 忽略此项。
      */
     iosListStyle?: NativeListIosStyle;
+    /** Basic List 样式。默认 `rounded`；iOS 原生 List 忽略此项。 */
+    listStyle?: NativeListBasicStyle;
+    /** Basic List 样式覆盖配置；iOS 原生 List 忽略此项。 */
+    listStyleOptions?: NativeListBasicStyleOptions;
     /**
      * iOS 原生 List 空白区域被点按时收起当前键盘。
      * 默认关闭，避免改变已有页面的原生 List 点按语义。
      */
     dismissKeyboardOnTap?: boolean;
-    /** 设为 false 时使用 list_group 回退模式（所有平台一致） */
+    /**
+     * 是否使用平台原生列表。iOS 默认 true；其他平台默认 false。
+     * 其他平台显式传 true 时使用 Basic 实现；iOS 才会启用 SwiftUI 原生列表。
+     */
     native?: boolean;
     /**
      * 下拉刷新回调。返回 Promise 时，刷新指示器会保持到 Promise settled。

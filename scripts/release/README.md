@@ -162,6 +162,7 @@ rn-ui-kit
 rn-ui-kit/core
 rn-ui-kit/debug
 rn-ui-kit/initialize
+rn-ui-kit/styles.css
 rn-ui-kit/package.json
 ```
 

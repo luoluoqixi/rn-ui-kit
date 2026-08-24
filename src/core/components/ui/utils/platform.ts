@@ -32,6 +32,14 @@ export function isWeb(): boolean {
   return Platform.OS === "web";
 }
 
+export function isAndroid(): boolean {
+  return Platform.OS === "android";
+}
+
+export function isIos(): boolean {
+  return Platform.OS === "ios";
+}
+
 export function isMobile(): boolean {
   return Platform.OS === "ios" || Platform.OS === "android";
 }

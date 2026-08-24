@@ -1,36 +1,67 @@
 import { useState } from "react";
-
 import { Checkbox } from "rn-ui-kit/core";
-
 import { ExampleBlock, ExampleStack } from "../shared";
 
 export function CheckboxExample() {
-  const [permissions, setPermissions] = useState({ analytics: true, updates: false, weekly: true });
-  const selectedCount = Object.values(permissions).filter(Boolean).length;
+  const [values, setValues] = useState({
+    terms: true,
+    terms2: true,
+    termsWithDescription: true,
+    notifications: false,
+    notifications2: false,
+  });
+
+  const update = (key: keyof typeof values) => (checked: boolean) => {
+    setValues((current) => ({ ...current, [key]: checked }));
+  };
 
   return (
     <ExampleStack>
-      <ExampleBlock description={`已启用 ${selectedCount}/3 项通知`} title="通知偏好">
+      <ExampleBlock title="通知偏好">
         <Checkbox
-          checked={permissions.updates}
-          label="产品更新"
-          onCheckedChange={(updates) =>
-            setPermissions((current) => ({ ...current, updates: updates === true }))
-          }
+          checked={values.terms2}
+          onCheckedChange={update("terms2")}
+          label="接受服务条款 Left"
+          labelPosition="left"
+          id="checkbox-terms-left"
         />
         <Checkbox
-          checked={permissions.weekly}
-          label="每周摘要"
-          onCheckedChange={(weekly) =>
-            setPermissions((current) => ({ ...current, weekly: weekly === true }))
-          }
+          checked={values.terms}
+          onCheckedChange={update("terms")}
+          label="接受服务条款"
+          id="checkbox-terms"
         />
         <Checkbox
-          checked={permissions.analytics}
-          label="匿名使用分析"
-          onCheckedChange={(analytics) =>
-            setPermissions((current) => ({ ...current, analytics: analytics === true }))
-          }
+          checked={values.termsWithDescription}
+          onCheckedChange={update("termsWithDescription")}
+          label="接受服务条款"
+          description="勾选此项即表示你同意服务条款和隐私政策。"
+          id="checkbox-terms-description"
+        />
+        <Checkbox label="启用通知" id="checkbox-notifications" disabled />
+        <Checkbox
+          checked={values.notifications}
+          onCheckedChange={update("notifications")}
+          label="启用通知 Right"
+          description="你可以随时启用或停用通知。"
+          labelPosition="right"
+          card
+          id="checkbox-notifications-card"
+          checkedClassName="border-primary bg-primary"
+          indicatorClassName="bg-primary"
+          iconClassName="text-primary-foreground"
+        />
+        <Checkbox
+          checked={values.notifications2}
+          onCheckedChange={update("notifications2")}
+          label="启用通知 Left"
+          description="你可以随时启用或停用通知。"
+          labelPosition="left"
+          card
+          id="checkbox-notifications-card2"
+          checkedClassName="border-primary bg-primary"
+          indicatorClassName="bg-primary"
+          iconClassName="text-primary-foreground"
         />
       </ExampleBlock>
     </ExampleStack>

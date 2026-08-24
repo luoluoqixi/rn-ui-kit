@@ -1,7 +1,8 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 
 import { AlertDialog } from "../alert_dialog";
-import { Button } from "../button";
+import { Text } from "../text";
+import { triggerNativeHaptics } from "../utils";
 
 import { runNativeDialogButton, setNativeDialogHandler } from "./native_dialog";
 import type { NativeDialogButton, NativeDialogRequest, NativeDialogResult } from "./types";
@@ -10,16 +11,7 @@ function getButtonComponent(button: NativeDialogButton) {
   if (button.style === "cancel") {
     return AlertDialog.Cancel;
   }
-
-  if (button.style === "destructive") {
-    return AlertDialog.Destructive;
-  }
-
   return AlertDialog.Action;
-}
-
-function getButtonTheme(button: NativeDialogButton) {
-  return button.style === "destructive" ? "red" : undefined;
 }
 
 export function NativeDialogProvider({ children }: { children: ReactNode }) {
@@ -65,16 +57,16 @@ export function NativeDialogProvider({ children }: { children: ReactNode }) {
     request?.buttons.map((button) => {
       const Action = getButtonComponent(button);
       return (
-        <Action key={button.key} asChild>
-          <Button
-            nativeHaptics
-            onPress={() => {
-              void settle(button.key, button);
-            }}
-            theme={getButtonTheme(button)}
-          >
-            {button.text}
-          </Button>
+        <Action
+          className={button.style === "destructive" ? "bg-destructive" : undefined}
+          key={button.key}
+          onPress={() => {
+            // NativeDialog previously used a haptic-enabled Button for every action.
+            triggerNativeHaptics(true);
+            void settle(button.key, button);
+          }}
+        >
+          <Text>{button.text}</Text>
         </Action>
       );
     }) ?? null;
@@ -82,15 +74,17 @@ export function NativeDialogProvider({ children }: { children: ReactNode }) {
   return (
     <>
       {children}
-      <AlertDialog
-        actions={actions}
-        description={request?.options.message}
-        dismissOnBackPress={request?.options.cancelable ?? true}
-        dismissOnOverlayPress={request?.options.cancelable ?? true}
-        onOpenChange={handleOpenChange}
-        open={request != null}
-        title={request?.options.title}
-      />
+      <AlertDialog onOpenChange={handleOpenChange} open={request != null}>
+        <AlertDialog.Content>
+          <AlertDialog.Header>
+            <AlertDialog.Title>{request?.options.title}</AlertDialog.Title>
+            {request?.options.message == null ? null : (
+              <AlertDialog.Description>{request.options.message}</AlertDialog.Description>
+            )}
+          </AlertDialog.Header>
+          <AlertDialog.Footer>{actions}</AlertDialog.Footer>
+        </AlertDialog.Content>
+      </AlertDialog>
     </>
   );
 }

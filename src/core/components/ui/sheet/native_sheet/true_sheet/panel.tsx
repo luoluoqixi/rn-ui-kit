@@ -56,9 +56,16 @@ export type TrueSheetPanelProps = {
 
 const defaultSheetProps: Pick<
   TrueSheetProps,
-  "detents" | "dismissible" | "disableStackingTranslation" | "insetAdjustment"
+  | "androidHideFriction"
+  | "androidSignificantVelocityThreshold"
+  | "detents"
+  | "dismissible"
+  | "disableStackingTranslation"
+  | "insetAdjustment"
 > &
   Pick<TrueSheetProps, "scrollable" | "scrollableOptions"> = {
+  androidHideFriction: 2,
+  androidSignificantVelocityThreshold: 10,
   detents: [1],
   dismissible: true,
   disableStackingTranslation: os() === "android",
@@ -106,8 +113,9 @@ function TrueSheetPanelInner({
       scrollableBinding.setPresented(true);
       setPresented(true);
       overlayLayoutSync.onDidPresent(event);
+      sheetProps?.onDidPresent?.(event);
     },
-    [overlayLayoutSync, scrollableBinding],
+    [overlayLayoutSync, scrollableBinding, sheetProps?.onDidPresent],
   );
 
   const handleDidDismiss = useCallback<NonNullable<TrueSheetProps["onDidDismiss"]>>(
@@ -116,8 +124,45 @@ function TrueSheetPanelInner({
       setPresented(false);
       onDidDismiss?.();
       overlayLayoutSync.onDidDismiss(event);
+      sheetProps?.onDidDismiss?.(event);
     },
-    [onDidDismiss, overlayLayoutSync, scrollableBinding],
+    [onDidDismiss, overlayLayoutSync, scrollableBinding, sheetProps?.onDidDismiss],
+  );
+
+  const handleDetentChange = useCallback<NonNullable<TrueSheetProps["onDetentChange"]>>(
+    (event) => {
+      overlayLayoutSync.onDetentChange(event);
+      sheetProps?.onDetentChange?.(event);
+    },
+    [overlayLayoutSync, sheetProps?.onDetentChange],
+  );
+  const handleDragChange = useCallback<NonNullable<TrueSheetProps["onDragChange"]>>(
+    (event) => {
+      overlayLayoutSync.onDragChange(event);
+      sheetProps?.onDragChange?.(event);
+    },
+    [overlayLayoutSync, sheetProps?.onDragChange],
+  );
+  const handleDragEnd = useCallback<NonNullable<TrueSheetProps["onDragEnd"]>>(
+    (event) => {
+      overlayLayoutSync.onDragEnd(event);
+      sheetProps?.onDragEnd?.(event);
+    },
+    [overlayLayoutSync, sheetProps?.onDragEnd],
+  );
+  const handlePositionChange = useCallback<NonNullable<TrueSheetProps["onPositionChange"]>>(
+    (event) => {
+      overlayLayoutSync.onPositionChange(event);
+      sheetProps?.onPositionChange?.(event);
+    },
+    [overlayLayoutSync, sheetProps?.onPositionChange],
+  );
+  const handleWillPresent = useCallback<NonNullable<TrueSheetProps["onWillPresent"]>>(
+    (event) => {
+      overlayLayoutSync.onWillPresent(event);
+      sheetProps?.onWillPresent?.(event);
+    },
+    [overlayLayoutSync, sheetProps?.onWillPresent],
   );
 
   const toolbarHeader =
@@ -195,13 +240,13 @@ function TrueSheetPanelInner({
       {...sheetProps}
       grabber={grabber}
       grabberOptions={resolvedGrabberOptions}
-      onDetentChange={overlayLayoutSync.onDetentChange}
+      onDetentChange={handleDetentChange}
       onDidDismiss={handleDidDismiss}
       onDidPresent={handleDidPresent}
-      onDragChange={overlayLayoutSync.onDragChange}
-      onDragEnd={overlayLayoutSync.onDragEnd}
-      onPositionChange={overlayLayoutSync.onPositionChange}
-      onWillPresent={overlayLayoutSync.onWillPresent}
+      onDragChange={handleDragChange}
+      onDragEnd={handleDragEnd}
+      onPositionChange={handlePositionChange}
+      onWillPresent={handleWillPresent}
       style={mergeTrueSheetContentStyle(mergedScrollable, [sheetProps?.style, backgroundStyle])}
     >
       {sheetBody}

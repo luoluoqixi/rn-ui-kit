@@ -1,27 +1,22 @@
 import type { ComponentProps, ReactNode } from "react";
-import type { Tabs as TamaguiTabs } from "tamagui";
+import type * as TabsPrimitive from "@rn-primitives/tabs";
 
-import type { NativeHapticsSetting } from "../utils";
+import type { NativeHapticsSetting, RenderProp } from "../utils";
 
-export interface TabsItemData {
-  "aria-label"?: string;
-  content: ReactNode;
+export type TabsItemData = {
+  content: RenderProp<TabsItemData>;
+  contentProps?: Omit<ComponentProps<typeof TabsPrimitive.Content>, "children" | "value">;
   disabled?: boolean;
-  label: ReactNode;
+  title: RenderProp<TabsItemData>;
+  triggerProps?: Omit<ComponentProps<typeof TabsPrimitive.Trigger>, "children" | "value">;
   value: string;
-}
+};
 
-type TabsRootProps = Omit<ComponentProps<typeof TamaguiTabs>, "children" | "items">;
-
-export interface TabsProps extends TabsRootProps {
-  "aria-label"?: string;
+export type TabsProps = Omit<ComponentProps<typeof TabsPrimitive.Root>, "children"> & {
   children?: ReactNode;
-  contentProps?: Omit<TabsContentProps, "value">;
+  contentProps?: Omit<ComponentProps<typeof TabsPrimitive.Content>, "children" | "value">;
   items?: TabsItemData[];
-  listProps?: TabsListProps;
+  listProps?: ComponentProps<typeof TabsPrimitive.List>;
   nativeHaptics?: NativeHapticsSetting;
-  tabProps?: Omit<TabsTabProps, "value">;
-}
-export type TabsListProps = ComponentProps<typeof TamaguiTabs.List>;
-export type TabsTabProps = ComponentProps<typeof TamaguiTabs.Tab>;
-export type TabsContentProps = ComponentProps<typeof TamaguiTabs.Content>;
+  triggerProps?: Omit<ComponentProps<typeof TabsPrimitive.Trigger>, "children" | "value">;
+};

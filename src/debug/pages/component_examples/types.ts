@@ -1,7 +1,5 @@
 import type { ComponentType } from "react";
 
-export type ComponentExampleLayout = "fill" | "scroll";
-
 export type ComponentExampleDefinition = {
   Component: ComponentType;
   description?: string;
@@ -10,5 +8,5 @@ export type ComponentExampleDefinition = {
   handlesHeaderInsets?: boolean;
   key: string;
   label: string;
-  layout?: ComponentExampleLayout;
+  layout?: "fill" | "scroll";
 };

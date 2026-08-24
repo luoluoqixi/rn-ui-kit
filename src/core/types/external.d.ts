@@ -31,6 +31,8 @@ declare module "@react-native-picker/picker" {
 declare module "@lodev09/react-native-true-sheet" {
   export interface TrueSheetProps extends ViewProps {
     disableStackingTranslation?: boolean;
+    androidHideFriction?: number;
+    androidSignificantVelocityThreshold?: number;
   }
 }
 

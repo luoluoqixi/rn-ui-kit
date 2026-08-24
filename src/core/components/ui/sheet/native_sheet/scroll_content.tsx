@@ -32,9 +32,11 @@ export type NativeSheetScrollContentProps = Omit<ScrollViewProps, "children"> &
    * 将当前 ScrollView 显式注册为所在 TrueSheet 的滚动视图。
    * NativeSheetStack 页面应传入当前页面的 focus 状态；默认不注册，保留 TrueSheet 原有查找逻辑。
    */
-  bindToNativeSheet?: boolean;
-  contentContainerStyle?: StyleProp<ViewStyle>;
-};
+    bindToNativeSheet?: boolean;
+    /** iOS patched ScrollView behavior for dragging from an otherwise empty viewport. */
+    iosEmptyViewportScrollEnabled?: boolean;
+    contentContainerStyle?: StyleProp<ViewStyle>;
+  };
 
 type NativeStackTransitionEndNavigation = {
   addListener: (
