@@ -9,6 +9,7 @@ import {
   NativeListSwitchItem,
   accentThemeNames,
   accentThemeSwatchColors,
+  isIos15,
   type UiPreferences,
 } from "rn-ui-kit";
 
@@ -21,9 +22,7 @@ function createThemeDebugPage(preferences: UiPreferences, updatePreferences: Upd
     const tracksScrollEdgeHeader =
       Platform.OS === "android" || Platform.OS === "web" || usesNativeIosScrollEdgeHeader;
     const horizontalContentInset =
-      Platform.OS === "ios"
-        ? undefined
-        : { paddingLeft: insets.left, paddingRight: insets.right };
+      Platform.OS === "ios" ? undefined : { paddingLeft: insets.left, paddingRight: insets.right };
     const accentOptions = useMemo(
       () =>
         accentThemeNames.map((value) => ({
@@ -46,6 +45,7 @@ function createThemeDebugPage(preferences: UiPreferences, updatePreferences: Upd
         >
           <NativeListSection title="主题">
             <NativeListSelectItem
+              iosSwiftNativeMenu={isIos15()}
               selectProps={{
                 options: accentOptions,
                 onValueChange: (value: string | null) => {
@@ -63,6 +63,7 @@ function createThemeDebugPage(preferences: UiPreferences, updatePreferences: Upd
               title="主题色"
             />
             <NativeListSelectItem
+              iosSwiftNativeMenu={isIos15()}
               selectProps={{
                 options: [
                   { label: "浅色", value: "light" },

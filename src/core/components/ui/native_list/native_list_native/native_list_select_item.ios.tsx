@@ -208,11 +208,11 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
   const [menuOpen, setMenuOpen] = useState(Boolean((selectProps as any).defaultOpen));
   const disabled = Boolean(itemProps.disabled || selectProps.disabled || selectProps.isDisabled);
   const fadeTitleOnOpen = itemProps.fadeTitleOnOpen !== false;
-  // iOS 15 会缓存 RN hosted trigger 的 intrinsic width。显式开启且满足简单 dropdown
+  // 部分 iOS 版本会缓存 RN hosted trigger 的 intrinsic width。显式开启且满足简单 dropdown
   // 条件时，直接使用 SwiftUI Menu，让整行由 SwiftUI 负责测量和打开菜单。
-  const usesIos15NativeMenu = itemProps.ios15NativeMenu === true;
+  const usesIosSwiftNativeMenu = itemProps.iosSwiftNativeMenu === true;
 
-  if (usesIos15NativeMenu) {
+  if (usesIosSwiftNativeMenu) {
     return (
       <NativeIos15MenuSelectRow
         itemProps={itemProps}
