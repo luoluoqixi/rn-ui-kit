@@ -3,11 +3,10 @@ import { useContext } from "react";
 import {
   disabled as disabledModifier,
   frame,
-  // @ts-ignore Expo UI declarations omit this iOS 15 helper.
   ios15ListRowTopRoundedBackground,
   padding,
-} from "@expo/ui/swift-ui/modifiers";
-import { Button as SwiftButton, VStack } from "@expo/ui/swift-ui";
+} from "@luoluoqixi/expo-ui-55/swift-ui/modifiers";
+import { Button as SwiftButton, VStack } from "@luoluoqixi/expo-ui-55/swift-ui";
 
 import { triggerNativeHaptics, useResolvedNativeHaptics } from "../../utils";
 import {

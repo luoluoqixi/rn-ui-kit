@@ -5,12 +5,12 @@ import {
   OutlinedButton,
   Text as ComposeText,
   TextButton,
-} from "@expo/ui/jetpack-compose";
+} from "@luoluoqixi/expo-ui-55/jetpack-compose";
 import {
   height as composeHeight,
   size as composeSize,
   width as composeWidth,
-} from "@expo/ui/jetpack-compose/modifiers";
+} from "@luoluoqixi/expo-ui-55/jetpack-compose/modifiers";
 import type * as React from "react";
 
 import type { ButtonNativeProps } from "./button_native";

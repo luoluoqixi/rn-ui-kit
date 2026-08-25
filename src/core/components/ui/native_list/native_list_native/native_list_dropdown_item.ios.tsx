@@ -95,7 +95,6 @@ export function NativeListDropdownItem({
             }}
             triggerProps={{ ...dropdownProps.triggerProps, disabled }}
             // Zeego 的原生菜单句柄用于让整行点击打开同一个菜单。
-            // @ts-ignore
             __menuRef={menuRef}
           />
         </NativeHostedTrailingControl>

@@ -6,8 +6,8 @@
       "name": "rn-ui-kit-example",
       "dependencies": {
         "@expo/metro-runtime": "=6.1.2",
-        "@expo/ui": "=55.0.17",
         "@lodev09/react-native-true-sheet": "=3.11.12",
+        "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_08_25",
         "@react-native-async-storage/async-storage": "=2.2.0",
         "@react-native-menu/menu": "=2.0.0",
         "@react-native-picker/picker": "^2.11.4",
@@ -53,13 +53,12 @@
     "react-native-screens@4.24.0": "patches/react-native-screens@4.24.0.patch",
     "react-native-ios-utilities@5.2.0": "patches/react-native-ios-utilities@5.2.0.patch",
     "@react-navigation/native-stack@7.18.8": "patches/@react-navigation+native-stack@7.18.8.patch",
-    "@lodev09/react-native-true-sheet@3.11.12": "patches/@lodev09+react-native-true-sheet@3.11.12.patch",
     "zeego@3.0.6": "patches/zeego@3.0.6.patch",
     "@expo/cli@55.0.32": "patches/@expo+cli@55.0.32.patch",
     "@react-native-picker/picker@2.11.4": "patches/@react-native-picker+picker@2.11.4.patch",
-    "@expo/ui@55.0.17": "patches/@expo+ui@55.0.17.patch",
-    "@react-native-menu/menu@2.0.0": "patches/@react-native-menu+menu@2.0.0.patch",
     "expo-haptics@55.0.14": "patches/expo-haptics@55.0.14.patch",
+    "@lodev09/react-native-true-sheet@3.11.12": "patches/@lodev09+react-native-true-sheet@3.11.12.patch",
+    "@react-native-menu/menu@2.0.0": "patches/@react-native-menu+menu@2.0.0.patch",
     "react-native@0.83.9": "patches/react-native@0.83.9.patch",
     "react-native-reanimated@4.3.0": "patches/react-native-reanimated@4.3.0.patch",
   },
@@ -330,8 +329,6 @@
 
     "@expo/sudo-prompt": ["@expo/sudo-prompt@9.3.2", "", {}, "sha512-HHQigo3rQWKMDzYDLkubN5WQOYXJJE2eNqIQC2axC2iO3mHdwnIR7FgZVvHWtBwAdzBgAP0ECp8KqS8TiMKvgw=="],
 
-    "@expo/ui": ["@expo/ui@55.0.17", "", { "dependencies": { "sf-symbols-typescript": "^2.1.0" }, "peerDependencies": { "expo": "*", "react": "*", "react-native": "*" } }, "sha512-NW/wFs+mhQeA/5W0yUNn6qKRNJBGiuF7NjCLZDFvg5Tyd+hDUEDEhBsLvI9MJ8B2aYuGcbuH9XZBIPF22LMrfQ=="],
-
     "@expo/vector-icons": ["@expo/vector-icons@15.1.1", "", { "peerDependencies": { "expo-font": ">=14.0.4", "react": "*", "react-native": "*" } }, "sha512-Iu2VkcoI5vygbtYngm7jb4ifxElNVXQYdDrYkT7UCEIiKLeWnQY0wf2ZhHZ+Wro6Sc5TaumpKUOqDRpLi5rkvw=="],
 
     "@expo/ws-tunnel": ["@expo/ws-tunnel@1.0.6", "", {}, "sha512-nDRbLmSrJar7abvUjp3smDwH8HcbZcoOEa5jVPUv9/9CajgmWw20JNRwTuBRzWIWIkEJDkz20GoNA+tSwUqk0Q=="],
@@ -377,6 +374,8 @@
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.31", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="],
 
     "@lodev09/react-native-true-sheet": ["@lodev09/react-native-true-sheet@3.11.12", "", { "peerDependencies": { "@radix-ui/react-dialog": ">=1", "@radix-ui/react-presence": ">=1", "@react-navigation/core": ">=7", "react": "*", "react-native": "*", "react-native-reanimated": ">=4", "react-native-worklets": "*" }, "optionalPeers": ["@radix-ui/react-dialog", "@radix-ui/react-presence", "@react-navigation/core", "react-native-reanimated", "react-native-worklets"] }, "sha512-eL7mfUw0p3dxqXKqck3k7H2Ja6UHGbPSqbVDRKeANuxZN4xctxF1iFSPYHj0LULVtheqxKBhWBiR4lJ25El57Q=="],
+
+    "@luoluoqixi/expo-ui-55": ["@luoluoqixi/expo-ui-55@github:luoluoqixi/expo-ui-55#f54ffee", { "dependencies": { "sf-symbols-typescript": "^2.1.0" }, "peerDependencies": { "expo": "*", "react": "*", "react-native": "*" } }, "luoluoqixi-expo-ui-55-f54ffee", "sha512-otdpxRL4h4qUhOpkcqxWEgA9ujtdC6inKbBSqzAwL2+mc6y5jH4KNcv4G99yax4VDaBHIiVSK5XMKbccGf3Ebg=="],
 
     "@radix-ui/primitive": ["@radix-ui/primitive@1.1.7", "", {}, "sha512-rqWnm76nYT8HoNNqEjpgJ7Pw/DrBj5iBTrmEPo6HTX5+VJyBNOqTdv4g89G63HuR5g0AaENoAcH7Is5fF2kZ8Q=="],
 

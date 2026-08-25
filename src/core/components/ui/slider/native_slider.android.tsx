@@ -1,4 +1,4 @@
-import { Host, Slider as ExpoSlider } from "@expo/ui/jetpack-compose";
+import { Host, Slider as ExpoSlider } from "@luoluoqixi/expo-ui-55/jetpack-compose";
 import { useEffect, useRef } from "react";
 
 import {

@@ -1,7 +1,11 @@
 import * as React from "react";
 import { useState } from "react";
-import { Toggle as SwiftToggle } from "@expo/ui/swift-ui";
-import { disabled as disabledModifier, tint, toggleStyle } from "@expo/ui/swift-ui/modifiers";
+import { Toggle as SwiftToggle } from "@luoluoqixi/expo-ui-55/swift-ui";
+import {
+  disabled as disabledModifier,
+  tint,
+  toggleStyle,
+} from "@luoluoqixi/expo-ui-55/swift-ui/modifiers";
 
 import { useComponentThemeTokens as useTheme } from "../../utils/theme";
 import { isIos15 } from "../../utils/platform";

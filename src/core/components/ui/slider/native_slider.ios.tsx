@@ -1,5 +1,5 @@
-import { Host, Slider as ExpoSlider } from "@expo/ui/swift-ui";
-import { tint } from "@expo/ui/swift-ui/modifiers";
+import { Host, Slider as ExpoSlider } from "@luoluoqixi/expo-ui-55/swift-ui";
+import { tint } from "@luoluoqixi/expo-ui-55/swift-ui/modifiers";
 import { useEffect, useRef } from "react";
 import { View } from "react-native";
 

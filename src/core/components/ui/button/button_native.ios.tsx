@@ -1,10 +1,10 @@
-import { Button as SwiftButton, Host, HStack, Image, Label } from "@expo/ui/swift-ui";
+import { Button as SwiftButton, Host, HStack, Image, Label } from "@luoluoqixi/expo-ui-55/swift-ui";
 import {
   accessibilityLabel as swiftAccessibilityLabel,
   buttonStyle,
   disabled,
   frame,
-} from "@expo/ui/swift-ui/modifiers";
+} from "@luoluoqixi/expo-ui-55/swift-ui/modifiers";
 import { View } from "react-native";
 
 import type { ButtonNativeProps } from "./button_native";

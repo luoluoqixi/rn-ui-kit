@@ -140,6 +140,8 @@ export type NativeListSwitchItemProps = NativeListItemBaseProps & {
 export type NativeListSelectItemProps = NativeListItemBaseProps & {
   /** iOS Select 打开时是否让 title/subtitle 跟随 trigger 降低透明度；默认开启。 */
   fadeTitleOnOpen?: boolean;
+  /** 仅 iOS 15：显式使用 SwiftUI Menu，绕过 hosted React Native trigger 的测量缓存问题；默认关闭。 */
+  ios15NativeMenu?: boolean;
   selectProps: Omit<SelectProps, "nativeTrigger">;
 };
 

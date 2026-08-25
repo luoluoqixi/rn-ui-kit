@@ -1,6 +1,6 @@
 import type { ComponentProps, ComponentRef, ReactNode, RefAttributes } from "react";
-import type { ButtonProps as ExpoSwiftUIButtonProps } from "@expo/ui/swift-ui";
-import type { ButtonProps as ExpoComposeButtonProps } from "@expo/ui/jetpack-compose";
+import type { ButtonProps as ExpoSwiftUIButtonProps } from "@luoluoqixi/expo-ui-55/swift-ui";
+import type { ButtonProps as ExpoComposeButtonProps } from "@luoluoqixi/expo-ui-55/jetpack-compose";
 import type { SFSymbol } from "sf-symbols-typescript";
 import type { VariantProps } from "class-variance-authority";
 import type { Pressable } from "react-native";

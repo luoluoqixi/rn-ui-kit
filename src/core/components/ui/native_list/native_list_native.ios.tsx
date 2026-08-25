@@ -15,7 +15,7 @@ import {
   Toggle as SwiftToggle,
   VStack,
   ZStack,
-} from "@expo/ui/swift-ui";
+} from "@luoluoqixi/expo-ui-55/swift-ui";
 import {
   background,
   buttonStyle,
@@ -25,9 +25,7 @@ import {
   font,
   foregroundStyle,
   frame,
-  // @ts-ignore
   ios15ListRowTopRoundedBackground,
-  // @ts-ignore
   ios15ListRowSeparatorHidden,
   layoutPriority,
   lineLimit,
@@ -46,7 +44,7 @@ import {
   tint,
   toggleStyle,
   viewID,
-} from "@expo/ui/swift-ui/modifiers";
+} from "@luoluoqixi/expo-ui-55/swift-ui/modifiers";
 import {
   Children,
   Fragment,
@@ -1077,7 +1075,6 @@ function NativeListRoot({
           automaticallyAdjustsScrollIndicatorInsets={
             manuallyAdjustNormalPageIndicator ? false : automaticallyAdjustsScrollIndicatorInsets
           }
-          // @ts-ignore
           contentInsetAdjustmentBehavior={resolvedContentInsetAdjustmentBehavior}
           tracksNavigationBarScrollEdge={
             (!insideTrueSheet || trueSheetPresentationActive) &&
@@ -1090,7 +1087,6 @@ function NativeListRoot({
           correctsNestedScrollIndicatorFrame={
             isIos26Plus() && fixesIOS26NestedScrollIndicatorSafeArea === true
           }
-          // @ts-ignore Expo UI 的原生 List 补丁提供此属性。
           dismissKeyboardOnTap={dismissKeyboardOnTap}
           initialScrollAnchor="center"
           initialScrollTarget={initialScrollTarget}
@@ -1098,7 +1094,6 @@ function NativeListRoot({
           nativeEditTint={nativeEditTint}
           onSelectionChange={usesNativeEditMode ? handleSelectedIdsChange : undefined}
           selection={usesNativeEditMode ? [...resolvedSelectedIds] : undefined}
-          // @ts-ignore Expo UI 的原生 List 补丁提供稳定的 UIKit 刷新控件属性。
           onRefresh={handleNativeRefresh}
           // 禁用时从 UIScrollView 解绑原生刷新控件；控件实例本身保持稳定，
           // 不会像动态增删 SwiftUI modifier 一样重建 List。

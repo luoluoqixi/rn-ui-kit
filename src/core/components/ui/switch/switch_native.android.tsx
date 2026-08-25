@@ -1,5 +1,5 @@
-import { Host, Switch as ComposeSwitch } from "@expo/ui/jetpack-compose";
-import type { SwitchProps as ExpoComposeSwitchProps } from "@expo/ui/jetpack-compose";
+import { Host, Switch as ComposeSwitch } from "@luoluoqixi/expo-ui-55/jetpack-compose";
+import type { SwitchProps as ExpoComposeSwitchProps } from "@luoluoqixi/expo-ui-55/jetpack-compose";
 
 import { toARGB, useUiTheme } from "../utils";
 import type { SwitchNativeProps } from "./types";

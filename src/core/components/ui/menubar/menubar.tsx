@@ -222,35 +222,19 @@ function MenubarSubContent({
   children,
   ...props
 }: React.ComponentProps<typeof MenubarPrimitive.SubContent>) {
-  const { height: windowHeight } = useWindowDimensions();
   return (
     <NativeOnlyAnimatedView entering={FadeIn.reduceMotion(ReduceMotion.System)}>
       <MenubarPrimitive.SubContent
         className={cn(
-          "bg-popover border-border max-h-[45vh] overflow-hidden rounded-md border p-1 shadow-lg shadow-black/5",
+          "bg-popover border-border overflow-hidden rounded-md border p-1 shadow-lg shadow-black/5",
           Platform.select({
-            web: "animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 fade-in-0 data-[state=closed]:zoom-out-95 zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-(--radix-context-menu-content-transform-origin) z-50 min-w-[8rem] overflow-y-auto ui-menu-scrollbar",
+            web: "animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 fade-in-0 data-[state=closed]:zoom-out-95 zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-(--radix-context-menu-content-transform-origin) z-50 min-w-[8rem] max-h-[45vh] overflow-y-auto ui-menu-scrollbar",
           }),
           className,
         )}
         {...props}
-        style={[{ maxHeight: windowHeight * MENUBAR_MENU_MAX_HEIGHT_RATIO }, props.style]}
-        asChild
       >
-        <View collapsable={false}>
-          {Platform.OS === "web" ? (
-            children
-          ) : (
-            <ScrollView
-              nestedScrollEnabled
-              showsVerticalScrollIndicator
-              onMoveShouldSetResponderCapture={() => true}
-              style={{ maxHeight: windowHeight * MENUBAR_MENU_MAX_HEIGHT_RATIO }}
-            >
-              {children}
-            </ScrollView>
-          )}
-        </View>
+        {children}
       </MenubarPrimitive.SubContent>
     </NativeOnlyAnimatedView>
   );
