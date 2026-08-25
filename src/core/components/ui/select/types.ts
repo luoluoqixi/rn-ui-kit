@@ -11,6 +11,7 @@ import type {
 } from "../native_trigger";
 import type { NativeHapticsSetting, RenderProp } from "../utils";
 import type { NativeSheetProps } from "../sheet/native_sheet/types";
+import type { TextProps } from "../text";
 
 export type SelectNativeMode = boolean | "sheet" | "dialog" | "dropdown" | "wheel";
 export type SelectHandle = {
@@ -22,6 +23,19 @@ export type SelectNativeTriggerIcon = NativeTriggerIcon;
 export type SelectNativePickerProps = Omit<
   ComponentProps<typeof Picker>,
   "children" | "mode" | "onValueChange" | "selectedValue"
+>;
+/** Props for the generated iOS wheel action buttons. `native` and `onPress` are managed by Select. */
+export type SelectNativeWheelButtonProps = Omit<ButtonProps, "children" | "native">;
+/** Props for the iOS wheel action button row. */
+export type SelectNativeWheelButtonContainerProps = Omit<ViewProps, "children">;
+/** Props for the iOS wheel title. The title content is managed by Select. */
+export type SelectNativeWheelTitleProps = Omit<TextProps, "children">;
+/** Props for the outer iOS wheel content container. */
+export type SelectNativeWheelContainerProps = Omit<ViewProps, "children">;
+/** Props for the generated iOS wheel NativeSheet. `open` and `onOpenChange` are managed by Select. */
+export type SelectNativeWheelSheetProps = Omit<
+  NativeSheetProps,
+  "children" | "onOpenChange" | "open"
 >;
 export type SelectNativeSelectProps = Omit<
   ComponentProps<"select">,
@@ -110,6 +124,22 @@ export interface SelectProps extends Omit<ViewProps, "ref">, SelectRootPrimitive
   nativeHaptics?: NativeHapticsSetting;
   /** Additional props for the Android dialog and iOS wheel Pickers. */
   nativePickerProps?: SelectNativePickerProps;
+  /** Text displayed by the iOS wheel cancel button. Defaults to `取消`. */
+  nativeWheelCancelText?: string;
+  /** Additional props for the iOS wheel cancel button. `native` and `onPress` are ignored. */
+  nativeWheelCancelButtonProps?: SelectNativeWheelButtonProps;
+  /** Text displayed by the iOS wheel done button. Defaults to `完成`. */
+  nativeWheelDoneText?: string;
+  /** Additional props for the iOS wheel done button. `native` and `onPress` are ignored. */
+  nativeWheelDoneButtonProps?: SelectNativeWheelButtonProps;
+  /** Additional props for the iOS wheel action button row. */
+  nativeWheelButtonContainerProps?: SelectNativeWheelButtonContainerProps;
+  /** Additional props for the outer iOS wheel content container. */
+  nativeWheelContainerProps?: SelectNativeWheelContainerProps;
+  /** Additional props for the iOS wheel NativeSheet. */
+  nativeWheelSheetProps?: SelectNativeWheelSheetProps;
+  /** Additional props for the iOS wheel title. */
+  nativeWheelTitleProps?: SelectNativeWheelTitleProps;
   /** Additional attributes for the browser-native select element. */
   nativeSelectProps?: SelectNativeSelectProps;
   nativeTrigger?: boolean;
