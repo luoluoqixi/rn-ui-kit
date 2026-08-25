@@ -1,6 +1,8 @@
-# SDK 55 backport of Expo PR #47707.
-# SwiftUI receives a disposable container instead of a Fabric-managed UIView,
-# preventing deferred frame/autoresizing mutations from leaking into recycled RN views.
+# SDK 55 回移 Expo #40604 的最终修复方案。
+# 通过一次性隔离容器承载 SwiftUI，避免 SwiftUI 延迟修改 Fabric 原生 View 的
+# frame/autoresizing 状态，并在 RN View 回收复用后污染其他组件。
+# Issue: https://github.com/expo/expo/issues/40604
+# 修复 PR: https://github.com/expo/expo/pull/47707
 diff --git a/ios/Core/Views/SwiftUI/SwiftUIViewHost.swift b/ios/Core/Views/SwiftUI/SwiftUIViewHost.swift
 --- a/ios/Core/Views/SwiftUI/SwiftUIViewHost.swift
 +++ b/ios/Core/Views/SwiftUI/SwiftUIViewHost.swift
