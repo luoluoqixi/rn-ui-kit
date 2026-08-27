@@ -1145,7 +1145,10 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   sectionBodyBorder: { borderWidth: NATIVE_LIST_BASIC_STYLE_DEFAULTS.borderWidth },
-  sectionBodyPlain: { borderRadius: 0 },
+  // Android's native ContextMenu/MenuView can be measured outside an
+  // unbordered plain section. Clipping that section hides the whole row;
+  // plain lists do not need clipping because they have no rounded corners.
+  sectionBodyPlain: { borderRadius: 0, overflow: "visible" },
   sectionShadow: {},
   sectionShadowDefault: {
     elevation: 3,
