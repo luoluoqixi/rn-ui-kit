@@ -69,7 +69,7 @@ export const NativeTriggerFace = React.forwardRef<View, NativeTriggerFaceProps>(
     {
       content,
       containerStyle,
-      icon = "stacked",
+      icon = "chevrons-up-down",
       iconColor: iconColorProp,
       labelProps,
       label,
@@ -86,7 +86,13 @@ export const NativeTriggerFace = React.forwardRef<View, NativeTriggerFaceProps>(
       );
     }
 
-    const iconColor: TriggerIconColor = iconColorProp ?? theme.foreground;
+    const labelStyle = StyleSheet.flatten(labelProps?.style) as
+      | { color?: TriggerIconColor }
+      | undefined;
+    const labelColor = (labelProps as (TextProps & { color?: TriggerIconColor }) | undefined)
+      ?.color;
+    const iconColor: TriggerIconColor =
+      iconColorProp ?? labelColor ?? labelStyle?.color ?? theme.foreground;
     // 图标跟随显式设置的文字透明度，避免文字已经恢复为 1 时右侧箭头仍然偏淡。
     const configuredLabelOpacity = (labelProps as (TextProps & { opacity?: number }) | undefined)
       ?.opacity;
