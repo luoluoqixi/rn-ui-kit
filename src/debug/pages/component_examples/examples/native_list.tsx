@@ -37,11 +37,10 @@ import {
   Switch,
   Text,
   isIos15,
-  os,
   useUiTheme,
-  useNativeListEditMode,
-  NATIVE_TRIGGER_LABEL_OPACITY,
   NativeListSectionRenderContext,
+  isIos,
+  isAndroid,
 } from "rn-ui-kit/core";
 
 const NATIVE_LIST_ICON_COLOR = "#7c3aed";
@@ -165,15 +164,17 @@ export function NativeListExample() {
   return (
     <View style={styles.exampleRoot}>
       <View style={styles.exampleHeader}>
-        <Switch
-          checked={native}
-          label="使用原生 List 外观"
-          labelPosition="right"
-          onCheckedChange={(nextNative) => {
-            setFallbackMounted(false);
-            setNative(nextNative);
-          }}
-        />
+        {isIos() && (
+          <Switch
+            checked={native}
+            label="使用原生 List 外观"
+            labelPosition="right"
+            onCheckedChange={(nextNative) => {
+              setFallbackMounted(false);
+              setNative(nextNative);
+            }}
+          />
+        )}
         <Switch
           checked={editMode}
           label={`编辑模式（已选 ${selectedIds.length} 项）`}
@@ -185,14 +186,16 @@ export function NativeListExample() {
             }
           }}
         />
-        <Switch
-          checked={customEditModeIcon}
-          disabled={os() === "ios" && native}
-          label="自定义编辑模式图标"
-          labelPosition="right"
-          onCheckedChange={setCustomEditModeIcon}
-        />
-        {os() === "ios" ? (
+        {!(isIos() && native) && (
+          <Switch
+            checked={customEditModeIcon}
+            disabled={isIos() && native}
+            label="自定义编辑模式图标"
+            labelPosition="right"
+            onCheckedChange={setCustomEditModeIcon}
+          />
+        )}
+        {isIos() && native ? (
           <View style={styles.exampleControlRow}>
             <View style={styles.exampleControlCopy}>
               <Text style={{ fontSize: 15, opacity: native ? 1 : 0.5 }}>iOS List 样式</Text>
@@ -218,7 +221,7 @@ export function NativeListExample() {
             />
           </View>
         ) : null}
-        {os() !== "ios" || !native ? (
+        {!isIos() || !native ? (
           <View style={styles.exampleControlRow}>
             <View style={styles.exampleControlCopy}>
               <Text style={{ fontSize: 15 }}>Basic List 样式</Text>
@@ -517,7 +520,7 @@ export function NativeListExample() {
                 }}
                 title="默认 Select"
               />
-              {os() === "ios" ? (
+              {isIos() ? (
                 <>
                   <NativeListSelectItem
                     icon={
@@ -565,7 +568,7 @@ export function NativeListExample() {
                   />
                 </>
               ) : null}
-              {os() === "android" ? (
+              {isAndroid() ? (
                 <NativeListSelectItem
                   icon={<Smartphone color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
                   selectProps={{
@@ -598,12 +601,8 @@ export function NativeListExample() {
           </NativeList>
         ) : null}
       </View>
-      <Text numberOfLines={2} style={{ opacity: 0.6 }}>
-        编辑模式：{editMode ? `已选 ${selectedIds.length} 项` : "关闭"} · iOS 实现： 编辑图标：
-        {customEditModeIcon ? "自定义" : "默认"} · 最近动作：{lastAction} · 自动同步：
-        {autoSyncEnabled ? "开启" : "关闭"} · 主题：{theme ?? "未选择"} · 频率：
-        {syncInterval ?? "未选择"} · 备份：{backupInterval} · 名称：
-        {workspaceName || "未填写"} · 备注：{workspaceNote || "未填写"}
+      <Text variant="small" numberOfLines={2} style={{ opacity: 0.6, textAlign: "center" }}>
+        编辑模式：{editMode ? `已选 ${selectedIds.length} 项` : "关闭"} · 最近动作：{lastAction}
       </Text>
     </View>
   );

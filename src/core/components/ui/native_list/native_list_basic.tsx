@@ -120,8 +120,11 @@ function BasicRowDivider() {
       style={[
         styles.rowDivider,
         {
-          borderTopColor: dividerColor,
-          borderTopWidth: dividerWidth,
+          // A zero-height border is not consistently rasterized by UIKit when
+          // the row is hosted by an iOS ContextMenu. Give the separator an
+          // explicit frame so it remains part of the native view hierarchy.
+          backgroundColor: dividerColor,
+          height: dividerWidth,
           left: dividerPaddingLeft,
           right: dividerPaddingRight,
           ...(dividerPlacement === "top" ? { top: 0 } : { bottom: 0 }),

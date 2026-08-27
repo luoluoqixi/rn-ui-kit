@@ -75,6 +75,7 @@ export const SelectWheel = React.forwardRef<SelectHandle, SelectProps>(
               {...props.nativeWheelButtonContainerProps}
               className={cn(
                 "flex-row items-center justify-between py-2 h-20",
+                isIos26Plus() ? "h-20" : "h-14",
                 props.nativeWheelButtonContainerProps?.className,
               )}
             >
