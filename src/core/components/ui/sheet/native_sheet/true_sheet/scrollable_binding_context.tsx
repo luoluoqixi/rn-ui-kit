@@ -18,6 +18,11 @@ function applyScrollableView(sheet: TrueSheet | null, scrollView: ScrollView | n
   const setScrollableView = (sheet as any).setScrollableView;
   if (setScrollableView) {
     void setScrollableView(scrollView).catch((error: unknown) => {
+      // NativeSheet 的 Fabric view 在首次挂载/卸载交界处可能暂时仍返回
+      // tag 0。后续 layout/presentation 回调会重试，避免把这个瞬态状态当成
+      // 用户可见错误；其他错误仍需保留警告。
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes("No sheet found with tag 0")) return;
       if (__DEV__) {
         console.warn("[rn-ui-kit] Failed to bind TrueSheet ScrollView", error);
       }

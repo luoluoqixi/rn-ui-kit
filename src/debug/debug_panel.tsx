@@ -5,7 +5,6 @@ import {
   type NavigationProp,
   type ParamListBase,
   StackActions,
-  useIsFocused,
   useNavigation,
   useRoute,
 } from "@react-navigation/native";
@@ -157,9 +156,10 @@ function useDebugSheetStackScreenOptions(overrides?: RnUiKitDebugPanelNativeShee
   };
 }
 
-function FocusedNativeSheetDebugSectionPage(props: ComponentProps<typeof RnUiKitDebugSectionPage>) {
-  const isFocused = useIsFocused();
-  return <RnUiKitDebugSectionPage {...props} bindToNativeSheet={isFocused} />;
+function NativeSheetStackDebugSectionPage(props: ComponentProps<typeof RnUiKitDebugSectionPage>) {
+  // 组件总览的静态页复用详情页的 viewport 约束，不再把外层 ScrollView
+  // 注册给 TrueSheet。关闭或切换 Stack screen 时原生 tag 已失效，继续绑定会报 tag 0。
+  return <RnUiKitDebugSectionPage {...props} bindToNativeSheet={false} />;
 }
 
 export function RnUiKitDebugPanel({
@@ -462,7 +462,7 @@ function RnUiKitDebugPanelSheet({
             options={{ title: definition.label }}
           >
             {() => (
-              <FocusedNativeSheetDebugSectionPage
+              <NativeSheetStackDebugSectionPage
                 contentTitle={definition.contentTitle}
                 instanceId={`panel-sheet-stack-${definition.key}`}
                 layoutHost="nativeSheet"

@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import { Platform, StyleSheet, View } from "react-native";
 import { HeaderHeightContext } from "@react-navigation/elements";
-import { type NavigationProp, useIsFocused, useNavigation } from "@react-navigation/native";
+import { type NavigationProp, useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
@@ -118,7 +118,6 @@ export function RnUiKitComponentExampleDetailPage({
   layoutHost?: "default" | "nativeSheet";
 }) {
   const headerHeight = useContext(HeaderHeightContext) ?? 0;
-  const isFocused = useIsFocused();
   const insets = useSafeAreaInsets();
   const appBackgroundColors = useAppBackgroundColors();
   const ActiveExample = definition.Component;
@@ -169,7 +168,10 @@ export function RnUiKitComponentExampleDetailPage({
   if (layoutHost === "nativeSheet") {
     return (
       <NativeSheetScrollContent
-        bindToNativeSheet={isFocused}
+        // Native Stack 中的 ScrollView 不属于 TrueSheetContentView 子树；显式绑定会让
+        // iOS 15 在低 detent 下按窗口高度重写它的 frame。详情页使用自身的 inset 处理。
+        bindToNativeSheet={false}
+        constrainToNativeSheetViewport
         iosEmptyViewportScrollEnabled={Platform.OS === "ios" ? true : undefined}
         style={styles.detailBody}
         tracksNavigationBarScrollEdge={Platform.OS === "android" || Platform.OS === "web"}

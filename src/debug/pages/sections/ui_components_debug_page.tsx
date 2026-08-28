@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { Info } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -155,43 +155,50 @@ export function RnUiKitUiComponentsDebugPage({
         description="NativeList、Card、Separator 和基础文本展示。"
         title="展示组件"
       >
-        <NativeList>
-          <NativeListSection title="NativeList 示例">
-            <NativeListNavigationItem
-              onPress={() => setNativeListValue("selected")}
-              title="NativeListNavigationItem"
-              value="详情"
-            />
-            <NativeListSwitchItem
-              switchProps={{
-                checked: switchValue,
-                onCheckedChange: setSwitchValue,
-              }}
-              title="NativeListSwitchItem"
-            />
-          </NativeListSection>
-          <NativeListSection title="单选示例">
-            {["30秒钟", "1分钟", "2分钟", "4分钟", "永不"].map(
-              (title, index) => {
-                const value = [
-                  "thirty-seconds",
-                  "one-minute",
-                  "two-minutes",
-                  "four-minutes",
-                  "never",
-                ][index];
-                return (
-                  <NativeListNavigationItem
-                    key={value}
-                    onPress={() => setNativeListValue(value)}
-                    selected={nativeListValue === value}
-                    title={title}
-                  />
-                );
-              },
-            )}
-          </NativeListSection>
-        </NativeList>
+        <View style={styles.embeddedNativeList}>
+          <NativeList
+            // 组件总览由外层 ScrollView 统一滚动；NativeList 只作为卡片内容块，
+            // 与旧版实现一致关闭自身滚动，避免出现第二个滚动视口和错误 scrollbar。
+            automaticallyAdjustsScrollIndicatorInsets={false}
+            scrollable={false}
+          >
+            <NativeListSection title="NativeList 示例">
+              <NativeListNavigationItem
+                onPress={() => setNativeListValue("selected")}
+                title="NativeListNavigationItem"
+                value="详情"
+              />
+              <NativeListSwitchItem
+                switchProps={{
+                  checked: switchValue,
+                  onCheckedChange: setSwitchValue,
+                }}
+                title="NativeListSwitchItem"
+              />
+            </NativeListSection>
+            <NativeListSection title="单选示例">
+              {["30秒钟", "1分钟", "2分钟", "4分钟", "永不"].map(
+                (title, index) => {
+                  const value = [
+                    "thirty-seconds",
+                    "one-minute",
+                    "two-minutes",
+                    "four-minutes",
+                    "never",
+                  ][index];
+                  return (
+                    <NativeListNavigationItem
+                      key={value}
+                      onPress={() => setNativeListValue(value)}
+                      selected={nativeListValue === value}
+                      title={title}
+                    />
+                  );
+                },
+              )}
+            </NativeListSection>
+          </NativeList>
+        </View>
         <Separator />
         <Badge>
           <Text>RNR + Uniwind</Text>
@@ -218,3 +225,11 @@ export function RnUiKitUiComponentsDebugPage({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  embeddedNativeList: {
+    gap: 12,
+    minHeight: 420,
+    marginHorizontal: -4,
+  },
+});
