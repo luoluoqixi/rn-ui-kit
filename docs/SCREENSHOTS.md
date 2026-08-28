@@ -78,3 +78,9 @@ The screenshots below come from the example app and compare the same numbered sc
 | :---: | :---: | :---: |
 | <img src="./screenshots/android/012.jpg" alt="Android screenshot 012" width="280"> | <img src="./screenshots/ios18/012.jpg" alt="iOS 18 screenshot 012" width="280"> | <img src="./screenshots/ios26/012.jpg" alt="iOS 26 screenshot 012" width="280"> |
 
+
+## Glass Effect
+
+| Android | iOS 18 | iOS 26 |
+| :---: | :---: | :---: |
+| <img src="./screenshots/android/013.jpg" alt="Android screenshot 013" width="280"> | <img src="./screenshots/ios18/013.jpg" alt="iOS 18 screenshot 013" width="280"> | <img src="./screenshots/ios26/013.jpg" alt="iOS 26 screenshot 013" width="280"> |
