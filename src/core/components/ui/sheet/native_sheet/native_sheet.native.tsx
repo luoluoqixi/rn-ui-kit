@@ -1,4 +1,5 @@
 import type { TrueSheetProps } from "@lodev09/react-native-true-sheet";
+import { useWindowDimensions } from "react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { iosMajorVersion, isIos26Plus, os } from "../../utils/platform";
@@ -93,8 +94,21 @@ function supportsCustomDetents() {
 
 function normalizeIos15Detents(
   indexedDetents: Array<{ detent: NativeSheetDetent; originalIndex: number }>,
+  compactHeight = false,
 ): NativeDetentNormalization {
   const sourceDetentCount = indexedDetents.length;
+
+  // UISheetPresentationController's medium detent is inactive in compact-height
+  // environments (iPhone landscape). iOS 15 has no custom detents, so large is
+  // the only safe native detent in that orientation.
+  if (compactHeight) {
+    return {
+      detents: [1],
+      sourceDetentCount,
+      fromNativeIndex: () => 0,
+      toNativeIndex: () => 0,
+    };
+  }
 
   if (indexedDetents.length === 1) {
     const detent = indexedDetents[0].detent;
@@ -130,6 +144,7 @@ function normalizeIos15Detents(
 export function resolveNativeDetents(
   detents: NativeSheetProps["detents"],
   snapPoints: NativeSheetProps["snapPoints"],
+  compactHeight = false,
 ): NativeDetentNormalization {
   const hasDirectDetents = detents != null && detents.length > 0;
   const sourceDetentsCandidate: NativeSheetDetent[] =
@@ -149,7 +164,7 @@ export function resolveNativeDetents(
     }));
 
   if (!supportsCustomDetents()) {
-    return normalizeIos15Detents(indexedDetents);
+    return normalizeIos15Detents(indexedDetents, compactHeight);
   }
 
   if (hasDirectDetents) {
@@ -225,6 +240,7 @@ export function NativeSheet({
     snapPoints,
     ...trueSheetProps
   } = props;
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const appBackgroundColors = useAppBackgroundColors();
   const [generatedSheetName] = useState(() => `ui-sheet-native-${++nativeSheetCounter}`);
   const sheetName = name ?? generatedSheetName;
@@ -249,8 +265,13 @@ export function NativeSheet({
   const initialDetentIndexRef = useRef<number | null>(null);
   const lastRequestedPositionRef = useRef<number | null>(null);
   const detentNormalization = useMemo(
-    () => resolveNativeDetents(detents, snapPoints),
-    [detents, snapPoints],
+    () =>
+      resolveNativeDetents(
+        detents,
+        snapPoints,
+        os() === "ios" && iosMajorVersion() === 15 && windowWidth > windowHeight,
+      ),
+    [detents, snapPoints, windowHeight, windowWidth],
   );
   const resolvedDetentIndex = detentNormalization.toNativeIndex(
     clampDetentIndex(sheetState.position, detentNormalization.sourceDetentCount),

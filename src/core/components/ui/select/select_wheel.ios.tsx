@@ -21,7 +21,8 @@ function resolveDefaultWheelDetent(width: number, height: number) {
   if (width <= height || height <= 0) return SELECT_WHEEL_DEFAULT_DETENT;
 
   // Keep the same physical sheet height as the portrait 30% detent after rotation.
-  return Math.min(1, (SELECT_WHEEL_DEFAULT_DETENT * width) / height);
+  const detent = (SELECT_WHEEL_DEFAULT_DETENT * width) / height;
+  return Math.min(1, Math.max(SELECT_WHEEL_DEFAULT_DETENT, detent));
 }
 
 export const SelectWheel = React.forwardRef<SelectHandle, SelectProps>(
