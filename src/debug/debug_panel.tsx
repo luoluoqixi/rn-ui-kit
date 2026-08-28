@@ -124,6 +124,9 @@ function useDebugSheetStackScreenOptions(overrides?: RnUiKitDebugPanelNativeShee
     contentStyle: {
       backgroundColor: transparentHeader ? "transparent" : appBackgroundColors.sheet,
     },
+    // Android/Web 使用 JS Stack；它读取 cardStyle，而不是 native-stack 的 contentStyle。
+    // 未设置时会回退到 React Navigation 的 #F2F2F2，导致 Header 与 TrueSheet 内容出现色差。
+    ...(Platform.OS !== "ios" ? { cardStyle: { backgroundColor: appBackgroundColors.sheet } } : {}),
     headerRight: undefined,
     ...(nativeScrollEdgeHeader
       ? {
