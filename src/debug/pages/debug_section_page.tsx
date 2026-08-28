@@ -37,13 +37,11 @@ export function RnUiKitDebugSectionPage({
         // 直接分区 Sheet 仍需要 TrueSheet 的原生滚动钉住；NativeSheetStack
         // 路径则由调用方传 false，避免深层 Stack screen 的失效 tag 绑定。
         bindToNativeSheet={bindToNativeSheet}
-        // 静态分区页与组件详情页一样位于 Native Stack 和透明 header 内。
-        // 约束外层滚动视图到 TrueSheet 的实际可视区域，避免内容和滚动条
-        // 延伸到 header 区域或低 detent 的 Sheet 下方。
-        constrainToNativeSheetViewport
-        // 分区嵌套 Sheet 的 contentInset 由 TrueSheet 注入；NativeSheetStack
-        // 路径则需保留 NativeSheetScrollContent 计算出的底部安全区 padding。
-        contentContainerStyle={bindToNativeSheet ? styles.staticScrollContent : undefined}
+        // NativeSheetStack 没有可供 TrueSheet 注册的原生滚动视图，需由 JS
+        // 约束到当前 detent；直接嵌套的 Sheet 已由原生层完成这项工作。
+        constrainToNativeSheetViewport={!bindToNativeSheet}
+        // 页面内容自身已包含底部留白，避免再叠加 NativeSheetScrollContent 的默认 24px。
+        extraBottomPadding={0}
         style={styles.staticScrollView}
         tracksNavigationBarScrollEdge={Platform.OS === "android" || Platform.OS === "web"}
       >
@@ -93,7 +91,6 @@ export function RnUiKitDebugSectionPage({
 }
 
 const styles = StyleSheet.create({
-  staticScrollContent: { paddingBottom: 12 },
   staticScrollView: { flex: 1, minHeight: 0 },
   scrollPage: { flex: 1, minHeight: 0 },
 });

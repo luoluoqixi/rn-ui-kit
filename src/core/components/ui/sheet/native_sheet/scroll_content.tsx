@@ -294,9 +294,15 @@ export const NativeSheetScrollContent = forwardRef<ScrollView, NativeSheetScroll
           { paddingBottom: bottomPadding },
           contentContainerStyle,
         ]}
-        scrollIndicatorInsets={{
-          bottom: indicatorBottomInset,
-        }}
+        // 已注册给 TrueSheet 的 ScrollView 由原生层维护 indicator inset；
+        // 显式传入 bottom=0 会覆盖 TrueSheet 根据 detent/safe-area 注入的值。
+        {...(shouldBindToNativeSheet
+          ? {}
+          : {
+              scrollIndicatorInsets: {
+                bottom: indicatorBottomInset,
+              },
+            })}
         scrollEventThrottle={scrollEventThrottle ?? (trackedOnScroll == null ? undefined : 16)}
         contentInsetAdjustmentBehavior={
           shouldUseManualViewportInsets

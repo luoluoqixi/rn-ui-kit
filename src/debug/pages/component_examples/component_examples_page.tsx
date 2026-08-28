@@ -172,6 +172,9 @@ export function RnUiKitComponentExampleDetailPage({
         // iOS 15 在低 detent 下按窗口高度重写它的 frame。详情页使用自身的 inset 处理。
         bindToNativeSheet={false}
         constrainToNativeSheetViewport
+        // 详情内容自身已经有 32px 的底部留白；TrueSheet 只负责安全区避让，
+        // 不再叠加通用滚动容器的额外 24px。
+        extraBottomPadding={0}
         iosEmptyViewportScrollEnabled={Platform.OS === "ios" ? true : undefined}
         style={styles.detailBody}
         tracksNavigationBarScrollEdge={Platform.OS === "android" || Platform.OS === "web"}
