@@ -36,7 +36,7 @@ export function RootProvider({
   );
   const semanticColors = resolveUiColors(resolvedColorScheme, resolvedAccentThemeName);
   const rootBackgroundColor = resolvedPreferences.appearance.backgroundFollowsTheme
-    ? semanticColors.background
+    ? semanticColors.primaryBackground
     : getAppWindowBackgroundColor(resolvedColorScheme);
 
   const resolvedNavigationTheme =

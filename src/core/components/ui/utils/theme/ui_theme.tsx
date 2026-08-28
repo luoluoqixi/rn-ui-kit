@@ -7,6 +7,7 @@ export type SemanticColors = {
   accent: string;
   accentForeground: string;
   background: string;
+  primaryBackground: string;
   border: string;
   card: string;
   cardForeground: string;
@@ -27,11 +28,11 @@ export type SemanticColors = {
 type AccentPreset = {
   dark: Pick<
     SemanticColors,
-    "accent" | "accentForeground" | "primary" | "primaryForeground" | "ring"
+    "accent" | "accentForeground" | "primaryBackground" | "primary" | "primaryForeground" | "ring"
   >;
   light: Pick<
     SemanticColors,
-    "accent" | "accentForeground" | "primary" | "primaryForeground" | "ring"
+    "accent" | "accentForeground" | "primaryBackground" | "primary" | "primaryForeground" | "ring"
   >;
   swatch: string;
 };
@@ -49,15 +50,33 @@ export const accentThemeNames = [
 ] as const;
 
 const accentPresets: Record<(typeof accentThemeNames)[number], AccentPreset> = {
-  aqua: createAccentPreset("#0891b2", "#cffafe", "#155e75", "#22d3ee", "#164e63"),
-  forest: createAccentPreset("#059669", "#d1fae5", "#065f46", "#34d399", "#064e3b"),
-  golden: createAccentPreset("#ca8a04", "#fef9c3", "#854d0e", "#facc15", "#713f12"),
-  lavender: createAccentPreset("#7c3aed", "#ede9fe", "#5b21b6", "#a78bfa", "#4c1d95"),
-  mono: createAccentPreset("#52525b", "#f4f4f5", "#27272a", "#d4d4d8", "#27272a"),
-  ocean: createAccentPreset("#2563eb", "#dbeafe", "#1e40af", "#60a5fa", "#1e3a8a"),
-  ruby: createAccentPreset("#e11d48", "#ffe4e6", "#9f1239", "#fb7185", "#881337"),
-  sakura: createAccentPreset("#db2777", "#fce7f3", "#9d174d", "#f472b6", "#831843"),
-  sunset: createAccentPreset("#d97706", "#ffedd5", "#9a3412", "#fb923c", "#7c2d12"),
+  aqua: createAccentPreset(
+    "#0891b2", "#cffafe", "#155e75", "#22d3ee", "#164e63", "#f1fbfd", "#08171b",
+  ),
+  forest: createAccentPreset(
+    "#059669", "#d1fae5", "#065f46", "#34d399", "#064e3b", "#f2fbf7", "#0b1712",
+  ),
+  golden: createAccentPreset(
+    "#ca8a04", "#fef9c3", "#854d0e", "#facc15", "#713f12", "#fffaf0", "#1a1408",
+  ),
+  lavender: createAccentPreset(
+    "#7c3aed", "#ede9fe", "#5b21b6", "#a78bfa", "#4c1d95", "#f8f5ff", "#120d1f",
+  ),
+  mono: createAccentPreset(
+    "#52525b", "#f4f4f5", "#27272a", "#d4d4d8", "#27272a", "#fafafa", "#111113",
+  ),
+  ocean: createAccentPreset(
+    "#2563eb", "#dbeafe", "#1e40af", "#60a5fa", "#1e3a8a", "#f5f8ff", "#0d1424",
+  ),
+  ruby: createAccentPreset(
+    "#e11d48", "#ffe4e6", "#9f1239", "#fb7185", "#881337", "#fff4f6", "#1c0b10",
+  ),
+  sakura: createAccentPreset(
+    "#db2777", "#fce7f3", "#9d174d", "#f472b6", "#831843", "#fff5fa", "#1c0d15",
+  ),
+  sunset: createAccentPreset(
+    "#d97706", "#ffedd5", "#9a3412", "#fb923c", "#7c2d12", "#fff8f1", "#1c120a",
+  ),
 };
 
 function createAccentPreset(
@@ -66,11 +85,14 @@ function createAccentPreset(
   lightAccentForeground: string,
   darkPrimary: string,
   darkAccent: string,
+  lightBackground: string,
+  darkBackground: string,
 ): AccentPreset {
   return {
     dark: {
       accent: darkAccent,
       accentForeground: "#fafafa",
+      primaryBackground: darkBackground,
       primary: darkPrimary,
       primaryForeground: "#09090b",
       ring: darkPrimary,
@@ -78,6 +100,7 @@ function createAccentPreset(
     light: {
       accent: lightAccent,
       accentForeground: lightAccentForeground,
+      primaryBackground: lightBackground,
       primary: lightPrimary,
       primaryForeground: "#ffffff",
       ring: lightPrimary,
@@ -91,6 +114,7 @@ const baseColors: Record<ResolvedColorScheme, SemanticColors> = {
     accent: "#27272a",
     accentForeground: "#fafafa",
     background: "#09090b",
+    primaryBackground: "#09090b",
     border: "rgba(255, 255, 255, 0.10)",
     card: "#18181b",
     cardForeground: "#fafafa",
@@ -111,6 +135,7 @@ const baseColors: Record<ResolvedColorScheme, SemanticColors> = {
     accent: "#f4f4f5",
     accentForeground: "#18181b",
     background: "#ffffff",
+    primaryBackground: "#ffffff",
     border: "#e4e4e7",
     card: "#ffffff",
     cardForeground: "#18181b",
@@ -157,6 +182,7 @@ export function semanticColorsToVariables(colors: SemanticColors) {
     "--color-muted-foreground": colors.mutedForeground,
     "--color-popover": colors.popover,
     "--color-popover-foreground": colors.popoverForeground,
+    "--color-primary-background": colors.primaryBackground,
     "--color-primary": colors.primary,
     "--color-primary-foreground": colors.primaryForeground,
     "--color-ring": colors.ring,

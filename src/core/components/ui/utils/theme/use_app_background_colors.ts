@@ -8,7 +8,7 @@ export function useAppBackgroundColors(): AppBackgroundColors {
   const { preferences } = useUiPreferences();
 
   if (preferences.appearance.backgroundFollowsTheme) {
-    const screen = theme.background;
+    const screen = theme.primaryBackground;
     return {
       screen,
       sheet: screen,

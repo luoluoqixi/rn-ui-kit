@@ -34,12 +34,15 @@ export function RootProvider({
     accentThemeName ?? resolvedPreferences.appearance.accentColor,
   );
   const semanticColors = resolveUiColors(resolvedColorScheme, resolvedAccentThemeName);
+  const rootBackgroundColor = resolvedPreferences.appearance.backgroundFollowsTheme
+    ? semanticColors.primaryBackground
+    : semanticColors.background;
   const resolvedNavigationTheme =
     navigationTheme ?? (resolvedColorScheme === "dark" ? DarkTheme : DefaultTheme);
 
   return (
-    <GestureHandlerRootView style={{ backgroundColor: semanticColors.background, flex: 1 }}>
-      <SafeAreaProvider style={{ backgroundColor: semanticColors.background }}>
+    <GestureHandlerRootView style={{ backgroundColor: rootBackgroundColor, flex: 1 }}>
+      <SafeAreaProvider style={{ backgroundColor: rootBackgroundColor }}>
         <UIProvider
           {...providerProps}
           accentThemeName={resolvedAccentThemeName}
