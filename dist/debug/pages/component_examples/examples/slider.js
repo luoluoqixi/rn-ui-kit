@@ -1,0 +1,13 @@
+import { jsxs as _jsxs, jsx as _jsx } from "react/jsx-runtime";
+import { useState } from "react";
+import { Button, Slider, Text, isWeb } from "rn-ui-kit/core";
+import { ExampleBlock, ExampleRow, ExampleStack } from "../shared";
+export function SliderExample() {
+    const [steppedValue, setSteppedValue] = useState(56);
+    const [continuousValue, setContinuousValue] = useState(50);
+    const [finishedValue, setFinishedValue] = useState(56);
+    const [rangeValues, setRangeValues] = useState([25, 75]);
+    const [nativeValue, setNativeValue] = useState(56);
+    const [nativeStepValue, setNativeStepValue] = useState(40);
+    return (_jsxs(ExampleStack, { children: [_jsxs(ExampleBlock, { description: `拖动结束值：${finishedValue}`, title: "Slider", children: [_jsxs(Text, { className: "font-medium", children: ["\u6B65\u8FDB\u503C\uFF1A", steppedValue] }), _jsx(Slider, { max: 100, min: 0, native: false, onChange: (value) => setSteppedValue(value), onChangeFinished: (value) => setFinishedValue(value), step: 1, value: steppedValue }), _jsxs(Text, { className: "font-medium", children: ["\u8FDE\u7EED\u503C\uFF1A", continuousValue.toFixed(2)] }), _jsx(Slider, { max: 100, min: 0, native: false, onChange: (value) => setContinuousValue(value), step: 0, value: continuousValue }), _jsxs(Text, { className: "font-medium", children: ["\u8303\u56F4\u503C\uFF1A", rangeValues[0], " - ", rangeValues[1]] }), _jsx(Slider, { max: 100, min: 0, native: false, onValueChange: setRangeValues, step: 5, thumbCount: 2, value: rangeValues }), _jsxs(ExampleRow, { children: [_jsx(Button, { onPress: () => setSteppedValue(0), title: "\u6700\u5C0F", variant: "outline" }), _jsx(Button, { onPress: () => setSteppedValue(50), title: "\u9ED8\u8BA4", variant: "outline" }), _jsx(Button, { onPress: () => setSteppedValue(100), title: "\u6700\u5927", variant: "outline" })] })] }), !isWeb() ? (_jsxs(ExampleBlock, { description: "Expo UI \u539F\u751F\u5E73\u53F0\u5B9E\u73B0\u3002", title: "\u539F\u751F Slider", children: [_jsxs(Text, { className: "font-medium", children: ["\u539F\u751F\u503C\uFF1A", nativeValue.toFixed(2)] }), _jsx(Slider, { max: 100, min: 0, step: 0, onChange: (value) => setNativeValue(value), value: nativeValue }), _jsxs(Text, { className: "font-medium", children: ["\u539F\u751F\u6B65\u8FDB\u503C\uFF1A", nativeStepValue] }), _jsx(Slider, { max: 100, min: 0, onChange: setNativeStepValue, step: 1, value: nativeStepValue }), _jsxs(ExampleRow, { children: [_jsx(Button, { onPress: () => setNativeValue(0), title: "\u6700\u5C0F", variant: "outline" }), _jsx(Button, { onPress: () => setNativeValue(50), title: "\u9ED8\u8BA4", variant: "outline" }), _jsx(Button, { onPress: () => setNativeValue(100), title: "\u6700\u5927", variant: "outline" })] })] })) : null] }));
+}

@@ -1,0 +1,64 @@
+import { createElement as _createElement } from "react";
+import { jsx as _jsx, Fragment as _Fragment, jsxs as _jsxs } from "react/jsx-runtime";
+import { TextClassContext } from "../text";
+import { Text } from "../text";
+import { cn } from "../utils/cn";
+import { triggerNativeHaptics, useResolvedNativeHaptics, } from "../utils";
+import { resolveRenderProp } from "../utils/render";
+import * as TabsPrimitive from "@rn-primitives/tabs";
+import * as React from "react";
+import { Platform } from "react-native";
+const TabsHapticsContext = React.createContext(undefined);
+const INACTIVE_TAB_TEXT_PRESS_OPACITY_CLASS = "opacity-70";
+const INACTIVE_TAB_TEXT_WEB_HOVER_OPACITY_CLASS = "group-hover:opacity-80";
+const INACTIVE_TAB_TEXT_WEB_PRESS_OPACITY_CLASS = "group-active:opacity-70";
+function normalizeTabsChildren(children) {
+    if (typeof children === "function")
+        return children;
+    return React.Children.map(children, (child) => typeof child === "string" || typeof child === "number" ? _jsx(Text, { children: child }) : child);
+}
+function Tabs({ children, className, contentProps, items, listProps, nativeHaptics, triggerProps, ...props }) {
+    const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics, {
+        defaultEnabled: true,
+    });
+    const renderedChildren = children ??
+        (items != null ? (_jsxs(_Fragment, { children: [_jsx(TabsList, { ...listProps, children: items.map((item) => (_createElement(TabsTrigger, { ...triggerProps, ...item.triggerProps, disabled: item.disabled ?? item.triggerProps?.disabled ?? triggerProps?.disabled, key: item.value, value: item.value, nativeHaptics: resolvedNativeHaptics }, resolveRenderProp(item.title, item)))) }), items.map((item) => (_createElement(TabsContent, { ...contentProps, ...item.contentProps, key: item.value, value: item.value }, resolveRenderProp(item.content, item))))] })) : null);
+    return (_jsx(TabsPrimitive.Root, { className: cn("flex flex-col gap-2", className), ...props, children: _jsx(TabsHapticsContext.Provider, { value: resolvedNativeHaptics, children: renderedChildren }) }));
+}
+function TabsList({ className, ...props }) {
+    return (_jsx(TabsPrimitive.List, { className: cn("bg-muted flex h-9 flex-row items-center justify-center rounded-lg p-[3px]", Platform.select({ web: "inline-flex w-fit", native: "mr-auto" }), className), ...props }));
+}
+function TabsTrigger({ className, children, nativeHaptics, onPress, onPressIn, onPressOut, ...props }) {
+    const contextNativeHaptics = React.useContext(TabsHapticsContext);
+    const { value } = TabsPrimitive.useRootContext();
+    const isActive = value === props.value;
+    const [isPressed, setIsPressed] = React.useState(false);
+    const inactiveTextInteractionClass = !isActive && !props.disabled
+        ? cn(isPressed && INACTIVE_TAB_TEXT_PRESS_OPACITY_CLASS, Platform.select({
+            web: cn(INACTIVE_TAB_TEXT_WEB_HOVER_OPACITY_CLASS, INACTIVE_TAB_TEXT_WEB_PRESS_OPACITY_CLASS),
+        }))
+        : undefined;
+    return (_jsx(TextClassContext.Provider, { value: cn("text-foreground dark:text-muted-foreground text-sm font-medium", isActive ? "dark:text-foreground" : inactiveTextInteractionClass), children: _jsx(TabsPrimitive.Trigger, { className: cn("group flex flex-row items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 shadow-none shadow-black/5", Platform.select({
+                web: "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring web:h-[calc(100%-1px)] inline-flex cursor-default whitespace-nowrap transition-[color,box-shadow] focus-visible:outline-1 focus-visible:ring-[3px] disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0",
+            }), props.disabled && "opacity-50", isActive && "bg-background dark:border-foreground/10 dark:bg-input/30", className), ...props, onPress: (event) => {
+                onPress?.(event);
+                if (!event.defaultPrevented)
+                    triggerNativeHaptics(nativeHaptics ?? contextNativeHaptics);
+            }, onPressIn: (event) => {
+                setIsPressed(true);
+                onPressIn?.(event);
+            }, onPressOut: (event) => {
+                setIsPressed(false);
+                onPressOut?.(event);
+            }, children: normalizeTabsChildren(children) }) }));
+}
+function TabsContent({ className, children, ...props }) {
+    return (_jsx(TabsPrimitive.Content, { className: cn(Platform.select({ web: "flex-1 outline-none" }), className), ...props, children: normalizeTabsChildren(children) }));
+}
+const TabsComponent = Object.assign(Tabs, {
+    Content: TabsContent,
+    List: TabsList,
+    Root: Tabs,
+    Trigger: TabsTrigger,
+});
+export { TabsComponent as Tabs };

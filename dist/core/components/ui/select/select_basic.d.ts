@@ -1,0 +1,27 @@
+import { type RenderProp } from "../utils/render";
+import * as SelectPrimitive from "@rn-primitives/select";
+import type { ComponentProps } from "react";
+import * as React from "react";
+import type { SelectContentProps, SelectHandle, SelectGroupProps, SelectItemProps, SelectLabelProps, SelectProps, SelectSeparatorProps, SelectTriggerProps, SelectValueProps } from "./types";
+declare function SelectValue({ className, ...props }: SelectValueProps): React.JSX.Element;
+declare function SelectTrigger({ className, children, size, ...props }: SelectTriggerProps): React.JSX.Element;
+declare function SelectContent({ className, children, position, align, side: sideProp, showScrollButtons, initialScrollOffset, portalHost, viewportProps, ...props }: SelectContentProps): React.JSX.Element;
+declare function SelectLabel({ className, ...props }: SelectLabelProps): React.JSX.Element;
+declare function SelectItem({ className, children, description, startContent, endContent, itemIndicatorProps, itemTextProps, ...props }: SelectItemProps): React.JSX.Element;
+declare function SelectSeparator({ className, ...props }: SelectSeparatorProps): React.JSX.Element;
+declare function SelectScrollUpButton({ className, ...props }: ComponentProps<typeof SelectPrimitive.ScrollUpButton>): React.JSX.Element | null;
+declare function SelectScrollDownButton({ className, ...props }: ComponentProps<typeof SelectPrimitive.ScrollDownButton>): React.JSX.Element | null;
+export declare const SelectBasic: React.ForwardRefExoticComponent<SelectProps & React.RefAttributes<SelectHandle>>;
+export declare const SelectBasicComponent: React.ForwardRefExoticComponent<SelectProps & React.RefAttributes<SelectHandle>> & {
+    Content: typeof SelectContent;
+    Group: (props: SelectGroupProps) => React.JSX.Element;
+    Item: typeof SelectItem;
+    Label: typeof SelectLabel;
+    Root: React.ForwardRefExoticComponent<SelectProps & React.RefAttributes<SelectHandle>>;
+    ScrollDownButton: typeof SelectScrollDownButton;
+    ScrollUpButton: typeof SelectScrollUpButton;
+    Separator: typeof SelectSeparator;
+    Trigger: typeof SelectTrigger;
+    Value: typeof SelectValue;
+};
+export type { RenderProp };
