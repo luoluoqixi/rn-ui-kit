@@ -25,6 +25,12 @@ export type SemanticColors = {
   secondaryForeground: string;
 };
 
+/** Complete semantic color set for one light/dark theme pair. */
+export interface UiThemeConfig {
+  light: SemanticColors;
+  dark: SemanticColors;
+}
+
 type AccentPreset = {
   dark: Pick<
     SemanticColors,
@@ -161,7 +167,10 @@ export const accentThemeSwatchColors: Record<AccentThemeName, string> = Object.f
 export function resolveUiColors(
   colorScheme: ResolvedColorScheme,
   accentThemeName: AccentThemeName,
+  theme?: UiThemeConfig,
 ): SemanticColors {
+  if (theme != null) return theme[colorScheme];
+
   const preset =
     accentPresets[accentThemeName as keyof typeof accentPresets] ?? accentPresets.ocean;
   return { ...baseColors[colorScheme], ...preset[colorScheme] };
@@ -198,15 +207,17 @@ export function UiThemeProvider({
   children,
   colorScheme,
   followsSystem,
+  theme,
 }: {
   accentThemeName: AccentThemeName;
   children: ReactNode;
   colorScheme: ResolvedColorScheme;
   followsSystem: boolean;
+  theme?: UiThemeConfig;
 }) {
   const colors = useMemo(
-    () => resolveUiColors(colorScheme, accentThemeName),
-    [accentThemeName, colorScheme],
+    () => resolveUiColors(colorScheme, accentThemeName, theme),
+    [accentThemeName, colorScheme, theme],
   );
   const variables = useMemo(() => semanticColorsToVariables(colors), [colors]);
 

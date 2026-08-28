@@ -94,9 +94,22 @@ export default function App() {
 }
 ```
 
-Themes follow the RNR New York semantic variable model: `background`, `foreground`, `primary`, `accent`, `muted`, `card`, `popover`, `border`, and `ring`. rn-ui-kit changes semantic accent colors only and does not expose numbered color scales.
+Themes follow the RNR New York semantic variable model: `background`, `primaryBackground`, `foreground`, `primary`, `accent`, `muted`, `card`, `popover`, `border`, and `ring`. Built-in accents only override accent-related fields and do not expose numbered color scales; complete custom themes can override every semantic field.
 
 Built-in accents: `mono`, `ocean`, `sakura`, `lavender`, `sunset`, `forest`, `ruby`, `golden`, and `aqua`.
+
+You can also pass a complete custom theme through `UiThemeConfig`. Both `light` and `dark`
+`SemanticColors` sets are required. Use `primaryBackground` for a subtly accent-tinted app
+background when background-following is enabled; the existing `background` value remains unchanged:
+
+```tsx
+const theme: UiThemeConfig = {
+  light: { /* SemanticColors */ },
+  dark: { /* SemanticColors */ },
+};
+
+<RootProvider theme={theme}>{children}</RootProvider>;
+```
 
 `RootProvider` installs gesture, safe-area, color scheme, navigation theme, sheet, portal, toast, native dialog, and haptics contexts.
 

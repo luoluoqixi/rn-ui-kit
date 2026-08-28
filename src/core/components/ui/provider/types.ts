@@ -6,6 +6,7 @@ import type {
   AccentThemeName,
   AccentThemeNames,
   ResolvedColorScheme,
+  UiThemeConfig,
   UiPreferences,
 } from "../utils/theme";
 
@@ -15,6 +16,8 @@ export interface UIProviderProps {
   children: ReactNode;
   colorScheme?: ResolvedColorScheme;
   navigationTheme?: NavigationTheme;
+  /** Complete custom semantic colors for both light and dark schemes. */
+  theme?: UiThemeConfig;
   defaultNativeHapticsEnabled?: boolean;
   keyboardAnimationProviderProps?: Omit<KeyboardProviderProps, "children">;
   preferences?: Partial<UiPreferences>;

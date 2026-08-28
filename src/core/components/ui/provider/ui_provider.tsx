@@ -16,6 +16,7 @@ export function UIProvider({
   defaultNativeHapticsEnabled = false,
   keyboardAnimationProviderProps,
   preferences,
+  theme,
 }: UIProviderProps) {
   const resolvedAccentThemeName = resolveAccentThemeName(
     accentThemeName ?? preferences?.appearance?.accentColor,
@@ -28,6 +29,7 @@ export function UIProvider({
           accentThemeName={resolvedAccentThemeName}
           colorScheme={colorScheme ?? "light"}
           followsSystem={preferences?.appearance?.themeMode === "system"}
+          theme={theme}
         >
           <TeleportPortalProvider>
             <NativeDialogProvider>

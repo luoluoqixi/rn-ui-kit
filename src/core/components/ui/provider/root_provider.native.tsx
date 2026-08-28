@@ -24,6 +24,7 @@ export function RootProvider({
   colorScheme,
   navigationTheme,
   preferences,
+  theme,
   ...providerProps
 }: RootProviderProps) {
   const systemColorScheme = useColorScheme();
@@ -34,7 +35,7 @@ export function RootProvider({
   const resolvedAccentThemeName = resolveAccentThemeName(
     accentThemeName ?? resolvedPreferences.appearance.accentColor,
   );
-  const semanticColors = resolveUiColors(resolvedColorScheme, resolvedAccentThemeName);
+  const semanticColors = resolveUiColors(resolvedColorScheme, resolvedAccentThemeName, theme);
   const rootBackgroundColor = resolvedPreferences.appearance.backgroundFollowsTheme
     ? semanticColors.primaryBackground
     : getAppWindowBackgroundColor(resolvedColorScheme);
@@ -50,6 +51,7 @@ export function RootProvider({
           accentThemeName={resolvedAccentThemeName}
           colorScheme={resolvedColorScheme}
           preferences={resolvedPreferences}
+          theme={theme}
         >
           <NavigationThemeProvider value={resolvedNavigationTheme}>
             <SheetProvider>{children}</SheetProvider>

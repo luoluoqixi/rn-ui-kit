@@ -117,9 +117,22 @@ export default function App() {
 }
 ```
 
-主题使用 RNR New York 风格的语义变量，如 `background`、`foreground`、`primary`、`accent`、`muted`、`card`、`popover`、`border` 与 `ring`。rn-ui-kit 只在这些语义变量上叠加强调色，不提供旧式编号色阶。
+主题使用 RNR New York 风格的语义变量，如 `background`、`primaryBackground`、`foreground`、`primary`、`accent`、`muted`、`card`、`popover`、`border` 与 `ring`。内置强调色只覆盖强调色相关字段，不提供旧式编号色阶；完整自定义主题可覆盖全部语义字段。
 
 内置强调色：`mono`、`ocean`、`sakura`、`lavender`、`sunset`、`forest`、`ruby`、`golden`、`aqua`。
+
+也可以通过 `UiThemeConfig` 传入完整的自定义主题。主题必须同时提供 `light` 和 `dark` 两套
+`SemanticColors`，并可通过 `primaryBackground` 为“背景跟随主题”单独指定带主色调的应用背景；
+原有的 `background` 字段不会被替换：
+
+```tsx
+const theme: UiThemeConfig = {
+  light: { /* SemanticColors */ },
+  dark: { /* SemanticColors */ },
+};
+
+<RootProvider theme={theme}>{children}</RootProvider>;
+```
 
 `RootProvider` 负责手势根节点、安全区、颜色模式、语义颜色、导航主题、Sheet、Portal、Toast、原生对话框和触觉反馈上下文。
 
