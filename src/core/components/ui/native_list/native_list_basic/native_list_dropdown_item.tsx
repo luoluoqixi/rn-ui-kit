@@ -16,6 +16,7 @@ import {
   NATIVE_LIST_TRAILING_TRIGGER_PRESS_OPACITY,
 } from "../constants";
 import { useUiTheme } from "../../utils/theme";
+import { triggerNativeHaptics } from "../../utils";
 import type { NativeListDropdownItemProps } from "../types";
 
 export function NativeListDropdownItem(props: NativeListDropdownItemProps) {
@@ -141,6 +142,7 @@ export function NativeListDropdownItem(props: NativeListDropdownItemProps) {
         if (Platform.OS === "ios" && consumeTriggerInteraction()) return;
         if (disabled || menuOpen || presentingMenuRef.current) return;
         itemProps.onPress?.();
+        triggerNativeHaptics(inheritedHaptics);
         if (dropdownProps.open === undefined) {
           setUncontrolledWillOpen(true);
         }

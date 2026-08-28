@@ -220,7 +220,9 @@ function NativeDropdownRoot({
     };
   }, [__menuRef]);
   const haptics = useResolvedNativeHaptics(nativeHaptics);
-  const resolvedItemHaptics = useResolvedNativeHaptics(itemNativeHaptics);
+  // Generated native items follow the dropdown setting by default; callers
+  // can still override it with itemNativeHaptics or per-item nativeHaptics.
+  const resolvedItemHaptics = useResolvedNativeHaptics(itemNativeHaptics ?? nativeHaptics);
   const resolvedOpen = open ?? uncontrolledOpen;
   // iOS reports the final menu state after the native presentation animation.
   // Use the will-change state for trigger feedback so press/open opacity does
@@ -277,7 +279,9 @@ function NativeDropdownRoot({
   const handleOpenWillChange = (nextOpen: boolean) => {
     if (resolvedDisabled && nextOpen) return;
     setWillOpen(nextOpen);
-    if (nextOpen) triggerNativeHaptics(haptics);
+    // Android native menus do not consistently emit this callback for a
+    // trigger press. The press path below provides the feedback there.
+    if (nextOpen && Platform.OS !== "android") triggerNativeHaptics(haptics);
     onOpenWillChange?.(nextOpen);
   };
 
@@ -294,11 +298,14 @@ function NativeDropdownRoot({
   const resolvedTriggerProps = {
     ...(triggerProps as object),
     style: composedTriggerStyle,
-    onPress: (event: unknown) => {
-      (triggerProps as { onPress?: (event: unknown) => void } | undefined)?.onPress?.(event);
-      if (isAndroidDetachedTrigger && !resolvedDisabled) {
-        menuRef.current?.presentMenu();
-      }
+      onPress: (event: unknown) => {
+        (triggerProps as { onPress?: (event: unknown) => void } | undefined)?.onPress?.(event);
+        if (!event || !(event as { defaultPrevented?: boolean }).defaultPrevented) {
+          if (Platform.OS === "android") triggerNativeHaptics(haptics);
+        }
+        if (isAndroidDetachedTrigger && !resolvedDisabled) {
+          menuRef.current?.presentMenu();
+        }
     },
     onPressIn: (event: unknown) => {
       (triggerProps as { onPressIn?: (event: unknown) => void } | undefined)?.onPressIn?.(event);
@@ -419,6 +426,9 @@ function NativeDropdownRoot({
       },
       onPress: (event: any) => {
         originalOnPress?.(event);
+        if (!event?.defaultPrevented && Platform.OS === "android") {
+          triggerNativeHaptics(haptics);
+        }
         if (!event?.defaultPrevented) menuRef.current?.presentMenu();
       },
     });

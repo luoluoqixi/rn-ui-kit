@@ -20,6 +20,7 @@ import { resolveRenderProp } from "../../utils/render";
 import { Text } from "../../text";
 import { Select } from "../../select";
 import { useUiTheme } from "../../utils/theme";
+import { triggerNativeHaptics } from "../../utils";
 import type { NativeListSelectItemProps } from "../types";
 
 export function NativeListSelectItem(props: NativeListSelectItemProps) {
@@ -175,6 +176,7 @@ export function NativeListSelectItem(props: NativeListSelectItemProps) {
           return;
         }
         itemProps.onPress?.();
+        triggerNativeHaptics(inheritedHaptics);
         openingSelectRef.current = true;
         selectRef.current?.open();
       }}

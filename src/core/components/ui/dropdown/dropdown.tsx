@@ -624,7 +624,10 @@ function Dropdown({
   }
 
   const resolvedHaptics = useResolvedNativeHaptics(nativeHaptics);
-  const resolvedItemHaptics = useResolvedNativeHaptics(itemNativeHaptics);
+  // Item feedback inherits the dropdown setting unless an item-specific
+  // setting was supplied. This keeps generated items consistent with the
+  // trigger and with native dropdown rendering.
+  const resolvedItemHaptics = useResolvedNativeHaptics(itemNativeHaptics ?? nativeHaptics);
   const generated = items != null || trigger != null || nativeTrigger === true;
   const resolvedDisabled = disabled ?? triggerProps?.disabled;
   const triggerRef = React.useRef<any>(null);
