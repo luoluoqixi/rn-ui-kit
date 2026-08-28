@@ -43,7 +43,7 @@ export type SelectNativeSelectProps = Omit<
 >;
 export type SelectSheetProps = Omit<
   NativeSheetProps,
-  "children" | "detents" | "onAnimationComplete" | "onOpenChange" | "open" | "scrollable"
+  "children" | "onAnimationComplete" | "onOpenChange" | "open" | "scrollable"
 >;
 
 export type SelectItemRenderContext = {
@@ -161,7 +161,10 @@ export interface SelectProps extends Omit<ViewProps, "ref">, SelectRootPrimitive
   options?: SelectItemData[];
   placeholder?: ReactNode;
   renderValue?: RenderProp<{ value: string | undefined; item?: SelectItemData }>;
-  /** Additional props for the generated Select sheet, excluding Select-managed state. */
+  /**
+   * Additional props for the generated Select sheet, excluding Select-managed state.
+   * `detents` or `snapPoints` can be used to override the automatic sheet height.
+   */
   sheetProps?: SelectSheetProps;
   /** Show Web Select's scroll up/down buttons. Defaults to true. */
   showScrollButtons?: boolean;

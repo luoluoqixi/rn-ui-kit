@@ -107,6 +107,14 @@ export const SelectSheet = React.forwardRef<SelectHandle, SelectProps>(function 
     SELECT_SHEET_MIN_DETENT,
     Math.min(SELECT_SHEET_MAX_DETENT, estimatedContentHeight / Math.max(1, windowHeight)),
   );
+  const customDetents = props.sheetProps?.detents;
+  const customSnapPoints = props.sheetProps?.snapPoints;
+  const resolvedDetents =
+    customDetents != null && customDetents.length > 0
+      ? customDetents
+      : customSnapPoints != null && customSnapPoints.length > 0
+        ? undefined
+        : [sheetDetent];
   const haptics = useResolvedNativeHaptics(props.nativeHaptics);
   const theme = useUiTheme();
   const selectedValue = value ?? undefined;
@@ -146,7 +154,7 @@ export const SelectSheet = React.forwardRef<SelectHandle, SelectProps>(function 
       )}
       <NativeSheet
         {...(props.sheetProps as object)}
-        detents={[sheetDetent]}
+        detents={resolvedDetents}
         grabber={props.sheetProps?.grabber ?? true}
         grabberContentInsetTop={Platform.OS === "web" ? 0 : SELECT_SHEET_GRABBER_CONTENT_INSET_TOP}
         grabberOptions={{
