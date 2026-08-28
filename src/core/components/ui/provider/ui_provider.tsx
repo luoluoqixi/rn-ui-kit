@@ -17,6 +17,8 @@ export function UIProvider({
   keyboardAnimationProviderProps,
   preferences,
   theme,
+  toaster: CustomToaster,
+  toasterProps,
 }: UIProviderProps) {
   const resolvedAccentThemeName = resolveAccentThemeName(
     accentThemeName ?? preferences?.appearance?.accentColor,
@@ -36,7 +38,17 @@ export function UIProvider({
               <NativeHapticsProvider enabledByDefault={defaultNativeHapticsEnabled}>
                 {children}
                 <PortalHost />
-                <Toaster accentThemeName={resolvedAccentThemeName} />
+                {CustomToaster ? (
+                  <CustomToaster
+                    {...toasterProps}
+                    accentThemeName={resolvedAccentThemeName}
+                  />
+                ) : (
+                  <Toaster
+                    {...toasterProps}
+                    accentThemeName={resolvedAccentThemeName}
+                  />
+                )}
               </NativeHapticsProvider>
             </NativeDialogProvider>
           </TeleportPortalProvider>

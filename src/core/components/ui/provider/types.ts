@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 import type { Theme as NavigationTheme } from "@react-navigation/native";
 import type { KeyboardProviderProps } from "react-native-keyboard-controller";
 
@@ -9,6 +9,7 @@ import type {
   UiThemeConfig,
   UiPreferences,
 } from "../utils/theme";
+import type { ToastNativeToasterProps } from "../toast/types";
 
 export interface UIProviderProps {
   accentThemeName?: AccentThemeName;
@@ -21,6 +22,10 @@ export interface UIProviderProps {
   defaultNativeHapticsEnabled?: boolean;
   keyboardAnimationProviderProps?: Omit<KeyboardProviderProps, "children">;
   preferences?: Partial<UiPreferences>;
+  /** Replaces the built-in Toast Toaster. */
+  toaster?: ComponentType<ToastNativeToasterProps>;
+  /** Props passed to the built-in or custom Toast Toaster. */
+  toasterProps?: Omit<ToastNativeToasterProps, "accentThemeName">;
 }
 
 export interface RootProviderProps extends Omit<UIProviderProps, "children"> {
