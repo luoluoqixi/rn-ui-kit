@@ -1,6 +1,6 @@
 import { Picker } from "@react-native-picker/picker";
 import * as React from "react";
-import { View } from "react-native";
+import { View, useWindowDimensions } from "react-native";
 import { Button } from "../button";
 import { cn } from "../utils/cn";
 import { NativeSheet } from "../sheet/native_sheet";
@@ -15,8 +15,18 @@ import {
 import type { SelectHandle, SelectProps } from "./types";
 import { Text } from "../text";
 
+const SELECT_WHEEL_DEFAULT_DETENT = 0.3;
+
+function resolveDefaultWheelDetent(width: number, height: number) {
+  if (width <= height || height <= 0) return SELECT_WHEEL_DEFAULT_DETENT;
+
+  // Keep the same physical sheet height as the portrait 30% detent after rotation.
+  return Math.min(1, (SELECT_WHEEL_DEFAULT_DETENT * width) / height);
+}
+
 export const SelectWheel = React.forwardRef<SelectHandle, SelectProps>(
   function SelectWheel(props, ref) {
+    const { width, height } = useWindowDimensions();
     const { value, setValue } = useSelectState(props);
     const items = flattenItems(props);
     const [open, setOpen] = React.useState(false);
@@ -50,6 +60,7 @@ export const SelectWheel = React.forwardRef<SelectHandle, SelectProps>(
       width: 40,
       height: isIos26Plus() ? 40 : 20,
     };
+    const defaultWheelDetent = resolveDefaultWheelDetent(width, height);
     return (
       <>
         {props.nativeTrigger ? (
@@ -59,7 +70,7 @@ export const SelectWheel = React.forwardRef<SelectHandle, SelectProps>(
         )}
         <NativeSheet
           {...(props.nativeWheelSheetProps as object)}
-          detents={props.nativeWheelSheetProps?.detents ?? [0.3]}
+          detents={props.nativeWheelSheetProps?.detents ?? [defaultWheelDetent]}
           dismissOnOverlayPress={props.nativeWheelSheetProps?.dismissOnOverlayPress ?? true}
           grabber={props.nativeWheelSheetProps?.grabber ?? false}
           open={open}
