@@ -7,18 +7,13 @@ export type PopoverRenderContext = {
   open?: boolean;
 };
 
-export type PopoverContentProps = ComponentProps<
-  typeof PopoverPrimitive.Content
-> & {
+export type PopoverContentProps = ComponentProps<typeof PopoverPrimitive.Content> & {
   portalHost?: string;
 };
 
 export type PopoverProps = ComponentProps<typeof PopoverPrimitive.Root> & {
   content?: RenderProp<PopoverRenderContext>;
   contentProps?: Omit<PopoverContentProps, "children">;
-  triggerProps?: Omit<
-    ComponentProps<typeof PopoverPrimitive.Trigger>,
-    "children"
-  >;
+  triggerProps?: Omit<ComponentProps<typeof PopoverPrimitive.Trigger>, "children">;
   children?: ReactNode;
 };

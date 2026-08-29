@@ -147,21 +147,19 @@ export function resolveNativeDetents(
   compactHeight = false,
 ): NativeDetentNormalization {
   const hasDirectDetents = detents != null && detents.length > 0;
-  const sourceDetentsCandidate: NativeSheetDetent[] =
-    hasDirectDetents
-      ? detents
-      : snapPoints == null || snapPoints.length === 0
-        ? [1]
-        : snapPoints
-            .map((point) => resolveSnapPoint(point))
-            .filter((point): point is number => point != null);
+  const sourceDetentsCandidate: NativeSheetDetent[] = hasDirectDetents
+    ? detents
+    : snapPoints == null || snapPoints.length === 0
+      ? [1]
+      : snapPoints
+          .map((point) => resolveSnapPoint(point))
+          .filter((point): point is number => point != null);
   const sourceDetents = sourceDetentsCandidate.length > 0 ? sourceDetentsCandidate : [1];
   const limitedSourceDetents = sourceDetents.slice(0, 3);
-  const indexedDetents = limitedSourceDetents
-    .map((detent, originalIndex) => ({
-      detent: typeof detent === "number" ? Math.max(0.01, Math.min(1, detent)) : detent,
-      originalIndex,
-    }));
+  const indexedDetents = limitedSourceDetents.map((detent, originalIndex) => ({
+    detent: typeof detent === "number" ? Math.max(0.01, Math.min(1, detent)) : detent,
+    originalIndex,
+  }));
 
   if (!supportsCustomDetents()) {
     return normalizeIos15Detents(indexedDetents, compactHeight);
@@ -203,9 +201,7 @@ export function clampDetentIndex(index: number | undefined, detentCount: number)
   return Math.max(0, Math.min(detentCount - 1, Math.round(index)));
 }
 
-export function NativeSheet({
-  ...props
-}: NativeSheetProps) {
+export function NativeSheet({ ...props }: NativeSheetProps) {
   const {
     backgroundColor,
     children,

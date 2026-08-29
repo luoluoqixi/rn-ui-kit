@@ -10,7 +10,13 @@ import { dismissNativeToast, dismissAllNativeToasts, showNativeToast } from "./t
 import { getToastId } from "./toast_basic_shared";
 import { resolveRenderProp } from "../utils/render";
 import { useScopedOverlayPortalHostName } from "../utils/overlay";
-import type { TitleToast, ToastContext, ToastPromise, ToastPromiseData, ToastShowOptions } from "./types";
+import type {
+  TitleToast,
+  ToastContext,
+  ToastPromise,
+  ToastPromiseData,
+  ToastShowOptions,
+} from "./types";
 import { isIos, isWeb } from "../utils";
 
 let toastId = 0;
@@ -52,15 +58,24 @@ export function useToast(): ToastContext {
     },
     [scopedPortalHost],
   );
-  const message = (title: TitleToast, options?: ToastShowOptions) => show(title, "default", resolveOptions(options));
-  const info = (title: TitleToast, options?: ToastShowOptions) => show(title, "info", resolveOptions(options));
-  const success = (title: TitleToast, options?: ToastShowOptions) => show(title, "success", resolveOptions(options));
-  const error = (title: TitleToast, options?: ToastShowOptions) => show(title, "error", resolveOptions(options));
-  const warning = (title: TitleToast, options?: ToastShowOptions) => show(title, "warning", resolveOptions(options));
-  const loading = (title: TitleToast, options?: ToastShowOptions) => show(title, "loading", resolveOptions(options));
+  const message = (title: TitleToast, options?: ToastShowOptions) =>
+    show(title, "default", resolveOptions(options));
+  const info = (title: TitleToast, options?: ToastShowOptions) =>
+    show(title, "info", resolveOptions(options));
+  const success = (title: TitleToast, options?: ToastShowOptions) =>
+    show(title, "success", resolveOptions(options));
+  const error = (title: TitleToast, options?: ToastShowOptions) =>
+    show(title, "error", resolveOptions(options));
+  const warning = (title: TitleToast, options?: ToastShowOptions) =>
+    show(title, "warning", resolveOptions(options));
+  const loading = (title: TitleToast, options?: ToastShowOptions) =>
+    show(title, "loading", resolveOptions(options));
   const custom = (jsx: (id: string | number) => React.ReactElement, options?: ToastShowOptions) =>
     showBasicCustom(jsx, resolveOptions(options));
-  const promise = <ToastData,>(promiseValue: ToastPromise<ToastData>, data?: ToastPromiseData<ToastData>) => {
+  const promise = <ToastData,>(
+    promiseValue: ToastPromise<ToastData>,
+    data?: ToastPromiseData<ToastData>,
+  ) => {
     const native = useNative({ native: data?.native });
     const loadingId =
       data?.loading != null
@@ -79,7 +94,8 @@ export function useToast(): ToastContext {
           native ? dismissNativeToast(loadingId) : dismissBasicToast(loadingId);
         }
         if (data?.success != null) {
-          const title = typeof data.success === "function" ? await data.success(result) : data.success;
+          const title =
+            typeof data.success === "function" ? await data.success(result) : data.success;
           success(title, { native: data.native, description: await resolveDescription(result) });
         }
         return result;

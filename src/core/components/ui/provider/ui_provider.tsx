@@ -39,15 +39,9 @@ export function UIProvider({
                 {children}
                 <PortalHost />
                 {CustomToaster ? (
-                  <CustomToaster
-                    {...toasterProps}
-                    accentThemeName={resolvedAccentThemeName}
-                  />
+                  <CustomToaster {...toasterProps} accentThemeName={resolvedAccentThemeName} />
                 ) : (
-                  <Toaster
-                    {...toasterProps}
-                    accentThemeName={resolvedAccentThemeName}
-                  />
+                  <Toaster {...toasterProps} accentThemeName={resolvedAccentThemeName} />
                 )}
               </NativeHapticsProvider>
             </NativeDialogProvider>

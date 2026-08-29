@@ -16,11 +16,7 @@ const PopoverTrigger = PopoverPrimitive.Trigger;
 
 function normalizePopoverChildren(children: React.ReactNode) {
   return React.Children.map(children, (child) =>
-    typeof child === "string" || typeof child === "number" ? (
-      <Text>{child}</Text>
-    ) : (
-      child
-    ),
+    typeof child === "string" || typeof child === "number" ? <Text>{child}</Text> : child,
   );
 }
 
@@ -43,9 +39,7 @@ function PopoverRootComponent({
       {trigger}
     </PopoverTrigger>
   ) : (
-    <PopoverTrigger {...triggerProps}>
-      {normalizePopoverChildren(children)}
-    </PopoverTrigger>
+    <PopoverTrigger {...triggerProps}>{normalizePopoverChildren(children)}</PopoverTrigger>
   );
 
   return (

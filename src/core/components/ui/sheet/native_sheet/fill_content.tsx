@@ -1,12 +1,5 @@
 import { NavigationContext } from "@react-navigation/native";
-import {
-  type ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type ReactNode, useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
   type LayoutChangeEvent,
   type StyleProp,
@@ -81,12 +74,7 @@ export function NativeSheetFillContent({
         setVisibleMaxHeight((current) => (current === nextHeight ? current : nextHeight));
       });
     });
-  }, [
-    cancelScheduledMeasurement,
-    sheetTopPosition,
-    shouldConstrainViewport,
-    windowHeight,
-  ]);
+  }, [cancelScheduledMeasurement, sheetTopPosition, shouldConstrainViewport, windowHeight]);
 
   useEffect(() => {
     measureVisibleViewport();

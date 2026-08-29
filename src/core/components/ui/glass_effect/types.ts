@@ -56,12 +56,7 @@ export type GlassEffectSearchBarTrailing =
 /** 默认关闭按钮允许覆盖的本库 `Button` 属性。 */
 export type GlassEffectSearchBarCancelButtonProps = Omit<
   ButtonProps,
-  | "aria-label"
-  | "children"
-  | "native"
-  | "nativeButtonStyle"
-  | "nativeSystemImage"
-  | "onPress"
+  "aria-label" | "children" | "native" | "nativeButtonStyle" | "nativeSystemImage" | "onPress"
 >;
 
 /**

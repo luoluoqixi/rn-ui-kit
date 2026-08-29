@@ -37,9 +37,7 @@ function ExampleEntry({ definition }: { definition: ComponentExampleDefinition }
   );
 }
 
-export function RnUiKitUiComponentsDebugPage({
-  header,
-}: RnUiKitUiComponentsDebugPageProps) {
+export function RnUiKitUiComponentsDebugPage({ header }: RnUiKitUiComponentsDebugPageProps) {
   const groups = useMemo(() => {
     const grouped = new Map<string, ComponentExampleDefinition[]>();
     for (const definition of componentExampleDefinitions) {

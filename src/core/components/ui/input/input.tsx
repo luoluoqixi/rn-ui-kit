@@ -33,8 +33,10 @@ function Input({
         Platform.select({
           web: cn(
             "selection:bg-primary selection:text-primary-foreground outline-none transition-[color,box-shadow] md:text-sm",
-            !unstyled && "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-            !unstyled && "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+            !unstyled &&
+              "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+            !unstyled &&
+              "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
           ),
           native: "placeholder:text-muted-foreground/50",
         }),

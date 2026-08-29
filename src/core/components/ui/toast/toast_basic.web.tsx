@@ -31,30 +31,44 @@ function callToast(kind: BasicToastKind, title: TitleToast, options?: ToastShowO
   if (kind === "default") return Sonner.toast(titleContent, data);
   return Sonner.toast[kind](titleContent, data);
 }
-export function showBasicToast(title: TitleToast, kind: BasicToastKind, options?: ToastShowOptions) { return callToast(kind, title, options); }
-export function showBasicCustom(jsx: (id: string | number) => ReactElement, options?: ToastShowOptions) {
+export function showBasicToast(
+  title: TitleToast,
+  kind: BasicToastKind,
+  options?: ToastShowOptions,
+) {
+  return callToast(kind, title, options);
+}
+export function showBasicCustom(
+  jsx: (id: string | number) => ReactElement,
+  options?: ToastShowOptions,
+) {
   const requestedId = options?.id;
   const id =
     requestedId == null || (typeof requestedId === "string" && requestedId.length === 0)
       ? `toast-${++toastId}`
       : requestedId;
-  const viewProps = options?.customToastViewProps ?? getBasicToastRuntimeConfig().customToastViewProps;
-  return Sonner.toast.custom((toastId) => (
-    <View
-      {...viewProps}
-      style={[{ width: "100%", paddingHorizontal: 16 }, viewProps?.style]}
-    >
-      {jsx(toastId)}
-    </View>
-  ), {
-    ...getBasicOptions(options),
-    ...options?.sonnerOptions,
-    id,
-    toasterId: options?.toasterId ?? options?.viewportName,
-  });
+  const viewProps =
+    options?.customToastViewProps ?? getBasicToastRuntimeConfig().customToastViewProps;
+  return Sonner.toast.custom(
+    (toastId) => (
+      <View {...viewProps} style={[{ width: "100%", paddingHorizontal: 16 }, viewProps?.style]}>
+        {jsx(toastId)}
+      </View>
+    ),
+    {
+      ...getBasicOptions(options),
+      ...options?.sonnerOptions,
+      id,
+      toasterId: options?.toasterId ?? options?.viewportName,
+    },
+  );
 }
-export function dismissBasicToast(id?: string | number): void { Sonner.toast.dismiss(id); }
-export function dismissAllBasicToasts(): void { Sonner.toast.dismiss(); }
+export function dismissBasicToast(id?: string | number): void {
+  Sonner.toast.dismiss(id);
+}
+export function dismissAllBasicToasts(): void {
+  Sonner.toast.dismiss();
+}
 export function BasicToaster({
   accentThemeName: _accentThemeName,
   viewportName,

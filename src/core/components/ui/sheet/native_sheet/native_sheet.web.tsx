@@ -37,9 +37,7 @@ function resolveWebSnapPoint(point: NativeSheetSnapPoint): number | null {
   }
 
   const percent = point.trim().match(/^(\d+(?:\.\d+)?)%$/);
-  return percent == null
-    ? null
-    : Math.max(0.01, Math.min(1, Number.parseFloat(percent[1]) / 100));
+  return percent == null ? null : Math.max(0.01, Math.min(1, Number.parseFloat(percent[1]) / 100));
 }
 
 function normalizeWebDetents(
@@ -47,21 +45,18 @@ function normalizeWebDetents(
   snapPoints: NativeSheetProps["snapPoints"],
 ): WebDetentNormalization {
   const hasDirectDetents = detents != null && detents.length > 0;
-  const sourceDetents: WebSheetDetent[] =
-    hasDirectDetents
-      ? detents
-      : snapPoints == null || snapPoints.length === 0
-        ? [1]
-        : snapPoints
-            .map((point) => resolveWebSnapPoint(point))
-            .filter((point): point is number => point != null);
+  const sourceDetents: WebSheetDetent[] = hasDirectDetents
+    ? detents
+    : snapPoints == null || snapPoints.length === 0
+      ? [1]
+      : snapPoints
+          .map((point) => resolveWebSnapPoint(point))
+          .filter((point): point is number => point != null);
   const limitedSourceDetents = sourceDetents.slice(0, 3);
-  const indexedDetents = limitedSourceDetents
-    .map((detent, originalIndex) => ({
-      detent:
-        typeof detent === "number" ? Math.max(0.01, Math.min(1, detent)) : detent,
-      originalIndex,
-    }));
+  const indexedDetents = limitedSourceDetents.map((detent, originalIndex) => ({
+    detent: typeof detent === "number" ? Math.max(0.01, Math.min(1, detent)) : detent,
+    originalIndex,
+  }));
 
   if (indexedDetents.length === 0) {
     return {
@@ -143,9 +138,7 @@ function useControllableNativeSheetState({
   return { open, position, setOpen, setPosition };
 }
 
-export function NativeSheet({
-  ...props
-}: NativeSheetProps) {
+export function NativeSheet({ ...props }: NativeSheetProps) {
   const {
     backgroundColor,
     children,

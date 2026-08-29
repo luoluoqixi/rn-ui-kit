@@ -133,10 +133,7 @@ function ToggleGroupItem({
 
   return (
     <TextClassContext.Provider
-      value={cn(
-        "text-sm text-foreground font-medium",
-        pressed && "text-accent-foreground",
-      )}
+      value={cn("text-sm text-foreground font-medium", pressed && "text-accent-foreground")}
     >
       <ToggleGroupPrimitive.Item
         {...props}
@@ -153,10 +150,7 @@ function ToggleGroupItem({
           (context.variant === "outline" || variant === "outline") && "border-l-0",
           (context.variant === "outline" || variant === "outline") && isFirst && "border-l",
           Platform.select({
-            web: cn(
-              "flex-1 focus:z-10 focus-visible:z-10",
-              hasCustomSizing && "flex-none",
-            ),
+            web: cn("flex-1 focus:z-10 focus-visible:z-10", hasCustomSizing && "flex-none"),
           }),
           className,
         )}

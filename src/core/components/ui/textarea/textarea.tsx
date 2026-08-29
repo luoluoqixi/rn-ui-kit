@@ -30,8 +30,10 @@ function Textarea({
         Platform.select({
           web: cn(
             "field-sizing-content outline-none transition-[color,box-shadow] disabled:cursor-not-allowed",
-            !unstyled && "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
-            !unstyled && "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+            !unstyled &&
+              "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+            !unstyled &&
+              "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
             !hasExplicitResize && (unstyled ? "resize-none" : "resize-y"),
           ),
         }),

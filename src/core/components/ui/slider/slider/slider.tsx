@@ -9,11 +9,7 @@ import {
   useResolvedNativeHaptics,
 } from "../../utils";
 import { isWeb } from "../../utils/platform";
-import {
-  resolveSliderValues,
-  type SliderProps,
-  type SliderValue,
-} from "../types";
+import { resolveSliderValues, type SliderProps, type SliderValue } from "../types";
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
@@ -21,22 +17,26 @@ function resolveStep(step: number | undefined) {
   return step === 0 ? undefined : typeof step === "number" && step > 0 ? step : 1;
 }
 
-function resolveCount(value: SliderValue | undefined, defaultValue: SliderValue | undefined, thumbCount?: number) {
+function resolveCount(
+  value: SliderValue | undefined,
+  defaultValue: SliderValue | undefined,
+  thumbCount?: number,
+) {
   if (thumbCount != null) return Math.max(1, thumbCount);
   return resolveSliderValues(value)?.length ?? resolveSliderValues(defaultValue)?.length ?? 1;
 }
 
-function resolveValues(
-  value: SliderValue | undefined,
-  count: number,
-  min: number,
-  max: number,
-) {
+function resolveValues(value: SliderValue | undefined, count: number, min: number, max: number) {
   const source = resolveSliderValues(value) ?? [];
   return Array.from({ length: count }, (_, index) => clamp(source[index] ?? min, min, max));
 }
 
-function normalizeSliderValues(values: number[], min: number, max: number, step: number | undefined) {
+function normalizeSliderValues(
+  values: number[],
+  min: number,
+  max: number,
+  step: number | undefined,
+) {
   const steppedValues = values.map((item) => {
     const stepped = step == null ? item : Math.round((item - min) / step) * step + min;
     // Avoid exposing binary floating-point noise for decimal steps.
@@ -148,7 +148,16 @@ export function useSliderBehavior({
       lastHapticsBucketsRef.current = nextBuckets;
       if (changed) triggerSliderNativeHaptics(resolvedNativeHaptics);
     },
-    [max, min, nativeHapticsInterval, onChange, onValueChange, resolvedNativeHaptics, safeStep, value],
+    [
+      max,
+      min,
+      nativeHapticsInterval,
+      onChange,
+      onValueChange,
+      resolvedNativeHaptics,
+      safeStep,
+      value,
+    ],
   );
 
   const beginGesture = useCallback(
@@ -278,7 +287,13 @@ export function useSliderBehavior({
         "worklet";
         runOnJS(finishGestureFromNative)();
       });
-  }, [beginGestureFromNative, disabled, finishGestureFromNative, updateFromTranslationFromNative, web]);
+  }, [
+    beginGestureFromNative,
+    disabled,
+    finishGestureFromNative,
+    updateFromTranslationFromNative,
+    web,
+  ]);
 
   const handleLayout = useCallback(
     (event: LayoutChangeEvent) => {

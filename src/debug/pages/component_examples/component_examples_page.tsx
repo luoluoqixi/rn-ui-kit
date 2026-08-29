@@ -132,8 +132,7 @@ export function RnUiKitComponentExampleDetailPage({
         paddingLeft: insets.left,
         paddingRight: insets.right,
       },
-      headerTransparent &&
-        !definition.handlesHeaderInsets && { paddingTop: headerHeight },
+      headerTransparent && !definition.handlesHeaderInsets && { paddingTop: headerHeight },
     ];
 
     if (layoutHost === "nativeSheet") {

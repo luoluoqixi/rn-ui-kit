@@ -45,11 +45,7 @@ function TrueSheetNativeSheetStackRoot({
         : { initialDetentIndex: 0, ...trueSheetProps };
     }
 
-    const normalization = resolveNativeDetents(
-      trueSheetProps.detents,
-      snapPoints,
-      compactHeight,
-    );
+    const normalization = resolveNativeDetents(trueSheetProps.detents, snapPoints, compactHeight);
     const sourceIndex = clampDetentIndex(
       trueSheetProps.initialDetentIndex,
       normalization.sourceDetentCount,

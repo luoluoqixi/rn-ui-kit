@@ -1,14 +1,24 @@
-import { ScrollView, Text } from "rn-ui-kit/core";
+import { ScrollView, Switch, Text } from "rn-ui-kit/core";
+import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { ExampleBlock, ExampleStack } from "../shared";
 
 export function ScrollViewExample() {
+  const [customScrollbar, setCustomScrollbar] = useState(false);
+
   return (
     <ExampleStack>
       <ExampleBlock title="独立滚动区域">
+        <Switch
+          checked={customScrollbar}
+          label="可拖拽滚动条"
+          native={false}
+          onCheckedChange={setCustomScrollbar}
+        />
         <View style={styles.scrollFrame}>
           <ScrollView
             contentContainerStyle={styles.scrollContent}
+            customScrollbar={customScrollbar}
             nestedScrollEnabled
             showsVerticalScrollIndicator
             style={styles.scrollView}

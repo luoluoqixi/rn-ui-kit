@@ -1,8 +1,18 @@
 import type { ReactElement, ReactNode } from "react";
 import type { ViewProps } from "react-native";
-import type { AlertOptions as BurntAlertOptions, ToastOptions as BurntToastOptions, IconParams } from "burnt/build/types";
-import type { ExternalToast as SonnerExternalToast, ToasterProps as SonnerToasterProps } from "sonner";
-import type { ToastProps as SonnerNativeToastProps, ToasterProps as SonnerNativeToasterProps } from "sonner-native";
+import type {
+  AlertOptions as BurntAlertOptions,
+  ToastOptions as BurntToastOptions,
+  IconParams,
+} from "burnt/build/types";
+import type {
+  ExternalToast as SonnerExternalToast,
+  ToasterProps as SonnerToasterProps,
+} from "sonner";
+import type {
+  ToastProps as SonnerNativeToastProps,
+  ToasterProps as SonnerNativeToasterProps,
+} from "sonner-native";
 import type { RenderProp } from "../utils/render";
 import type { NativeHapticsSetting } from "../utils/haptics";
 

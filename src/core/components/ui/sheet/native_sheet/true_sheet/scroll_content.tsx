@@ -20,11 +20,11 @@ import { useTrueSheetScrollLayout } from "./true_sheet_scroll_context";
 
 export type TrueSheetScrollContentProps = Omit<ScrollViewProps, "children"> &
   NavigationBarScrollEdgeTrackingProps & {
-  children: ReactNode;
-  /** 追加在底部安全区与默认留白之后 */
-  extraBottomPadding?: number;
-  contentContainerStyle?: StyleProp<ViewStyle>;
-};
+    children: ReactNode;
+    /** 追加在底部安全区与默认留白之后 */
+    extraBottomPadding?: number;
+    contentContainerStyle?: StyleProp<ViewStyle>;
+  };
 
 /**
  * True Sheet 内滚动容器：约束 flex、避免 `flexGrow: 1` 占满导致 iOS 滚不到底。

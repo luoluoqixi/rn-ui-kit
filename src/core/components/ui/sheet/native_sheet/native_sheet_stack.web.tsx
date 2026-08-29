@@ -86,9 +86,7 @@ function NativeSheetStackRoot({
   const { detents: directDetents, snapPoints, ...trueSheetProps } = sheetProps;
   const detents = resolveWebStackDetents(directDetents, snapPoints);
   const resolvedDismissible =
-    trueSheetProps.dismissible === false || hasOpenSheetAbove
-      ? false
-      : trueSheetProps.dismissible;
+    trueSheetProps.dismissible === false || hasOpenSheetAbove ? false : trueSheetProps.dismissible;
 
   return (
     <TrueSheetStackHost

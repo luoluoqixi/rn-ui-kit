@@ -24,10 +24,7 @@ function updateEntry(id: string, open: boolean) {
     if (open) {
       // The actual presentation order, rather than JSX mount order, defines
       // which sheet is above another one.
-      entries = [
-        ...entries.filter((item) => item.id !== id),
-        { ...entry, open: true },
-      ];
+      entries = [...entries.filter((item) => item.id !== id), { ...entry, open: true }];
     } else {
       entries = entries.map((item) => (item.id === id ? { ...item, open: false } : item));
     }

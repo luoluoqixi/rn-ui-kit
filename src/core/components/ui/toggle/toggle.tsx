@@ -62,9 +62,7 @@ function Toggle({
     typeof props.style === "function" ? props.style({ pressed: isPressed }) : props.style;
   const interactionStyle = StyleSheet.flatten([
     resolvedStyle,
-    isPressed && !props.pressed && !props.disabled
-      ? { backgroundColor: theme.accent }
-      : undefined,
+    isPressed && !props.pressed && !props.disabled ? { backgroundColor: theme.accent } : undefined,
   ]);
   const resolvedChildren =
     resolveRenderProp(title, {

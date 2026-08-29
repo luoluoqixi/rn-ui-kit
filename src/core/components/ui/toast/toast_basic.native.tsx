@@ -40,31 +40,42 @@ function callToast(kind: BasicToastKind, title: TitleToast, options?: ToastShowO
   }
   return id;
 }
-export function showBasicToast(title: TitleToast, kind: BasicToastKind, options?: ToastShowOptions) { return callToast(kind, title, options); }
-export function showBasicCustom(jsx: (id: string | number) => ReactElement, options?: ToastShowOptions) {
+export function showBasicToast(
+  title: TitleToast,
+  kind: BasicToastKind,
+  options?: ToastShowOptions,
+) {
+  return callToast(kind, title, options);
+}
+export function showBasicCustom(
+  jsx: (id: string | number) => ReactElement,
+  options?: ToastShowOptions,
+) {
   const requestedId = options?.id;
   const id =
     requestedId == null || (typeof requestedId === "string" && requestedId.length === 0)
       ? `toast-${++toastId}`
       : requestedId;
-  const viewProps = options?.customToastViewProps ?? getBasicToastRuntimeConfig().customToastViewProps;
+  const viewProps =
+    options?.customToastViewProps ?? getBasicToastRuntimeConfig().customToastViewProps;
   return SonnerNativeToast.custom(
-    <View
-      {...viewProps}
-      style={[{ width: "100%", paddingHorizontal: 16 }, viewProps?.style]}
-    >
+    <View {...viewProps} style={[{ width: "100%", paddingHorizontal: 16 }, viewProps?.style]}>
       {jsx(id)}
     </View>,
     {
-    ...getBasicOptions(options),
-    ...options?.sonnerNativeOptions,
-    id,
-    toasterId: options?.toasterId ?? options?.viewportName,
+      ...getBasicOptions(options),
+      ...options?.sonnerNativeOptions,
+      id,
+      toasterId: options?.toasterId ?? options?.viewportName,
     },
   );
 }
-export function dismissBasicToast(id?: string | number): void { SonnerNativeToast.dismiss(id); }
-export function dismissAllBasicToasts(): void { SonnerNativeToast.dismiss(); }
+export function dismissBasicToast(id?: string | number): void {
+  SonnerNativeToast.dismiss(id);
+}
+export function dismissAllBasicToasts(): void {
+  SonnerNativeToast.dismiss();
+}
 export function BasicToaster({
   accentThemeName: _accentThemeName,
   viewportName,

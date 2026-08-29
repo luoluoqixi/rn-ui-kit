@@ -17,8 +17,8 @@ import {
 
 type AndroidClippedScrollViewProps = Omit<ScrollViewProps, "children"> &
   NavigationBarScrollEdgeTrackingProps & {
-  children: ReactNode;
-};
+    children: ReactNode;
+  };
 
 const MIN_THUMB_HEIGHT = 24;
 

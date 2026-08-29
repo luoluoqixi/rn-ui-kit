@@ -177,13 +177,7 @@ export function useSplitLayoutStorage(
     return () => {
       cancelled = true;
     };
-  }, [
-    fallbackState,
-    hasStorage,
-    resolvedStorageAdapter,
-    resolvedStorageKey,
-    useContextStorage,
-  ]);
+  }, [fallbackState, hasStorage, resolvedStorageAdapter, resolvedStorageKey, useContextStorage]);
 
   const entry = useContextStorage ? createReadyEntry(context!.state) : fallbackEntry;
 

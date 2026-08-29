@@ -32,7 +32,9 @@ export function resolveToastContent(value: TitleToast | undefined): ReactNode | 
 
 export function resolveToastText(value: TitleToast | undefined): string | undefined {
   const resolved = resolveToastContent(value);
-  return typeof resolved === "string" || typeof resolved === "number" ? String(resolved) : undefined;
+  return typeof resolved === "string" || typeof resolved === "number"
+    ? String(resolved)
+    : undefined;
 }
 
 export function getToastMessage(options?: ToastShowOptions): ReactNode | undefined {
@@ -110,4 +112,7 @@ export function BasicToasterFallback(_props: ToastNativeToasterProps) {
   return null;
 }
 
-export type BasicCustom = (jsx: (id: string | number) => ReactElement, options?: ToastShowOptions) => string | number;
+export type BasicCustom = (
+  jsx: (id: string | number) => ReactElement,
+  options?: ToastShowOptions,
+) => string | number;

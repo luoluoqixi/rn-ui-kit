@@ -128,9 +128,7 @@ function RadioGroupItem({
   const resolvedDisabled = disabled || interaction?.disabled;
   const [isPressed, setIsPressed] = React.useState(false);
   const resolvedItemStyle =
-    typeof props.style === "function"
-      ? props.style({ pressed: isPressed })
-      : props.style;
+    typeof props.style === "function" ? props.style({ pressed: isPressed }) : props.style;
   const pressedItemStyle =
     isPressed && !checked && !resolvedDisabled ? { backgroundColor: theme.accent } : undefined;
   const itemStyle = StyleSheet.flatten([resolvedItemStyle, pressedItemStyle]);
@@ -238,10 +236,11 @@ function RadioGroupItem({
         Platform.select({
           web: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 dark:aria-invalid:border-destructive outline-none transition-all focus-visible:ring-[3px] disabled:cursor-not-allowed",
         }),
-        !checked && Platform.select({
-          native: "active:bg-accent/50",
-          web: "hover:bg-accent/50 active:bg-accent/50",
-        }),
+        !checked &&
+          Platform.select({
+            native: "active:bg-accent/50",
+            web: "hover:bg-accent/50 active:bg-accent/50",
+          }),
         resolvedDisabled && "opacity-50",
         className,
       )}

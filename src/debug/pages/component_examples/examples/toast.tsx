@@ -58,35 +58,46 @@ export function ToastExample() {
         description="native=true 在 Android/iOS 使用 Burnt；native=false 使用 Sonner 基础 Toast。Web 始终使用基础 Toast。"
         title="基础 Toast"
       >
-        {
-          !isWeb() &&
+        {!isWeb() && (
           <ExampleRow>
-          <Switch checked={isNative} onCheckedChange={setIsNative} label="使用 Native Toast" />
-        </ExampleRow>
-        }
+            <Switch checked={isNative} onCheckedChange={setIsNative} label="使用 Native Toast" />
+          </ExampleRow>
+        )}
         <ExampleRow>
-          <Button onPress={() => toast("普通消息", { native: isNative, description: "这是一条基础提示。" })}>
+          <Button
+            onPress={() =>
+              toast("普通消息", { native: isNative, description: "这是一条基础提示。" })
+            }
+          >
             普通
           </Button>
           <Button
-            onPress={() => toast.info("同步中", { native: isNative, description: "正在连接服务器。" })}
+            onPress={() =>
+              toast.info("同步中", { native: isNative, description: "正在连接服务器。" })
+            }
             variant="outline"
           >
             信息
           </Button>
           <Button
-            onPress={() => toast.success("保存成功", { native: isNative, description: "工作区配置已写入本地。" })}
+            onPress={() =>
+              toast.success("保存成功", { native: isNative, description: "工作区配置已写入本地。" })
+            }
           >
             成功
           </Button>
           <Button
-            onPress={() => toast.warning("空间不足", { native: isNative, description: "建议先清理附件缓存。" })}
+            onPress={() =>
+              toast.warning("空间不足", { native: isNative, description: "建议先清理附件缓存。" })
+            }
             variant="outline"
           >
             警告
           </Button>
           <Button
-            onPress={() => toast.error("同步失败", { native: isNative, description: "请检查网络连接。" })}
+            onPress={() =>
+              toast.error("同步失败", { native: isNative, description: "请检查网络连接。" })
+            }
             variant="destructive"
           >
             失败

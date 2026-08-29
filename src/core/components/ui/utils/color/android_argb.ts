@@ -79,10 +79,8 @@ export function toARGB(val: unknown): number | undefined {
     const b = pct
       ? Math.round((Number.parseFloat(rgbMatch[3]) / 100) * 255)
       : Number.parseFloat(rgbMatch[3]);
-    const a =
-      rgbMatch[4] !== undefined ? Math.round(Number.parseFloat(rgbMatch[4]) * 255) : 0xff;
-    const int =
-      (a << 24) | (Math.min(r, 255) << 16) | (Math.min(g, 255) << 8) | Math.min(b, 255);
+    const a = rgbMatch[4] !== undefined ? Math.round(Number.parseFloat(rgbMatch[4]) * 255) : 0xff;
+    const int = (a << 24) | (Math.min(r, 255) << 16) | (Math.min(g, 255) << 8) | Math.min(b, 255);
     return int | 0;
   }
 

@@ -36,19 +36,19 @@ import { useTrueSheetOverlaySheetTopPosition } from "./true_sheet/overlay_layout
 
 export type NativeSheetScrollContentProps = Omit<ScrollViewProps, "children"> &
   NavigationBarScrollEdgeTrackingProps & {
-  children: ReactNode;
-  /** 追加在底部安全区与默认留白之后 */
-  extraBottomPadding?: number;
-  /**
-   * 将当前 ScrollView 显式注册为所在 TrueSheet 的滚动视图。
-   * NativeSheetStack 页面应传入当前页面的 focus 状态；默认不注册，保留 TrueSheet 原有查找逻辑。
-   */
-  bindToNativeSheet?: boolean;
-  /** Native Stack 页面可能按整窗高度布局。启用后按 TrueSheet 的实际可视区域约束滚动容器。 */
-  constrainToNativeSheetViewport?: boolean;
-  /** iOS patched ScrollView behavior for dragging from an otherwise empty viewport. */
-  iosEmptyViewportScrollEnabled?: boolean;
-  contentContainerStyle?: StyleProp<ViewStyle>;
+    children: ReactNode;
+    /** 追加在底部安全区与默认留白之后 */
+    extraBottomPadding?: number;
+    /**
+     * 将当前 ScrollView 显式注册为所在 TrueSheet 的滚动视图。
+     * NativeSheetStack 页面应传入当前页面的 focus 状态；默认不注册，保留 TrueSheet 原有查找逻辑。
+     */
+    bindToNativeSheet?: boolean;
+    /** Native Stack 页面可能按整窗高度布局。启用后按 TrueSheet 的实际可视区域约束滚动容器。 */
+    constrainToNativeSheetViewport?: boolean;
+    /** iOS patched ScrollView behavior for dragging from an otherwise empty viewport. */
+    iosEmptyViewportScrollEnabled?: boolean;
+    contentContainerStyle?: StyleProp<ViewStyle>;
   };
 
 type NativeStackTransitionEndNavigation = {
@@ -59,7 +59,9 @@ type NativeStackTransitionEndNavigation = {
 };
 
 type MeasurableScrollView = {
-  measureInWindow: (callback: (x: number, y: number, width: number, height: number) => void) => void;
+  measureInWindow: (
+    callback: (x: number, y: number, width: number, height: number) => void,
+  ) => void;
 };
 
 /**
@@ -98,8 +100,7 @@ export const NativeSheetScrollContent = forwardRef<ScrollView, NativeSheetScroll
     const { height: windowHeight } = useWindowDimensions();
     const sheetTopPosition = useTrueSheetOverlaySheetTopPosition();
     const shouldBindToNativeSheet = os() === "ios" && bindToNativeSheet;
-    const shouldUseManualViewportInsets =
-      os() === "ios" && constrainToNativeSheetViewport;
+    const shouldUseManualViewportInsets = os() === "ios" && constrainToNativeSheetViewport;
     const isRootSheetViewport = sheetTopPosition == null || sheetTopPosition <= 1;
     const shouldConstrainViewport = shouldUseManualViewportInsets;
 
@@ -129,7 +130,13 @@ export const NativeSheetScrollContent = forwardRef<ScrollView, NativeSheetScroll
           setVisibleViewportHeight((current) => (current === nextHeight ? current : nextHeight));
         });
       });
-    }, [insets.bottom, isRootSheetViewport, sheetTopPosition, shouldConstrainViewport, windowHeight]);
+    }, [
+      insets.bottom,
+      isRootSheetViewport,
+      sheetTopPosition,
+      shouldConstrainViewport,
+      windowHeight,
+    ]);
     const handleLayout = useCallback(
       (event: LayoutChangeEvent) => {
         onLayout?.(event);
@@ -150,13 +157,7 @@ export const NativeSheetScrollContent = forwardRef<ScrollView, NativeSheetScroll
           measureVisibleViewport();
         });
       },
-      [
-        binding,
-        measureVisibleViewport,
-        onLayout,
-        shouldBindToNativeSheet,
-        shouldConstrainViewport,
-      ],
+      [binding, measureVisibleViewport, onLayout, shouldBindToNativeSheet, shouldConstrainViewport],
     );
 
     useEffect(() => {
@@ -178,15 +179,13 @@ export const NativeSheetScrollContent = forwardRef<ScrollView, NativeSheetScroll
     const trackedOnScroll = useNavigationBarScrollEdge({
       navigationBarScrollEdgeOptions,
       onScroll,
-      tracksNavigationBarScrollEdge:
-        os() === "web" && tracksNavigationBarScrollEdge === true,
+      tracksNavigationBarScrollEdge: os() === "web" && tracksNavigationBarScrollEdge === true,
     });
     const { automaticContentInsetAdjustment, insetAdjustment, nativeScrollInsetsApplied } =
       useTrueSheetScrollLayout();
     // Once the exact ScrollView is registered, TrueSheet applies its native content/indicator
     // insets even though deep Stack pages historically reported that native pinning was absent.
-    const effectiveNativeScrollInsetsApplied =
-      nativeScrollInsetsApplied || shouldBindToNativeSheet;
+    const effectiveNativeScrollInsetsApplied = nativeScrollInsetsApplied || shouldBindToNativeSheet;
 
     const setScrollViewRef = useCallback(
       (scrollView: ScrollView | null) => {
@@ -252,20 +251,21 @@ export const NativeSheetScrollContent = forwardRef<ScrollView, NativeSheetScroll
     // Native Stack 仍须由 UIKit 自动处理顶部 header inset。
     // 直接嵌套的 Sheet 已由 TrueSheet 注入 contentInset；而 NativeSheetStack
     // 为避免失效 tag 不注册滚动视图，需在 JS 侧补回底部安全区留白。
-    const bottomPadding = shouldUseManualViewportInsets && isRootSheetViewport
-      ? (extraBottomPadding ?? 24)
-      : shouldUseManualViewportInsets
-        ? getTrueSheetScrollBottomPadding({
-            extraBottom: extraBottomPadding,
-            nativeScrollInsetsApplied: effectiveNativeScrollInsetsApplied,
-            safeAreaBottom: insets.bottom,
-          })
-      : getTrueSheetScrollBottomPadding({
-          extraBottom: extraBottomPadding,
-          insetAdjustment,
-          nativeScrollInsetsApplied: effectiveNativeScrollInsetsApplied,
-          safeAreaBottom: insets.bottom,
-        });
+    const bottomPadding =
+      shouldUseManualViewportInsets && isRootSheetViewport
+        ? (extraBottomPadding ?? 24)
+        : shouldUseManualViewportInsets
+          ? getTrueSheetScrollBottomPadding({
+              extraBottom: extraBottomPadding,
+              nativeScrollInsetsApplied: effectiveNativeScrollInsetsApplied,
+              safeAreaBottom: insets.bottom,
+            })
+          : getTrueSheetScrollBottomPadding({
+              extraBottom: extraBottomPadding,
+              insetAdjustment,
+              nativeScrollInsetsApplied: effectiveNativeScrollInsetsApplied,
+              safeAreaBottom: insets.bottom,
+            });
     const indicatorBottomInset = shouldUseManualViewportInsets
       ? 0
       : getTrueSheetScrollIndicatorBottomInset({

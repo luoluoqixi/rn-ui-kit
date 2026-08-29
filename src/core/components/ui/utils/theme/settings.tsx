@@ -30,9 +30,7 @@ export type UiPreferencesContextValue = {
   reload: () => Promise<void>;
   save: () => Promise<void>;
   setPreferences: (preferences: UiPreferences) => Promise<void>;
-  updateAndSave: (
-    updater: (currentPreferences: UiPreferences) => UiPreferences,
-  ) => Promise<void>;
+  updateAndSave: (updater: (currentPreferences: UiPreferences) => UiPreferences) => Promise<void>;
 };
 
 export type UiPreferencesProviderProps = {
@@ -98,9 +96,7 @@ export function UiPreferencesProvider({
     [accentThemeNames, preferences],
   );
 
-  return (
-    <UiPreferencesContext.Provider value={value}>{children}</UiPreferencesContext.Provider>
-  );
+  return <UiPreferencesContext.Provider value={value}>{children}</UiPreferencesContext.Provider>;
 }
 
 export function useUiPreferences() {

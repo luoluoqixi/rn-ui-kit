@@ -15,9 +15,19 @@ function getPreset(kind: ToastKind): "done" | "error" | "none" {
   return kind === "error" ? "error" : kind === "success" ? "done" : "none";
 }
 function getHaptic(kind: ToastKind): "success" | "warning" | "error" | "none" {
-  return kind === "error" ? "error" : kind === "success" ? "success" : kind === "warning" ? "warning" : "none";
+  return kind === "error"
+    ? "error"
+    : kind === "success"
+      ? "success"
+      : kind === "warning"
+        ? "warning"
+        : "none";
 }
-export function showNativeToast(title: TitleToast, kind: ToastKind, options?: ToastShowOptions): string | number | null {
+export function showNativeToast(
+  title: TitleToast,
+  kind: ToastKind,
+  options?: ToastShowOptions,
+): string | number | null {
   const titleText = resolveToastText(title);
   if (titleText == null) return null;
   const message = getToastMessageText(options);
@@ -38,7 +48,7 @@ export function showNativeToast(title: TitleToast, kind: ToastKind, options?: To
     (kind === "success" || kind === "warning" || kind === "error");
   const haptic = shouldManuallyHaptic
     ? "none"
-    : explicitHaptic ?? (hapticsEnabled === false ? "none" : getHaptic(kind));
+    : (explicitHaptic ?? (hapticsEnabled === false ? "none" : getHaptic(kind)));
   if (kind === "loading") {
     Burnt.alert({
       title: titleText,
@@ -52,7 +62,7 @@ export function showNativeToast(title: TitleToast, kind: ToastKind, options?: To
       title: titleText,
       message,
       duration,
-      preset: options?.preset === "custom" ? "none" : options?.preset ?? getPreset(kind),
+      preset: options?.preset === "custom" ? "none" : (options?.preset ?? getPreset(kind)),
       haptic,
       from: options?.from,
       shouldDismissByDrag: options?.shouldDismissByDrag,
@@ -67,6 +77,12 @@ export function showNativeToast(title: TitleToast, kind: ToastKind, options?: To
   }
   return getToastId(options?.id, () => ++toastId);
 }
-export function dismissNativeToast(_id?: string | number): void { Burnt.dismissAllAlerts(); }
-export function dismissAllNativeToasts(): void { Burnt.dismissAllAlerts(); }
-export function NativeToaster(_props: ToastNativeToasterProps) { return null; }
+export function dismissNativeToast(_id?: string | number): void {
+  Burnt.dismissAllAlerts();
+}
+export function dismissAllNativeToasts(): void {
+  Burnt.dismissAllAlerts();
+}
+export function NativeToaster(_props: ToastNativeToasterProps) {
+  return null;
+}

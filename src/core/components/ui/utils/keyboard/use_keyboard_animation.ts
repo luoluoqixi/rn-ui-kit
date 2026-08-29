@@ -1,8 +1,7 @@
 import { KeyboardState, useKeyboardHandler } from "react-native-keyboard-controller";
 import { useSharedValue, withTiming, type SharedValue } from "react-native-reanimated";
 
-export type KeyboardAnimationState =
-  (typeof KeyboardState)[keyof typeof KeyboardState];
+export type KeyboardAnimationState = (typeof KeyboardState)[keyof typeof KeyboardState];
 
 export type KeyboardAnimation = {
   /** 键盘从屏幕底部露出的实时高度，动画期间在 UI 线程逐帧更新。 */

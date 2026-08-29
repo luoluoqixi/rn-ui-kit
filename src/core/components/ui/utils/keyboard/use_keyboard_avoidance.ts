@@ -1,6 +1,11 @@
 import { useCallback, useRef } from "react";
 import { KeyboardState } from "react-native-keyboard-controller";
-import { useDerivedValue, useSharedValue, withTiming, type SharedValue } from "react-native-reanimated";
+import {
+  useDerivedValue,
+  useSharedValue,
+  withTiming,
+  type SharedValue,
+} from "react-native-reanimated";
 
 import type {
   KeyboardHiddenConfirmation,

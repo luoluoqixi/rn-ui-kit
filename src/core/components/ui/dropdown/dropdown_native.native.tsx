@@ -298,14 +298,14 @@ function NativeDropdownRoot({
   const resolvedTriggerProps = {
     ...(triggerProps as object),
     style: composedTriggerStyle,
-      onPress: (event: unknown) => {
-        (triggerProps as { onPress?: (event: unknown) => void } | undefined)?.onPress?.(event);
-        if (!event || !(event as { defaultPrevented?: boolean }).defaultPrevented) {
-          if (Platform.OS === "android") triggerNativeHaptics(haptics);
-        }
-        if (isAndroidDetachedTrigger && !resolvedDisabled) {
-          menuRef.current?.presentMenu();
-        }
+    onPress: (event: unknown) => {
+      (triggerProps as { onPress?: (event: unknown) => void } | undefined)?.onPress?.(event);
+      if (!event || !(event as { defaultPrevented?: boolean }).defaultPrevented) {
+        if (Platform.OS === "android") triggerNativeHaptics(haptics);
+      }
+      if (isAndroidDetachedTrigger && !resolvedDisabled) {
+        menuRef.current?.presentMenu();
+      }
     },
     onPressIn: (event: unknown) => {
       (triggerProps as { onPressIn?: (event: unknown) => void } | undefined)?.onPressIn?.(event);

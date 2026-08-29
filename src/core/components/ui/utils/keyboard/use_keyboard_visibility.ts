@@ -11,10 +11,7 @@ import {
 } from "react-native-reanimated";
 import { KeyboardState } from "react-native-keyboard-controller";
 
-import {
-  useKeyboardAnimation,
-  type KeyboardAnimation,
-} from "./use_keyboard_animation";
+import { useKeyboardAnimation, type KeyboardAnimation } from "./use_keyboard_animation";
 
 const DEFAULT_KEYBOARD_HIDDEN_HEIGHT_THRESHOLD = 20;
 const DEFAULT_KEYBOARD_HIDDEN_CONSECUTIVE_FRAMES = 1;
@@ -53,7 +50,7 @@ export type KeyboardVisibility = KeyboardAnimation & {
    *
    * `hiding` 仅在非返回手势且高度达到隐藏阈值后进入；持续配置的确认帧数后才会
    * 切换至 `hidden`。
-  */
+   */
   phase: SharedValue<KeyboardVisibilityPhase>;
   /** 键盘是否已显示在界面上，`opening`、`visible`、`hiding` 时均为 true。 */
   isVisible: SharedValue<boolean>;
@@ -119,19 +116,25 @@ export function useKeyboardVisibility(options: KeyboardVisibilityOptions = {}): 
     isFullyDisplayed.value = nextPhase === "visible";
     runOnJS(notifyPhaseChange)(nextPhase);
   };
-  const transitionPhaseFromJs = useCallback((nextPhase: KeyboardVisibilityPhase) => {
-    if (phase.value === nextPhase) {
-      return;
-    }
-    phase.value = nextPhase;
-    isVisible.value = nextPhase !== "hidden";
-    isFullyDisplayed.value = nextPhase === "visible";
-    notifyPhaseChange(nextPhase);
-  }, [isFullyDisplayed, isVisible, notifyPhaseChange, phase]);
+  const transitionPhaseFromJs = useCallback(
+    (nextPhase: KeyboardVisibilityPhase) => {
+      if (phase.value === nextPhase) {
+        return;
+      }
+      phase.value = nextPhase;
+      isVisible.value = nextPhase !== "hidden";
+      isFullyDisplayed.value = nextPhase === "visible";
+      notifyPhaseChange(nextPhase);
+    },
+    [isFullyDisplayed, isVisible, notifyPhaseChange, phase],
+  );
   useAnimatedReaction(
     () => state.value,
     (keyboardState, previousKeyboardState) => {
-      if (keyboardState === KeyboardState.OPENING && previousKeyboardState !== KeyboardState.OPENING) {
+      if (
+        keyboardState === KeyboardState.OPENING &&
+        previousKeyboardState !== KeyboardState.OPENING
+      ) {
         // Once a keyboard has been confirmed visible, an interactive-back
         // cancellation can transiently report OPENING. Keep the stable phase.
         if (!isVisible.value) {

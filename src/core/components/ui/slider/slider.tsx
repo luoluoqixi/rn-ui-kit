@@ -1,5 +1,12 @@
 import { GestureDetector } from "react-native-gesture-handler";
-import { Platform, Pressable, StyleSheet, View, type ColorValue, type ViewStyle } from "react-native";
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+  type ColorValue,
+  type ViewStyle,
+} from "react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useUiTheme } from "../utils";
@@ -14,18 +21,34 @@ function resolveColor(color: ColorValue | undefined, fallback: string) {
 
 function brightenColor(color: string, amount = 0.18) {
   const hex = color.trim().replace(/^#/, "");
-  const normalized = hex.length === 3 ? hex.split("").map((part) => part + part).join("") : hex;
+  const normalized =
+    hex.length === 3
+      ? hex
+          .split("")
+          .map((part) => part + part)
+          .join("")
+      : hex;
   if (!/^[0-9a-f]{6}$/i.test(normalized)) return color;
-  const channels = [0, 2, 4].map((offset) => Number.parseInt(normalized.slice(offset, offset + 2), 16));
+  const channels = [0, 2, 4].map((offset) =>
+    Number.parseInt(normalized.slice(offset, offset + 2), 16),
+  );
   const brightened = channels.map((channel) => Math.round(channel + (255 - channel) * amount));
   return `rgb(${brightened.join(", ")})`;
 }
 
 function withAlpha(color: string, alpha: number) {
   const hex = color.trim().replace(/^#/, "");
-  const normalized = hex.length === 3 ? hex.split("").map((part) => part + part).join("") : hex;
+  const normalized =
+    hex.length === 3
+      ? hex
+          .split("")
+          .map((part) => part + part)
+          .join("")
+      : hex;
   if (!/^[0-9a-f]{6}$/i.test(normalized)) return color;
-  const channels = [0, 2, 4].map((offset) => Number.parseInt(normalized.slice(offset, offset + 2), 16));
+  const channels = [0, 2, 4].map((offset) =>
+    Number.parseInt(normalized.slice(offset, offset + 2), 16),
+  );
   return `rgba(${channels.join(", ")}, ${alpha})`;
 }
 
@@ -92,7 +115,7 @@ function NonNativeSlider({
       ? 0
       : ((Math.min(Math.max(item, resolvedMin), resolvedMax) - resolvedMin) / range) * 100,
   );
-  const activeTrackStart = percentages.length > 1 ? percentages[0] ?? 0 : 0;
+  const activeTrackStart = percentages.length > 1 ? (percentages[0] ?? 0) : 0;
   const activeTrackEnd = percentages[percentages.length - 1] ?? 0;
   const percentagesRef = useRef(percentages);
   percentagesRef.current = percentages;
@@ -173,13 +196,9 @@ function NonNativeSlider({
               styles.thumb,
               {
                 backgroundColor:
-                  activeThumbIndex === index
-                    ? brightenColor(thumbColor)
-                    : thumbColor,
+                  activeThumbIndex === index ? brightenColor(thumbColor) : thumbColor,
                 borderColor:
-                  activeThumbIndex === index
-                    ? theme.foreground
-                    : withAlpha(theme.foreground, 0.18),
+                  activeThumbIndex === index ? theme.foreground : withAlpha(theme.foreground, 0.18),
                 left: `${percent}%`,
               },
               thumbStyle,

@@ -46,10 +46,7 @@ export function Spinner({
   if (!animating && hidesWhenStopped) return null;
 
   return (
-    <Animated.View
-      {...(props as ComponentProps<typeof View>)}
-      style={[style, animatedStyle]}
-    >
+    <Animated.View {...(props as ComponentProps<typeof View>)} style={[style, animatedStyle]}>
       <Loader2 color={color == null ? theme.primary : String(color)} size={iconSize} />
     </Animated.View>
   );
