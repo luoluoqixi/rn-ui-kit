@@ -45,6 +45,8 @@ import {
   isIos26Plus,
 } from "rn-ui-kit/core";
 
+import { useIsComponentExampleEmbedded } from "../presentation_context";
+
 type GlassExampleMode =
   | "floating-buttons"
   | "docked-actions"
@@ -531,6 +533,7 @@ function GlassEffectPreview({
 }
 
 export function GlassEffectExample() {
+  const embeddedInOverview = useIsComponentExampleEmbedded();
   const appBackgroundColors = useAppBackgroundColors();
   const colorSchemeName = useUiColorScheme();
   const [mode, setMode] = useState<GlassExampleMode>("floating-buttons");
@@ -572,7 +575,7 @@ export function GlassEffectExample() {
         contentMarginBottom={190}
         iosListStyle="insetGrouped"
         style={styles.list}
-        tracksNavigationBarScrollEdge
+        tracksNavigationBarScrollEdge={!embeddedInOverview}
       >
         <NativeListSection
           footer="工具栏与导航无关，只是叠放在页面根节点上；切换模式不会改变 NativeList 的滚动容器。"

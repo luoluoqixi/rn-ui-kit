@@ -4,6 +4,7 @@ import { StyleSheet, View } from "react-native";
 import { Text } from "../../../core/components/ui";
 import type { RnUiKitUiComponentsDebugPageProps } from "../../types";
 import { componentExampleDefinitions } from "../component_examples/catalog";
+import { ComponentExampleEmbeddedProvider } from "../component_examples/presentation_context";
 import type { ComponentExampleDefinition } from "../component_examples/types";
 import { ExampleStack } from "../component_examples/shared";
 
@@ -50,27 +51,29 @@ export function RnUiKitUiComponentsDebugPage({
   }, []);
 
   return (
-    <View style={styles.root}>
-      {header}
-      {GROUP_ORDER.map((group) => {
-        const definitions = groups.get(group) ?? [];
-        if (definitions.length === 0) return null;
-        return (
-          <View key={group} style={styles.group}>
-            <Text className="text-xl font-semibold">{group}</Text>
-            <Text className="text-muted-foreground text-sm">{GROUP_DESCRIPTION[group]}</Text>
-            <ExampleStack>
-              {definitions.map((definition) => (
-                <ExampleEntry definition={definition} key={definition.key} />
-              ))}
-            </ExampleStack>
-          </View>
-        );
-      })}
-      <Text className="text-muted-foreground text-center text-xs">
-        组件总览与组件示例使用相同的实现和交互逻辑。
-      </Text>
-    </View>
+    <ComponentExampleEmbeddedProvider>
+      <View style={styles.root}>
+        {header}
+        {GROUP_ORDER.map((group) => {
+          const definitions = groups.get(group) ?? [];
+          if (definitions.length === 0) return null;
+          return (
+            <View key={group} style={styles.group}>
+              <Text className="text-xl font-semibold">{group}</Text>
+              <Text className="text-muted-foreground text-sm">{GROUP_DESCRIPTION[group]}</Text>
+              <ExampleStack>
+                {definitions.map((definition) => (
+                  <ExampleEntry definition={definition} key={definition.key} />
+                ))}
+              </ExampleStack>
+            </View>
+          );
+        })}
+        <Text className="text-muted-foreground text-center text-xs">
+          组件总览与组件示例使用相同的实现和交互逻辑。
+        </Text>
+      </View>
+    </ComponentExampleEmbeddedProvider>
   );
 }
 
