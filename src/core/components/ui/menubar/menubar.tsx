@@ -4,6 +4,7 @@ import { Text, TextClassContext } from "../text";
 import { cn } from "../utils/cn";
 import { OverlayPortalWindow, useOverlayPortalContentStyle } from "../utils/overlay/overlay_portal";
 import { useScopedOverlayPortalHostName } from "../utils/overlay";
+import { semanticColorsToVariables, useUiTheme } from "../utils/theme";
 import {
   resolveRenderProp,
   triggerNativeHaptics,
@@ -222,8 +223,11 @@ function MenubarSubTrigger({
 function MenubarSubContent({
   className,
   children,
+  style,
   ...props
 }: React.ComponentProps<typeof MenubarPrimitive.SubContent>) {
+  const theme = useUiTheme();
+
   return (
     <NativeOnlyAnimatedView entering={FadeIn.reduceMotion(ReduceMotion.System)}>
       <MenubarPrimitive.SubContent
@@ -234,6 +238,14 @@ function MenubarSubContent({
           }),
           className,
         )}
+        // The web primitive renders SubContent through its own Radix portal,
+        // outside the provider-scoped variables applied by OverlayPortalWindow.
+        style={
+          [
+            Platform.OS === "web" ? (semanticColorsToVariables(theme) as any) : null,
+            style,
+          ] as any
+        }
         {...props}
       >
         {children}
