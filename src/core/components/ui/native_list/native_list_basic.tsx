@@ -1077,6 +1077,7 @@ export function NativeListRoot({
               setRefreshing(true);
               Promise.resolve(onRefresh()).finally(() => setRefreshing(false));
             }}
+            progressBackgroundColor={backgrounds.screen}
             refreshing={refreshing}
             tintColor={refreshColor ?? theme.primary}
           />

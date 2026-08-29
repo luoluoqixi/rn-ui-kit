@@ -12,7 +12,6 @@ import {
   Button as SwiftButton,
   Text as SwiftText,
   Section as SwiftUISection,
-  Toggle as SwiftToggle,
   VStack,
   ZStack,
 } from "@luoluoqixi/expo-ui-55/swift-ui";
@@ -31,7 +30,6 @@ import {
   lineLimit,
   listRowBackground,
   listRowInsets,
-  listRowSeparator,
   listSectionSpacing,
   listStyle,
   multilineTextAlignment,
@@ -42,7 +40,6 @@ import {
   shapes,
   tag,
   tint,
-  toggleStyle,
   viewID,
 } from "@luoluoqixi/expo-ui-55/swift-ui/modifiers";
 import {
@@ -52,21 +49,16 @@ import {
   type ReactNode,
   createContext,
   useContext,
-  useRef,
   useState,
 } from "react";
-import { StyleSheet, TextInput, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { SFSymbol } from "sf-symbols-typescript";
 import { useComponentThemeTokens as useTheme } from "../utils/theme";
 
-import { resolveSelectItemGroups } from "../select/select_grouping";
 import type { ResolvedSelectItemData } from "../select/select_grouping";
-import { SelectWheel } from "../select/select_wheel.ios";
-import type { SelectHandle } from "../select/types";
 import { Text } from "../text";
 import type { ContextMenuItemData } from "../context_menu";
-import { Dropdown as Menu } from "../dropdown";
 import { getTrueSheetScrollBottomPadding } from "../sheet/native_sheet/true_sheet/sheet_scroll_layout";
 import { useTrueSheetScrollLayout } from "../sheet/native_sheet/true_sheet/true_sheet_scroll_context";
 import { isIos15, isIos26Plus } from "../utils/platform";
@@ -86,22 +78,14 @@ import {
   useNativeListEditRow,
 } from "./edit_mode";
 import type {
-  NativeListActionItemProps,
-  NativeListButtonItemProps,
-  NativeListCustomItemProps,
   NativeListContextMenuProps,
   NativeListItemBaseProps,
-  NativeListInputItemProps,
   NativeListItemPaddingProps,
-  NativeListItemProps,
-  NativeListDropdownItemProps,
-  NativeListNavigationItemProps,
   NativeListRootProps,
   NativeListSectionProps,
   NativeListSectionRenderContext,
   NativeListSelectionId,
   NativeListSelectItemProps,
-  NativeListSwitchItemProps,
   NativeListTextAreaItemProps,
 } from "./types";
 
@@ -988,7 +972,7 @@ function NativeListRoot({
   onRefresh,
   onSelectedIdsChange,
   nativeHaptics,
-  iosPressFeedback = isIos26Plus() ? "immediate" : "automatic",
+  iosPressFeedback = "immediate",
   refreshColor: _refreshColor,
   refreshEnabledInEditMode = false,
   scrollIndicatorInsets,
