@@ -13,11 +13,21 @@ import Animated, {
 import { useUiTheme } from "../utils/theme";
 import type { SpinnerProps } from "./types";
 
+const spinnerSizes = {
+  "2xs": 12,
+  xs: 14,
+  sm: 16,
+  md: 20,
+  lg: 24,
+  xl: 28,
+  "2xl": 36,
+} as const;
+
 export function Spinner({
   animating = true,
   color,
   hidesWhenStopped = true,
-  size = "small",
+  size = "md",
   style,
   ...props
 }: SpinnerProps) {
@@ -26,7 +36,7 @@ export function Spinner({
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotateZ: `${rotation.value}deg` }],
   }));
-  const iconSize = typeof size === "number" ? size : size === "large" ? 36 : 20;
+  const iconSize = typeof size === "number" ? size : spinnerSizes[size];
 
   useEffect(() => {
     if (!animating) {
