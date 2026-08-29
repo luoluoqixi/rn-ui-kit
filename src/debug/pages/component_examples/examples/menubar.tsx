@@ -7,7 +7,11 @@ import { ExampleBlock, ExampleStack } from "../shared";
 export function MenubarExample() {
   const insets = useSafeAreaInsets();
   const contentInsets = { top: insets.top, bottom: insets.bottom, left: 12, right: 12 };
-  const [value, setValue] = React.useState<string | undefined>();
+  const [valueXs, setValueXs] = React.useState<string | undefined>();
+  const [valueSm, setValueSm] = React.useState<string | undefined>();
+  const [valueMd, setValueMd] = React.useState<string | undefined>();
+  const [valueLg, setValueLg] = React.useState<string | undefined>();
+  const [valueXl, setValueXl] = React.useState<string | undefined>();
   const [isShareOpen, setIsShareOpen] = React.useState(false);
   const [isFindOpen, setIsFindOpen] = React.useState(false);
   const [showBookmarks, setShowBookmarks] = React.useState(false);
@@ -19,9 +23,29 @@ export function MenubarExample() {
     setIsFindOpen(false);
   };
 
-  const handleValueChange = (nextValue: string | undefined) => {
+  const handleValueChangeXs = (nextValue: string | undefined) => {
     if (nextValue == null) closeSubs();
-    setValue(nextValue);
+    setValueXs(nextValue);
+  };
+
+  const handleValueChangeSm = (nextValue: string | undefined) => {
+    if (nextValue == null) closeSubs();
+    setValueSm(nextValue);
+  };
+
+  const handleValueChangeMd = (nextValue: string | undefined) => {
+    if (nextValue == null) closeSubs();
+    setValueMd(nextValue);
+  };
+
+  const handleValueChangeLg = (nextValue: string | undefined) => {
+    if (nextValue == null) closeSubs();
+    setValueLg(nextValue);
+  };
+
+  const handleValueChangeXl = (nextValue: string | undefined) => {
+    if (nextValue == null) closeSubs();
+    setValueXl(nextValue);
   };
 
   const items: MenubarMenuData[] = [
@@ -143,12 +167,54 @@ export function MenubarExample() {
     <ExampleStack>
       <ExampleBlock title="菜单栏">
         <Menubar
+          size="xs"
+          contentSize="xs"
           nativeHaptics
           itemNativeHaptics
           className="self-center web:w-fit"
           items={items}
-          value={value}
-          onValueChange={handleValueChange}
+          value={valueXs}
+          onValueChange={handleValueChangeXs}
+        />
+        <Menubar
+          size="sm"
+          contentSize="sm"
+          nativeHaptics
+          itemNativeHaptics
+          className="self-center web:w-fit"
+          items={items}
+          value={valueSm}
+          onValueChange={handleValueChangeSm}
+        />
+        <Menubar
+          size="md"
+          contentSize="md"
+          nativeHaptics
+          itemNativeHaptics
+          className="self-center web:w-fit"
+          items={items}
+          value={valueMd}
+          onValueChange={handleValueChangeMd}
+        />
+        <Menubar
+          size="lg"
+          contentSize="lg"
+          nativeHaptics
+          itemNativeHaptics
+          className="self-center web:w-fit"
+          items={items}
+          value={valueLg}
+          onValueChange={handleValueChangeLg}
+        />
+        <Menubar
+          size="xl"
+          contentSize="xl"
+          nativeHaptics
+          itemNativeHaptics
+          className="self-center web:w-fit"
+          items={items}
+          value={valueXl}
+          onValueChange={handleValueChangeXl}
         />
       </ExampleBlock>
     </ExampleStack>
