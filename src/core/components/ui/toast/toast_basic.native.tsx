@@ -2,6 +2,8 @@ import { toast as SonnerNativeToast, Toaster as SonnerNativeToaster } from "sonn
 import type { ReactElement } from "react";
 import * as React from "react";
 import { View } from "react-native";
+import { CheckCircle2, CircleX, Info, TriangleAlert } from "lucide-react-native";
+import { Icon } from "../icon";
 import { triggerNativeHaptics } from "../utils/haptics";
 import type { ToastNativeToasterProps, ToastShowOptions, TitleToast } from "./types";
 import {
@@ -80,6 +82,7 @@ export function BasicToaster({
   accentThemeName: _accentThemeName,
   viewportName,
   offset,
+  iconSize = "default",
   basicHaptics,
   haptics,
   customToastViewProps,
@@ -115,6 +118,14 @@ export function BasicToaster({
       ...sonnerNativeProps?.toastOptions?.toastContentStyle,
     },
   };
+  const resolvedIconSize = iconSize === "default" || iconSize === "md" ? "lg" : iconSize;
+  const icons = {
+    success: <Icon as={CheckCircle2} size={resolvedIconSize} color="#16a34a" />,
+    info: <Icon as={Info} size={resolvedIconSize} color="#2563eb" />,
+    warning: <Icon as={TriangleAlert} size={resolvedIconSize} color="#d97706" />,
+    error: <Icon as={CircleX} size={resolvedIconSize} color="#dc2626" />,
+    ...sonnerNativeProps?.icons,
+  };
   return (
     <SonnerNativeToaster
       position="bottom-center"
@@ -122,6 +133,7 @@ export function BasicToaster({
       visibleToasts={4}
       {...sonnerNativeProps}
       {...props}
+      icons={icons}
       id={viewportName}
       closeButton={closeButton ?? sonnerNativeProps?.closeButton}
       offset={offset ?? sonnerNativeProps?.offset ?? 40}

@@ -15,6 +15,7 @@ import type {
 } from "sonner-native";
 import type { RenderProp } from "../utils/render";
 import type { NativeHapticsSetting } from "../utils/haptics";
+import type { IconProps } from "../icon";
 
 export type ToastCustomViewProps = Omit<ViewProps, "children">;
 
@@ -104,6 +105,8 @@ export type ToastNativeToasterProps = {
   accentThemeName?: string;
   viewportName?: string;
   offset?: number;
+  /** Size of status icons rendered by the non-native Toast adapter. */
+  iconSize?: IconProps["size"];
   /** Defaults to true for basic success/warning/error toasts on native platforms. */
   basicHaptics?: NativeHapticsSetting;
   /** Defaults to true for success/warning/error toasts on native platforms. */

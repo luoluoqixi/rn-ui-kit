@@ -3,6 +3,7 @@ import * as Sonner from "sonner";
 import type { ReactElement } from "react";
 import { CheckCircle2, CircleX, Info, TriangleAlert, X } from "lucide-react-native";
 import { View } from "react-native";
+import { Icon } from "../icon";
 import type { ToastNativeToasterProps, ToastShowOptions, TitleToast } from "./types";
 import {
   configureBasicToastRuntime,
@@ -73,6 +74,7 @@ export function BasicToaster({
   accentThemeName: _accentThemeName,
   viewportName,
   offset,
+  iconSize = "default",
   basicHaptics,
   haptics,
   customToastViewProps,
@@ -110,11 +112,12 @@ export function BasicToaster({
         .join(" "),
     },
   };
+  const resolvedIconSize = iconSize === "default" || iconSize === "md" ? "lg" : iconSize;
   const icons = {
-    success: <CheckCircle2 size={18} color="#16a34a" />,
-    info: <Info size={18} color="#2563eb" />,
-    warning: <TriangleAlert size={18} color="#d97706" />,
-    error: <CircleX size={18} color="#dc2626" />,
+    success: <Icon as={CheckCircle2} size={resolvedIconSize} color="#16a34a" />,
+    info: <Icon as={Info} size={resolvedIconSize} color="#2563eb" />,
+    warning: <Icon as={TriangleAlert} size={resolvedIconSize} color="#d97706" />,
+    error: <Icon as={CircleX} size={resolvedIconSize} color="#dc2626" />,
     close: closeButtonIcon ?? <X size={15} color="currentColor" />,
     ...sonnerProps?.icons,
   };
@@ -156,6 +159,15 @@ export function BasicToaster({
           left: auto !important;
           right: 16px !important;
           transform: translate(0, -50%) !important;
+        }
+        [data-sonner-toast][data-styled="true"] [data-icon] {
+          width: auto;
+          height: auto;
+        }
+        [data-sonner-toast][data-styled="true"][data-type="loading"] [data-icon],
+        [data-sonner-toast][data-styled="true"][data-promise="true"] [data-icon] {
+          width: 16px;
+          height: 16px;
         }
       `}</style>
     </>
