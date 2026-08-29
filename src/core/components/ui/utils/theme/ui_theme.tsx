@@ -201,6 +201,7 @@ export function semanticColorsToVariables(colors: SemanticColors) {
 }
 
 const UiThemeContext = createContext<SemanticColors>(resolveUiColors("light", "ocean"));
+const UiColorSchemeContext = createContext<ResolvedColorScheme>("light");
 
 export function UiThemeProvider({
   accentThemeName,
@@ -226,14 +227,20 @@ export function UiThemeProvider({
   }, [colorScheme, followsSystem]);
 
   return (
-    <UiThemeContext.Provider value={colors}>
-      <ScopedVariables variables={variables}>{children}</ScopedVariables>
-    </UiThemeContext.Provider>
+    <UiColorSchemeContext.Provider value={colorScheme}>
+      <UiThemeContext.Provider value={colors}>
+        <ScopedVariables variables={variables}>{children}</ScopedVariables>
+      </UiThemeContext.Provider>
+    </UiColorSchemeContext.Provider>
   );
 }
 
 export function useUiTheme(): SemanticColors {
   return useContext(UiThemeContext);
+}
+
+export function useUiColorScheme(): ResolvedColorScheme {
+  return useContext(UiColorSchemeContext);
 }
 
 type ComponentThemeValue = { val: string };

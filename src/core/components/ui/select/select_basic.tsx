@@ -428,6 +428,7 @@ const GeneratedSelectTrigger = React.forwardRef<
     | "nativeTriggerProps"
     | "nativeTriggerFeedbackOpacity"
     | "nativeTriggerHoverBackground"
+    | "nativeTriggerHoverOpacity"
   > & {
     disabled?: boolean;
     label: React.ReactNode;
@@ -446,6 +447,7 @@ const GeneratedSelectTrigger = React.forwardRef<
     nativeTriggerProps,
     nativeTriggerFeedbackOpacity,
     nativeTriggerHoverBackground,
+    nativeTriggerHoverOpacity,
     selectProps,
     disabled,
     label,
@@ -509,6 +511,7 @@ export const SelectBasic = React.forwardRef<SelectHandle, SelectProps>(function 
     nativeTriggerProps,
     nativeTriggerFeedbackOpacity,
     nativeTriggerHoverBackground,
+    nativeTriggerHoverOpacity,
     contentProps,
     itemProps,
     itemIndicatorProps,
@@ -595,6 +598,7 @@ export const SelectBasic = React.forwardRef<SelectHandle, SelectProps>(function 
             nativeTriggerLabelProps,
             nativeTriggerFeedbackOpacity,
             nativeTriggerHoverBackground,
+            nativeTriggerHoverOpacity,
             nativeTriggerProps,
             triggerProps,
           }}

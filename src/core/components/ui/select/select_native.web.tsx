@@ -4,6 +4,7 @@ import { StyleSheet } from "react-native";
 
 import { NativeTrigger } from "../native_trigger";
 import { cn } from "../utils/cn";
+import { useUiTheme } from "../utils/theme";
 import {
   flattenItems,
   itemLabel,
@@ -22,6 +23,7 @@ export const SelectNative = React.forwardRef<SelectHandle, SelectProps>(function
   ref,
 ) {
   const selectProps = { ...props, itemGroups, items, onOpenChange, options };
+  const theme = useUiTheme();
   const state = useSelectState(selectProps);
   const allItems = flattenItems(selectProps);
   const disabled = selectProps.disabled ?? selectProps.isDisabled;
@@ -47,12 +49,17 @@ export const SelectNative = React.forwardRef<SelectHandle, SelectProps>(function
       value={state.value ?? ""}
     >
       {state.value == null && selectProps.placeholder != null ? (
-        <option value="">
+        <option style={{ backgroundColor: theme.background, color: theme.foreground }} value="">
           {typeof selectProps.placeholder === "string" ? selectProps.placeholder : "选择"}
         </option>
       ) : null}
       {allItems.map((item) => (
-        <option disabled={item.disabled ?? item.isDisabled} key={item.value} value={item.value}>
+        <option
+          disabled={item.disabled ?? item.isDisabled}
+          key={item.value}
+          style={{ backgroundColor: theme.background, color: theme.foreground }}
+          value={item.value}
+        >
           {itemLabel(item, state.value ?? undefined)}
         </option>
       ))}
@@ -88,7 +95,7 @@ export const SelectNative = React.forwardRef<SelectHandle, SelectProps>(function
     >
       {React.cloneElement(nativeSelect, {
         className: cn(
-          "border-border bg-background text-foreground h-10 w-fit cursor-default appearance-none rounded-md border px-3 pr-10 py-2 shadow-sm shadow-black/5 transition-colors hover:bg-accent hover:text-accent-foreground active:bg-accent focus:border-ring focus:ring-ring/50 focus:outline-none focus:ring-[3px] disabled:opacity-50",
+          "border-border bg-background text-foreground text-sm h-10 w-fit cursor-default appearance-none rounded-md border px-3 pr-10 py-2 shadow-sm shadow-black/5 transition-colors hover:bg-accent hover:text-accent-foreground active:bg-accent dark:bg-input/30 dark:border-input dark:active:bg-input/50 dark:hover:bg-input/50 focus:border-ring focus:ring-ring/50 focus:outline-none focus:ring-[3px] disabled:opacity-50",
           props.nativeSelectProps?.className,
           props.className,
         ),
@@ -120,12 +127,17 @@ const NativeSelectTrigger = React.forwardRef<
   const [hovered, setHovered] = React.useState(false);
   const [pressed, setPressed] = React.useState(false);
   const hasFullWidthClass = props.className?.split(/\s+/).includes("w-full") === true;
+  const hoverBackground = props.nativeTriggerHoverBackground !== false;
+  const hoverOpacity =
+    props.nativeTriggerHoverOpacity ?? props.nativeTriggerHoverBackground === false;
   const opacity = disabled
     ? SELECT_TRIGGER_DISABLE_OPACITY
     : pressed
       ? SELECT_TRIGGER_WEB_PRESS_OPACITY
       : hovered
-        ? SELECT_TRIGGER_WEB_HOVER_OPACITY
+        ? hoverOpacity
+          ? SELECT_TRIGGER_WEB_HOVER_OPACITY
+          : 1
         : 1;
   React.useImperativeHandle(
     ref,
@@ -156,7 +168,7 @@ const NativeSelectTrigger = React.forwardRef<
         labelProps={props.nativeTriggerLabelProps as any}
         pointerEvents="none"
         className={cn(
-          props.nativeTriggerHoverBackground !== false &&
+          hoverBackground &&
             "rounded-md hover:bg-accent group-hover:bg-accent group-active:bg-accent hover:text-accent-foreground group-hover:text-accent-foreground group-active:text-accent-foreground disabled:hover:bg-transparent disabled:group-hover:bg-transparent disabled:group-active:bg-transparent disabled:hover:text-foreground disabled:group-hover:text-foreground disabled:group-active:text-foreground",
           props.nativeTriggerProps?.className,
           props.className,
@@ -164,7 +176,7 @@ const NativeSelectTrigger = React.forwardRef<
         feedbackOpacity={{
           disabled: SELECT_TRIGGER_DISABLE_OPACITY,
           press: SELECT_TRIGGER_PRESS_OPACITY,
-          webHover: SELECT_TRIGGER_WEB_HOVER_OPACITY,
+          webHover: hoverOpacity ? SELECT_TRIGGER_WEB_HOVER_OPACITY : 1,
           webPress: SELECT_TRIGGER_WEB_PRESS_OPACITY,
           ...props.nativeTriggerFeedbackOpacity,
         }}

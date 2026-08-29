@@ -20,7 +20,6 @@ import {
   View,
   type StyleProp,
   type ViewStyle,
-  useColorScheme,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -41,6 +40,7 @@ import {
   isGlassEffectAPIAvailable,
   isLiquidGlassAvailable,
   useAppBackgroundColors,
+  useUiColorScheme,
   useKeyboardVisibility,
   isIos26Plus,
 } from "rn-ui-kit/core";
@@ -198,7 +198,7 @@ function GlassEffectPreview({
   tintColor,
 }: PreviewProps) {
   const insets = useSafeAreaInsets();
-  const colorSchemeName = useColorScheme();
+  const colorSchemeName = useUiColorScheme();
   const dark = colorSchemeName === "dark";
   const foregroundColor = dark ? "#f5f5f7" : "#111114";
   const secondaryColor = dark ? "#b7b7bd" : "#65656b";
@@ -532,7 +532,7 @@ function GlassEffectPreview({
 
 export function GlassEffectExample() {
   const appBackgroundColors = useAppBackgroundColors();
-  const colorSchemeName = useColorScheme();
+  const colorSchemeName = useUiColorScheme();
   const [mode, setMode] = useState<GlassExampleMode>("floating-buttons");
   const [effectStyle, setEffectStyle] = useState<GlassStyle>("regular");
   const [colorScheme, setColorScheme] = useState<GlassColorScheme>("auto");

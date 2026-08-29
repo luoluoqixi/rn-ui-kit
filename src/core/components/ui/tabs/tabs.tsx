@@ -13,9 +13,6 @@ import { Platform } from "react-native";
 import type { TabsProps } from "./types";
 
 const TabsHapticsContext = React.createContext<NativeHapticsSetting | undefined>(undefined);
-const INACTIVE_TAB_TEXT_PRESS_OPACITY_CLASS = "opacity-70";
-const INACTIVE_TAB_TEXT_WEB_HOVER_OPACITY_CLASS = "group-hover:opacity-80";
-const INACTIVE_TAB_TEXT_WEB_PRESS_OPACITY_CLASS = "group-active:opacity-70";
 
 function normalizeTabsChildren(children: unknown) {
   if (typeof children === "function") return children as any;
@@ -102,12 +99,9 @@ function TabsTrigger({
   const inactiveTextInteractionClass =
     !isActive && !props.disabled
       ? cn(
-          isPressed && INACTIVE_TAB_TEXT_PRESS_OPACITY_CLASS,
+          isPressed && "text-foreground dark:text-foreground",
           Platform.select({
-            web: cn(
-              INACTIVE_TAB_TEXT_WEB_HOVER_OPACITY_CLASS,
-              INACTIVE_TAB_TEXT_WEB_PRESS_OPACITY_CLASS,
-            ),
+            web: "group-hover:text-foreground group-active:text-foreground dark:group-hover:text-foreground dark:group-active:text-foreground",
           }),
         )
       : undefined;

@@ -1,6 +1,6 @@
 import { Icon } from "../icon";
 import { NativeOnlyAnimatedView } from "../utils/native_only_animated_view";
-import { TextClassContext } from "../text";
+import { Text, TextClassContext } from "../text";
 import { cn } from "../utils/cn";
 import { OverlayPortalWindow, useOverlayPortalContentStyle } from "../utils/overlay/overlay_portal";
 import { useScopedOverlayPortalHostName } from "../utils/overlay";
@@ -20,7 +20,6 @@ import {
   ScrollView,
   type StyleProp,
   StyleSheet,
-  Text,
   View,
   type ViewStyle,
   useWindowDimensions,

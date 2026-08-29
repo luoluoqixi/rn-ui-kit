@@ -13,6 +13,7 @@ import {
   resolveToastContent,
 } from "./toast_basic_shared";
 import type { BasicToastKind } from "./toast_basic_shared";
+import { useUiColorScheme } from "../utils/theme";
 
 let toastId = 0;
 const CLOSE_BUTTON_CLASS = "rn-ui-kit-toast-close-button";
@@ -68,6 +69,7 @@ export function BasicToaster({
   sonnerNativeProps: _sonnerNativeProps,
   ...props
 }: ToastNativeToasterProps) {
+  const colorScheme = useUiColorScheme();
   React.useEffect(() => {
     const runtimeConfig = {
       ...(basicHaptics !== undefined
@@ -113,6 +115,7 @@ export function BasicToaster({
         position={viewportName == null ? "bottom-right" : "bottom-center"}
         duration={5000}
         visibleToasts={4}
+        theme={colorScheme}
         {...sonnerProps}
         {...props}
         id={viewportName}

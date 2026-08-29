@@ -62,6 +62,7 @@ export function useSliderBehavior({
   nativeHapticsInterval,
   onChange,
   onChangeFinished,
+  onActiveThumbChange,
   onLayout,
   onValueChange,
   onValueChangeFinished,
@@ -85,7 +86,10 @@ export function useSliderBehavior({
   | "step"
   | "thumbCount"
   | "value"
-> & { sliderRef?: RefObject<View | null> }) {
+> & {
+  onActiveThumbChange?: (index: number | null) => void;
+  sliderRef?: RefObject<View | null>;
+}) {
   const safeStep = resolveStep(stepProp);
   const valueCount = resolveCount(value, defaultValue, thumbCount);
   const initialValues = useMemo(
@@ -159,6 +163,7 @@ export function useSliderBehavior({
         0,
       );
       activeThumbRef.current = activeThumbIndex;
+      onActiveThumbChange?.(activeThumbIndex);
 
       // A press on the track is also a value change. Updating it here makes a
       // tap seek immediately, while the first move continues from that point.
@@ -167,7 +172,7 @@ export function useSliderBehavior({
       setValues(nextValues);
       startValuesRef.current = [...valuesRef.current];
     },
-    [max, min, setValues],
+    [max, min, onActiveThumbChange, setValues],
   );
 
   const updateFromTranslation = useCallback(
@@ -187,9 +192,10 @@ export function useSliderBehavior({
 
   const finishGesture = useCallback(() => {
     const finishedValues = [...valuesRef.current];
+    onActiveThumbChange?.(null);
     onChangeFinished?.(finishedValues[0] ?? min);
     onValueChangeFinished?.(finishedValues);
-  }, [min, onChangeFinished, onValueChangeFinished]);
+  }, [min, onActiveThumbChange, onChangeFinished, onValueChangeFinished]);
 
   const beginGestureRef = useRef(beginGesture);
   const updateFromTranslationRef = useRef(updateFromTranslation);
@@ -197,6 +203,15 @@ export function useSliderBehavior({
   beginGestureRef.current = beginGesture;
   updateFromTranslationRef.current = updateFromTranslation;
   finishGestureRef.current = finishGesture;
+  const beginGestureFromNative = useCallback(
+    (locationX: number) => beginGestureRef.current(locationX),
+    [],
+  );
+  const updateFromTranslationFromNative = useCallback(
+    (translationX: number) => updateFromTranslationRef.current(translationX),
+    [],
+  );
+  const finishGestureFromNative = useCallback(() => finishGestureRef.current(), []);
 
   // Use pointer capture on web so controlled value updates cannot replace the
   // responder during a drag. This also prevents the page from selecting text.
@@ -253,17 +268,17 @@ export function useSliderBehavior({
       .shouldCancelWhenOutside(false)
       .onBegin((event) => {
         "worklet";
-        runOnJS(beginGesture)(event.x);
+        runOnJS(beginGestureFromNative)(event.x);
       })
       .onUpdate((event) => {
         "worklet";
-        runOnJS(updateFromTranslation)(event.translationX);
+        runOnJS(updateFromTranslationFromNative)(event.translationX);
       })
       .onFinalize(() => {
         "worklet";
-        runOnJS(finishGesture)();
+        runOnJS(finishGestureFromNative)();
       });
-  }, [beginGesture, disabled, finishGesture, updateFromTranslation, web]);
+  }, [beginGestureFromNative, disabled, finishGestureFromNative, updateFromTranslationFromNative, web]);
 
   const handleLayout = useCallback(
     (event: LayoutChangeEvent) => {

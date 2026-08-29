@@ -10,9 +10,10 @@ export function SwitchExample() {
   return (
     <ExampleStack>
       <ExampleBlock description={checked ? "已开启" : "已关闭"} title="飞行模式">
-        <Switch checked={checked} label="飞行模式" onCheckedChange={setChecked} />
+        <Switch native={false} checked={checked} label="飞行模式" onCheckedChange={setChecked} />
 
         <Switch
+          native={false}
           labelPosition="left"
           checked={checkedLeft}
           label="飞行模式"
@@ -20,6 +21,7 @@ export function SwitchExample() {
         />
         <Switch
           disabled
+          native={false}
           labelPosition="left"
           checked={checkedLeft}
           label="飞行模式"

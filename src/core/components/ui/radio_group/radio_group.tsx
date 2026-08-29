@@ -3,12 +3,13 @@ import { cn } from "../utils/cn";
 import {
   triggerNativeHaptics,
   useResolvedNativeHaptics,
+  useUiTheme,
   type NativeHapticsSetting,
 } from "../utils";
 import { resolveRenderProp } from "../utils/render";
 import * as RadioGroupPrimitive from "@rn-primitives/radio-group";
 import * as React from "react";
-import { Platform, Pressable, View, type GestureResponderEvent } from "react-native";
+import { Platform, Pressable, StyleSheet, View, type GestureResponderEvent } from "react-native";
 import type { RenderProp } from "../utils";
 import type {
   RadioGroupItemData,
@@ -121,10 +122,18 @@ function RadioGroupItem({
   const groupNativeHaptics = React.useContext(RadioGroupHapticsContext);
   const interaction = React.useContext(RadioGroupInteractionContext);
   const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics ?? groupNativeHaptics);
+  const theme = useUiTheme();
   const hasContainer = label != null || description != null;
   const checked = interaction?.value === value;
   const resolvedDisabled = disabled || interaction?.disabled;
   const [isPressed, setIsPressed] = React.useState(false);
+  const resolvedItemStyle =
+    typeof props.style === "function"
+      ? props.style({ pressed: isPressed })
+      : props.style;
+  const pressedItemStyle =
+    isPressed && !checked && !resolvedDisabled ? { backgroundColor: theme.accent } : undefined;
+  const itemStyle = StyleSheet.flatten([resolvedItemStyle, pressedItemStyle]);
   const renderContext: RadioGroupItemRenderContext = {
     checked: checked === true,
     disabled: resolvedDisabled,
@@ -182,9 +191,8 @@ function RadioGroupItem({
           aria-label={props["aria-label"]}
           className={cn(
             "border-input dark:bg-input/30 aspect-square size-4 shrink-0 items-center justify-center rounded-full border shadow-sm shadow-black/5",
-            isPressed && "opacity-70",
             Platform.select({
-              web: "group-hover:opacity-80 group-active:opacity-70",
+              web: !checked && "group-hover:bg-accent/50 group-active:bg-accent/50",
               native: "overflow-hidden",
             }),
             renderedDescription != null && "mt-0.5",
@@ -192,7 +200,7 @@ function RadioGroupItem({
             resolvedDisabled && "opacity-50",
             className,
           )}
-          style={isPressed && !resolvedDisabled ? { opacity: 0.7 } : props.style}
+          style={itemStyle}
           disabled={resolvedDisabled}
           pointerEvents="none"
           accessible={false}
@@ -228,13 +236,16 @@ function RadioGroupItem({
       className={cn(
         "border-input dark:bg-input/30 aspect-square size-4 shrink-0 items-center justify-center rounded-full border shadow-sm shadow-black/5",
         Platform.select({
-          web: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 dark:aria-invalid:border-destructive outline-none transition-all focus-visible:ring-[3px] disabled:cursor-not-allowed hover:opacity-80 active:opacity-70",
+          web: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 dark:aria-invalid:border-destructive outline-none transition-all focus-visible:ring-[3px] disabled:cursor-not-allowed",
         }),
-        isPressed && "opacity-70",
+        !checked && Platform.select({
+          native: "active:bg-accent/50",
+          web: "hover:bg-accent/50 active:bg-accent/50",
+        }),
         resolvedDisabled && "opacity-50",
         className,
       )}
-      style={isPressed && !resolvedDisabled ? { opacity: 0.7 } : props.style}
+      style={itemStyle}
       disabled={resolvedDisabled}
       onPress={(event) => {
         onPress?.(event);

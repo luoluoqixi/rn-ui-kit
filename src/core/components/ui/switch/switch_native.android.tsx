@@ -17,6 +17,12 @@ function withAlpha(color: string, alpha: number) {
     .join("")}`;
 }
 
+function normalizeComposeColors(colors: Record<string, unknown>) {
+  return Object.fromEntries(
+    Object.entries(colors).map(([name, color]) => [name, toARGB(color) ?? color]),
+  );
+}
+
 export function SwitchNative({
   disabled,
   nativeComposeProps,
@@ -32,7 +38,7 @@ export function SwitchNative({
     value: _overriddenValue,
     ...props
   } = (nativeComposeProps ?? {}) as Partial<ExpoComposeSwitchProps>;
-  const colors = {
+  const colors = normalizeComposeColors({
     checkedThumbColor: theme.primaryForeground,
     checkedTrackColor: theme.primary,
     checkedBorderColor: theme.primary,
@@ -47,7 +53,7 @@ export function SwitchNative({
     disabledUncheckedTrackColor: withAlpha(theme.foreground, 0.12),
     disabledUncheckedBorderColor: withAlpha(theme.foreground, 0.12),
     ...overriddenColors,
-  };
+  }) as NonNullable<ExpoComposeSwitchProps["colors"]>;
 
   return (
     <Host matchContents style={style}>

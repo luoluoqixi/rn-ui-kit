@@ -154,6 +154,8 @@ export interface SelectProps extends Omit<ViewProps, "ref">, SelectRootPrimitive
   nativeTriggerFeedbackOpacity?: NativeTriggerFeedbackOpacity;
   /** Enable the Web-only hover background on the generated native trigger. Defaults to true. */
   nativeTriggerHoverBackground?: boolean;
+  /** Enable the Web-only hover opacity feedback. Defaults to false when hover background is enabled. */
+  nativeTriggerHoverOpacity?: boolean;
   onOpenChange?: (open: boolean) => void;
   /** 原生 dropdown 开始打开或关闭时触发，不等待动画完成。 */
   onOpenWillChange?: (open: boolean) => void;

@@ -6,6 +6,7 @@ import { cn } from "../utils/cn";
 import {
   triggerNativeHaptics,
   useResolvedNativeHaptics,
+  useUiTheme,
   type NativeHapticsSetting,
 } from "../utils";
 import { resolveRenderProp, type RenderProp } from "../utils/render";
@@ -102,6 +103,8 @@ function ToggleGroupItem({
   nativeHaptics,
   title,
   onPress,
+  onPressIn,
+  onPressOut,
   ...props
 }: React.ComponentProps<typeof ToggleGroupPrimitive.Item> &
   VariantProps<typeof toggleVariants> & {
@@ -113,7 +116,15 @@ function ToggleGroupItem({
   const context = useToggleGroupContext();
   const { value } = ToggleGroupPrimitive.useRootContext();
   const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics ?? context.nativeHaptics);
+  const theme = useUiTheme();
   const pressed = ToggleGroupPrimitive.utils.getIsSelected(value, props.value);
+  const [isPressed, setIsPressed] = React.useState(false);
+  const resolvedStyle =
+    typeof props.style === "function" ? props.style({ pressed: isPressed }) : props.style;
+  const interactionStyle = StyleSheet.flatten([
+    resolvedStyle,
+    isPressed && !pressed && !props.disabled ? { backgroundColor: theme.accent } : undefined,
+  ]);
   const hasCustomSizing = hasExplicitItemSizing(className, props.style);
   const renderedTitle = resolveRenderProp(title, {
     pressed,
@@ -124,9 +135,7 @@ function ToggleGroupItem({
     <TextClassContext.Provider
       value={cn(
         "text-sm text-foreground font-medium",
-        ToggleGroupPrimitive.utils.getIsSelected(value, props.value)
-          ? "text-accent-foreground"
-          : Platform.select({ web: "group-hover:text-muted-foreground" }),
+        pressed && "text-accent-foreground",
       )}
     >
       <ToggleGroupPrimitive.Item
@@ -151,9 +160,18 @@ function ToggleGroupItem({
           }),
           className,
         )}
+        style={interactionStyle}
         onPress={(event) => {
           onPress?.(event);
           if (!event.defaultPrevented) triggerNativeHaptics(resolvedNativeHaptics);
+        }}
+        onPressIn={(event) => {
+          setIsPressed(true);
+          onPressIn?.(event);
+        }}
+        onPressOut={(event) => {
+          setIsPressed(false);
+          onPressOut?.(event);
         }}
       >
         {renderedTitle != null ? (

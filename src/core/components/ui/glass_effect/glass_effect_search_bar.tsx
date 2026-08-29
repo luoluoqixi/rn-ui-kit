@@ -9,11 +9,11 @@ import {
   type StyleProp,
   type TextStyle,
   type TextInputProps,
-  useColorScheme,
 } from "react-native";
 
 import { Button } from "../button";
 import { isIos26Plus } from "../utils/platform";
+import { useUiColorScheme } from "../utils/theme";
 import { GlassEffect } from "./glass_effect";
 import type {
   GlassEffectSearchBarProps,
@@ -72,7 +72,7 @@ export const GlassEffectSearchBar = forwardRef<TextInput, GlassEffectSearchBarPr
     const focused = focusedProp ?? uncontrolledFocused;
     const focusStateRef = useRef(focused);
     focusStateRef.current = focused;
-    const dark = useColorScheme() === "dark";
+    const dark = useUiColorScheme() === "dark";
     const textColor = inputColor ?? (dark ? "#f5f5f7" : "#111114");
     const secondaryColor = placeholderTextColor ?? (dark ? "#b7b7bd" : "#65656b");
 

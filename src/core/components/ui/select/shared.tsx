@@ -6,6 +6,7 @@ import { Text } from "../text";
 import { cn } from "../utils/cn";
 import { useResolvedNativeHaptics } from "../utils";
 import { resolveRenderProp } from "../utils/render";
+import { useUiTheme } from "../utils/theme";
 import type { SelectItemData, SelectProps } from "./types";
 import type { TextProps } from "../text";
 import * as React from "react";
@@ -43,7 +44,13 @@ export function itemLabel(item: SelectItemData | undefined, value?: string) {
     : item.value;
 }
 
-export function renderSelectText(value: React.ReactNode, textProps?: TextProps) {
+export function renderSelectText(
+  value: React.ReactNode,
+  textProps?: TextProps,
+  defaultColor?: string,
+  defaultOpacity = NATIVE_TRIGGER_LABEL_OPACITY,
+  defaultFontSize = 16,
+) {
   if (typeof value !== "string" && typeof value !== "number") return value;
   const { color, opacity, style, ...restTextProps } = (textProps ?? {}) as TextProps & {
     color?: string;
@@ -54,9 +61,9 @@ export function renderSelectText(value: React.ReactNode, textProps?: TextProps) 
       {...restTextProps}
       style={[
         {
-          color,
-          fontSize: 16,
-          opacity: opacity ?? NATIVE_TRIGGER_LABEL_OPACITY,
+          color: color ?? defaultColor,
+          fontSize: defaultFontSize,
+          opacity: opacity ?? defaultOpacity,
         },
         style,
       ]}
@@ -67,21 +74,32 @@ export function renderSelectText(value: React.ReactNode, textProps?: TextProps) 
 }
 
 export function SelectedLabel({
+  defaultFontSize,
+  defaultOpacity,
   labelProps,
   props,
   value,
 }: {
+  defaultFontSize?: number;
+  defaultOpacity?: number;
   labelProps?: TextProps;
   props: SelectProps;
   value?: string;
 }) {
+  const theme = useUiTheme();
   const item = flattenItems(props).find((entry) => entry.value === value);
   const rendered = resolveRenderProp(props.renderValue, { value, item });
   const label =
     rendered != null
       ? rendered
       : (props.nativeTriggerLabel ?? (itemLabel(item, value) || props.placeholder || "选择"));
-  const text = renderSelectText(label, labelProps);
+  const text = renderSelectText(
+    label,
+    labelProps,
+    theme.foreground,
+    defaultOpacity,
+    defaultFontSize,
+  );
   if (item?.swatchColor == null) return text;
   return (
     <View style={{ alignItems: "center", flexDirection: "row", gap: 8 }}>
@@ -122,6 +140,8 @@ export const SelectNativeTrigger = React.forwardRef<any, SelectTriggerSharedProp
     );
     const hasFullWidthClass = props.className?.split(/\s+/).includes("w-full") === true;
     const hoverBackground = props.nativeTriggerHoverBackground !== false;
+    const hoverOpacity =
+      props.nativeTriggerHoverOpacity ?? props.nativeTriggerHoverBackground === false;
     const triggerClassName = props.className
       ?.split(/\s+/)
       .filter((name: string) => name !== "w-full")
@@ -149,7 +169,7 @@ export const SelectNativeTrigger = React.forwardRef<any, SelectTriggerSharedProp
         feedbackOpacity={{
           disabled: SELECT_TRIGGER_DISABLE_OPACITY,
           press: SELECT_TRIGGER_PRESS_OPACITY,
-          webHover: SELECT_TRIGGER_WEB_HOVER_OPACITY,
+          webHover: hoverOpacity ? SELECT_TRIGGER_WEB_HOVER_OPACITY : 1,
           webPress: SELECT_TRIGGER_WEB_PRESS_OPACITY,
           ...props.nativeTriggerFeedbackOpacity,
         }}
@@ -231,7 +251,9 @@ export const SelectBasicTrigger = React.forwardRef<
       ]}
       variant={triggerProps.variant ?? configuredTriggerProps?.variant ?? "outline"}
     >
-      {label ?? <SelectedLabel props={props} value={value} />}
+      {label ?? (
+        <SelectedLabel defaultFontSize={14} defaultOpacity={1} props={props} value={value} />
+      )}
       <Icon aria-hidden as={ChevronDown} className="text-muted-foreground size-4 shrink-0" />
     </Button>
   );

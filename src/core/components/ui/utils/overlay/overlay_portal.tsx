@@ -1,11 +1,13 @@
 import { type ReactNode } from "react";
 import { Modal, Platform, type StyleProp, type ViewStyle } from "react-native";
 import { FullWindowOverlay as RNFullWindowOverlay } from "react-native-screens";
+import { ScopedVariables } from "uniwind";
 
 import {
   useScopedOverlayPortalHostName,
   useScreenOverlayPortalOffset,
 } from "./screen_overlay_portal";
+import { semanticColorsToVariables, useUiTheme } from "../theme";
 
 /**
  * Renders an overlay in the current TrueSheet window when one is active.
@@ -22,6 +24,13 @@ export function OverlayPortalWindow({
   onRequestClose?: () => void;
   portalHost?: string;
 }) {
+  const theme = useUiTheme();
+  // Web Radix portals mount under document.body, outside the provider's
+  // scoped CSS variables. Re-apply the current semantic tokens at the portal
+  // boundary so popup text and surfaces keep the active light/dark theme.
+  const themedChildren = (
+    <ScopedVariables variables={semanticColorsToVariables(theme)}>{children}</ScopedVariables>
+  );
   const scopedHostName = useScopedOverlayPortalHostName();
   const isScopedHost =
     scopedHostName != null && (portalHost == null || portalHost === scopedHostName);
@@ -35,7 +44,7 @@ export function OverlayPortalWindow({
         transparent
         visible
       >
-        {children}
+        {themedChildren}
       </Modal>
     );
   }
@@ -44,10 +53,10 @@ export function OverlayPortalWindow({
     Platform.OS === "ios" && (forceFullScreen || !isScopedHost) ? RNFullWindowOverlay : null;
 
   if (WindowOverlay == null) {
-    return <>{children}</>;
+    return <>{themedChildren}</>;
   }
 
-  return <WindowOverlay>{children}</WindowOverlay>;
+  return <WindowOverlay>{themedChildren}</WindowOverlay>;
 }
 
 /**

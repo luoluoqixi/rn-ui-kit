@@ -20,7 +20,11 @@ import {
   TriggerIconColor,
 } from "./types";
 
-function renderTriggerLabel(label: React.ReactNode, labelProps?: TextProps) {
+function renderTriggerLabel(
+  label: React.ReactNode,
+  labelProps: TextProps | undefined,
+  defaultColor: string,
+) {
   const { color, opacity, style, ...textProps } = (labelProps ?? {}) as TextProps & {
     color?: string;
     opacity?: number;
@@ -31,7 +35,7 @@ function renderTriggerLabel(label: React.ReactNode, labelProps?: TextProps) {
       <Text
         style={[
           {
-            color,
+            color: color ?? defaultColor,
             fontSize: 16,
             opacity: opacity ?? NATIVE_TRIGGER_LABEL_OPACITY,
           },
@@ -108,7 +112,7 @@ export const NativeTriggerFace = React.forwardRef<View, NativeTriggerFaceProps>(
         style={{ alignSelf: "center", flexGrow: 0, flexShrink: 0, opacity, width: "auto" }}
       >
         <View style={[styles.defaultTrigger, containerStyle]}>
-          {renderTriggerLabel(label, labelProps)}
+          {renderTriggerLabel(label, labelProps, theme.foreground)}
           <View style={{ opacity: iconOpacity }}>{renderTriggerIcon(icon, iconColor)}</View>
         </View>
       </View>
