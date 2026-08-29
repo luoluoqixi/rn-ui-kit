@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react-native";
 import React from "react";
-import { Platform, Pressable, StyleSheet, View } from "react-native";
+import { Platform, Pressable, StyleSheet, View, type TextStyle } from "react-native";
 import { Text } from "../text";
 import { cn } from "../utils/cn";
 import { useUiTheme } from "../utils/theme";
@@ -17,13 +17,49 @@ import {
   NativeTriggerFaceProps,
   NativeTriggerIcon,
   NativeTriggerProps,
+  NativeTriggerSize,
   TriggerIconColor,
 } from "./types";
+
+const nativeTriggerSizeStyles: Record<
+  NativeTriggerSize,
+  { gap: number; minHeight: number; paddingHorizontal: number }
+> = {
+  "2xs": { gap: 4, minHeight: 32, paddingHorizontal: 8 },
+  xs: { gap: 4, minHeight: 36, paddingHorizontal: 12 },
+  sm: { gap: 6, minHeight: 40, paddingHorizontal: 16 },
+  md: { gap: 8, minHeight: 44, paddingHorizontal: 20 },
+  lg: { gap: 8, minHeight: 48, paddingHorizontal: 24 },
+  xl: { gap: 10, minHeight: 56, paddingHorizontal: 32 },
+  "2xl": { gap: 12, minHeight: 64, paddingHorizontal: 40 },
+};
+
+const nativeTriggerLabelFontSizes: Record<NativeTriggerSize, number> = {
+  "2xs": 12,
+  xs: 12,
+  sm: 14,
+  md: 16,
+  lg: 16,
+  xl: 18,
+  "2xl": 20,
+};
+
+const nativeTriggerIconSizes: Record<NativeTriggerSize, { chevron: number; stacked: number }> = {
+  "2xs": { chevron: 12, stacked: 8 },
+  xs: { chevron: 12, stacked: 8 },
+  sm: { chevron: 14, stacked: 9 },
+  md: { chevron: 16, stacked: 10 },
+  lg: { chevron: 16, stacked: 10 },
+  xl: { chevron: 18, stacked: 12 },
+  "2xl": { chevron: 20, stacked: 14 },
+};
 
 function renderTriggerLabel(
   label: React.ReactNode,
   labelProps: TextProps | undefined,
   defaultColor: string,
+  fontSize: number,
+  fontWeight: TextStyle["fontWeight"] = "500",
 ) {
   const { color, opacity, style, ...textProps } = (labelProps ?? {}) as TextProps & {
     color?: string;
@@ -36,7 +72,8 @@ function renderTriggerLabel(
         style={[
           {
             color: color ?? defaultColor,
-            fontSize: 16,
+            fontSize,
+            fontWeight,
             opacity: opacity ?? NATIVE_TRIGGER_LABEL_OPACITY,
           },
           style,
@@ -51,19 +88,23 @@ function renderTriggerLabel(
   return label;
 }
 
-function renderTriggerIcon(icon: NativeTriggerIcon, color: TriggerIconColor) {
+function renderTriggerIcon(
+  icon: NativeTriggerIcon,
+  color: TriggerIconColor,
+  size: { chevron: number; stacked: number },
+) {
   if (icon === "none") {
     return null;
   }
 
   if (icon === "chevrons-up-down") {
-    return <ChevronsUpDown color={color} size={14} />;
+    return <ChevronsUpDown color={color} size={size.chevron} />;
   }
 
   return (
     <View style={styles.chevronColumn}>
-      <ChevronUp color={color} size={10} />
-      <ChevronDown color={color} size={10} />
+      <ChevronUp color={color} size={size.stacked} />
+      <ChevronDown color={color} size={size.stacked} />
     </View>
   );
 }
@@ -78,6 +119,8 @@ export const NativeTriggerFace = React.forwardRef<View, NativeTriggerFaceProps>(
       labelProps,
       label,
       opacity = 1,
+      size = "md",
+      fontWeight = "500",
     },
     forwardedRef,
   ) {
@@ -111,9 +154,17 @@ export const NativeTriggerFace = React.forwardRef<View, NativeTriggerFaceProps>(
         pointerEvents="none"
         style={{ alignSelf: "center", flexGrow: 0, flexShrink: 0, opacity, width: "auto" }}
       >
-        <View style={[styles.defaultTrigger, containerStyle]}>
-          {renderTriggerLabel(label, labelProps, theme.foreground)}
-          <View style={{ opacity: iconOpacity }}>{renderTriggerIcon(icon, iconColor)}</View>
+        <View style={[styles.defaultTrigger, nativeTriggerSizeStyles[size], containerStyle]}>
+          {renderTriggerLabel(
+            label,
+            labelProps,
+            theme.foreground,
+            nativeTriggerLabelFontSizes[size],
+            fontWeight,
+          )}
+          <View style={{ opacity: iconOpacity }}>
+            {renderTriggerIcon(icon, iconColor, nativeTriggerIconSizes[size])}
+          </View>
         </View>
       </View>
     );
@@ -139,6 +190,7 @@ export const NativeTrigger = React.forwardRef<View, NativeTriggerProps>(
       pressedOpacity = true,
       style,
       className,
+      size,
       onHoverIn,
       onHoverOut,
       ...pressableProps
@@ -246,6 +298,7 @@ export const NativeTrigger = React.forwardRef<View, NativeTriggerProps>(
           iconColor={iconColor}
           label={label}
           labelProps={labelProps}
+          size={size}
         />
       </Pressable>
     );
@@ -274,11 +327,11 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     flexDirection: "row",
     flexGrow: 0,
-    gap: 4,
+    gap: 8,
     justifyContent: "center",
-    minHeight: 36,
+    minHeight: 44,
     flexShrink: 0,
     width: "auto",
-    paddingHorizontal: 4,
+    paddingHorizontal: 20,
   },
 });

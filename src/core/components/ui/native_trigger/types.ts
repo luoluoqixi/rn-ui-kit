@@ -1,9 +1,10 @@
 import type { ChevronDown } from "lucide-react-native";
 import type { TextProps } from "../text";
 
-import type { PressableProps, StyleProp, ViewStyle } from "react-native";
+import type { PressableProps, StyleProp, TextStyle, ViewStyle } from "react-native";
 
 export type NativeTriggerIcon = "stacked" | "chevrons-up-down" | "none";
+export type NativeTriggerSize = "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
 
 export type TriggerIconColor = React.ComponentProps<typeof ChevronDown>["color"];
 
@@ -43,8 +44,12 @@ export type NativeTriggerFaceProps = {
   iconColor?: TriggerIconColor;
   /** 默认 label 的文本属性。 */
   labelProps?: TextProps & { opacity?: number };
+  /** 默认 label 的字重；未指定时使用 `500`。 */
+  fontWeight?: TextStyle["fontWeight"];
   /** 要显示的 label。 */
   label: React.ReactNode;
+  /** Standard trigger size. Defaults to `md`. */
+  size?: NativeTriggerSize;
   /** 整个 trigger 的不透明度。 */
   opacity?: number;
 };

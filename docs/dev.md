@@ -59,3 +59,11 @@ UI 组件统一使用 `2xs`、`xs`、`sm`、`md`、`lg`、`xl`、`2xl` 七级尺
 ### Checkbox
 
 `Checkbox` 使用统一的七级尺寸名，方框尺寸对应 `12/14/16/20/24/28/32`，默认使用 `sm`（16）。勾选图标会随方框尺寸同步调整；如需精确控制，可通过 `iconProps.size` 覆盖。
+
+### NativeTrigger
+
+`NativeTrigger` 使用统一的七级尺寸名，对应最小高度 `32/36/40/44/48/56/64`，默认使用 `md`（44），与 Button 的默认尺寸保持一致。Dropdown/Select 的原生触发器通过 `nativeTriggerProps={{ size: "lg" }}` 传入尺寸；自定义 `content` 时，尺寸由自定义内容自行决定。
+
+`Select` 的所有非原生触发器路径（`native={false}`、`native="sheet"`、`native="dialog"`、`native="wheel"` 等）通过统一的 `triggerSize` 控制，默认使用 `md`。`triggerSize` 同时会传递到原生触发器；未设置时再回退到 `triggerProps.size` 或 `nativeTriggerProps.size`。
+
+触发器文字粗细通过 `triggerFontWeight` 控制，默认值为公共常量 `SELECT_TRIGGER_FONT_WEIGHT`（`500`）。

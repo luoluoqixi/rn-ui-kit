@@ -9,7 +9,14 @@ import * as SelectPrimitive from "@rn-primitives/select";
 import { Check, ChevronDown, ChevronDownIcon, ChevronUpIcon } from "lucide-react-native";
 import type { ComponentProps } from "react";
 import * as React from "react";
-import { Platform, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
+import {
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+  type TextStyle,
+} from "react-native";
 import { FadeIn, FadeOut, ReduceMotion } from "react-native-reanimated";
 
 const SELECT_MENU_MAX_HEIGHT_RATIO = 0.45;
@@ -17,6 +24,7 @@ const SELECT_MENU_MAX_HEIGHT_RATIO = 0.45;
 import { triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
 import { resolveSelectItemGroups } from "./select_grouping";
 import { SelectBasicTrigger, SelectNativeTrigger } from "./shared";
+import { SELECT_TRIGGER_FONT_WEIGHT } from "./constants";
 import type {
   SelectContentProps,
   SelectHandle,
@@ -44,8 +52,18 @@ function SelectItemSwatch({ color }: { color: string }) {
   return <View className="size-3.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />;
 }
 
-function renderSelectDisplay(label: React.ReactNode, swatchColor?: string) {
-  const content = normalizeText(label);
+function renderSelectDisplay(
+  label: React.ReactNode,
+  swatchColor?: string,
+  fontWeight: TextStyle["fontWeight"] = SELECT_TRIGGER_FONT_WEIGHT,
+) {
+  const content = React.Children.map(label, (child) =>
+    typeof child === "string" || typeof child === "number" ? (
+      <Text style={{ fontWeight }}>{child}</Text>
+    ) : (
+      child
+    ),
+  );
   if (swatchColor == null) return content;
   return (
     <View className="flex-row items-center gap-2">
@@ -461,7 +479,11 @@ const GeneratedSelectTrigger = React.forwardRef<
   // a pre-rendered ReactNode here bypasses those props on Web.
   const display = nativeTrigger
     ? undefined
-    : renderSelectDisplay(nativeTriggerLabel ?? label, swatchColor);
+    : renderSelectDisplay(
+        nativeTriggerLabel ?? label,
+        swatchColor,
+        selectProps.triggerFontWeight ?? SELECT_TRIGGER_FONT_WEIGHT,
+      );
   if (!nativeTrigger) {
     return (
       <SelectPrimitive.Trigger asChild disabled={disabled}>
@@ -521,6 +543,8 @@ export const SelectBasic = React.forwardRef<SelectHandle, SelectProps>(function 
     sheetProps,
     showScrollButtons,
     triggerProps,
+    triggerSize,
+    triggerFontWeight,
     viewportProps,
     isDisabled,
     onValueChange,
@@ -600,6 +624,8 @@ export const SelectBasic = React.forwardRef<SelectHandle, SelectProps>(function 
             nativeTriggerHoverBackground,
             nativeTriggerHoverOpacity,
             nativeTriggerProps,
+            triggerSize,
+            triggerFontWeight,
             triggerProps,
           }}
           swatchColor={sourceOptions.find((item) => item.value === selectedValue)?.swatchColor}

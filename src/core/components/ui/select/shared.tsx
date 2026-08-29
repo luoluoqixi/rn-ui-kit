@@ -4,13 +4,14 @@ import { Button } from "../button";
 import { Icon } from "../icon";
 import { Text } from "../text";
 import { cn } from "../utils/cn";
+import { SELECT_TRIGGER_FONT_WEIGHT } from "./constants";
 import { useResolvedNativeHaptics } from "../utils";
 import { resolveRenderProp } from "../utils/render";
 import { useUiTheme } from "../utils/theme";
 import type { SelectItemData, SelectProps } from "./types";
 import type { TextProps } from "../text";
 import * as React from "react";
-import { Platform, View } from "react-native";
+import { Platform, View, type TextStyle } from "react-native";
 import { ChevronDown } from "lucide-react-native";
 import {
   SELECT_TRIGGER_DISABLE_OPACITY,
@@ -20,6 +21,16 @@ import {
 } from "../native_trigger";
 
 export const SELECT_TRIGGER_SWATCH_SIZE = 14;
+const selectTriggerFontSizes: Record<string, number> = {
+  "2xs": 12,
+  "xs": 12,
+  "sm": 14,
+  "md": 16,
+  "default": 16,
+  "lg": 16,
+  "xl": 18,
+  "2xl": 20,
+};
 export {
   SELECT_TRIGGER_DISABLE_OPACITY,
   SELECT_TRIGGER_PRESS_OPACITY,
@@ -50,6 +61,7 @@ export function renderSelectText(
   defaultColor?: string,
   defaultOpacity = NATIVE_TRIGGER_LABEL_OPACITY,
   defaultFontSize = 16,
+  defaultFontWeight?: TextStyle["fontWeight"],
 ) {
   if (typeof value !== "string" && typeof value !== "number") return value;
   const { color, opacity, style, ...restTextProps } = (textProps ?? {}) as TextProps & {
@@ -63,6 +75,7 @@ export function renderSelectText(
         {
           color: color ?? defaultColor,
           fontSize: defaultFontSize,
+          ...(defaultFontWeight == null ? {} : { fontWeight: defaultFontWeight }),
           opacity: opacity ?? defaultOpacity,
         },
         style,
@@ -73,15 +86,22 @@ export function renderSelectText(
   );
 }
 
+export function getSelectTriggerFontSize(props: SelectProps) {
+  const size = props.triggerSize ?? props.triggerProps?.size ?? props.nativeTriggerProps?.size;
+  return selectTriggerFontSizes[size == null ? "md" : String(size)] ?? 16;
+}
+
 export function SelectedLabel({
   defaultFontSize,
   defaultOpacity,
+  defaultFontWeight,
   labelProps,
   props,
   value,
 }: {
   defaultFontSize?: number;
   defaultOpacity?: number;
+  defaultFontWeight?: TextStyle["fontWeight"];
   labelProps?: TextProps;
   props: SelectProps;
   value?: string;
@@ -99,6 +119,7 @@ export function SelectedLabel({
     theme.foreground,
     defaultOpacity,
     defaultFontSize,
+    defaultFontWeight,
   );
   if (item?.swatchColor == null) return text;
   return (
@@ -133,6 +154,8 @@ export const SelectNativeTrigger = React.forwardRef<any, SelectTriggerSharedProp
   ) {
     const label = labelProp ?? props.nativeTriggerLabel ?? (
       <SelectedLabel
+        defaultFontSize={getSelectTriggerFontSize(props)}
+        defaultFontWeight={props.triggerFontWeight ?? SELECT_TRIGGER_FONT_WEIGHT}
         labelProps={props.nativeTriggerLabelProps as TextProps}
         props={props}
         value={value}
@@ -174,9 +197,11 @@ export const SelectNativeTrigger = React.forwardRef<any, SelectTriggerSharedProp
           ...props.nativeTriggerFeedbackOpacity,
         }}
         icon={props.nativeTriggerIcon}
+        fontWeight={props.triggerFontWeight ?? SELECT_TRIGGER_FONT_WEIGHT}
         keepPressedOpacity={props.nativeTriggerProps?.keepPressedOpacity ?? Platform.OS === "web"}
         label={label}
         labelProps={props.nativeTriggerLabelProps as any}
+        size={props.triggerSize ?? props.nativeTriggerProps?.size ?? "md"}
         onPress={onPress ?? props.nativeTriggerProps?.onPress ?? triggerProps.onPress}
         pressedOpacity={props.nativeTriggerProps?.pressedOpacity ?? true}
         ref={ref}
@@ -250,9 +275,16 @@ export const SelectBasicTrigger = React.forwardRef<
         typeof triggerProps.style === "function" ? triggerProps.style(state) : triggerProps.style,
       ]}
       variant={triggerProps.variant ?? configuredTriggerProps?.variant ?? "outline"}
+      size={props.triggerSize ?? triggerProps.size ?? configuredTriggerProps?.size ?? "md"}
     >
       {label ?? (
-        <SelectedLabel defaultFontSize={14} defaultOpacity={1} props={props} value={value} />
+        <SelectedLabel
+          defaultFontSize={getSelectTriggerFontSize(props)}
+          defaultFontWeight={props.triggerFontWeight ?? SELECT_TRIGGER_FONT_WEIGHT}
+          defaultOpacity={1}
+          props={props}
+          value={value}
+        />
       )}
       <Icon aria-hidden as={ChevronDown} className="text-muted-foreground size-4 shrink-0" />
     </Button>
