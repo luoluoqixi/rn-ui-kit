@@ -1,7 +1,7 @@
 import { TextClassContext } from "../text";
 import { cn } from "../utils/cn";
 
-import type { IconProps } from "./types";
+import type { IconProps, IconSize } from "./types";
 import * as React from "react";
 import { withUniwind } from "uniwind";
 
@@ -20,6 +20,20 @@ const StyledIcon = withUniwind(IconImpl, {
   },
 });
 
+const iconSizeClasses: Record<IconSize, string> = {
+  "2xs": "size-3",
+  "xs": "size-3.5",
+  "sm": "size-4",
+  "md": "size-5",
+  "lg": "size-6",
+  "xl": "size-7",
+  "2xl": "size-8",
+};
+
+function isIconSize(size: IconProps["size"]): size is IconSize {
+  return typeof size === "string" && size in iconSizeClasses;
+}
+
 /**
  * A wrapper component for Lucide icons with Uniwind `className` support via `withUniwind`.
  *
@@ -37,16 +51,22 @@ const StyledIcon = withUniwind(IconImpl, {
  *
  * @param {LucideIcon} as - The Lucide icon component to render.
  * @param {string} className - Utility classes to style the icon using Uniwind.
- * @param {number} size - Icon size (overrides the size class).
+ * @param {IconSize | string | number} size - One of the standard size names, or a native Lucide size.
  * @param {...LucideProps} ...props - Additional Lucide icon props passed to the "as" icon.
  */
-function Icon({ as: IconComponent, className, ...props }: IconProps) {
+function Icon({ as: IconComponent, className, size = "md", ...props }: IconProps) {
   const textClass = React.useContext(TextClassContext);
+  const isCustomSize = isIconSize(size);
   return (
     <StyledIcon
       as={IconComponent}
-      className={cn("text-foreground size-5", textClass, className)}
-      {...props}
+      className={cn(
+        "text-foreground size-5",
+        textClass,
+        isCustomSize ? iconSizeClasses[size] : undefined,
+        className,
+      )}
+      {...(isCustomSize || size == null ? props : { ...props, size })}
     />
   );
 }

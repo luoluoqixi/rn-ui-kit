@@ -6,10 +6,13 @@ import type { NativeHapticsSetting, RenderProp } from "../utils";
 
 type PrimitiveCheckboxProps = ComponentProps<typeof CheckboxPrimitive.Root>;
 
+export type CheckboxSize = "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+
 export type CheckboxRenderContext = {
   card: boolean;
   checked: boolean;
   disabled?: boolean;
+  size: CheckboxSize;
 };
 
 export type CheckboxProps = Omit<PrimitiveCheckboxProps, "checked" | "onCheckedChange"> & {
@@ -28,4 +31,5 @@ export type CheckboxProps = Omit<PrimitiveCheckboxProps, "checked" | "onCheckedC
   containerClassName?: string;
   labelClassName?: string;
   descriptionClassName?: string;
+  size?: CheckboxSize;
 };

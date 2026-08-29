@@ -1,9 +1,34 @@
 import { Icon } from "../icon";
+import type { IconProps } from "../icon";
 import { Text, TextClassContext } from "../text";
 import { cn } from "../utils/cn";
 import { resolveRenderProp } from "../utils/render";
 import * as React from "react";
 import { View } from "react-native";
+
+const alertIconPaddingClasses = {
+  "2xs": "pl-6",
+  xs: "pl-6",
+  sm: "pl-6",
+  md: "pl-6",
+  lg: "pl-8",
+  xl: "pl-9",
+  "2xl": "pl-10",
+} as const;
+
+function getAlertIconPaddingClass(size: IconProps["size"]) {
+  if (typeof size === "string" && size in alertIconPaddingClasses) {
+    return alertIconPaddingClasses[size as keyof typeof alertIconPaddingClasses];
+  }
+
+  if (typeof size === "number") {
+    if (size > 28) return "pl-10";
+    if (size > 24) return "pl-9";
+    if (size > 20) return "pl-8";
+  }
+
+  return "pl-6";
+}
 
 function Alert({
   className,
@@ -16,6 +41,7 @@ function Alert({
   iconAlign = "center",
   iconContainerClassName,
   iconClassName,
+  iconSize = "md",
   iconProps,
   title,
   titleClassName,
@@ -26,6 +52,7 @@ function Alert({
   const renderedTitle = resolveRenderProp(title, renderContext);
   const renderedDescription = resolveRenderProp(description, renderContext);
   const hasStructuredContent = renderedTitle != null || renderedDescription != null;
+  const iconPaddingClass = getAlertIconPaddingClass(iconSize ?? iconProps?.size);
 
   return (
     <TextClassContext.Provider
@@ -53,8 +80,9 @@ function Alert({
           <Icon
             as={icon}
             {...iconProps}
+            size={iconSize ?? iconProps?.size}
             className={cn(
-              "size-4",
+              iconSize == null && iconProps?.size == null ? "size-4" : undefined,
               variant === "destructive" && "text-destructive",
               iconClassName,
               iconProps?.className,
@@ -64,14 +92,17 @@ function Alert({
         {hasStructuredContent ? (
           <>
             {renderedTitle != null ? (
-              <AlertTitle {...titleProps} className={cn(titleClassName, titleProps?.className)}>
+              <AlertTitle
+                {...titleProps}
+                className={cn(iconPaddingClass, titleClassName, titleProps?.className)}
+              >
                 {renderedTitle}
               </AlertTitle>
             ) : null}
             {renderedDescription != null ? (
               <AlertDescription
                 {...descriptionProps}
-                className={cn(descriptionClassName, descriptionProps?.className)}
+                className={cn(iconPaddingClass, descriptionClassName, descriptionProps?.className)}
               >
                 {renderedDescription}
               </AlertDescription>
@@ -89,7 +120,7 @@ function Alert({
 function AlertTitle({ className, ...props }: React.ComponentProps<typeof Text>) {
   return (
     <Text
-      className={cn("mb-1 ml-0.5 min-h-4 pl-6 font-medium leading-none tracking-tight", className)}
+      className={cn("mb-1 ml-0.5 min-h-4 font-medium leading-none tracking-tight", className)}
       {...props}
     />
   );
@@ -100,7 +131,7 @@ function AlertDescription({ className, ...props }: React.ComponentProps<typeof T
   return (
     <Text
       className={cn(
-        "text-muted-foreground ml-0.5 pb-1.5 pl-6 text-sm leading-relaxed",
+        "text-muted-foreground ml-0.5 pb-1.5 text-sm leading-relaxed",
         textClass?.includes("text-destructive") && "text-destructive/90",
         className,
       )}

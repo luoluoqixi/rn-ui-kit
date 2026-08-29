@@ -7,9 +7,29 @@ import * as CheckboxPrimitive from "@rn-primitives/checkbox";
 import { Check } from "lucide-react-native";
 import * as React from "react";
 import { Platform, Pressable, View, type GestureResponderEvent } from "react-native";
-import type { CheckboxProps, CheckboxRenderContext } from "./types";
+import type { CheckboxProps, CheckboxRenderContext, CheckboxSize } from "./types";
 
 const DEFAULT_HIT_SLOP = 24;
+
+const checkboxSizeClasses: Record<CheckboxSize, string> = {
+  "2xs": "size-3",
+  "xs": "size-3.5",
+  "sm": "size-4",
+  "md": "size-5",
+  "lg": "size-6",
+  "xl": "size-7",
+  "2xl": "size-8",
+};
+
+const checkboxIconSizes: Record<CheckboxSize, number> = {
+  "2xs": 10,
+  "xs": 11,
+  "sm": 12,
+  "md": 14,
+  "lg": 18,
+  "xl": 21,
+  "2xl": 24,
+};
 
 function Checkbox({
   className,
@@ -31,6 +51,7 @@ function Checkbox({
   checked,
   onPressIn,
   onPressOut,
+  size = "md",
   ...props
 }: CheckboxProps) {
   const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics, {
@@ -45,6 +66,7 @@ function Checkbox({
     card,
     checked: resolvedChecked,
     disabled: props.disabled,
+    size,
   };
   const renderedLabel = resolveRenderProp(label, renderContext);
   const renderedDescription = resolveRenderProp(description, renderContext);
@@ -117,7 +139,8 @@ function Checkbox({
           {...props}
           checked={resolvedChecked}
           className={cn(
-            "border-input dark:bg-input/30 size-4 shrink-0 rounded-[4px] border shadow-sm shadow-black/5",
+            "border-input dark:bg-input/30 shrink-0 rounded-[4px] border shadow-sm shadow-black/5",
+            checkboxSizeClasses[size],
             isPressed && "opacity-70",
             Platform.select({
               web: "group-hover:opacity-80 group-active:opacity-70",
@@ -144,7 +167,7 @@ function Checkbox({
             <Icon
               as={Check}
               {...iconProps}
-              size={iconProps?.size ?? 12}
+              size={iconProps?.size ?? checkboxIconSizes[size]}
               strokeWidth={iconProps?.strokeWidth ?? (Platform.OS === "web" ? 2.5 : 3.5)}
               className={cn("text-primary-foreground", iconClassName, iconProps?.className)}
             />
@@ -161,7 +184,8 @@ function Checkbox({
   return (
     <CheckboxPrimitive.Root
       className={cn(
-        "border-input dark:bg-input/30 size-4 shrink-0 rounded-[4px] border shadow-sm shadow-black/5",
+        "border-input dark:bg-input/30 shrink-0 rounded-[4px] border shadow-sm shadow-black/5",
+        checkboxSizeClasses[size],
         Platform.select({
           web: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive peer cursor-default outline-none transition-shadow focus-visible:ring-[3px] disabled:cursor-not-allowed hover:opacity-80 active:opacity-70",
           native: "overflow-hidden",
@@ -200,7 +224,7 @@ function Checkbox({
         <Icon
           as={Check}
           {...iconProps}
-          size={iconProps?.size ?? 12}
+          size={iconProps?.size ?? checkboxIconSizes[size]}
           strokeWidth={iconProps?.strokeWidth ?? (Platform.OS === "web" ? 2.5 : 3.5)}
           className={cn("text-primary-foreground", iconClassName, iconProps?.className)}
         />

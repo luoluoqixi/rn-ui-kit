@@ -28,9 +28,13 @@ export function IconExample() {
       </ExampleBlock>
       <ExampleBlock title="尺寸与颜色">
         <ExampleRow>
-          <Icon as={Search} className="size-4 text-muted-foreground" />
-          <Icon as={Search} className="size-6 text-primary" />
-          <Icon as={Search} className="size-8 text-destructive" />
+          <Icon as={Search} size="2xs" />
+          <Icon as={Search} size="xs" />
+          <Icon as={Search} size="sm" />
+          <Icon as={Search} size="md" />
+          <Icon as={Search} size="lg" />
+          <Icon as={Search} size="xl" />
+          <Icon as={Search} size="2xl" className="text-primary" />
         </ExampleRow>
       </ExampleBlock>
     </ExampleStack>

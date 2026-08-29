@@ -29,9 +29,16 @@ export const textVariants = cva(
           "bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold",
         ),
         lead: "text-muted-foreground text-xl",
-        large: "text-lg font-semibold",
-        small: "text-sm font-medium leading-none",
         muted: "text-muted-foreground text-sm",
+      },
+      size: {
+        "2xs": "text-[10px]",
+        xs: "text-xs",
+        sm: "text-sm",
+        md: "text-base",
+        lg: "text-lg",
+        xl: "text-xl",
+        "2xl": "text-2xl",
       },
     },
     defaultVariants: {

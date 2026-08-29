@@ -7,6 +7,13 @@ export function AvatarExample() {
     <ExampleStack>
       <ExampleBlock title="协作者">
         <ExampleRow>
+          <Avatar alt="xs" fallback="X" size="xs" />
+          <Avatar alt="sm" fallback="S" size="sm" />
+          <Avatar alt="md" fallback="M" size="md" />
+          <Avatar alt="lg" fallback="L" size="lg" />
+          <Avatar alt="xl" fallback="X" size="xl" />
+        </ExampleRow>
+        <ExampleRow>
           <View>
             <Avatar
               alt="Ada Lovelace"

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Checkbox } from "rn-ui-kit/core";
-import { ExampleBlock, ExampleStack } from "../shared";
+import { ExampleBlock, ExampleRow, ExampleStack } from "../shared";
 
 export function CheckboxExample() {
   const [values, setValues] = useState({
@@ -9,6 +9,11 @@ export function CheckboxExample() {
     termsWithDescription: true,
     notifications: false,
     notifications2: false,
+    xs: false,
+    sm: false,
+    md: false,
+    lg: false,
+    xl: false,
   });
 
   const update = (key: keyof typeof values) => (checked: boolean) => {
@@ -62,6 +67,43 @@ export function CheckboxExample() {
           checkedClassName="border-primary bg-primary"
           indicatorClassName="bg-primary"
           iconClassName="text-primary-foreground"
+        />
+      </ExampleBlock>
+      <ExampleBlock title="大小示例">
+        <Checkbox
+          checked={values.xs}
+          onCheckedChange={update("xs")}
+          label="超小 Checkbox"
+          size="xs"
+          id="checkbox-xs"
+        />
+        <Checkbox
+          checked={values.sm}
+          onCheckedChange={update("sm")}
+          label="小 Checkbox"
+          size="sm"
+          id="checkbox-sm"
+        />
+        <Checkbox
+          checked={values.md}
+          onCheckedChange={update("md")}
+          label="默认 Checkbox"
+          size="md"
+          id="checkbox-md"
+        />
+        <Checkbox
+          checked={values.lg}
+          onCheckedChange={update("lg")}
+          label="大 Checkbox"
+          size="lg"
+          id="checkbox-lg"
+        />
+        <Checkbox
+          checked={values.xl}
+          onCheckedChange={update("xl")}
+          label="超大 Checkbox"
+          size="xl"
+          id="checkbox-xl"
         />
       </ExampleBlock>
     </ExampleStack>

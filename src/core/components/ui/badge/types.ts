@@ -10,6 +10,7 @@ import type { badgeVariants } from "./badge";
 export type BadgeRenderContext = {
   icon?: LucideIcon;
   variant?: "default" | "secondary" | "destructive" | "outline" | null;
+  size?: "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | null;
 };
 
 export type BadgeProps = ComponentProps<typeof View> &

@@ -11,3 +11,4 @@ export type TextProps = React.ComponentProps<typeof RNText> &
   };
 
 export type TextVariant = NonNullable<TextVariantProps["variant"]>;
+export type TextSize = NonNullable<TextVariantProps["size"]>;

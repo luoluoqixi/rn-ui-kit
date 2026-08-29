@@ -2,13 +2,48 @@ import { cn } from "../utils/cn";
 import { resolveRenderProp } from "../utils/render";
 import { Text } from "../text";
 import * as AvatarPrimitive from "@rn-primitives/avatar";
+import { cva } from "class-variance-authority";
 import { Children } from "react";
 
 import type { AvatarFallbackProps, AvatarImageProps, AvatarProps } from "./types";
 
-function normalizeAvatarChildren(children: React.ReactNode) {
+export const avatarVariants = cva("relative flex shrink-0 overflow-hidden rounded-full", {
+  variants: {
+    size: {
+      "2xs": "size-6",
+      xs: "size-8",
+      sm: "size-9",
+      md: "size-10",
+      lg: "size-12",
+      xl: "size-14",
+      "2xl": "size-16",
+    },
+  },
+  defaultVariants: { size: "md" },
+});
+
+const avatarFallbackTextVariants = cva("font-medium", {
+  variants: {
+    size: {
+      "2xs": "text-[10px]",
+      xs: "text-xs",
+      sm: "text-sm",
+      md: "text-base",
+      lg: "text-lg",
+      xl: "text-xl",
+      "2xl": "text-2xl",
+    },
+  },
+  defaultVariants: { size: "md" },
+});
+
+function normalizeAvatarChildren(children: React.ReactNode, className?: string) {
   return Children.map(children, (child) =>
-    typeof child === "string" || typeof child === "number" ? <Text>{child}</Text> : child,
+    typeof child === "string" || typeof child === "number" ? (
+      <Text className={className}>{child}</Text>
+    ) : (
+      child
+    ),
   );
 }
 
@@ -21,16 +56,17 @@ function Avatar({
   imageClassName,
   imageProps,
   src,
+  size,
   className,
   ...props
 }: AvatarProps) {
   const hasFallback = fallback != null || fallbackProps != null || src != null;
-  const renderedFallback = resolveRenderProp(fallback, { alt, src });
+  const renderedFallback = resolveRenderProp(fallback, { alt, size, src });
 
   return (
     <AvatarPrimitive.Root
       alt={alt ?? ""}
-      className={cn("relative flex size-8 shrink-0 overflow-hidden rounded-full", className)}
+      className={cn(avatarVariants({ size }), className)}
       {...props}
     >
       {children ?? (
@@ -47,7 +83,7 @@ function Avatar({
               {...fallbackProps}
               className={cn(fallbackClassName, fallbackProps?.className)}
             >
-              {renderedFallback}
+              {normalizeAvatarChildren(renderedFallback, avatarFallbackTextVariants({ size }))}
             </AvatarFallback>
           ) : null}
         </>

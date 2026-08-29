@@ -7,6 +7,13 @@ export function BadgeExample() {
     <ExampleStack>
       <ExampleBlock title="项目状态">
         <ExampleRow>
+          <Badge label="xs" size="xs" />
+          <Badge label="sm" size="sm" />
+          <Badge label="md" size="md" />
+          <Badge label="lg" size="lg" />
+          <Badge label="xl" size="xl" />
+        </ExampleRow>
+        <ExampleRow>
           <Badge label="稳定" />
           <Badge label="次要" variant="secondary" />
           <Badge label="阻塞" variant="destructive" />

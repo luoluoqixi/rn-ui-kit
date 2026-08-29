@@ -41,7 +41,7 @@ function getButtonStyle(
       },
     } as const;
   }
-  if (variant === "ghost" || variant === "link") {
+  if (variant === "ghost" || variant === "link" || variant === "icon") {
     return {
       Component: TextButton,
       colors: { contentColor: colors.primary },

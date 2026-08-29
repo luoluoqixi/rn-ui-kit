@@ -19,6 +19,7 @@ export type AlertProps = ComponentProps<typeof View> & {
   icon: LucideIcon;
   iconContainerClassName?: string;
   iconClassName?: string;
+  iconSize?: IconProps["size"];
   iconProps?: Omit<IconProps, "as">;
   iconAlign?: "center" | "start";
   title?: RenderProp<AlertRenderContext>;

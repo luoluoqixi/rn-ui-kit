@@ -57,6 +57,23 @@ export function ButtonExample() {
           </Button>
         </ExampleRow>
       </ExampleBlock>
+      <ExampleBlock title="尺寸等级">
+        <ExampleRow>
+          <Button size="2xs">最小</Button>
+          <Button size="xs">超小</Button>
+          <Button size="sm">小</Button>
+          <Button>中（默认）</Button>
+          <Button size="lg">大</Button>
+          <Button size="xl">超大</Button>
+          <Button size="2xl">最大</Button>
+          <Button variant="icon" aria-label="图标按钮">
+            <Icon as={Mail} className="text-foreground" />
+          </Button>
+          <Button size="lg" variant="icon" aria-label="大图标按钮">
+            <Icon as={Mail} className="text-foreground" />
+          </Button>
+        </ExampleRow>
+      </ExampleBlock>
       <ExampleBlock title="扩展状态">
         <ExampleRow>
           <Button loading title="请稍候" />
@@ -69,8 +86,8 @@ export function ButtonExample() {
             <Icon as={Mail} className="text-primary-foreground" />
             <Text>邮件登录</Text>
           </Button>
-          <Button nativeHaptics={nativeHaptics} aria-label="打开邮件" size="icon">
-            <Icon as={Mail} className="text-primary-foreground" />
+          <Button nativeHaptics={nativeHaptics} aria-label="打开邮件" variant="icon">
+            <Icon as={Mail} className="text-foreground" />
           </Button>
           <Button nativeHaptics={nativeHaptics} title="Button Link" variant="link" />
           <Button nativeHaptics={nativeHaptics} native>
