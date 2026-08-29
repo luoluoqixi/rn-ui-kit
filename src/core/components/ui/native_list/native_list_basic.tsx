@@ -526,6 +526,10 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
           nativeTriggerIcon={selectProps.nativeTriggerIcon ?? "chevrons-up-down"}
           nativeHaptics={inheritedHaptics}
           nativeTriggerHoverBackground={false}
+          nativeTriggerContainerStyle={[
+            selectProps.nativeTriggerContainerStyle,
+            { paddingHorizontal: 0 },
+          ]}
           nativeTriggerLabel={selectProps.nativeTriggerLabel}
           nativeTriggerLabelProps={{
             ...selectProps.nativeTriggerLabelProps,
@@ -542,6 +546,7 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
           }}
           nativeTriggerProps={{
             ...selectProps.nativeTriggerProps,
+            size: selectProps.nativeTriggerProps?.size ?? "md",
             iconColor:
               itemProps.valueColor ??
               selectProps.nativeTriggerProps?.iconColor ??
@@ -641,9 +646,11 @@ export function NativeListDropdownItem({
             nativeHaptics={inheritedHaptics}
             nativeTrigger
             nativeTriggerIcon="chevrons-up-down"
+            nativeTriggerContainerStyle={{ paddingHorizontal: 0 }}
             nativeTriggerLabelProps={nativeTriggerLabelProps}
             nativeTriggerProps={{
               ...dropdownProps.nativeTriggerProps,
+              size: dropdownProps.nativeTriggerProps?.size ?? "md",
               iconColor:
                 itemProps.valueColor ??
                 dropdownProps.nativeTriggerProps?.iconColor ??

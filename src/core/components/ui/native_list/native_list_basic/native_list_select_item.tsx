@@ -197,6 +197,10 @@ export function NativeListSelectItem(props: NativeListSelectItemProps) {
             nativeTriggerIcon={selectProps.nativeTriggerIcon ?? "chevrons-up-down"}
             nativeHaptics={inheritedHaptics}
             nativeTriggerHoverBackground={false}
+            nativeTriggerContainerStyle={[
+              selectProps.nativeTriggerContainerStyle,
+              { paddingHorizontal: 0 },
+            ]}
             // 让 Select 自己生成 SelectedLabel，这样 labelProps（包括默认透明度、
             // fontSize 与 color）能真正传到内部 Text，而不是被 ReactNode 绕过。
             nativeTriggerLabel={selectProps.nativeTriggerLabel}
@@ -216,6 +220,7 @@ export function NativeListSelectItem(props: NativeListSelectItemProps) {
             }}
             nativeTriggerProps={{
               ...selectProps.nativeTriggerProps,
+              size: selectProps.nativeTriggerProps?.size ?? "md",
               iconColor:
                 itemProps.valueColor ??
                 selectProps.nativeTriggerProps?.iconColor ??

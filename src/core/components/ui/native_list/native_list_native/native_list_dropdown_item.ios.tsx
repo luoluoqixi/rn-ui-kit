@@ -69,7 +69,7 @@ export function NativeListDropdownItem({
             {...dropdownProps}
             nativeHaptics={inheritedHaptics}
             nativeTrigger
-            nativeTriggerContainerStyle={[styles.selectInlineTrigger]}
+            nativeTriggerContainerStyle={[styles.selectInlineTrigger, { paddingHorizontal: 0 }]}
             nativeTriggerIcon="chevrons-up-down"
             nativeTriggerLabelProps={nativeTriggerLabelProps}
             nativeTriggerFeedbackOpacity={{
@@ -81,6 +81,7 @@ export function NativeListDropdownItem({
             }}
             nativeTriggerProps={{
               ...dropdownProps.nativeTriggerProps,
+              size: dropdownProps.nativeTriggerProps?.size ?? "md",
               iconColor:
                 itemProps.valueColor ??
                 dropdownProps.nativeTriggerProps?.iconColor ??
