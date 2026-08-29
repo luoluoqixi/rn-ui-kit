@@ -3,12 +3,16 @@ import type * as TabsPrimitive from "@rn-primitives/tabs";
 
 import type { NativeHapticsSetting, RenderProp } from "../utils";
 
+export type TabsSize = "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+
 export type TabsItemData = {
   content: RenderProp<TabsItemData>;
   contentProps?: Omit<ComponentProps<typeof TabsPrimitive.Content>, "children" | "value">;
   disabled?: boolean;
   title: RenderProp<TabsItemData>;
-  triggerProps?: Omit<ComponentProps<typeof TabsPrimitive.Trigger>, "children" | "value">;
+  triggerProps?: Omit<ComponentProps<typeof TabsPrimitive.Trigger>, "children" | "value"> & {
+    size?: TabsSize;
+  };
   value: string;
 };
 
@@ -16,7 +20,17 @@ export type TabsProps = Omit<ComponentProps<typeof TabsPrimitive.Root>, "childre
   children?: ReactNode;
   contentProps?: Omit<ComponentProps<typeof TabsPrimitive.Content>, "children" | "value">;
   items?: TabsItemData[];
-  listProps?: ComponentProps<typeof TabsPrimitive.List>;
+  listProps?: ComponentProps<typeof TabsPrimitive.List> & { size?: TabsSize };
   nativeHaptics?: NativeHapticsSetting;
-  triggerProps?: Omit<ComponentProps<typeof TabsPrimitive.Trigger>, "children" | "value">;
+  size?: TabsSize;
+  triggerProps?: Omit<ComponentProps<typeof TabsPrimitive.Trigger>, "children" | "value"> & {
+    size?: TabsSize;
+  };
+};
+
+export type TabsListProps = ComponentProps<typeof TabsPrimitive.List> & { size?: TabsSize };
+export type TabsTriggerProps = Omit<ComponentProps<typeof TabsPrimitive.Trigger>, "children"> & {
+  children?: ReactNode;
+  nativeHaptics?: NativeHapticsSetting;
+  size?: TabsSize;
 };

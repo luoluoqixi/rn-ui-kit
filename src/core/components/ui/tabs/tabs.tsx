@@ -10,9 +10,20 @@ import { resolveRenderProp } from "../utils/render";
 import * as TabsPrimitive from "@rn-primitives/tabs";
 import * as React from "react";
 import { Platform } from "react-native";
-import type { TabsProps } from "./types";
+import type { TabsListProps, TabsProps, TabsSize, TabsTriggerProps } from "./types";
 
 const TabsHapticsContext = React.createContext<NativeHapticsSetting | undefined>(undefined);
+const TabsSizeContext = React.createContext<TabsSize>("md");
+
+const tabsSizes: Record<TabsSize, { list: string; trigger: string; text: string }> = {
+  "2xs": { list: "h-7 p-0.5", trigger: "gap-1 px-1.5 py-0.5", text: "text-xs" },
+  "xs": { list: "h-8 p-0.5", trigger: "gap-1 px-2 py-1", text: "text-xs" },
+  "sm": { list: "h-9 p-[3px]", trigger: "gap-1.5 px-2 py-1", text: "text-sm" },
+  "md": { list: "h-10 p-[3px]", trigger: "gap-1.5 px-2.5 py-1", text: "text-base" },
+  "lg": { list: "h-11 p-[3px]", trigger: "gap-2 px-3 py-1.5", text: "text-base" },
+  "xl": { list: "h-12 p-[3px]", trigger: "gap-2 px-4 py-1.5", text: "text-lg" },
+  "2xl": { list: "h-14 p-1", trigger: "gap-2.5 px-5 py-2.5", text: "text-xl" },
+};
 
 function normalizeTabsChildren(children: unknown) {
   if (typeof children === "function") return children as any;
@@ -28,6 +39,7 @@ function Tabs({
   items,
   listProps,
   nativeHaptics,
+  size = "md",
   triggerProps,
   ...props
 }: TabsProps) {
@@ -62,17 +74,19 @@ function Tabs({
   return (
     <TabsPrimitive.Root className={cn("flex flex-col gap-2", className)} {...props}>
       <TabsHapticsContext.Provider value={resolvedNativeHaptics}>
-        {renderedChildren}
+        <TabsSizeContext.Provider value={size}>{renderedChildren}</TabsSizeContext.Provider>
       </TabsHapticsContext.Provider>
     </TabsPrimitive.Root>
   );
 }
 
-function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.List>) {
+function TabsList({ className, size, ...props }: TabsListProps) {
+  const resolvedSize = size ?? React.useContext(TabsSizeContext);
   return (
     <TabsPrimitive.List
       className={cn(
-        "bg-muted flex h-9 flex-row items-center justify-center rounded-lg p-[3px]",
+        "bg-muted flex flex-row items-center justify-center rounded-lg",
+        tabsSizes[resolvedSize].list,
         Platform.select({ web: "inline-flex w-fit", native: "mr-auto" }),
         className,
       )}
@@ -88,11 +102,11 @@ function TabsTrigger({
   onPress,
   onPressIn,
   onPressOut,
+  size,
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.Trigger> & {
-  nativeHaptics?: NativeHapticsSetting;
-}) {
+}: TabsTriggerProps) {
   const contextNativeHaptics = React.useContext(TabsHapticsContext);
+  const resolvedSize = size ?? React.useContext(TabsSizeContext);
   const { value } = TabsPrimitive.useRootContext();
   const isActive = value === props.value;
   const [isPressed, setIsPressed] = React.useState(false);
@@ -108,13 +122,15 @@ function TabsTrigger({
   return (
     <TextClassContext.Provider
       value={cn(
-        "text-foreground dark:text-muted-foreground text-sm font-medium",
+        "text-foreground dark:text-muted-foreground font-medium",
+        tabsSizes[resolvedSize].text,
         isActive ? "dark:text-foreground" : inactiveTextInteractionClass,
       )}
     >
       <TabsPrimitive.Trigger
         className={cn(
-          "group flex flex-row items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 shadow-none shadow-black/5",
+          "group flex flex-row items-center justify-center rounded-md border border-transparent shadow-none shadow-black/5",
+          tabsSizes[resolvedSize].trigger,
           Platform.select({
             web: "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring web:h-[calc(100%-1px)] inline-flex cursor-default whitespace-nowrap transition-[color,box-shadow] focus-visible:outline-1 focus-visible:ring-[3px] disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0",
           }),
