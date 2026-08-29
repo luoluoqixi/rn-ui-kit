@@ -14,6 +14,29 @@ export function TooltipExample() {
           </Tooltip>
         </ExampleRow>
       </ExampleBlock>
+      <ExampleBlock title="大小">
+        <Tooltip size="2xs" content="最小 Tooltip" delayDuration={200}>
+          <Button variant="outline">最小 Tooltip</Button>
+        </Tooltip>
+        <Tooltip size="xs" content="超小 Tooltip" delayDuration={200}>
+          <Button variant="outline">超小 Tooltip</Button>
+        </Tooltip>
+        <Tooltip size="sm" content="小 Tooltip" delayDuration={200}>
+          <Button variant="outline">小 Tooltip</Button>
+        </Tooltip>
+        <Tooltip size="md" content="正常 Tooltip" delayDuration={200}>
+          <Button variant="outline">正常 Tooltip</Button>
+        </Tooltip>
+        <Tooltip size="lg" content="大 Tooltip" delayDuration={200}>
+          <Button variant="outline">大 Tooltip</Button>
+        </Tooltip>
+        <Tooltip size="xl" content="超大 Tooltip" delayDuration={200}>
+          <Button variant="outline">超大 Tooltip</Button>
+        </Tooltip>
+        <Tooltip size="2xl" content="最大 Tooltip" delayDuration={200}>
+          <Button variant="outline">最大 Tooltip</Button>
+        </Tooltip>
+      </ExampleBlock>
     </ExampleStack>
   );
 }

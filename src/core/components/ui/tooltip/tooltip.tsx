@@ -9,10 +9,21 @@ import * as TooltipPrimitive from "@rn-primitives/tooltip";
 import * as React from "react";
 import { Platform, StyleSheet } from "react-native";
 import { FadeInDown, FadeInUp, FadeOut, ReduceMotion } from "react-native-reanimated";
-import type { TooltipProps } from "./types";
+import type { TooltipProps, TooltipSize } from "./types";
 
 const TooltipRoot = TooltipPrimitive.Root;
 const TooltipTrigger = TooltipPrimitive.Trigger;
+const TooltipSizeContext = React.createContext<TooltipSize>("md");
+
+const tooltipSizes: Record<TooltipSize, { content: string; text: string }> = {
+  "2xs": { content: "px-2 py-1", text: "text-[10px]" },
+  "xs": { content: "px-2.5 py-1", text: "text-xs" },
+  "sm": { content: "px-2.5 py-1.5", text: "text-sm" },
+  "md": { content: "px-3 py-1.5", text: "text-sm" },
+  "lg": { content: "px-3.5 py-2", text: "text-lg" },
+  "xl": { content: "px-4 py-2.5", text: "text-xl" },
+  "2xl": { content: "px-5 py-3", text: "text-2xl" },
+};
 
 function normalizeTooltipChildren(children: React.ReactNode) {
   return React.Children.map(children, (child) =>
@@ -24,11 +35,16 @@ function TooltipRootComponent({
   children,
   content,
   contentProps,
+  size = "md",
   triggerProps,
   ...props
 }: TooltipProps) {
   if (content === undefined) {
-    return <TooltipRoot {...props}>{children}</TooltipRoot>;
+    return (
+      <TooltipRoot {...props}>
+        <TooltipSizeContext.Provider value={size}>{children}</TooltipSizeContext.Provider>
+      </TooltipRoot>
+    );
   }
   const renderedContent = resolveRenderProp(content, {});
 
@@ -45,7 +61,9 @@ function TooltipRootComponent({
   return (
     <TooltipRoot {...props}>
       {triggerElement}
-      <TooltipContent {...contentProps}>{renderedContent}</TooltipContent>
+      <TooltipContent {...contentProps} size={contentProps?.size ?? size}>
+        {renderedContent}
+      </TooltipContent>
     </TooltipRoot>
   );
 }
@@ -56,9 +74,11 @@ function TooltipContent({
   sideOffset = 4,
   portalHost,
   side = "top",
+  size: sizeProp,
   style,
   ...props
 }: import("./types").TooltipContentProps) {
+  const size = sizeProp ?? React.useContext(TooltipSizeContext);
   const scopedPortalHost = useScopedOverlayPortalHostName();
   const resolvedPortalHost = portalHost ?? scopedPortalHost;
   const contentStyle = useOverlayPortalContentStyle(style);
@@ -85,12 +105,14 @@ function TooltipContent({
             exiting={FadeOut.reduceMotion(ReduceMotion.System)}
             as="Pressable"
           >
-            <TextClassContext.Provider value="text-xs text-primary-foreground">
+            <TextClassContext.Provider
+              value={cn(tooltipSizes[size].text, "text-primary-foreground")}
+            >
               <TooltipPrimitive.Content
                 sideOffset={sideOffset}
                 style={contentStyle as any}
                 className={cn(
-                  "bg-primary z-50 rounded-md px-3 py-2 sm:py-1.5",
+                  cn("bg-primary z-50 rounded-md", tooltipSizes[size].content),
                   Platform.select({
                     web: cn(
                       "animate-in fade-in-0 zoom-in-95 origin-(--radix-tooltip-content-transform-origin) w-fit text-balance",
