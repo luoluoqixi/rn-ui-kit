@@ -8,9 +8,11 @@ export type ToggleRenderContext = {
   pressed?: boolean;
 };
 
+export type ToggleSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+
 export type ToggleProps = ComponentProps<typeof TogglePrimitive.Root> & {
   nativeHaptics?: NativeHapticsSetting;
-  size?: "default" | "sm" | "lg";
+  size?: ToggleSize;
   title?: RenderProp<ToggleRenderContext>;
   variant?: "default" | "outline";
 };

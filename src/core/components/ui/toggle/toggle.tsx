@@ -8,7 +8,7 @@ import { cva } from "class-variance-authority";
 import * as React from "react";
 import { Platform, StyleSheet } from "react-native";
 import { resolveRenderProp } from "../utils/render";
-import type { ToggleProps } from "./types";
+import type { ToggleProps, ToggleSize } from "./types";
 
 const toggleVariants = cva(
   cn(
@@ -29,17 +29,50 @@ const toggleVariants = cva(
         ),
       },
       size: {
-        default: "h-10 min-w-10 px-2.5 sm:h-9 sm:min-w-9 sm:px-2",
-        sm: "h-9 min-w-9 px-2 sm:h-8 sm:min-w-8 sm:px-1.5",
-        lg: "h-11 min-w-11 px-3 sm:h-10 sm:min-w-10 sm:px-2.5",
+        "2xs": "h-8 min-w-8 gap-1 px-2 py-1",
+        "xs": "h-9 min-w-9 gap-1 px-2.5 py-1.5",
+        "sm": "h-10 min-w-10 gap-1.5 px-3 py-2",
+        "md": "h-11 min-w-11 px-4 py-2.5",
+        "lg": "h-12 min-w-12 px-5 py-2.5",
+        "xl": "h-14 min-w-14 gap-2.5 px-6 py-3",
+        "2xl": "h-16 min-w-16 gap-3 px-8 py-4",
+        "default": "h-11 min-w-11 px-4 py-2.5",
       },
     },
     defaultVariants: {
       variant: "default",
-      size: "default",
+      size: "md",
     },
   },
 );
+
+const toggleTextVariants = cva("text-foreground font-medium", {
+  variants: {
+    size: {
+      "2xs": "text-[10px]",
+      "xs": "text-xs",
+      "sm": "text-sm",
+      "md": "text-base",
+      "lg": "text-lg",
+      "xl": "text-xl",
+      "2xl": "text-2xl",
+      "default": "text-base",
+    },
+  },
+  defaultVariants: { size: "md" },
+});
+
+export const ToggleSizeContext = React.createContext<ToggleSize>("md");
+const toggleIconSizes: Record<ToggleSize, string> = {
+  "default": "size-4",
+  "2xs": "size-3",
+  "xs": "size-3.5",
+  "sm": "size-4",
+  "md": "size-4",
+  "lg": "size-4",
+  "xl": "size-5",
+  "2xl": "size-6",
+};
 
 function Toggle({
   className,
@@ -72,47 +105,52 @@ function Toggle({
 
   return (
     <TextClassContext.Provider
-      value={cn(
-        "text-sm text-foreground font-medium",
-        props.pressed && "text-accent-foreground",
-        className,
-      )}
+      value={cn(toggleTextVariants({ size }), props.pressed && "text-accent-foreground", className)}
     >
-      <TogglePrimitive.Root
-        {...props}
-        className={cn(
-          toggleVariants({ variant, size }),
-          props.disabled && "opacity-50",
-          props.pressed && "bg-accent",
-          className,
-        )}
-        style={interactionStyle}
-        onPressedChange={(pressed) => {
-          triggerNativeHaptics(resolvedNativeHaptics);
-          onPressedChange?.(pressed);
-        }}
-        onPressIn={(event) => {
-          setIsPressed(true);
-          onPressIn?.(event);
-        }}
-        onPressOut={(event) => {
-          setIsPressed(false);
-          onPressOut?.(event);
-        }}
-      >
-        {typeof resolvedChildren === "function"
-          ? resolvedChildren
-          : React.Children.map(resolvedChildren, (child) =>
-              typeof child === "string" || typeof child === "number" ? <Text>{child}</Text> : child,
-            )}
-      </TogglePrimitive.Root>
+      <ToggleSizeContext.Provider value={size === "default" ? "md" : (size ?? "md")}>
+        <TogglePrimitive.Root
+          {...props}
+          className={cn(
+            toggleVariants({ variant, size }),
+            props.disabled && "opacity-50",
+            props.pressed && "bg-accent",
+            className,
+          )}
+          style={interactionStyle}
+          onPressedChange={(pressed) => {
+            triggerNativeHaptics(resolvedNativeHaptics);
+            onPressedChange?.(pressed);
+          }}
+          onPressIn={(event) => {
+            setIsPressed(true);
+            onPressIn?.(event);
+          }}
+          onPressOut={(event) => {
+            setIsPressed(false);
+            onPressOut?.(event);
+          }}
+        >
+          {typeof resolvedChildren === "function"
+            ? resolvedChildren
+            : React.Children.map(resolvedChildren, (child) =>
+                typeof child === "string" || typeof child === "number" ? (
+                  <Text>{child}</Text>
+                ) : (
+                  child
+                ),
+              )}
+        </TogglePrimitive.Root>
+      </ToggleSizeContext.Provider>
     </TextClassContext.Provider>
   );
 }
 
 function ToggleIcon({ className, ...props }: React.ComponentProps<typeof Icon>) {
   const textClass = React.useContext(TextClassContext);
-  return <Icon className={cn("size-4 shrink-0", textClass, className)} {...props} />;
+  const size = React.useContext(ToggleSizeContext);
+  return (
+    <Icon className={cn(toggleIconSizes[size], "shrink-0", textClass, className)} {...props} />
+  );
 }
 
 const ToggleComponent = Object.assign(Toggle, {
@@ -120,4 +158,4 @@ const ToggleComponent = Object.assign(Toggle, {
   Root: Toggle,
 });
 
-export { ToggleComponent as Toggle, toggleVariants };
+export { ToggleComponent as Toggle, toggleTextVariants, toggleVariants };

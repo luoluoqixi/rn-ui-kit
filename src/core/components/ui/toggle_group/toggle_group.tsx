@@ -1,7 +1,7 @@
 import { Icon } from "../icon";
 import { TextClassContext } from "../text";
 import { Text } from "../text";
-import { toggleVariants } from "../toggle";
+import { ToggleSizeContext, toggleTextVariants, toggleVariants } from "../toggle";
 import { cn } from "../utils/cn";
 import {
   triggerNativeHaptics,
@@ -63,7 +63,9 @@ function ToggleGroup({
       )}
       {...(props as ToggleGroupPrimitive.RootProps)}
     >
-      <ToggleGroupContext.Provider value={{ nativeHaptics: resolvedNativeHaptics, variant, size }}>
+      <ToggleGroupContext.Provider
+        value={{ nativeHaptics: resolvedNativeHaptics, variant, size: size ?? "md" }}
+      >
         {children ??
           items?.map((item, index) => (
             <ToggleGroupItem
@@ -130,58 +132,64 @@ function ToggleGroupItem({
     pressed,
     value: String(props.value ?? ""),
   });
+  const resolvedSize = context.size || size || "md";
 
   return (
     <TextClassContext.Provider
-      value={cn("text-sm text-foreground font-medium", pressed && "text-accent-foreground")}
+      value={cn(
+        toggleTextVariants({ size: resolvedSize }),
+        pressed && "text-accent-foreground",
+      )}
     >
-      <ToggleGroupPrimitive.Item
-        {...props}
-        className={cn(
-          toggleVariants({
-            variant: context.variant || variant,
-            size: context.size || size,
-          }),
-          props.disabled && "opacity-50",
-          pressed && "bg-accent",
-          "min-w-0 shrink-0 rounded-none shadow-none",
-          isFirst && "rounded-l-md",
-          isLast && "rounded-r-md",
-          (context.variant === "outline" || variant === "outline") && "border-l-0",
-          (context.variant === "outline" || variant === "outline") && isFirst && "border-l",
-          Platform.select({
-            web: cn("flex-1 focus:z-10 focus-visible:z-10", hasCustomSizing && "flex-none"),
-          }),
-          className,
-        )}
-        style={interactionStyle}
-        onPress={(event) => {
-          onPress?.(event);
-          if (!event.defaultPrevented) triggerNativeHaptics(resolvedNativeHaptics);
-        }}
-        onPressIn={(event) => {
-          setIsPressed(true);
-          onPressIn?.(event);
-        }}
-        onPressOut={(event) => {
-          setIsPressed(false);
-          onPressOut?.(event);
-        }}
-      >
-        {renderedTitle != null ? (
-          typeof renderedTitle === "string" || typeof renderedTitle === "number" ? (
-            <Text>{renderedTitle}</Text>
+      <ToggleSizeContext.Provider value={resolvedSize === "default" ? "md" : resolvedSize}>
+        <ToggleGroupPrimitive.Item
+          {...props}
+          className={cn(
+            toggleVariants({
+              variant: context.variant || variant,
+              size: resolvedSize,
+            }),
+            props.disabled && "opacity-50",
+            pressed && "bg-accent",
+            "min-w-0 shrink-0 rounded-none shadow-none",
+            isFirst && "rounded-l-md",
+            isLast && "rounded-r-md",
+            (context.variant === "outline" || variant === "outline") && "border-l-0",
+            (context.variant === "outline" || variant === "outline") && isFirst && "border-l",
+            Platform.select({
+              web: cn("flex-1 focus:z-10 focus-visible:z-10", hasCustomSizing && "flex-none"),
+            }),
+            className,
+          )}
+          style={interactionStyle}
+          onPress={(event) => {
+            onPress?.(event);
+            if (!event.defaultPrevented) triggerNativeHaptics(resolvedNativeHaptics);
+          }}
+          onPressIn={(event) => {
+            setIsPressed(true);
+            onPressIn?.(event);
+          }}
+          onPressOut={(event) => {
+            setIsPressed(false);
+            onPressOut?.(event);
+          }}
+        >
+          {renderedTitle != null ? (
+            typeof renderedTitle === "string" || typeof renderedTitle === "number" ? (
+              <Text>{renderedTitle}</Text>
+            ) : (
+              renderedTitle
+            )
+          ) : typeof children === "function" ? (
+            children
           ) : (
-            renderedTitle
-          )
-        ) : typeof children === "function" ? (
-          children
-        ) : (
-          React.Children.map(children, (child) =>
-            typeof child === "string" || typeof child === "number" ? <Text>{child}</Text> : child,
-          )
-        )}
-      </ToggleGroupPrimitive.Item>
+            React.Children.map(children, (child) =>
+              typeof child === "string" || typeof child === "number" ? <Text>{child}</Text> : child,
+            )
+          )}
+        </ToggleGroupPrimitive.Item>
+      </ToggleSizeContext.Provider>
     </TextClassContext.Provider>
   );
 }
