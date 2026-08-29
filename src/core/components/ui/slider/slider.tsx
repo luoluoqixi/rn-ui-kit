@@ -15,6 +15,19 @@ import { NativeSlider } from "./native_slider";
 import { useSliderBehavior } from "./slider/slider";
 import type { SliderProps } from "./types";
 
+type SliderVisualSize = { root: number; track: number; thumb: number };
+
+const sliderVisualSizes: Record<NonNullable<SliderProps["size"]>, SliderVisualSize> = {
+  default: { root: 32, track: 6, thumb: 24 },
+  "2xs": { root: 20, track: 4, thumb: 16 },
+  xs: { root: 24, track: 4, thumb: 18 },
+  sm: { root: 28, track: 5, thumb: 20 },
+  md: { root: 32, track: 6, thumb: 24 },
+  lg: { root: 36, track: 7, thumb: 28 },
+  xl: { root: 42, track: 8, thumb: 32 },
+  "2xl": { root: 48, track: 10, thumb: 36 },
+};
+
 function resolveColor(color: ColorValue | undefined, fallback: string) {
   return color == null ? fallback : String(color);
 }
@@ -68,7 +81,9 @@ function NonNativeSlider({
   onLayout,
   onValueChange,
   onValueChangeFinished,
+  orientation = "horizontal",
   step,
+  size = "default",
   style,
   thumbCount,
   thumbStyle,
@@ -76,8 +91,9 @@ function NonNativeSlider({
   value,
   ...props
 }: SliderProps) {
+  const visualSize = sliderVisualSizes[size];
   const sliderRef = useRef<View>(null);
-  const trackWidthRef = useRef(0);
+  const trackLengthRef = useRef(0);
   const hasCursorOverride = className?.split(/\s+/).some((token) => token.startsWith("cursor-"));
   const [hoveredThumbIndex, setHoveredThumbIndex] = useState<number | null>(null);
   const [pressedThumbIndex, setPressedThumbIndex] = useState<number | null>(null);
@@ -99,6 +115,8 @@ function NonNativeSlider({
     onLayout,
     onValueChange,
     onValueChangeFinished,
+    orientation,
+    trackInset: 0,
     step,
     sliderRef,
     thumbCount,
@@ -122,10 +140,10 @@ function NonNativeSlider({
   const activeTrackEnd = percentages[percentages.length - 1] ?? 0;
   const percentagesRef = useRef(percentages);
   percentagesRef.current = percentages;
-  const resolveThumbIndex = useCallback((locationX: number | undefined) => {
+  const resolveThumbIndex = useCallback((location: number | undefined) => {
     const currentPercentages = percentagesRef.current;
-    if (locationX == null || trackWidthRef.current <= 0 || currentPercentages.length <= 1) return 0;
-    const percent = (locationX / trackWidthRef.current) * 100;
+    if (location == null || trackLengthRef.current <= 0 || currentPercentages.length <= 1) return 0;
+    const percent = (location / trackLengthRef.current) * 100;
     return currentPercentages.reduce(
       (closestIndex, item, index) =>
         Math.abs(item - percent) < Math.abs(currentPercentages[closestIndex]! - percent)
@@ -140,9 +158,12 @@ function NonNativeSlider({
     const node = sliderRef.current as unknown as HTMLElement;
     const handlePointerMove = (event: PointerEvent) => {
       const rect = node.getBoundingClientRect();
-      if (rect.width <= 0) return;
-      trackWidthRef.current = rect.width;
-      setHoveredThumbIndex(resolveThumbIndex(event.clientX - rect.left));
+      const length = orientation === "horizontal" ? rect.width : rect.height;
+      if (length <= 0) return;
+      trackLengthRef.current = length;
+      const position =
+        orientation === "horizontal" ? event.clientX - rect.left : rect.bottom - event.clientY;
+      setHoveredThumbIndex(resolveThumbIndex(position));
     };
     const handlePointerLeave = () => setHoveredThumbIndex(null);
 
@@ -152,23 +173,44 @@ function NonNativeSlider({
       node.removeEventListener("pointermove", handlePointerMove);
       node.removeEventListener("pointerleave", handlePointerLeave);
     };
-  }, [disabled, resolveThumbIndex]);
+  }, [disabled, orientation, resolveThumbIndex]);
 
   const sliderView = (
     <Pressable
       {...props}
       className={className}
-      hitSlop={hitSlop ?? (isWeb() ? undefined : { bottom: 24, top: 12 })}
+      hitSlop={
+        hitSlop ??
+        {
+          bottom: visualSize.thumb / 2,
+          left: visualSize.thumb / 2,
+          right: visualSize.thumb / 2,
+          top: visualSize.thumb / 2,
+        }
+      }
       onHoverOut={() => {
         setHoveredThumbIndex(null);
       }}
       onLayout={(event) => {
-        trackWidthRef.current = event.nativeEvent.layout.width;
+        const length =
+          orientation === "horizontal"
+            ? event.nativeEvent.layout.width
+            : event.nativeEvent.layout.height;
+        trackLengthRef.current = length;
         handleLayout(event);
       }}
       ref={sliderRef}
       style={[
         styles.root,
+        orientation === "horizontal"
+          ? { height: visualSize.root, minWidth: 100, width: "100%" }
+          : {
+              alignItems: "center",
+              height: 200,
+              minHeight: 100,
+              minWidth: visualSize.root,
+              width: visualSize.root,
+            },
         isWeb() && ({ userSelect: "none" } as unknown as ViewStyle),
         isWeb() && ({ touchAction: "none" } as unknown as ViewStyle),
         isWeb() && !hasCursorOverride && ({ cursor: "default" } as unknown as ViewStyle),
@@ -176,41 +218,95 @@ function NonNativeSlider({
         style,
       ]}
     >
-      <View style={[styles.track, { backgroundColor: inactiveTrackColor }, trackStyle]}>
+      <View
+        style={[
+          styles.trackFrame,
+          orientation === "horizontal"
+            ? {
+                height: visualSize.track,
+                left: 0,
+                marginTop: -visualSize.track / 2,
+                right: 0,
+                top: "50%",
+              }
+            : {
+                bottom: 0,
+                left: "50%",
+                marginLeft: -visualSize.track / 2,
+                top: 0,
+                width: visualSize.track,
+              },
+        ]}
+      >
         <View
           style={[
-            styles.activeTrack,
-            {
-              backgroundColor: activeTrackColor,
-              left: `${activeTrackStart}%`,
-              width: `${Math.max(0, activeTrackEnd - activeTrackStart)}%`,
-            },
-            activeTrackStyle,
+            styles.track,
+            orientation === "horizontal"
+              ? { borderRadius: visualSize.track / 2, height: visualSize.track, width: "100%" }
+              : { borderRadius: visualSize.track / 2, height: "100%", width: "100%" },
+            { backgroundColor: inactiveTrackColor },
+            trackStyle,
           ]}
-        />
-      </View>
-      {values.map((_item, index) => {
-        const percent = percentages[index] ?? 0;
-        return (
+        >
           <View
-            key={`thumb-${index}`}
-            pointerEvents="none"
             style={[
-              styles.thumb,
+              styles.activeTrack,
               {
-                backgroundColor:
-                  activeThumbIndex === index ? brightenColor(thumbColor) : thumbColor,
-                borderColor:
-                  activeThumbIndex === index
-                    ? activeThumbBorderColor
-                    : withAlpha(theme.foreground, 0.18),
-                left: `${percent}%`,
+                backgroundColor: activeTrackColor,
+                borderRadius: visualSize.track / 2,
+                ...(orientation === "horizontal"
+                  ? {
+                      left: `${activeTrackStart}%`,
+                      width: `${Math.max(0, activeTrackEnd - activeTrackStart)}%`,
+                    }
+                  : {
+                      bottom: `${activeTrackStart}%`,
+                      height: `${Math.max(0, activeTrackEnd - activeTrackStart)}%`,
+                      width: "100%",
+                    }),
               },
-              thumbStyle,
+              activeTrackStyle,
             ]}
           />
-        );
-      })}
+        </View>
+        {values.map((_item, index) => {
+          const percent = percentages[index] ?? 0;
+          return (
+            <View
+              key={`thumb-${index}`}
+              pointerEvents="auto"
+              style={[
+                styles.thumb,
+                {
+                  backgroundColor:
+                    activeThumbIndex === index ? brightenColor(thumbColor) : thumbColor,
+                  borderColor:
+                    activeThumbIndex === index
+                      ? activeThumbBorderColor
+                      : withAlpha(theme.foreground, 0.18),
+                  borderRadius: visualSize.thumb / 2,
+                  ...(orientation === "horizontal"
+                    ? {
+                        left: `${percent}%`,
+                        marginLeft: -visualSize.thumb / 2,
+                        marginTop: -visualSize.thumb / 2,
+                        top: "50%",
+                      }
+                    : {
+                        bottom: `${percent}%`,
+                        left: "50%",
+                        marginBottom: -visualSize.thumb / 2,
+                        marginLeft: -visualSize.thumb / 2,
+                      }),
+                  height: visualSize.thumb,
+                  width: visualSize.thumb,
+                },
+                thumbStyle,
+              ]}
+            />
+          );
+        })}
+      </View>
     </Pressable>
   );
 
@@ -221,16 +317,19 @@ function NonNativeSlider({
   );
 }
 
-export function Slider({ native = true, ...props }: SliderProps) {
+export function Slider({ native = true, orientation = "horizontal", ...props }: SliderProps) {
   // Web has no native Expo slider host; always use the pointer/gesture implementation there.
-  if (!native || Platform.OS === "web") return <NonNativeSlider {...props} />;
-  return <NativeSlider {...props} />;
+  if (!native || Platform.OS === "web" || orientation === "vertical") {
+    return <NonNativeSlider {...props} orientation={orientation} />;
+  }
+  return <NativeSlider {...props} orientation={orientation} />;
 }
 
 const styles = StyleSheet.create({
   activeTrack: { borderRadius: 3, height: "100%", position: "absolute" },
   disabled: { opacity: 0.5 },
   root: { height: 28, justifyContent: "center", minWidth: 100, width: "100%" },
+  trackFrame: { position: "absolute" },
   thumb: {
     borderRadius: 12,
     borderWidth: 2,

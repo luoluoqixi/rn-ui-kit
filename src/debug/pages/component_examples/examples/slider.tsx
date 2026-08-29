@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { Button, Slider, Text, isWeb } from "rn-ui-kit/core";
+import { View } from "react-native";
 import { ExampleBlock, ExampleRow, ExampleStack } from "../shared";
 
 export function SliderExample() {
@@ -8,6 +9,7 @@ export function SliderExample() {
   const [continuousValue, setContinuousValue] = useState(50);
   const [finishedValue, setFinishedValue] = useState(56);
   const [rangeValues, setRangeValues] = useState([25, 75]);
+  const [verticalValue, setVerticalValue] = useState(64);
   const [nativeValue, setNativeValue] = useState(56);
   const [nativeStepValue, setNativeStepValue] = useState(40);
 
@@ -50,6 +52,40 @@ export function SliderExample() {
           <Button onPress={() => setSteppedValue(50)} title="默认" variant="outline" />
           <Button onPress={() => setSteppedValue(100)} title="最大" variant="outline" />
         </ExampleRow>
+      </ExampleBlock>
+
+      <ExampleBlock description={`横向值：${verticalValue}`} title="横向 Slider">
+        <View className="h-56 flex-col items-center justify-around px-8">
+          {(["xs", "sm", "md", "lg", "xl"] as const).map((size) => (
+            <Slider
+              key={size}
+              max={100}
+              min={0}
+              native={false}
+              onChange={setVerticalValue}
+              orientation="horizontal"
+              size={size}
+              value={verticalValue}
+            />
+          ))}
+        </View>
+      </ExampleBlock>
+
+      <ExampleBlock description={`竖向值：${verticalValue}`} title="竖向 Slider">
+        <View className="h-56 flex-row items-center justify-around px-8">
+          {(["xs", "sm", "md", "lg", "xl"] as const).map((size) => (
+            <Slider
+              key={size}
+              max={100}
+              min={0}
+              native={false}
+              onChange={setVerticalValue}
+              orientation="vertical"
+              size={size}
+              value={verticalValue}
+            />
+          ))}
+        </View>
       </ExampleBlock>
 
       {!isWeb() ? (

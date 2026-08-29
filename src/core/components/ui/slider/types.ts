@@ -12,6 +12,8 @@ export type SliderColors = {
 };
 
 export type SliderValue = number[] | number;
+export type SliderSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+export type SliderOrientation = "horizontal" | "vertical";
 
 export function resolveSliderValues(value: SliderValue | undefined): number[] | undefined {
   if (value == null) return undefined;
@@ -29,6 +31,10 @@ export interface SliderProps extends ViewProps {
   max?: number;
   min?: number;
   native?: boolean;
+  /** Non-native slider orientation. Vertical sliders use the custom implementation. */
+  orientation?: SliderOrientation;
+  /** Size of the non-native track and thumb. Defaults to `default` (`md`). */
+  size?: SliderSize;
   colors?: SliderColors;
   /** Slider-specific tick feedback; enabled by default, or disable with false. */
   nativeHaptics?: NativeHapticsSetting;

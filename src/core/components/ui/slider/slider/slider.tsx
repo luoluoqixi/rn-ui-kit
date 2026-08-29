@@ -56,6 +56,7 @@ function normalizeSliderValues(
 export function useSliderBehavior({
   defaultValue,
   disabled = false,
+  orientation = "horizontal",
   max = 100,
   min = 0,
   nativeHaptics,
@@ -70,6 +71,7 @@ export function useSliderBehavior({
   thumbCount,
   value,
   sliderRef,
+  trackInset,
 }: Pick<
   SliderProps,
   | "defaultValue"
@@ -86,9 +88,11 @@ export function useSliderBehavior({
   | "step"
   | "thumbCount"
   | "value"
+  | "orientation"
 > & {
   onActiveThumbChange?: (index: number | null) => void;
   sliderRef?: RefObject<View | null>;
+  trackInset?: number;
 }) {
   const safeStep = resolveStep(stepProp);
   const valueCount = resolveCount(value, defaultValue, thumbCount);
@@ -102,7 +106,7 @@ export function useSliderBehavior({
     [max, min, uncontrolledValues, value, valueCount],
   );
   const valuesRef = useRef(resolvedValues);
-  const trackWidthRef = useRef(0);
+  const trackLengthRef = useRef(0);
   const startValuesRef = useRef(resolvedValues);
   const activeThumbRef = useRef(0);
   const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics, { defaultEnabled: true });
@@ -161,8 +165,9 @@ export function useSliderBehavior({
   );
 
   const beginGesture = useCallback(
-    (locationX: number) => {
-      const ratio = trackWidthRef.current > 0 ? locationX / trackWidthRef.current : 0;
+    (location: number) => {
+      const position = orientation === "horizontal" ? location : trackLengthRef.current - location;
+      const ratio = trackLengthRef.current > 0 ? position / trackLengthRef.current : 0;
       const targetValue = min + clamp(ratio, 0, 1) * (max - min);
       const activeThumbIndex = valuesRef.current.reduce(
         (closestIndex, item, index, values) =>
@@ -181,19 +186,19 @@ export function useSliderBehavior({
       setValues(nextValues);
       startValuesRef.current = [...valuesRef.current];
     },
-    [max, min, onActiveThumbChange, setValues],
+    [max, min, onActiveThumbChange, orientation, setValues],
   );
 
   const updateFromTranslation = useCallback(
-    (translationX: number) => {
-      const width = trackWidthRef.current;
-      if (width <= 0) return;
+    (translation: number) => {
+      const length = trackLengthRef.current;
+      if (length <= 0) return;
       const index = activeThumbRef.current;
       const range = max - min;
       if (range <= 0) return;
       const startValue = startValuesRef.current[index] ?? min;
       const nextValues = [...valuesRef.current];
-      nextValues[index] = startValue + (translationX / width) * range;
+      nextValues[index] = startValue + (translation / length) * range;
       setValues(nextValues);
     },
     [max, min, setValues],
@@ -231,23 +236,31 @@ export function useSliderBehavior({
       releasePointerCapture?: (pointerId: number) => void;
     };
     let activePointerId: number | null = null;
-    let startClientX = 0;
+    let startClientPosition = 0;
 
     const handlePointerDown = (event: PointerEvent) => {
       if (activePointerId != null) return;
       const rect = node.getBoundingClientRect();
-      if (rect.width <= 0) return;
+      const length = orientation === "horizontal" ? rect.width : rect.height;
+      if (length <= 0) return;
       event.preventDefault();
-      trackWidthRef.current = rect.width;
-      startClientX = event.clientX;
+      trackLengthRef.current = Math.max(0, length - (trackInset ?? 0) * 2);
+      startClientPosition = orientation === "horizontal" ? event.clientX : event.clientY;
       activePointerId = event.pointerId;
       node.setPointerCapture?.(event.pointerId);
-      beginGestureRef.current(event.clientX - rect.left);
+      const position =
+        (orientation === "horizontal" ? event.clientX - rect.left : event.clientY - rect.top) -
+        (trackInset ?? 0);
+      beginGestureRef.current(position);
     };
     const handlePointerMove = (event: PointerEvent) => {
       if (event.pointerId !== activePointerId) return;
       event.preventDefault();
-      updateFromTranslationRef.current(event.clientX - startClientX);
+      const translation =
+        orientation === "horizontal"
+          ? event.clientX - startClientPosition
+          : startClientPosition - event.clientY;
+      updateFromTranslationRef.current(translation);
     };
     const handlePointerEnd = (event: PointerEvent) => {
       if (event.pointerId !== activePointerId) return;
@@ -267,7 +280,7 @@ export function useSliderBehavior({
       node.removeEventListener("pointerup", handlePointerEnd);
       node.removeEventListener("pointercancel", handlePointerEnd);
     };
-  }, [disabled, sliderRef, web]);
+  }, [disabled, orientation, sliderRef, trackInset, web]);
 
   const nativeGesture = useMemo(() => {
     if (web || disabled) return null;
@@ -277,11 +290,15 @@ export function useSliderBehavior({
       .shouldCancelWhenOutside(false)
       .onBegin((event) => {
         "worklet";
-        runOnJS(beginGestureFromNative)(event.x);
+        runOnJS(beginGestureFromNative)(
+          (orientation === "horizontal" ? event.x : event.y) - (trackInset ?? 0),
+        );
       })
       .onUpdate((event) => {
         "worklet";
-        runOnJS(updateFromTranslationFromNative)(event.translationX);
+        runOnJS(updateFromTranslationFromNative)(
+          orientation === "horizontal" ? event.translationX : -event.translationY,
+        );
       })
       .onFinalize(() => {
         "worklet";
@@ -291,16 +308,20 @@ export function useSliderBehavior({
     beginGestureFromNative,
     disabled,
     finishGestureFromNative,
+    orientation,
+    trackInset,
     updateFromTranslationFromNative,
     web,
   ]);
 
   const handleLayout = useCallback(
     (event: LayoutChangeEvent) => {
-      trackWidthRef.current = event.nativeEvent.layout.width;
+      const length =
+        orientation === "horizontal" ? event.nativeEvent.layout.width : event.nativeEvent.layout.height;
+      trackLengthRef.current = Math.max(0, length - (trackInset ?? 0) * 2);
       onLayout?.(event);
     },
-    [onLayout],
+    [onLayout, orientation, trackInset],
   );
 
   return {
