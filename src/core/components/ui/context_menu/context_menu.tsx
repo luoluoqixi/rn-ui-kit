@@ -19,6 +19,11 @@ import type {
   ContextMenuSubContentProps,
   ContextMenuSubTriggerProps,
 } from "./types";
+import {
+  menuIconSizeClasses,
+  menuItemPaddingClasses,
+  menuTextSizeClasses,
+} from "../utils/menu_size";
 import { ContextMenuNative } from "./context_menu_native";
 import { NativeOnlyAnimatedView } from "../utils/native_only_animated_view";
 import { triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
@@ -48,6 +53,8 @@ const ContextMenuGroup = ContextMenuPrimitive.Group;
 const ContextMenuSub = ContextMenuPrimitive.Sub;
 const ContextMenuRadioGroup = ContextMenuPrimitive.RadioGroup;
 const CONTEXT_MENU_MAX_HEIGHT_RATIO = 0.45;
+const ContextMenuContentSizeContext =
+  React.createContext<import("./types").ContextMenuSize>("default");
 
 const ContextMenuHapticsContext = React.createContext<{
   item?: NativeHapticsSetting;
@@ -64,19 +71,23 @@ function ContextMenuSubTrigger({
 }: ContextMenuSubTriggerProps) {
   const { open } = ContextMenuPrimitive.useSubContext();
   const contextHaptics = React.useContext(ContextMenuHapticsContext);
+  const size = React.useContext(ContextMenuContentSizeContext);
   const disabled = props.disabled === true;
   const icon = Platform.OS === "web" ? ChevronRight : open ? ChevronUp : ChevronDown;
   return (
     <TextClassContext.Provider
       value={cn(
-        "text-sm select-none",
+        cn(menuTextSizeClasses[size], "select-none"),
         !disabled && "group-active:text-accent-foreground",
         open && "text-accent-foreground",
       )}
     >
       <ContextMenuPrimitive.SubTrigger
         className={cn(
-          "group flex flex-row items-center justify-between rounded-sm px-2 py-2 sm:py-1.5",
+          cn(
+            "group flex flex-row items-center justify-between rounded-sm px-2",
+            menuItemPaddingClasses[size],
+          ),
           !disabled && "active:bg-accent",
           Platform.select({
             web: "focus:bg-accent focus:text-accent-foreground cursor-default outline-none [&_svg]:pointer-events-none",
@@ -96,14 +107,24 @@ function ContextMenuSubTrigger({
         }}
       >
         <>{children}</>
-        <Icon as={icon} className={cn("text-foreground size-4 shrink-0", iconClassName)} />
+        <Icon
+          as={icon}
+          className={cn("text-foreground shrink-0", menuIconSizeClasses[size], iconClassName)}
+        />
       </ContextMenuPrimitive.SubTrigger>
     </TextClassContext.Provider>
   );
 }
 
-function ContextMenuSubContent({ className, style, ...props }: ContextMenuSubContentProps) {
+function ContextMenuSubContent({
+  className,
+  style,
+  size: sizeProp,
+  children,
+  ...props
+}: ContextMenuSubContentProps) {
   const theme = useUiTheme();
+  const size = sizeProp ?? React.useContext(ContextMenuContentSizeContext);
 
   return (
     <NativeOnlyAnimatedView entering={FadeIn.reduceMotion(ReduceMotion.System)}>
@@ -118,13 +139,18 @@ function ContextMenuSubContent({ className, style, ...props }: ContextMenuSubCon
         // The web primitive renders SubContent through its own Radix portal,
         // outside the provider-scoped variables applied by OverlayPortalWindow.
         style={
-          [
-            Platform.OS === "web" ? (semanticColorsToVariables(theme) as any) : null,
-            style,
-          ] as any
+          [Platform.OS === "web" ? (semanticColorsToVariables(theme) as any) : null, style] as any
         }
         {...props}
-      />
+      >
+        <ContextMenuContentSizeContext.Provider value={size}>
+          <TextClassContext.Provider
+            value={cn("text-popover-foreground", menuTextSizeClasses[size])}
+          >
+            {children}
+          </TextClassContext.Provider>
+        </ContextMenuContentSizeContext.Provider>
+      </ContextMenuPrimitive.SubContent>
     </NativeOnlyAnimatedView>
   );
 }
@@ -136,6 +162,7 @@ function ContextMenuContent({
   portalHost,
   style,
   itemNativeHaptics,
+  size: sizeProp,
   side: sideProp,
   children,
   ...props
@@ -164,6 +191,7 @@ function ContextMenuContent({
   const contentStyle = useOverlayPortalContentStyle(style);
   const resolvedContentStyle = StyleSheet.flatten(contentStyle as any) as Record<string, unknown>;
   const inheritedHaptics = React.useContext(ContextMenuHapticsContext);
+  const size = sizeProp ?? React.useContext(ContextMenuContentSizeContext);
   const handleNativeOverlayPress = (event: any) => {
     const target = event?.target ?? event?.nativeEvent?.target;
     const currentTarget = event?.currentTarget;
@@ -187,55 +215,59 @@ function ContextMenuContent({
             {Platform.OS !== "web" ? (
               <Pressable onPress={handleNativeOverlayPress} style={StyleSheet.absoluteFillObject} />
             ) : null}
-            <TextClassContext.Provider value="text-popover-foreground">
-              <ContextMenuHapticsContext.Provider
-                value={{ item: itemNativeHaptics ?? inheritedHaptics.item }}
+            <ContextMenuContentSizeContext.Provider value={size}>
+              <TextClassContext.Provider
+                value={cn("text-popover-foreground", menuTextSizeClasses[size])}
               >
-                <ContextMenuPrimitive.Content
-                  style={
-                    {
-                      maxHeight: windowHeight * CONTEXT_MENU_MAX_HEIGHT_RATIO,
-                      ...resolvedContentStyle,
-                    } as any
-                  }
-                  className={cn(
-                    "bg-popover border-border min-w-[8rem] overflow-hidden rounded-md border p-1 shadow-lg shadow-black/5",
-                    Platform.select({
-                      web: cn(
-                        cn(
-                          "animate-in fade-in-0 zoom-in-95 max-h-[45vh] overflow-y-auto origin-(--radix-context-menu-content-transform-origin) z-50 cursor-default",
-                          "ui-menu-scrollbar",
-                        ),
-                        resolvedSide === "bottom" && "slide-in-from-top-2",
-                        resolvedSide === "top" && "slide-in-from-bottom-2",
-                      ),
-                    }),
-                    className,
-                  )}
-                  side={resolvedSide}
-                  {...props}
-                  asChild
-                  // The primitive Content claims the responder on touch start by
-                  // default. Let the nested ScrollView own drag gestures instead.
-                  onStartShouldSetResponder={() => false}
+                <ContextMenuHapticsContext.Provider
+                  value={{ item: itemNativeHaptics ?? inheritedHaptics.item }}
                 >
-                  <View collapsable={false}>
-                    {Platform.OS === "web" ? (
-                      children
-                    ) : (
-                      <ScrollView
-                        nestedScrollEnabled
-                        showsVerticalScrollIndicator
-                        onMoveShouldSetResponderCapture={() => true}
-                        style={{ maxHeight: windowHeight * CONTEXT_MENU_MAX_HEIGHT_RATIO }}
-                      >
-                        {children}
-                      </ScrollView>
+                  <ContextMenuPrimitive.Content
+                    style={
+                      {
+                        maxHeight: windowHeight * CONTEXT_MENU_MAX_HEIGHT_RATIO,
+                        ...resolvedContentStyle,
+                      } as any
+                    }
+                    className={cn(
+                      "bg-popover border-border min-w-[8rem] overflow-hidden rounded-md border p-1 shadow-lg shadow-black/5",
+                      Platform.select({
+                        web: cn(
+                          cn(
+                            "animate-in fade-in-0 zoom-in-95 max-h-[45vh] overflow-y-auto origin-(--radix-context-menu-content-transform-origin) z-50 cursor-default",
+                            "ui-menu-scrollbar",
+                          ),
+                          resolvedSide === "bottom" && "slide-in-from-top-2",
+                          resolvedSide === "top" && "slide-in-from-bottom-2",
+                        ),
+                      }),
+                      className,
                     )}
-                  </View>
-                </ContextMenuPrimitive.Content>
-              </ContextMenuHapticsContext.Provider>
-            </TextClassContext.Provider>
+                    side={resolvedSide}
+                    {...props}
+                    asChild
+                    // The primitive Content claims the responder on touch start by
+                    // default. Let the nested ScrollView own drag gestures instead.
+                    onStartShouldSetResponder={() => false}
+                  >
+                    <View collapsable={false}>
+                      {Platform.OS === "web" ? (
+                        children
+                      ) : (
+                        <ScrollView
+                          nestedScrollEnabled
+                          showsVerticalScrollIndicator
+                          onMoveShouldSetResponderCapture={() => true}
+                          style={{ maxHeight: windowHeight * CONTEXT_MENU_MAX_HEIGHT_RATIO }}
+                        >
+                          {children}
+                        </ScrollView>
+                      )}
+                    </View>
+                  </ContextMenuPrimitive.Content>
+                </ContextMenuHapticsContext.Provider>
+              </TextClassContext.Provider>
+            </ContextMenuContentSizeContext.Provider>
           </NativeOnlyAnimatedView>
         </ContextMenuPrimitive.Overlay>
       </OverlayPortalWindow>
@@ -253,10 +285,11 @@ function ContextMenuItem({
   ...props
 }: ContextMenuItemComponentProps) {
   const contextHaptics = React.useContext(ContextMenuHapticsContext);
+  const size = React.useContext(ContextMenuContentSizeContext);
   return (
     <TextClassContext.Provider
       value={cn(
-        "select-none text-sm text-popover-foreground",
+        cn(menuTextSizeClasses[size], "select-none text-popover-foreground"),
         !disabled && "group-active:text-popover-foreground",
         variant === "destructive" && "text-destructive",
         variant === "destructive" && !disabled && "group-active:text-destructive",
@@ -264,7 +297,10 @@ function ContextMenuItem({
     >
       <ContextMenuPrimitive.Item
         className={cn(
-          "group relative flex flex-row items-center gap-2 rounded-sm px-2 py-2 sm:py-1.5",
+          cn(
+            "group relative flex flex-row items-center gap-2 rounded-sm px-2",
+            menuItemPaddingClasses[size],
+          ),
           !disabled && "active:bg-accent",
           Platform.select({
             web: cn(
@@ -305,16 +341,20 @@ function ContextMenuCheckboxItem({
   ...props
 }: ContextMenuCheckboxItemProps) {
   const contextHaptics = React.useContext(ContextMenuHapticsContext);
+  const size = React.useContext(ContextMenuContentSizeContext);
   return (
     <TextClassContext.Provider
       value={cn(
-        "text-sm text-popover-foreground select-none",
+        cn(menuTextSizeClasses[size], "text-popover-foreground select-none"),
         !disabled && "group-active:text-accent-foreground",
       )}
     >
       <ContextMenuPrimitive.CheckboxItem
         className={cn(
-          "group relative flex flex-row items-center gap-2 rounded-sm py-2 pl-8 pr-2 sm:py-1.5",
+          cn(
+            "group relative flex flex-row items-center gap-2 rounded-sm pl-8 pr-2",
+            menuItemPaddingClasses[size],
+          ),
           !disabled && "active:bg-accent",
           Platform.select({
             web: "focus:bg-accent focus:text-accent-foreground cursor-default outline-none data-[disabled]:pointer-events-none",
@@ -336,7 +376,7 @@ function ContextMenuCheckboxItem({
             <Icon
               as={Check}
               className={cn(
-                "text-foreground size-4",
+                cn("text-foreground shrink-0", menuIconSizeClasses[size]),
                 Platform.select({ web: "pointer-events-none" }),
               )}
             />
@@ -357,16 +397,20 @@ function ContextMenuRadioItem({
   ...props
 }: ContextMenuRadioItemProps) {
   const contextHaptics = React.useContext(ContextMenuHapticsContext);
+  const size = React.useContext(ContextMenuContentSizeContext);
   return (
     <TextClassContext.Provider
       value={cn(
-        "text-sm text-popover-foreground select-none",
+        cn(menuTextSizeClasses[size], "text-popover-foreground select-none"),
         !disabled && "group-active:text-accent-foreground",
       )}
     >
       <ContextMenuPrimitive.RadioItem
         className={cn(
-          "group relative flex flex-row items-center gap-2 rounded-sm py-2 pl-8 pr-2 sm:py-1.5",
+          cn(
+            "group relative flex flex-row items-center gap-2 rounded-sm pl-8 pr-2",
+            menuItemPaddingClasses[size],
+          ),
           !disabled && "active:bg-accent",
           Platform.select({
             web: "focus:bg-accent focus:text-accent-foreground cursor-default outline-none data-[disabled]:pointer-events-none",
@@ -397,10 +441,15 @@ function ContextMenuRadioItem({
 }
 
 function ContextMenuLabel({ className, inset, ...props }: ContextMenuLabelProps) {
+  const size = React.useContext(ContextMenuContentSizeContext);
   return (
     <ContextMenuPrimitive.Label
       className={cn(
-        "text-foreground px-2 py-2 text-sm font-medium sm:py-1.5",
+        cn(
+          "text-foreground px-2 font-medium",
+          menuTextSizeClasses[size],
+          menuItemPaddingClasses[size],
+        ),
         inset && "pl-8",
         className,
       )}
@@ -421,20 +470,37 @@ function ContextMenuSeparator({ className, ...props }: ContextMenuSeparatorProps
 }
 
 function ContextMenuShortcut({ className, ...props }: ContextMenuShortcutProps) {
+  const size = React.useContext(ContextMenuContentSizeContext);
   return (
     <Text
-      className={cn("text-muted-foreground ml-auto text-xs tracking-widest", className)}
+      className={cn(
+        "text-muted-foreground ml-auto tracking-widest",
+        menuTextSizeClasses[size],
+        className,
+      )}
       {...props}
     />
   );
 }
 
 function ContextMenuItemTitle({ className, ...props }: ContextMenuItemTitleProps) {
-  return <Text className={cn("text-sm text-popover-foreground", className)} {...props} />;
+  const size = React.useContext(ContextMenuContentSizeContext);
+  return (
+    <Text
+      className={cn(menuTextSizeClasses[size], "text-popover-foreground", className)}
+      {...props}
+    />
+  );
 }
 
 function ContextMenuItemSubtitle({ className, ...props }: ContextMenuItemSubtitleProps) {
-  return <Text className={cn("text-muted-foreground text-xs", className)} {...props} />;
+  const size = React.useContext(ContextMenuContentSizeContext);
+  return (
+    <Text
+      className={cn("text-muted-foreground", menuTextSizeClasses[size], className)}
+      {...props}
+    />
+  );
 }
 
 function ContextMenuItemIcon({ children }: ContextMenuItemIconProps) {
@@ -533,6 +599,7 @@ function ContextMenu({
   items,
   itemProps,
   itemNativeHaptics,
+  contentSize,
   native = Platform.OS !== "web",
   nativeHaptics,
   nativeShouldWaitForMenuToHideBeforeFiringOnPressMenuItem,
@@ -566,32 +633,34 @@ function ContextMenu({
   const generated = items != null || trigger != null;
   return (
     <ContextMenuHapticsContext.Provider value={{ item: resolvedItemHaptics }}>
-      <ContextMenuPrimitiveRoot
-        {...props}
-        onOpenChange={(open) => {
-          onOpenWillChange?.(open);
-          if (open) triggerNativeHaptics(resolvedHaptics);
-          onOpenChange?.(open);
-        }}
-      >
-        {generated ? (
-          <>
-            {trigger != null ? (
-              <ContextMenuTrigger {...(triggerProps as object)} asChild>
-                {resolveRenderProp(trigger, { native: false, open: false }) as React.ReactElement}
-              </ContextMenuTrigger>
-            ) : null}
-            {items != null ? (
-              <ContextMenuContent itemNativeHaptics={resolvedItemHaptics}>
-                {renderContextMenuItems(items, itemProps, resolvedItemHaptics)}
-              </ContextMenuContent>
-            ) : null}
-            {children}
-          </>
-        ) : (
-          children
-        )}
-      </ContextMenuPrimitiveRoot>
+      <ContextMenuContentSizeContext.Provider value={contentSize ?? "default"}>
+        <ContextMenuPrimitiveRoot
+          {...props}
+          onOpenChange={(open) => {
+            onOpenWillChange?.(open);
+            if (open) triggerNativeHaptics(resolvedHaptics);
+            onOpenChange?.(open);
+          }}
+        >
+          {generated ? (
+            <>
+              {trigger != null ? (
+                <ContextMenuTrigger {...(triggerProps as object)} asChild>
+                  {resolveRenderProp(trigger, { native: false, open: false }) as React.ReactElement}
+                </ContextMenuTrigger>
+              ) : null}
+              {items != null ? (
+                <ContextMenuContent itemNativeHaptics={resolvedItemHaptics}>
+                  {renderContextMenuItems(items, itemProps, resolvedItemHaptics)}
+                </ContextMenuContent>
+              ) : null}
+              {children}
+            </>
+          ) : (
+            children
+          )}
+        </ContextMenuPrimitiveRoot>
+      </ContextMenuContentSizeContext.Provider>
     </ContextMenuHapticsContext.Provider>
   );
 }

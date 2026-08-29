@@ -1,4 +1,4 @@
-import type { ComponentProps, RefObject } from "react";
+import type { ComponentProps, ReactNode, RefObject } from "react";
 import type { ButtonProps } from "../button";
 import type { ColorValue } from "react-native";
 import type { SFSymbol } from "sf-symbols-typescript";
@@ -11,6 +11,8 @@ import type {
 import type { NativeHapticsSetting, RenderProp } from "../utils";
 import type * as Zeego from "zeego/dropdown-menu";
 import type * as DropdownPrimitive from "@rn-primitives/dropdown-menu";
+
+export type DropdownSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
 
 export type NativeDropdownControlHandle = {
   presentMenu: () => void;
@@ -109,9 +111,19 @@ export type DropdownContentProps = Omit<
   ComponentProps<typeof DropdownPrimitive.Content>,
   "children"
 > & {
+  children?: ReactNode | ((state: unknown) => ReactNode);
+  size?: DropdownSize;
   overlayClassName?: string;
   overlayStyle?: import("react-native").StyleProp<import("react-native").ViewStyle>;
   portalHost?: string;
+};
+
+export type DropdownSubContentProps = Omit<
+  ComponentProps<typeof DropdownPrimitive.SubContent>,
+  "children"
+> & {
+  children?: ReactNode;
+  size?: DropdownSize;
 };
 
 /** Props applied to the generated Zeego menu content on native platforms. */
@@ -124,6 +136,8 @@ export type DropdownRootExtensions = NativeDropdownRootExtensions & {
   native?: boolean;
   /** Props applied to the generated non-native menu content. */
   contentProps?: DropdownContentProps;
+  /** Size of the generated non-native menu content. */
+  contentSize?: DropdownSize;
 };
 export type DropdownProps = ComponentProps<typeof Zeego.Root> & DropdownRootExtensions;
 export type NativeDropdownProps = ComponentProps<typeof Zeego.Root> & NativeDropdownRootExtensions;

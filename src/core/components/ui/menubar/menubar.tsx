@@ -27,7 +27,19 @@ import {
 } from "react-native";
 import { FadeIn, ReduceMotion } from "react-native-reanimated";
 
-import type { MenubarItemData, MenubarProps, MenubarTriggerProps } from "./types";
+import type {
+  MenubarContentProps,
+  MenubarItemData,
+  MenubarProps,
+  MenubarSize,
+  MenubarSubContentProps,
+  MenubarTriggerProps,
+} from "./types";
+import {
+  menuIconSizeClasses,
+  menuItemPaddingClasses,
+  menuTextSizeClasses,
+} from "../utils/menu_size";
 
 const MENUBAR_MENU_MAX_HEIGHT_RATIO = 0.45;
 
@@ -51,6 +63,44 @@ const MenubarHapticsContext = React.createContext<{
   trigger?: NativeHapticsSetting;
   item?: NativeHapticsSetting;
 }>({});
+const MenubarSizeContext = React.createContext<MenubarSize>("default");
+const MenubarContentSizeContext = React.createContext<MenubarSize>("default");
+
+const menubarRootSizeClasses: Record<MenubarSize, string> = {
+  "default": "h-11 p-1.5",
+  "2xs": "h-8 p-0.5",
+  "xs": "h-9 p-0.5",
+  "sm": "h-10 p-1",
+  "md": "h-11 p-1.5",
+  "lg": "h-12 p-1.5",
+  "xl": "h-14 p-2",
+  "2xl": "h-16 p-2",
+};
+
+// Native text metrics are tighter than the browser's default line box. Keep
+// the main triggers on predictable line heights so their labels stay centered
+// at every menu size.
+const menubarTriggerTextSizeClasses: Record<MenubarSize, string> = {
+  default: "text-base leading-6",
+  "2xs": "text-[10px] leading-3.5",
+  xs: "text-xs leading-4",
+  sm: "text-sm leading-5",
+  md: "text-base leading-6",
+  lg: "text-lg leading-7",
+  xl: "text-xl leading-7",
+  "2xl": "text-2xl leading-8",
+};
+
+const menubarTriggerSizeClasses: Record<MenubarSize, string> = {
+  "default": "px-2.5 py-1.5",
+  "2xs": "px-1.5 py-0.5",
+  "xs": "px-2 py-1",
+  "sm": "px-2 py-1",
+  "md": "px-2.5 py-1.5",
+  "lg": "px-3 py-2",
+  "xl": "px-4 py-2.5",
+  "2xl": "px-5 py-3",
+};
 
 function normalizeMenubarChildren(children: React.ReactNode) {
   return React.Children.map(children, (child) =>
@@ -62,6 +112,8 @@ function MenubarRoot({
   children,
   className,
   items,
+  size = "default",
+  contentSize = "default",
   nativeHaptics,
   itemNativeHaptics,
   value: valueProp,
@@ -100,32 +152,39 @@ function MenubarRoot({
       : null);
 
   return (
-    <MenubarHapticsContext.Provider
-      value={{ trigger: resolvedTriggerHaptics, item: resolvedItemHaptics }}
-    >
-      {Platform.OS !== "web" && (value || valueProp) ? (
-        <Portal hostName={scopedPortalHost} name={`menubar-overlay-${id}`}>
-          <Pressable onPress={closeMenu} style={StyleSheet.absoluteFill} />
-        </Portal>
-      ) : null}
-      <MenubarPrimitive.Root
-        className={cn(
-          "bg-background border-border flex h-10 flex-row items-center gap-1 rounded-md border p-1 shadow-sm shadow-black/5 sm:h-9",
-          className,
-        )}
-        value={value ?? valueProp}
-        onValueChange={onValueChangeProp ?? setValue}
-        {...props}
-      >
-        {renderedChildren}
-      </MenubarPrimitive.Root>
-    </MenubarHapticsContext.Provider>
+    <MenubarSizeContext.Provider value={size}>
+      <MenubarContentSizeContext.Provider value={contentSize}>
+        <MenubarHapticsContext.Provider
+          value={{ trigger: resolvedTriggerHaptics, item: resolvedItemHaptics }}
+        >
+          {Platform.OS !== "web" && (value || valueProp) ? (
+            <Portal hostName={scopedPortalHost} name={`menubar-overlay-${id}`}>
+              <Pressable onPress={closeMenu} style={StyleSheet.absoluteFill} />
+            </Portal>
+          ) : null}
+          <MenubarPrimitive.Root
+            className={cn(
+              "bg-background border-border flex flex-row items-center gap-1 rounded-md border shadow-sm shadow-black/5",
+              menubarRootSizeClasses[size],
+              Platform.select({ native: "p-1" }),
+              className,
+            )}
+            value={value ?? valueProp}
+            onValueChange={onValueChangeProp ?? setValue}
+            {...props}
+          >
+            {renderedChildren}
+          </MenubarPrimitive.Root>
+        </MenubarHapticsContext.Provider>
+      </MenubarContentSizeContext.Provider>
+    </MenubarSizeContext.Provider>
   );
 }
 
 function MenubarTrigger({
   className,
   cursorDefault = true,
+  size: sizeProp,
   nativeHaptics,
   onPress,
   ...props
@@ -133,18 +192,22 @@ function MenubarTrigger({
   const { value } = MenubarPrimitive.useRootContext();
   const { value: itemValue } = MenubarPrimitive.useMenuContext();
   const contextHaptics = React.useContext(MenubarHapticsContext);
+  const size = sizeProp ?? React.useContext(MenubarSizeContext);
   const hasCursorOverride = className?.split(/\s+/).some((token) => token.startsWith("cursor-"));
 
   return (
     <TextClassContext.Provider
       value={cn(
-        "text-sm font-medium select-none group-active:text-accent-foreground",
+        cn(
+          menubarTriggerTextSizeClasses[size],
+          "font-medium select-none group-active:text-accent-foreground",
+        ),
         value === itemValue && "text-accent-foreground",
       )}
     >
       <MenubarPrimitive.Trigger
         className={cn(
-          "group flex items-center rounded-md px-2 py-1.5 sm:py-1",
+          cn("group flex items-center rounded-md", menubarTriggerSizeClasses[size]),
           Platform.select({
             web: cn(
               "hover:bg-accent hover:text-accent-foreground outline-none",
@@ -182,19 +245,23 @@ function MenubarSubTrigger({
 }) {
   const { open } = MenubarPrimitive.useSubContext();
   const contextHaptics = React.useContext(MenubarHapticsContext);
+  const size = React.useContext(MenubarContentSizeContext);
   const disabled = props.disabled === true;
   const icon = Platform.OS === "web" ? ChevronRight : open ? ChevronUp : ChevronDown;
   return (
     <TextClassContext.Provider
       value={cn(
-        "text-sm select-none",
+        cn(menuTextSizeClasses[size], "select-none"),
         !disabled && "group-active:text-accent-foreground",
         open && "text-accent-foreground",
       )}
     >
       <MenubarPrimitive.SubTrigger
         className={cn(
-          "group flex flex-row items-center justify-between rounded-sm px-2 py-2 sm:py-1.5",
+          cn(
+            "group flex flex-row items-center justify-between rounded-sm px-2",
+            menuItemPaddingClasses[size],
+          ),
           !disabled && "active:bg-accent",
           Platform.select({
             web: "focus:bg-accent focus:text-accent-foreground cursor-default outline-none [&_svg]:pointer-events-none",
@@ -214,7 +281,10 @@ function MenubarSubTrigger({
         }}
       >
         {normalizeMenubarChildren(children)}
-        <Icon as={icon} className={cn("text-foreground size-4 shrink-0", iconClassName)} />
+        <Icon
+          as={icon}
+          className={cn("text-foreground shrink-0", menuIconSizeClasses[size], iconClassName)}
+        />
       </MenubarPrimitive.SubTrigger>
     </TextClassContext.Provider>
   );
@@ -223,10 +293,12 @@ function MenubarSubTrigger({
 function MenubarSubContent({
   className,
   children,
+  size: sizeProp,
   style,
   ...props
-}: React.ComponentProps<typeof MenubarPrimitive.SubContent>) {
+}: MenubarSubContentProps) {
   const theme = useUiTheme();
+  const size = sizeProp ?? React.useContext(MenubarContentSizeContext);
 
   return (
     <NativeOnlyAnimatedView entering={FadeIn.reduceMotion(ReduceMotion.System)}>
@@ -241,14 +313,17 @@ function MenubarSubContent({
         // The web primitive renders SubContent through its own Radix portal,
         // outside the provider-scoped variables applied by OverlayPortalWindow.
         style={
-          [
-            Platform.OS === "web" ? (semanticColorsToVariables(theme) as any) : null,
-            style,
-          ] as any
+          [Platform.OS === "web" ? (semanticColorsToVariables(theme) as any) : null, style] as any
         }
         {...props}
       >
-        {children}
+        <MenubarContentSizeContext.Provider value={size}>
+          <TextClassContext.Provider
+            value={cn("text-popover-foreground", menuTextSizeClasses[size])}
+          >
+            {children}
+          </TextClassContext.Provider>
+        </MenubarContentSizeContext.Provider>
       </MenubarPrimitive.SubContent>
     </NativeOnlyAnimatedView>
   );
@@ -260,12 +335,13 @@ function MenubarContent({
   overlayClassName,
   overlayStyle,
   portalHost,
+  size: sizeProp,
   align = "start",
   alignOffset = -4,
   sideOffset = 8,
   style,
   ...props
-}: React.ComponentProps<typeof MenubarPrimitive.Content> & {
+}: MenubarContentProps & {
   overlayStyle?: StyleProp<ViewStyle>;
   overlayClassName?: string;
   portalHost?: string;
@@ -286,6 +362,7 @@ function MenubarContent({
   const scopedPortalHost = useScopedOverlayPortalHostName();
   const resolvedPortalHost = portalHost ?? scopedPortalHost;
   const contentStyle = useOverlayPortalContentStyle(style);
+  const size = sizeProp ?? React.useContext(MenubarContentSizeContext);
 
   return (
     <MenubarPrimitive.Portal hostName={resolvedPortalHost}>
@@ -297,7 +374,9 @@ function MenubarContent({
           style={StyleSheet.absoluteFill}
           pointerEvents="box-none"
         >
-          <TextClassContext.Provider value="text-popover-foreground">
+          <TextClassContext.Provider
+            value={cn("text-popover-foreground", menuTextSizeClasses[size])}
+          >
             <MenubarPrimitive.Content
               style={
                 [{ maxHeight: windowHeight * MENUBAR_MENU_MAX_HEIGHT_RATIO }, contentStyle] as any
@@ -323,7 +402,9 @@ function MenubarContent({
             >
               <View collapsable={false}>
                 {Platform.OS === "web" ? (
-                  children
+                  <MenubarContentSizeContext.Provider value={size}>
+                    {children}
+                  </MenubarContentSizeContext.Provider>
                 ) : (
                   <ScrollView
                     nestedScrollEnabled
@@ -331,7 +412,9 @@ function MenubarContent({
                     onMoveShouldSetResponderCapture={() => true}
                     style={{ maxHeight: windowHeight * MENUBAR_MENU_MAX_HEIGHT_RATIO }}
                   >
-                    {children}
+                    <MenubarContentSizeContext.Provider value={size}>
+                      {children}
+                    </MenubarContentSizeContext.Provider>
                   </ScrollView>
                 )}
               </View>
@@ -358,10 +441,11 @@ function MenubarItem({
   nativeHaptics?: NativeHapticsSetting;
 }) {
   const contextHaptics = React.useContext(MenubarHapticsContext);
+  const size = React.useContext(MenubarContentSizeContext);
   return (
     <TextClassContext.Provider
       value={cn(
-        "select-none text-sm text-popover-foreground",
+        cn(menuTextSizeClasses[size], "select-none text-popover-foreground"),
         !disabled && "group-active:text-popover-foreground",
         variant === "destructive" && "text-destructive",
         variant === "destructive" && !disabled && "group-active:text-destructive",
@@ -369,7 +453,10 @@ function MenubarItem({
     >
       <MenubarPrimitive.Item
         className={cn(
-          "group relative flex flex-row items-center gap-2 rounded-sm px-2 py-2 sm:py-1.5",
+          cn(
+            "group relative flex flex-row items-center gap-2 rounded-sm px-2",
+            menuItemPaddingClasses[size],
+          ),
           !disabled && "active:bg-accent",
           Platform.select({
             web: cn(
@@ -411,16 +498,20 @@ function MenubarCheckboxItem({
   nativeHaptics?: NativeHapticsSetting;
 }) {
   const contextHaptics = React.useContext(MenubarHapticsContext);
+  const size = React.useContext(MenubarContentSizeContext);
   return (
     <TextClassContext.Provider
       value={cn(
-        "text-sm text-popover-foreground select-none",
+        cn(menuTextSizeClasses[size], "text-popover-foreground select-none"),
         !disabled && "group-active:text-accent-foreground",
       )}
     >
       <MenubarPrimitive.CheckboxItem
         className={cn(
-          "group relative flex flex-row items-center gap-2 rounded-sm py-2 pl-8 pr-2 sm:py-1.5",
+          cn(
+            "group relative flex flex-row items-center gap-2 rounded-sm pl-8 pr-2",
+            menuItemPaddingClasses[size],
+          ),
           !disabled && "active:bg-accent",
           Platform.select({
             web: "focus:bg-accent focus:text-accent-foreground cursor-default outline-none data-[disabled]:pointer-events-none",
@@ -442,7 +533,7 @@ function MenubarCheckboxItem({
             <Icon
               as={Check}
               className={cn(
-                "text-foreground size-4",
+                cn("text-foreground shrink-0", menuIconSizeClasses[size]),
                 Platform.select({ web: "pointer-events-none" }),
               )}
             />
@@ -466,16 +557,20 @@ function MenubarRadioItem({
   nativeHaptics?: NativeHapticsSetting;
 }) {
   const contextHaptics = React.useContext(MenubarHapticsContext);
+  const size = React.useContext(MenubarContentSizeContext);
   return (
     <TextClassContext.Provider
       value={cn(
-        "text-sm text-popover-foreground select-none",
+        cn(menuTextSizeClasses[size], "text-popover-foreground select-none"),
         !disabled && "group-active:text-accent-foreground",
       )}
     >
       <MenubarPrimitive.RadioItem
         className={cn(
-          "group relative flex flex-row items-center gap-2 rounded-sm py-2 pl-8 pr-2 sm:py-1.5",
+          cn(
+            "group relative flex flex-row items-center gap-2 rounded-sm pl-8 pr-2",
+            menuItemPaddingClasses[size],
+          ),
           !disabled && "active:bg-accent",
           Platform.select({
             web: "focus:bg-accent focus:text-accent-foreground cursor-default outline-none data-[disabled]:pointer-events-none",
@@ -513,10 +608,15 @@ function MenubarLabel({
   className?: string;
   inset?: boolean;
 }) {
+  const size = React.useContext(MenubarContentSizeContext);
   return (
     <MenubarPrimitive.Label
       className={cn(
-        "text-foreground px-2 py-2 text-sm font-medium sm:py-1.5",
+        cn(
+          "text-foreground px-2 font-medium",
+          menuTextSizeClasses[size],
+          menuItemPaddingClasses[size],
+        ),
         inset && "pl-8",
         className,
       )}
@@ -539,9 +639,14 @@ function MenubarSeparator({
 }
 
 function MenubarShortcut({ className, ...props }: React.ComponentProps<typeof Text>) {
+  const size = React.useContext(MenubarContentSizeContext);
   return (
     <Text
-      className={cn("text-muted-foreground ml-auto text-xs tracking-widest", className)}
+      className={cn(
+        "text-muted-foreground ml-auto tracking-widest",
+        menuTextSizeClasses[size],
+        className,
+      )}
       {...props}
     />
   );

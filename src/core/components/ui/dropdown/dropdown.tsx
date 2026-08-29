@@ -1,5 +1,11 @@
 import { Icon } from "../icon";
-import type { DropdownItemData, DropdownProps } from "./types";
+import type {
+  DropdownContentProps,
+  DropdownItemData,
+  DropdownProps,
+  DropdownSize,
+  DropdownSubContentProps,
+} from "./types";
 import { NativeOnlyAnimatedView } from "../utils/native_only_animated_view";
 import {
   triggerNativeHaptics,
@@ -26,6 +32,11 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { FadeIn, ReduceMotion } from "react-native-reanimated";
+import {
+  menuIconSizeClasses,
+  menuItemPaddingClasses,
+  menuTextSizeClasses,
+} from "../utils/menu_size";
 
 const DROPDOWN_MENU_MAX_HEIGHT_RATIO = 0.45;
 
@@ -57,6 +68,7 @@ function DropdownPortal({
 const DropdownSub = DropdownPrimitive.Sub;
 
 const DropdownRadioGroup = DropdownPrimitive.RadioGroup;
+const DropdownContentSizeContext = React.createContext<DropdownSize>("default");
 
 const DropdownHapticsContext = React.createContext<{
   item?: NativeHapticsSetting;
@@ -78,19 +90,23 @@ function DropdownSubTrigger({
 }) {
   const { open } = DropdownPrimitive.useSubContext();
   const contextHaptics = React.useContext(DropdownHapticsContext);
+  const size = React.useContext(DropdownContentSizeContext);
   const disabled = props.disabled === true;
   const icon = Platform.OS === "web" ? ChevronRight : open ? ChevronUp : ChevronDown;
   return (
     <TextClassContext.Provider
       value={cn(
-        "text-sm select-none",
+        cn(menuTextSizeClasses[size], "select-none"),
         !disabled && "group-active:text-accent-foreground",
         open && "text-accent-foreground",
       )}
     >
       <DropdownPrimitive.SubTrigger
         className={cn(
-          "group flex flex-row items-center justify-between rounded-sm px-2 py-2 sm:py-1.5",
+          cn(
+            "group flex flex-row items-center justify-between rounded-sm px-2",
+            menuItemPaddingClasses[size],
+          ),
           !disabled && "active:bg-accent",
           Platform.select({
             web: "focus:bg-accent focus:text-accent-foreground cursor-default outline-none [&_svg]:pointer-events-none",
@@ -110,7 +126,10 @@ function DropdownSubTrigger({
         }}
       >
         <>{children}</>
-        <Icon as={icon} className={cn("text-foreground size-4 shrink-0", iconClassName)} />
+        <Icon
+          as={icon}
+          className={cn("text-foreground shrink-0", menuIconSizeClasses[size], iconClassName)}
+        />
       </DropdownPrimitive.SubTrigger>
     </TextClassContext.Provider>
   );
@@ -118,10 +137,13 @@ function DropdownSubTrigger({
 
 function DropdownSubContent({
   className,
+  children,
+  size: sizeProp,
   style,
   ...props
-}: React.ComponentProps<typeof DropdownPrimitive.SubContent>) {
+}: DropdownSubContentProps) {
   const theme = useUiTheme();
+  const size = sizeProp ?? React.useContext(DropdownContentSizeContext);
 
   return (
     <NativeOnlyAnimatedView entering={FadeIn.reduceMotion(ReduceMotion.System)}>
@@ -136,13 +158,18 @@ function DropdownSubContent({
         // The web primitive renders SubContent through its own Radix portal,
         // outside the provider-scoped variables applied by OverlayPortalWindow.
         style={
-          [
-            Platform.OS === "web" ? (semanticColorsToVariables(theme) as any) : null,
-            style,
-          ] as any
+          [Platform.OS === "web" ? (semanticColorsToVariables(theme) as any) : null, style] as any
         }
         {...props}
-      />
+      >
+        <DropdownContentSizeContext.Provider value={size}>
+          <TextClassContext.Provider
+            value={cn("text-popover-foreground", menuTextSizeClasses[size])}
+          >
+            {children}
+          </TextClassContext.Provider>
+        </DropdownContentSizeContext.Provider>
+      </DropdownPrimitive.SubContent>
     </NativeOnlyAnimatedView>
   );
 }
@@ -156,9 +183,10 @@ function DropdownContent({
   overlayClassName,
   overlayStyle,
   portalHost,
+  size: sizeProp,
   style,
   ...props
-}: React.ComponentProps<typeof DropdownPrimitive.Content> & {
+}: DropdownContentProps & {
   /** Internal value used to preserve item haptics across the primitive portal host. */
   itemNativeHaptics?: NativeHapticsSetting;
   overlayStyle?: StyleProp<ViewStyle>;
@@ -187,6 +215,7 @@ function DropdownContent({
   const scopedPortalHost = useScopedOverlayPortalHostName();
   const resolvedPortalHost = portalHost ?? scopedPortalHost;
   const contentStyle = useOverlayPortalContentStyle(style);
+  const size = sizeProp ?? React.useContext(DropdownContentSizeContext);
   const resolvedChildren =
     typeof children === "function" ? children({ pressed: false } as any) : children;
   const handleNativeOverlayPress = (event: any) => {
@@ -239,54 +268,58 @@ function DropdownContent({
               <Pressable onPress={handleNativeOverlayPress} style={StyleSheet.absoluteFillObject} />
             ) : null}
             <DropdownHapticsContext.Provider value={{ item: itemNativeHaptics }}>
-              <TextClassContext.Provider value="text-popover-foreground">
-                <DropdownPrimitive.Content
-                  style={
-                    [
-                      Platform.OS === "web"
-                        ? {
-                            maxHeight: windowHeight * DROPDOWN_MENU_MAX_HEIGHT_RATIO,
-                            zIndex: 50,
-                          }
-                        : { maxHeight: windowHeight * DROPDOWN_MENU_MAX_HEIGHT_RATIO },
-                      contentStyle as any,
-                    ] as any
-                  }
-                  className={cn(
-                    "bg-popover border-border min-w-[8rem] overflow-x-hidden rounded-md border p-1 shadow-lg shadow-black/5",
-                    Platform.select({
-                      web: cn(
-                        cn(
-                          "animate-in fade-in-0 zoom-in-95 max-h-[45vh] overflow-y-auto origin-(--radix-context-menu-content-transform-origin) z-50 cursor-default",
-                          "ui-menu-scrollbar",
-                        ),
-                        resolvedSide === "bottom" && "slide-in-from-top-2",
-                        resolvedSide === "top" && "slide-in-from-bottom-2",
-                      ),
-                    }),
-                    className,
-                  )}
-                  {...props}
-                  asChild
-                  align={align}
-                  side={resolvedSide}
+              <DropdownContentSizeContext.Provider value={size}>
+                <TextClassContext.Provider
+                  value={cn("text-popover-foreground", menuTextSizeClasses[size])}
                 >
-                  <View collapsable={false}>
-                    {Platform.OS === "web" ? (
-                      resolvedChildren
-                    ) : (
-                      <ScrollView
-                        nestedScrollEnabled
-                        showsVerticalScrollIndicator
-                        onMoveShouldSetResponderCapture={() => true}
-                        style={{ maxHeight: windowHeight * DROPDOWN_MENU_MAX_HEIGHT_RATIO }}
-                      >
-                        {resolvedChildren}
-                      </ScrollView>
+                  <DropdownPrimitive.Content
+                    style={
+                      [
+                        Platform.OS === "web"
+                          ? {
+                              maxHeight: windowHeight * DROPDOWN_MENU_MAX_HEIGHT_RATIO,
+                              zIndex: 50,
+                            }
+                          : { maxHeight: windowHeight * DROPDOWN_MENU_MAX_HEIGHT_RATIO },
+                        contentStyle as any,
+                      ] as any
+                    }
+                    className={cn(
+                      "bg-popover border-border min-w-[8rem] overflow-x-hidden rounded-md border p-1 shadow-lg shadow-black/5",
+                      Platform.select({
+                        web: cn(
+                          cn(
+                            "animate-in fade-in-0 zoom-in-95 max-h-[45vh] overflow-y-auto origin-(--radix-context-menu-content-transform-origin) z-50 cursor-default",
+                            "ui-menu-scrollbar",
+                          ),
+                          resolvedSide === "bottom" && "slide-in-from-top-2",
+                          resolvedSide === "top" && "slide-in-from-bottom-2",
+                        ),
+                      }),
+                      className,
                     )}
-                  </View>
-                </DropdownPrimitive.Content>
-              </TextClassContext.Provider>
+                    {...props}
+                    asChild
+                    align={align}
+                    side={resolvedSide}
+                  >
+                    <View collapsable={false}>
+                      {Platform.OS === "web" ? (
+                        resolvedChildren
+                      ) : (
+                        <ScrollView
+                          nestedScrollEnabled
+                          showsVerticalScrollIndicator
+                          onMoveShouldSetResponderCapture={() => true}
+                          style={{ maxHeight: windowHeight * DROPDOWN_MENU_MAX_HEIGHT_RATIO }}
+                        >
+                          {resolvedChildren}
+                        </ScrollView>
+                      )}
+                    </View>
+                  </DropdownPrimitive.Content>
+                </TextClassContext.Provider>
+              </DropdownContentSizeContext.Provider>
             </DropdownHapticsContext.Provider>
           </NativeOnlyAnimatedView>
         </DropdownPrimitive.Overlay>
@@ -310,10 +343,11 @@ function DropdownItem({
   variant?: "default" | "destructive";
 }) {
   const contextHaptics = React.useContext(DropdownHapticsContext);
+  const size = React.useContext(DropdownContentSizeContext);
   return (
     <TextClassContext.Provider
       value={cn(
-        "select-none text-sm text-popover-foreground",
+        cn(menuTextSizeClasses[size], "select-none text-popover-foreground"),
         !disabled && "group-active:text-popover-foreground",
         variant === "destructive" && "text-destructive",
         variant === "destructive" && !disabled && "group-active:text-destructive",
@@ -321,7 +355,10 @@ function DropdownItem({
     >
       <DropdownPrimitive.Item
         className={cn(
-          "group relative flex flex-row items-center gap-2 rounded-sm px-2 py-2 sm:py-1.5",
+          cn(
+            "group relative flex flex-row items-center gap-2 rounded-sm px-2",
+            menuItemPaddingClasses[size],
+          ),
           !disabled && "active:bg-accent",
           Platform.select({
             web: cn(
@@ -365,16 +402,20 @@ function DropdownCheckboxItem({
   nativeHaptics?: NativeHapticsSetting;
 }) {
   const contextHaptics = React.useContext(DropdownHapticsContext);
+  const size = React.useContext(DropdownContentSizeContext);
   return (
     <TextClassContext.Provider
       value={cn(
-        "text-sm text-popover-foreground select-none",
+        cn(menuTextSizeClasses[size], "text-popover-foreground select-none"),
         !disabled && "group-active:text-accent-foreground",
       )}
     >
       <DropdownPrimitive.CheckboxItem
         className={cn(
-          "group relative flex flex-row items-center gap-2 rounded-sm py-2 pl-8 pr-2 sm:py-1.5",
+          cn(
+            "group relative flex flex-row items-center gap-2 rounded-sm pl-8 pr-2",
+            menuItemPaddingClasses[size],
+          ),
           !disabled && "active:bg-accent",
           Platform.select({
             web: "focus:bg-accent focus:text-accent-foreground cursor-default outline-none data-[disabled]:pointer-events-none",
@@ -396,7 +437,7 @@ function DropdownCheckboxItem({
             <Icon
               as={Check}
               className={cn(
-                "text-foreground size-4",
+                cn("text-foreground shrink-0", menuIconSizeClasses[size]),
                 Platform.select({ web: "pointer-events-none" }),
               )}
             />
@@ -420,16 +461,20 @@ function DropdownRadioItem({
   nativeHaptics?: NativeHapticsSetting;
 }) {
   const contextHaptics = React.useContext(DropdownHapticsContext);
+  const size = React.useContext(DropdownContentSizeContext);
   return (
     <TextClassContext.Provider
       value={cn(
-        "text-sm text-popover-foreground select-none",
+        cn(menuTextSizeClasses[size], "text-popover-foreground select-none"),
         !disabled && "group-active:text-accent-foreground",
       )}
     >
       <DropdownPrimitive.RadioItem
         className={cn(
-          "group relative flex flex-row items-center gap-2 rounded-sm py-2 pl-8 pr-2 sm:py-1.5",
+          cn(
+            "group relative flex flex-row items-center gap-2 rounded-sm pl-8 pr-2",
+            menuItemPaddingClasses[size],
+          ),
           !disabled && "active:bg-accent",
           Platform.select({
             web: "focus:bg-accent focus:text-accent-foreground cursor-default outline-none data-[disabled]:pointer-events-none",
@@ -467,10 +512,15 @@ function DropdownLabel({
   className?: string;
   inset?: boolean;
 }) {
+  const size = React.useContext(DropdownContentSizeContext);
   return (
     <DropdownPrimitive.Label
       className={cn(
-        "text-foreground px-2 py-2 text-sm font-medium sm:py-1.5",
+        cn(
+          "text-foreground px-2 font-medium",
+          menuTextSizeClasses[size],
+          menuItemPaddingClasses[size],
+        ),
         inset && "pl-8",
         className,
       )}
@@ -494,9 +544,14 @@ function DropdownSeparator({
 }
 
 function DropdownShortcut({ className, ...props }: React.ComponentProps<typeof Text>) {
+  const size = React.useContext(DropdownContentSizeContext);
   return (
     <Text
-      className={cn("text-muted-foreground ml-auto text-xs tracking-widest", className)}
+      className={cn(
+        "text-muted-foreground ml-auto tracking-widest",
+        menuTextSizeClasses[size],
+        className,
+      )}
       {...props}
     />
   );
@@ -574,6 +629,7 @@ function renderDropdownItems(
 function Dropdown({
   children,
   contentProps,
+  contentSize,
   __nativeDetachedAnchor,
   __menuRef,
   defaultOpen,
@@ -657,78 +713,84 @@ function Dropdown({
 
   return (
     <DropdownHapticsContext.Provider value={{ item: resolvedItemHaptics }}>
-      <DropdownPrimitiveRoot
-        {...props}
-        {...(defaultOpen === undefined ? {} : { defaultOpen })}
-        {...(open === undefined ? {} : { open })}
-        onOpenChange={(open) => {
-          if (resolvedDisabled && open) return;
-          onOpenWillChange?.(open);
-          if (open) triggerNativeHaptics(resolvedHaptics);
-          onOpenChange?.(open);
-        }}
-      >
-        {generated ? (
-          <>
-            {nativeTrigger ? (
-              <DropdownTrigger
-                ref={triggerRef}
-                {...(triggerProps as object)}
-                asChild
-                disabled={resolvedDisabled}
-              >
-                <DropdownNativeTriggerWithContext
-                  className={triggerClassName}
-                  containerStyle={nativeTriggerContainerStyle}
-                  content={nativeTriggerContent}
+      <DropdownContentSizeContext.Provider value={contentSize ?? "default"}>
+        <DropdownPrimitiveRoot
+          {...props}
+          {...(defaultOpen === undefined ? {} : { defaultOpen })}
+          {...(open === undefined ? {} : { open })}
+          onOpenChange={(open) => {
+            if (resolvedDisabled && open) return;
+            onOpenWillChange?.(open);
+            if (open) triggerNativeHaptics(resolvedHaptics);
+            onOpenChange?.(open);
+          }}
+        >
+          {generated ? (
+            <>
+              {nativeTrigger ? (
+                <DropdownTrigger
+                  ref={triggerRef}
+                  {...(triggerProps as object)}
+                  asChild
                   disabled={resolvedDisabled}
-                  icon={nativeTriggerIcon}
-                  label={triggerLabel}
-                  labelProps={nativeTriggerLabelProps}
-                  nativeTriggerProps={nativeTriggerProps}
-                  nativeTriggerFeedbackOpacity={nativeTriggerFeedbackOpacity}
-                  nativeTriggerHoverBackground={nativeTriggerHoverBackground}
-                  trigger={trigger}
-                />
-              </DropdownTrigger>
-            ) : trigger != null ? (
-              <DropdownTrigger
-                ref={triggerRef}
-                {...(triggerProps as object)}
-                asChild
-                disabled={resolvedDisabled}
-              >
-                {resolveDropdownTrigger(trigger, { native: false, open: false }, resolvedDisabled)}
-              </DropdownTrigger>
-            ) : items != null ? (
-              <DropdownTrigger
-                ref={triggerRef}
-                {...(triggerProps as object)}
-                asChild
-                disabled={resolvedDisabled}
-              >
-                <DropdownDefaultTrigger
-                  className={triggerClassName}
+                >
+                  <DropdownNativeTriggerWithContext
+                    className={triggerClassName}
+                    containerStyle={nativeTriggerContainerStyle}
+                    content={nativeTriggerContent}
+                    disabled={resolvedDisabled}
+                    icon={nativeTriggerIcon}
+                    label={triggerLabel}
+                    labelProps={nativeTriggerLabelProps}
+                    nativeTriggerProps={nativeTriggerProps}
+                    nativeTriggerFeedbackOpacity={nativeTriggerFeedbackOpacity}
+                    nativeTriggerHoverBackground={nativeTriggerHoverBackground}
+                    trigger={trigger}
+                  />
+                </DropdownTrigger>
+              ) : trigger != null ? (
+                <DropdownTrigger
+                  ref={triggerRef}
+                  {...(triggerProps as object)}
+                  asChild
                   disabled={resolvedDisabled}
-                  label={resolveRenderProp(triggerLabel, { native: false, open: false })}
-                  props={triggerProps}
-                />
-              </DropdownTrigger>
-            ) : null}
-            {items != null ? (
-              <DropdownContent
-                {...(contentProps as object)}
-                itemNativeHaptics={resolvedItemHaptics}
-              >
-                {renderDropdownItems(items, itemProps, resolvedItemHaptics)}
-              </DropdownContent>
-            ) : null}
-            {children}
-          </>
-        ) : (
-          children
-        )}
-      </DropdownPrimitiveRoot>
+                >
+                  {resolveDropdownTrigger(
+                    trigger,
+                    { native: false, open: false },
+                    resolvedDisabled,
+                  )}
+                </DropdownTrigger>
+              ) : items != null ? (
+                <DropdownTrigger
+                  ref={triggerRef}
+                  {...(triggerProps as object)}
+                  asChild
+                  disabled={resolvedDisabled}
+                >
+                  <DropdownDefaultTrigger
+                    className={triggerClassName}
+                    disabled={resolvedDisabled}
+                    label={resolveRenderProp(triggerLabel, { native: false, open: false })}
+                    props={triggerProps}
+                  />
+                </DropdownTrigger>
+              ) : null}
+              {items != null ? (
+                <DropdownContent
+                  {...(contentProps as object)}
+                  itemNativeHaptics={resolvedItemHaptics}
+                >
+                  {renderDropdownItems(items, itemProps, resolvedItemHaptics)}
+                </DropdownContent>
+              ) : null}
+              {children}
+            </>
+          ) : (
+            children
+          )}
+        </DropdownPrimitiveRoot>
+      </DropdownContentSizeContext.Provider>
     </DropdownHapticsContext.Provider>
   );
 }

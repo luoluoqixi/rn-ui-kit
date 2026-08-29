@@ -5,6 +5,8 @@ import type { StyleProp, TextProps, ViewStyle } from "react-native";
 import type { NativeHapticsSetting } from "../utils";
 import type { RenderProp } from "../utils/render";
 
+export type ContextMenuSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+
 export type ContextMenuRenderContext = {
   native: boolean;
   open: boolean;
@@ -44,9 +46,16 @@ export type ContextMenuSubTriggerProps = ComponentProps<typeof ContextMenuPrimit
   nativeHaptics?: NativeHapticsSetting;
 };
 
-export type ContextMenuSubContentProps = ComponentProps<typeof ContextMenuPrimitive.SubContent>;
+export type ContextMenuSubContentProps = Omit<
+  ComponentProps<typeof ContextMenuPrimitive.SubContent>,
+  "children"
+> & {
+  children?: ReactNode;
+  size?: ContextMenuSize;
+};
 
 export type ContextMenuContentProps = ComponentProps<typeof ContextMenuPrimitive.Content> & {
+  size?: ContextMenuSize;
   overlayStyle?: StyleProp<ViewStyle>;
   overlayClassName?: string;
   portalHost?: string;
@@ -97,6 +106,8 @@ export type ContextMenuRootExtensions = {
   itemProps?: ContextMenuItemProps;
   itemNativeHaptics?: NativeHapticsSetting;
   native?: boolean;
+  /** Size of the generated non-native menu content. */
+  contentSize?: ContextMenuSize;
   nativeHaptics?: NativeHapticsSetting;
   /** iOS native only. Defaults to false so item callbacks run before menu-dismiss animation. */
   nativeShouldWaitForMenuToHideBeforeFiringOnPressMenuItem?: boolean;

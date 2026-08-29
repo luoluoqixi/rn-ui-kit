@@ -18,6 +18,11 @@ import {
   type TextStyle,
 } from "react-native";
 import { FadeIn, FadeOut, ReduceMotion } from "react-native-reanimated";
+import {
+  menuIconSizeClasses,
+  menuItemPaddingClasses,
+  menuTextSizeClasses,
+} from "../utils/menu_size";
 
 const SELECT_MENU_MAX_HEIGHT_RATIO = 0.45;
 
@@ -27,6 +32,7 @@ import { SelectBasicTrigger, SelectNativeTrigger } from "./shared";
 import { SELECT_TRIGGER_FONT_WEIGHT } from "./constants";
 import type {
   SelectContentProps,
+  SelectContentSize,
   SelectHandle,
   SelectGroupProps,
   SelectItemData,
@@ -37,6 +43,8 @@ import type {
   SelectTriggerProps,
   SelectValueProps,
 } from "./types";
+
+const SelectContentSizeContext = React.createContext<SelectContentSize>("default");
 
 function normalizeText(children: React.ReactNode, className?: string) {
   return React.Children.map(children, (child) =>
@@ -118,6 +126,7 @@ function SelectContent({
   initialScrollOffset = 0,
   portalHost,
   viewportProps,
+  size: sizeProp,
   ...props
 }: SelectContentProps) {
   const { height: windowHeight } = useWindowDimensions();
@@ -155,6 +164,7 @@ function SelectContent({
   const resolvedViewportStyle = StyleSheet.flatten(viewportProps?.style as any) as
     | Record<string, unknown>
     | undefined;
+  const size = sizeProp ?? React.useContext(SelectContentSizeContext);
   return (
     <SelectPrimitive.Portal hostName={resolvedHost}>
       <OverlayPortalWindow portalHost={resolvedHost}>
@@ -184,81 +194,86 @@ function SelectContent({
             exiting={FadeOut.reduceMotion(ReduceMotion.System)}
             as="Pressable"
           >
-            <TextClassContext.Provider value="text-popover-foreground">
-              <SelectPrimitive.Content
-                {...props}
-                className={cn(
-                  "bg-popover border-border relative z-50 min-w-[8rem] rounded-md border shadow-md shadow-black/5",
-                  Platform.select({
-                    web: cn(
-                      "animate-in fade-in-0 zoom-in-95 max-h-[45vh] overflow-x-hidden",
-                      showScrollButtons ? "overflow-y-auto" : "overflow-y-hidden",
-                      resolvedSide === "bottom" && "slide-in-from-top-2",
-                      resolvedSide === "top" && "slide-in-from-bottom-2",
-                    ),
-                    native: "p-1",
-                  }),
-                  position === "popper" && Platform.select({ web: "translate-y-1" }),
-                  className,
-                )}
-                style={
-                  {
-                    ...(Platform.OS === "web" ? { zIndex: 50 } : {}),
-                    maxHeight: windowHeight * SELECT_MENU_MAX_HEIGHT_RATIO,
-                    ...(Platform.OS === "web"
-                      ? { overflowY: showScrollButtons ? "auto" : "hidden" }
-                      : {}),
-                    ...resolvedContentStyle,
-                  } as any
-                }
-                position={position}
-                side={resolvedSide}
-                align={align}
+            <SelectContentSizeContext.Provider value={size}>
+              <TextClassContext.Provider
+                value={cn("text-popover-foreground", menuTextSizeClasses[size])}
               >
-                {showScrollButtons ? <SelectScrollUpButton /> : null}
-                {Platform.OS === "web" ? (
-                  <SelectPrimitive.Viewport
-                    {...viewportProps}
-                    className={cn(
-                      "p-1",
-                      position === "popper" &&
-                        Platform.select({ web: "min-w-[var(--radix-select-trigger-width)]" }),
-                      !showScrollButtons && cn("max-h-[45vh] overflow-y-auto", "ui-menu-scrollbar"),
-                      viewportProps?.className,
-                    )}
-                    style={
-                      {
-                        ...(!showScrollButtons
-                          ? {
-                              maxHeight: windowHeight * SELECT_MENU_MAX_HEIGHT_RATIO,
-                              overflowY: "auto",
-                            }
-                          : {}),
-                        ...resolvedViewportStyle,
-                      } as any
-                    }
-                  >
-                    {children}
-                  </SelectPrimitive.Viewport>
-                ) : (
-                  <ScrollView
-                    ref={scrollRef}
-                    nestedScrollEnabled
-                    showsVerticalScrollIndicator
-                    onContentSizeChange={scrollToSelectedItem}
-                    style={{ maxHeight: windowHeight * SELECT_MENU_MAX_HEIGHT_RATIO }}
-                  >
+                <SelectPrimitive.Content
+                  {...props}
+                  className={cn(
+                    "bg-popover border-border relative z-50 min-w-[8rem] rounded-md border shadow-md shadow-black/5",
+                    Platform.select({
+                      web: cn(
+                        "animate-in fade-in-0 zoom-in-95 max-h-[45vh] overflow-x-hidden",
+                        showScrollButtons ? "overflow-y-auto" : "overflow-y-hidden",
+                        resolvedSide === "bottom" && "slide-in-from-top-2",
+                        resolvedSide === "top" && "slide-in-from-bottom-2",
+                      ),
+                      native: "p-1",
+                    }),
+                    position === "popper" && Platform.select({ web: "translate-y-1" }),
+                    className,
+                  )}
+                  style={
+                    {
+                      ...(Platform.OS === "web" ? { zIndex: 50 } : {}),
+                      maxHeight: windowHeight * SELECT_MENU_MAX_HEIGHT_RATIO,
+                      ...(Platform.OS === "web"
+                        ? { overflowY: showScrollButtons ? "auto" : "hidden" }
+                        : {}),
+                      ...resolvedContentStyle,
+                    } as any
+                  }
+                  position={position}
+                  side={resolvedSide}
+                  align={align}
+                >
+                  {showScrollButtons ? <SelectScrollUpButton /> : null}
+                  {Platform.OS === "web" ? (
                     <SelectPrimitive.Viewport
                       {...viewportProps}
-                      className={cn("p-1", viewportProps?.className)}
+                      className={cn(
+                        "p-1",
+                        position === "popper" &&
+                          Platform.select({ web: "min-w-[var(--radix-select-trigger-width)]" }),
+                        !showScrollButtons &&
+                          cn("max-h-[45vh] overflow-y-auto", "ui-menu-scrollbar"),
+                        viewportProps?.className,
+                      )}
+                      style={
+                        {
+                          ...(!showScrollButtons
+                            ? {
+                                maxHeight: windowHeight * SELECT_MENU_MAX_HEIGHT_RATIO,
+                                overflowY: "auto",
+                              }
+                            : {}),
+                          ...resolvedViewportStyle,
+                        } as any
+                      }
                     >
                       {children}
                     </SelectPrimitive.Viewport>
-                  </ScrollView>
-                )}
-                {showScrollButtons ? <SelectScrollDownButton /> : null}
-              </SelectPrimitive.Content>
-            </TextClassContext.Provider>
+                  ) : (
+                    <ScrollView
+                      ref={scrollRef}
+                      nestedScrollEnabled
+                      showsVerticalScrollIndicator
+                      onContentSizeChange={scrollToSelectedItem}
+                      style={{ maxHeight: windowHeight * SELECT_MENU_MAX_HEIGHT_RATIO }}
+                    >
+                      <SelectPrimitive.Viewport
+                        {...viewportProps}
+                        className={cn("p-1", viewportProps?.className)}
+                      >
+                        {children}
+                      </SelectPrimitive.Viewport>
+                    </ScrollView>
+                  )}
+                  {showScrollButtons ? <SelectScrollDownButton /> : null}
+                </SelectPrimitive.Content>
+              </TextClassContext.Provider>
+            </SelectContentSizeContext.Provider>
           </NativeOnlyAnimatedView>
         </SelectPrimitive.Overlay>
       </OverlayPortalWindow>
@@ -267,9 +282,15 @@ function SelectContent({
 }
 
 function SelectLabel({ className, ...props }: SelectLabelProps) {
+  const size = React.useContext(SelectContentSizeContext);
   return (
     <SelectPrimitive.Label
-      className={cn("text-muted-foreground px-2 py-2 text-xs sm:py-1.5", className)}
+      className={cn(
+        "text-muted-foreground px-2",
+        menuTextSizeClasses[size],
+        menuItemPaddingClasses[size],
+        className,
+      )}
       {...props}
     />
   );
@@ -285,6 +306,7 @@ function SelectItem({
   itemTextProps,
   ...props
 }: SelectItemProps) {
+  const size = React.useContext(SelectContentSizeContext);
   const label =
     props.label ??
     (typeof children === "string" || typeof children === "number" ? String(children) : props.value);
@@ -295,7 +317,10 @@ function SelectItem({
       {...props}
       label={label}
       className={cn(
-        "active:bg-accent group relative flex w-full flex-row items-center gap-2 rounded-sm py-2 pl-2 pr-8 sm:py-1.5",
+        cn(
+          "active:bg-accent group relative flex w-full flex-row items-center gap-2 rounded-sm pl-2 pr-8",
+          menuItemPaddingClasses[size],
+        ),
         Platform.select({
           web: "focus:bg-accent focus:text-accent-foreground cursor-default outline-none data-[disabled]:pointer-events-none",
         }),
@@ -305,7 +330,10 @@ function SelectItem({
     >
       <View className="absolute right-2 flex size-3.5 items-center justify-center">
         <SelectPrimitive.ItemIndicator {...itemIndicatorProps}>
-          <Icon as={Check} className="text-muted-foreground size-4 shrink-0" />
+          <Icon
+            as={Check}
+            className={cn("text-muted-foreground shrink-0", menuIconSizeClasses[size])}
+          />
         </SelectPrimitive.ItemIndicator>
       </View>
       {startContent}
@@ -314,12 +342,17 @@ function SelectItem({
         <SelectPrimitive.ItemText
           {...itemTextProps}
           className={cn(
-            "text-foreground select-none text-sm group-active:text-accent-foreground",
+            cn(
+              "text-foreground select-none group-active:text-accent-foreground",
+              menuTextSizeClasses[size],
+            ),
             customLabel && "hidden",
             itemTextProps?.className,
           )}
         />
-        {description != null ? normalizeText(description, "text-muted-foreground text-xs") : null}
+        {description != null
+          ? normalizeText(description, cn("text-muted-foreground", menuTextSizeClasses[size]))
+          : null}
       </View>
       {endContent}
     </SelectPrimitive.Item>
@@ -344,12 +377,13 @@ function SelectScrollUpButton({
   ...props
 }: ComponentProps<typeof SelectPrimitive.ScrollUpButton>) {
   if (Platform.OS !== "web") return null;
+  const size = React.useContext(SelectContentSizeContext);
   return (
     <SelectPrimitive.ScrollUpButton
       className={cn("flex cursor-default items-center justify-center py-1", className)}
       {...props}
     >
-      <Icon as={ChevronUpIcon} className="size-4" />
+      <Icon as={ChevronUpIcon} className={menuIconSizeClasses[size]} />
     </SelectPrimitive.ScrollUpButton>
   );
 }
@@ -358,12 +392,13 @@ function SelectScrollDownButton({
   ...props
 }: ComponentProps<typeof SelectPrimitive.ScrollDownButton>) {
   if (Platform.OS !== "web") return null;
+  const size = React.useContext(SelectContentSizeContext);
   return (
     <SelectPrimitive.ScrollDownButton
       className={cn("flex cursor-default items-center justify-center py-1", className)}
       {...props}
     >
-      <Icon as={ChevronDownIcon} className="size-4" />
+      <Icon as={ChevronDownIcon} className={menuIconSizeClasses[size]} />
     </SelectPrimitive.ScrollDownButton>
   );
 }
@@ -544,6 +579,7 @@ export const SelectBasic = React.forwardRef<SelectHandle, SelectProps>(function 
     showScrollButtons,
     triggerProps,
     triggerSize,
+    contentSize,
     triggerFontWeight,
     viewportProps,
     isDisabled,
@@ -678,7 +714,9 @@ export const SelectBasic = React.forwardRef<SelectHandle, SelectProps>(function 
         onValueChange?.(option?.value ?? null);
       }}
     >
-      {generated}
+      <SelectContentSizeContext.Provider value={contentSize ?? "default"}>
+        {generated}
+      </SelectContentSizeContext.Provider>
     </SelectPrimitive.Root>
   );
 });

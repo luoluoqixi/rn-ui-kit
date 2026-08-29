@@ -37,7 +37,11 @@ const SelectRoot = React.forwardRef<SelectHandle, SelectProps>(function SelectRo
   const RoutedImplementation = Implementation as React.ComponentType<
     SelectProps & React.RefAttributes<SelectHandle>
   >;
-  return <RoutedImplementation {...props} ref={ref} />;
+  if (Implementation === SelectBasic) {
+    return <RoutedImplementation {...props} ref={ref} />;
+  }
+  const { contentSize: _contentSize, ...nativeProps } = props;
+  return <RoutedImplementation {...nativeProps} ref={ref} />;
 });
 
 const SelectComponent = Object.assign(SelectRoot, {

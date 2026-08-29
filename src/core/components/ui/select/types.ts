@@ -21,6 +21,7 @@ export type SelectHandle = {
 export type SelectNativeDropdownAlign = "start" | "center" | "end";
 export type SelectNativeTriggerIcon = NativeTriggerIcon;
 export type SelectTriggerSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+export type SelectContentSize = SelectTriggerSize;
 export type SelectNativePickerProps = Omit<
   ComponentProps<typeof Picker>,
   "children" | "mode" | "onValueChange" | "selectedValue"
@@ -85,6 +86,7 @@ export type SelectTriggerProps = ComponentProps<typeof SelectPrimitive.Trigger> 
 };
 export type SelectValueProps = ComponentProps<typeof SelectPrimitive.Value>;
 export type SelectContentProps = ComponentProps<typeof SelectPrimitive.Content> & {
+  size?: SelectContentSize;
   portalHost?: string;
   showScrollButtons?: boolean;
   /** Internal initial offset used to bring the selected item into view. */
@@ -175,6 +177,8 @@ export interface SelectProps extends Omit<ViewProps, "ref">, SelectRootPrimitive
   triggerProps?: Omit<ButtonProps, "children">;
   /** Shared size for every generated Select trigger. Defaults to `default` (`md`). */
   triggerSize?: SelectTriggerSize;
+  /** Size of the generated non-native menu content. */
+  contentSize?: SelectContentSize;
   /** Font weight for generated Select trigger labels. Defaults to `500`. */
   triggerFontWeight?: TextStyle["fontWeight"];
   value?: string | null;

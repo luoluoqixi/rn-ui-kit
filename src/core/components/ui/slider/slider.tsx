@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useUiTheme } from "../utils";
+import { useUiColorScheme, useUiTheme } from "../utils";
 import { isWeb } from "../utils/platform";
 import { NativeSlider } from "./native_slider";
 import { useSliderBehavior } from "./slider/slider";
@@ -85,6 +85,7 @@ function NonNativeSlider({
     setPressedThumbIndex(index);
   }, []);
   const theme = useUiTheme();
+  const colorScheme = useUiColorScheme();
   const { handleLayout, nativeGesture, values } = useSliderBehavior({
     defaultValue,
     disabled,
@@ -109,6 +110,8 @@ function NonNativeSlider({
   const activeTrackColor = resolveColor(colors?.activeTrackColor, theme.primary);
   const inactiveTrackColor = resolveColor(colors?.inactiveTrackColor, theme.muted);
   const thumbColor = resolveColor(colors?.thumbColor, theme.primary);
+  const activeThumbBorderColor =
+    colorScheme === "dark" ? theme.foreground : withAlpha(thumbColor, 0.78);
   const activeThumbIndex = pressedThumbIndex ?? hoveredThumbIndex;
   const percentages = values.map((item) =>
     range <= 0
@@ -198,7 +201,9 @@ function NonNativeSlider({
                 backgroundColor:
                   activeThumbIndex === index ? brightenColor(thumbColor) : thumbColor,
                 borderColor:
-                  activeThumbIndex === index ? theme.foreground : withAlpha(theme.foreground, 0.18),
+                  activeThumbIndex === index
+                    ? activeThumbBorderColor
+                    : withAlpha(theme.foreground, 0.18),
                 left: `${percent}%`,
               },
               thumbStyle,
