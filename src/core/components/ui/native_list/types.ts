@@ -14,6 +14,9 @@ import type { RenderProp } from "../utils/render";
 
 export type NativeListSelectionId = string | number;
 
+/** iOS 26 原生列表行按下反馈策略。 */
+export type NativeListIosPressFeedback = "automatic" | "immediate";
+
 /** iOS 原生 SwiftUI List 支持的系统列表样式。 */
 export type NativeListIosStyle =
   | "automatic"
@@ -257,6 +260,8 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
     /** 列表宿主背景色：iOS 原生 List 直接作用于 List，自定义 fallback 作用于根容器。 */
     backgroundColor?: ViewStyle["backgroundColor"];
     children?: ReactNode;
+    /** 原生列表是否在触点按下时立即显示行反馈；iOS 26 默认开启，其他版本默认沿用系统行为。 */
+    iosPressFeedback?: NativeListIosPressFeedback;
     /** 所有行默认使用的菜单；Section 或 item 可逐级覆盖。 */
     contextMenuProps?: NativeListContextMenuProps;
     /** 所有 disabled 行是否显示禁用视觉；Section 或 item 可逐级覆盖，默认 true。 */

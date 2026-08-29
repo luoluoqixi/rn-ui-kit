@@ -973,6 +973,7 @@ export function NativeListRoot({
   editModeSelectedSfSymbol,
   editModeSfSymbol,
   iosListStyle: _iosListStyle,
+  iosPressFeedback: _iosPressFeedback,
   listStyle = NATIVE_LIST_BASIC_DEFAULT_STYLE,
   listStyleOptions,
   onRefresh,

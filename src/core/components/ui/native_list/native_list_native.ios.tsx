@@ -988,6 +988,7 @@ function NativeListRoot({
   onRefresh,
   onSelectedIdsChange,
   nativeHaptics,
+  iosPressFeedback = isIos26Plus() ? "immediate" : "automatic",
   refreshColor: _refreshColor,
   refreshEnabledInEditMode = false,
   scrollIndicatorInsets,
@@ -1023,6 +1024,7 @@ function NativeListRoot({
     backgroundColor != null ? (toSwiftUIHexColor(backgroundColor) ?? undefined) : undefined;
   const isNestedNativeList = nestedScrollEnabled === true;
   const usesNativeEditMode = editMode === true;
+  const usesImmediatePressFeedback = iosPressFeedback === "immediate";
 
   const bottomPadding =
     insideTrueSheet && scrollable && !isNestedNativeList
@@ -1087,6 +1089,7 @@ function NativeListRoot({
           correctsNestedScrollIndicatorFrame={
             isIos26Plus() && fixesIOS26NestedScrollIndicatorSafeArea === true
           }
+          delaysContentTouches={!usesImmediatePressFeedback}
           dismissKeyboardOnTap={dismissKeyboardOnTap}
           initialScrollAnchor="center"
           initialScrollTarget={initialScrollTarget}
