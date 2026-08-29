@@ -2,7 +2,7 @@
 
 [中文](./README.md) · [English](./README_EN.md)
 
-[Live demo (web)](https://rn-ui-kit.luoluoqixi.com/)
+[Live demo (web)](https://rn-ui-kit.luoluoqixi.com/) · [Screenshots](./docs/SCREENSHOTS.md)
 
 A cross-platform UI kit for the maintainer's Expo apps. Base components use React Native Reusables source and APIs with Uniwind styling. Components that need system capabilities keep dedicated iOS, Android, and Web implementations in rn-ui-kit.
 
