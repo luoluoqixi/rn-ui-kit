@@ -10,7 +10,7 @@
     "android": "expo run:android --device",
     "prebuild:android": "npx expo prebuild --platform android",
     "prebuild:ios": "npx expo prebuild --platform ios",
-    "build:web": "expo export --platform web",
+    "build:web": "expo export --platform web && node scripts/rewrite-web-asset-paths.cjs",
     "build:android": "expo run:android --variant release --device --no-bundler",
     "build:ios": "expo run:ios --configuration Release --device --no-bundler",
     "typecheck": "tsc -p tsconfig.typecheck.json --noEmit --pretty false",
