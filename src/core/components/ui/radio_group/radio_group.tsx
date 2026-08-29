@@ -10,18 +10,28 @@ import { resolveRenderProp } from "../utils/render";
 import * as RadioGroupPrimitive from "@rn-primitives/radio-group";
 import * as React from "react";
 import { Platform, Pressable, StyleSheet, View, type GestureResponderEvent } from "react-native";
-import type { RenderProp } from "../utils";
 import type {
-  RadioGroupItemData,
   RadioGroupItemProps,
   RadioGroupItemRenderContext,
   RadioGroupProps,
+  RadioGroupSize,
 } from "./types";
 
 type RadioGroupInteraction = {
   disabled: boolean;
   onValueChange: (value: string) => void;
+  size: RadioGroupSize;
   value: string | undefined;
+};
+
+const radioSizes: Record<RadioGroupSize, { indicator: string; dot: string; label: string }> = {
+  "2xs": { indicator: "size-3", dot: "size-1.5", label: "text-xs" },
+  "xs": { indicator: "size-3.5", dot: "size-2", label: "text-xs" },
+  "sm": { indicator: "size-4", dot: "size-2", label: "text-sm" },
+  "md": { indicator: "size-[18px]", dot: "size-2.5", label: "text-base" },
+  "lg": { indicator: "size-5", dot: "size-3", label: "text-base" },
+  "xl": { indicator: "size-6", dot: "size-3.5", label: "text-lg" },
+  "2xl": { indicator: "size-7", dot: "size-4", label: "text-xl" },
 };
 
 const RadioGroupHapticsContext = React.createContext<NativeHapticsSetting | undefined>(undefined);
@@ -36,6 +46,7 @@ function RadioGroup({
   itemProps,
   labelPosition,
   onValueChange,
+  size = "md",
   value,
   disabled = false,
   ...props
@@ -74,6 +85,7 @@ function RadioGroup({
           labelPosition ??
           itemProps?.labelPosition
         }
+        size={item.size ?? item.itemProps?.size ?? itemProps?.size ?? size}
         value={item.value}
       />
     ));
@@ -85,6 +97,7 @@ function RadioGroup({
           disabled,
           onValueChange: handleValueChange,
           value: resolvedValue,
+          size,
         }}
       >
         <RadioGroupPrimitive.Root
@@ -116,6 +129,7 @@ function RadioGroupItem({
   onPressIn,
   onPressOut,
   value,
+  size,
   disabled,
   ...props
 }: RadioGroupItemProps) {
@@ -139,6 +153,8 @@ function RadioGroupItem({
   };
   const renderedLabel = resolveRenderProp(label, renderContext);
   const renderedDescription = resolveRenderProp(description, renderContext);
+  const resolvedSize = size ?? interaction?.size ?? "md";
+  const sizeStyles = radioSizes[resolvedSize];
 
   const normalizeText = (valueToNormalize: React.ReactNode, classNameToUse: string) =>
     React.Children.map(valueToNormalize, (child) =>
@@ -188,7 +204,8 @@ function RadioGroupItem({
           {...props}
           aria-label={props["aria-label"]}
           className={cn(
-            "border-input dark:bg-input/30 aspect-square size-4 shrink-0 items-center justify-center rounded-full border shadow-sm shadow-black/5",
+            "border-input dark:bg-input/30 aspect-square shrink-0 items-center justify-center rounded-full border shadow-sm shadow-black/5",
+            sizeStyles.indicator,
             Platform.select({
               web: !checked && "group-hover:bg-accent/50 group-active:bg-accent/50",
               native: "overflow-hidden",
@@ -208,7 +225,7 @@ function RadioGroupItem({
           <RadioGroupPrimitive.Indicator
             {...indicatorProps}
             className={cn(
-              "bg-primary size-2 rounded-full",
+              cn("bg-primary rounded-full", sizeStyles.dot),
               indicatorClassName,
               indicatorProps?.className,
             )}
@@ -217,11 +234,16 @@ function RadioGroupItem({
         <View className="min-w-0 justify-center gap-1">
           {normalizeText(
             renderedLabel,
-            cn("text-sm font-medium", Platform.select({ web: "leading-none" }), labelClassName),
+            cn(
+              sizeStyles.label,
+              "font-medium",
+              Platform.select({ web: "leading-none" }),
+              labelClassName,
+            ),
           )}
           {normalizeText(
             renderedDescription,
-            cn("text-muted-foreground text-sm", descriptionClassName),
+            cn(sizeStyles.label, "text-muted-foreground", descriptionClassName),
           )}
         </View>
       </Pressable>
@@ -232,7 +254,8 @@ function RadioGroupItem({
     <RadioGroupPrimitive.Item
       {...props}
       className={cn(
-        "border-input dark:bg-input/30 aspect-square size-4 shrink-0 items-center justify-center rounded-full border shadow-sm shadow-black/5",
+        "border-input dark:bg-input/30 aspect-square shrink-0 items-center justify-center rounded-full border shadow-sm shadow-black/5",
+        sizeStyles.indicator,
         Platform.select({
           web: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 dark:aria-invalid:border-destructive outline-none transition-all focus-visible:ring-[3px] disabled:cursor-not-allowed",
         }),
@@ -263,7 +286,7 @@ function RadioGroupItem({
       <RadioGroupPrimitive.Indicator
         {...indicatorProps}
         className={cn(
-          "bg-primary size-2 rounded-full",
+          cn("bg-primary rounded-full", sizeStyles.dot),
           indicatorClassName,
           indicatorProps?.className,
         )}

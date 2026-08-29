@@ -9,6 +9,8 @@ export type RadioGroupItemRenderContext = {
   value: string;
 };
 
+export type RadioGroupSize = "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+
 export interface RadioGroupItemData {
   "aria-label"?: string;
   "description"?: RenderProp<RadioGroupItemRenderContext>;
@@ -17,6 +19,7 @@ export interface RadioGroupItemData {
   "label"?: RenderProp<RadioGroupItemRenderContext>;
   "labelClassName"?: string;
   "labelPosition"?: "left" | "right";
+  "size"?: RadioGroupSize;
   "itemProps"?: Omit<RadioGroupItemProps, "value" | "label" | "description">;
   "value": string;
 }
@@ -33,6 +36,7 @@ export type RadioGroupItemProps = Omit<
   labelClassName?: string;
   labelPosition?: "left" | "right";
   nativeHaptics?: NativeHapticsSetting;
+  size?: RadioGroupSize;
   containerClassName?: string;
 };
 
@@ -46,6 +50,7 @@ export type RadioGroupProps = Omit<
   itemProps?: Omit<RadioGroupItemProps, "value" | "label" | "description">;
   labelPosition?: "left" | "right";
   nativeHaptics?: NativeHapticsSetting;
+  size?: RadioGroupSize;
   onValueChange?: (value: string) => void;
   value?: string;
 };
