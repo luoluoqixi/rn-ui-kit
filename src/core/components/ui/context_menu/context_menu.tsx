@@ -28,6 +28,7 @@ import { Text, TextClassContext } from "../text";
 import { cn } from "../utils/cn";
 import { OverlayPortalWindow, useOverlayPortalContentStyle } from "../utils/overlay/overlay_portal";
 import { useScopedOverlayPortalHostName } from "../utils/overlay";
+import { semanticColorsToVariables, useUiTheme } from "../utils/theme";
 import * as ContextMenuPrimitive from "@rn-primitives/context-menu";
 import { Check, ChevronDown, ChevronRight, ChevronUp } from "lucide-react-native";
 import * as React from "react";
@@ -101,7 +102,9 @@ function ContextMenuSubTrigger({
   );
 }
 
-function ContextMenuSubContent({ className, ...props }: ContextMenuSubContentProps) {
+function ContextMenuSubContent({ className, style, ...props }: ContextMenuSubContentProps) {
+  const theme = useUiTheme();
+
   return (
     <NativeOnlyAnimatedView entering={FadeIn.reduceMotion(ReduceMotion.System)}>
       <ContextMenuPrimitive.SubContent
@@ -112,6 +115,14 @@ function ContextMenuSubContent({ className, ...props }: ContextMenuSubContentPro
           }),
           className,
         )}
+        // The web primitive renders SubContent through its own Radix portal,
+        // outside the provider-scoped variables applied by OverlayPortalWindow.
+        style={
+          [
+            Platform.OS === "web" ? (semanticColorsToVariables(theme) as any) : null,
+            style,
+          ] as any
+        }
         {...props}
       />
     </NativeOnlyAnimatedView>

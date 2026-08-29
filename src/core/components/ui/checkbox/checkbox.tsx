@@ -6,8 +6,9 @@ import { resolveRenderProp } from "../utils/render";
 import * as CheckboxPrimitive from "@rn-primitives/checkbox";
 import { Check } from "lucide-react-native";
 import * as React from "react";
-import { Platform, Pressable, View, type GestureResponderEvent } from "react-native";
+import { Platform, Pressable, StyleSheet, View, type GestureResponderEvent } from "react-native";
 import type { CheckboxProps, CheckboxRenderContext, CheckboxSize } from "./types";
+import { useUiTheme } from "../utils/theme";
 
 const DEFAULT_HIT_SLOP = 24;
 
@@ -30,6 +31,21 @@ const checkboxIconSizes: Record<CheckboxSize, number> = {
   "xl": 21,
   "2xl": 24,
 };
+
+function withAlpha(color: string, alpha: number): string {
+  const value = color.trim();
+  const hex = value.match(/^#([\da-f]{3}|[\da-f]{6})$/i)?.[1];
+  if (hex != null) {
+    const expanded = hex.length === 3 ? hex.split("").map((char) => char + char).join("") : hex;
+    const channels = [0, 2, 4].map((index) => Number.parseInt(expanded.slice(index, index + 2), 16));
+    return `rgba(${channels.join(",")},${alpha})`;
+  }
+
+  const rgb = value.match(
+    /^rgba?\(\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*(?:,[\d.]+)?\s*\)$/i,
+  );
+  return rgb == null ? value : `rgba(${rgb[1]},${rgb[2]},${rgb[3]},${alpha})`;
+}
 
 function Checkbox({
   className,
@@ -61,6 +77,7 @@ function Checkbox({
   const hasContainer = label != null || description != null || card;
   const [uncontrolledChecked, setUncontrolledChecked] = React.useState(false);
   const [isPressed, setIsPressed] = React.useState(false);
+  const theme = useUiTheme();
   const resolvedChecked = checked ?? uncontrolledChecked;
   const renderContext: CheckboxRenderContext = {
     card,
@@ -70,6 +87,20 @@ function Checkbox({
   };
   const renderedLabel = resolveRenderProp(label, renderContext);
   const renderedDescription = resolveRenderProp(description, renderContext);
+  const resolvedRootStyle =
+    typeof props.style === "function" ? props.style({ pressed: isPressed }) : props.style;
+  const pressedRootStyle =
+    isPressed && !resolvedChecked && !props.disabled
+      ? { backgroundColor: theme.accent }
+      : undefined;
+  const rootStyle = StyleSheet.flatten([resolvedRootStyle, pressedRootStyle]);
+  const pressedCheckedBackground = withAlpha(theme.primary, 0.85);
+  const indicatorStyle = StyleSheet.flatten([
+    indicatorProps?.style,
+    isPressed && resolvedChecked && !props.disabled
+      ? { backgroundColor: pressedCheckedBackground }
+      : undefined,
+  ]);
 
   const handleCheckedChange = (nextChecked: boolean) => {
     if (checked === undefined) {
@@ -116,6 +147,20 @@ function Checkbox({
           labelPosition === "left" && "flex-row-reverse",
           card && "rounded-lg border border-border p-3",
           card && resolvedChecked === true && "border-primary bg-primary/10",
+          card &&
+            resolvedChecked === true &&
+            !props.disabled &&
+            Platform.select({
+              web: "hover:bg-primary/15 active:bg-primary/15",
+              native: "active:bg-primary/15",
+            }),
+          card &&
+            resolvedChecked !== true &&
+            !props.disabled &&
+            Platform.select({
+              web: "hover:bg-accent/50 active:bg-accent/50",
+              native: "active:bg-accent/50",
+            }),
           props.disabled && "opacity-50",
           containerClassName,
         )}
@@ -139,11 +184,10 @@ function Checkbox({
           {...props}
           checked={resolvedChecked}
           className={cn(
-            "border-input dark:bg-input/30 shrink-0 rounded-[4px] border shadow-sm shadow-black/5",
+            "group border-input dark:bg-input/30 shrink-0 rounded-[4px] border shadow-sm shadow-black/5",
             checkboxSizeClasses[size],
-            isPressed && "opacity-70",
             Platform.select({
-              web: "group-hover:opacity-80 group-active:opacity-70",
+              web: !resolvedChecked && "group-hover:bg-accent/50 group-active:bg-accent/50",
               native: "overflow-hidden",
             }),
             renderedDescription != null && !card && "mt-0.5",
@@ -151,7 +195,7 @@ function Checkbox({
             props.disabled && "opacity-50",
             className,
           )}
-          style={isPressed && !props.disabled ? { opacity: 0.7 } : props.style}
+          style={rootStyle}
           pointerEvents="none"
           accessible={false}
           onCheckedChange={() => undefined}
@@ -160,16 +204,26 @@ function Checkbox({
             {...indicatorProps}
             className={cn(
               "bg-primary h-full w-full items-center justify-center",
+              resolvedChecked &&
+                Platform.select({
+                  web: "group-hover:bg-primary/85 group-active:bg-primary/85",
+                }),
               indicatorClassName,
               indicatorProps?.className,
             )}
+            style={indicatorStyle}
           >
             <Icon
               as={Check}
               {...iconProps}
               size={iconProps?.size ?? checkboxIconSizes[size]}
               strokeWidth={iconProps?.strokeWidth ?? (Platform.OS === "web" ? 2.5 : 3.5)}
-              className={cn("text-primary-foreground", iconClassName, iconProps?.className)}
+              color={iconProps?.color}
+              className={cn(
+                "text-primary-foreground",
+                iconClassName,
+                iconProps?.className,
+              )}
             />
           </CheckboxPrimitive.Indicator>
         </CheckboxPrimitive.Root>
@@ -184,20 +238,24 @@ function Checkbox({
   return (
     <CheckboxPrimitive.Root
       className={cn(
-        "border-input dark:bg-input/30 shrink-0 rounded-[4px] border shadow-sm shadow-black/5",
+        "group border-input dark:bg-input/30 shrink-0 rounded-[4px] border shadow-sm shadow-black/5",
         checkboxSizeClasses[size],
         Platform.select({
-          web: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive peer cursor-default outline-none transition-shadow focus-visible:ring-[3px] disabled:cursor-not-allowed hover:opacity-80 active:opacity-70",
+          web: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive peer cursor-default outline-none transition-shadow focus-visible:ring-[3px] disabled:cursor-not-allowed",
           native: "overflow-hidden",
         }),
-        isPressed && "opacity-70",
-        checked && cn("border-primary", checkedClassName),
+        !resolvedChecked &&
+          Platform.select({
+            native: "active:bg-accent/50",
+            web: "hover:bg-accent/50 active:bg-accent/50",
+          }),
+        resolvedChecked && cn("border-primary", checkedClassName),
         props.disabled && "opacity-50",
         className,
       )}
-      style={isPressed && !props.disabled ? { opacity: 0.7 } : props.style}
+      style={rootStyle}
       hitSlop={DEFAULT_HIT_SLOP}
-      checked={checked ?? false}
+      checked={resolvedChecked}
       onPress={onPress}
       onPressIn={(event) => {
         setIsPressed(true);
@@ -208,6 +266,9 @@ function Checkbox({
         onPressOut?.(event);
       }}
       onCheckedChange={(nextChecked) => {
+        if (checked === undefined) {
+          setUncontrolledChecked(nextChecked);
+        }
         triggerNativeHaptics(resolvedNativeHaptics);
         onCheckedChange?.(nextChecked);
       }}
@@ -215,18 +276,28 @@ function Checkbox({
     >
       <CheckboxPrimitive.Indicator
         {...indicatorProps}
-        className={cn(
-          "bg-primary h-full w-full items-center justify-center",
-          indicatorClassName,
-          indicatorProps?.className,
-        )}
-      >
+          className={cn(
+            "bg-primary h-full w-full items-center justify-center",
+            resolvedChecked &&
+              Platform.select({
+                web: "group-hover:bg-primary/85 group-active:bg-primary/85",
+              }),
+            indicatorClassName,
+            indicatorProps?.className,
+          )}
+          style={indicatorStyle}
+        >
         <Icon
           as={Check}
           {...iconProps}
           size={iconProps?.size ?? checkboxIconSizes[size]}
           strokeWidth={iconProps?.strokeWidth ?? (Platform.OS === "web" ? 2.5 : 3.5)}
-          className={cn("text-primary-foreground", iconClassName, iconProps?.className)}
+          color={iconProps?.color}
+          className={cn(
+            "text-primary-foreground",
+            iconClassName,
+            iconProps?.className,
+          )}
         />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
