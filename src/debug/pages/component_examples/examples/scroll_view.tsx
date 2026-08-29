@@ -12,7 +12,6 @@ export function ScrollViewExample() {
         <Switch
           checked={customScrollbar}
           label="可拖拽滚动条"
-          native={false}
           onCheckedChange={setCustomScrollbar}
         />
         <View style={styles.scrollFrame}>

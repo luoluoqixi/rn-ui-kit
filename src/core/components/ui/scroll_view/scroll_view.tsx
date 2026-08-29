@@ -1,13 +1,16 @@
-import { forwardRef } from "react";
+import { forwardRef, useImperativeHandle, useRef } from "react";
 import {
   ScrollView as ReactNativeScrollView,
   type ScrollViewProps as ReactNativeScrollViewProps,
+  StyleSheet,
+  View,
 } from "react-native";
 
 import { useTrueSheetScrollLayout } from "../sheet/native_sheet/true_sheet/true_sheet_scroll_context";
 import { useNavigationBarScrollEdge } from "../utils/navigation";
 import { isWeb, os } from "../utils/platform";
 
+import { useScrollTrack, type ScrollTrackOptions } from "./scroll_track";
 import type { ScrollViewProps } from "./types";
 
 const AndroidTrackedScrollView = forwardRef<any, ScrollViewProps>((props, ref) => {
@@ -61,7 +64,7 @@ const WebTrackedScrollView = forwardRef<any, ScrollViewProps>((props, ref) => {
 });
 WebTrackedScrollView.displayName = "WebTrackedScrollView";
 
-export const ScrollView = forwardRef<any, ScrollViewProps>((props, ref) => {
+const BaseScrollView = forwardRef<any, ScrollViewProps>((props, ref) => {
   const { active: insideTrueSheet } = useTrueSheetScrollLayout();
 
   if (isWeb()) {
@@ -70,6 +73,7 @@ export const ScrollView = forwardRef<any, ScrollViewProps>((props, ref) => {
 
   const {
     automaticallyAdjustsScrollIndicatorInsets,
+    customScrollbar: _customScrollbar,
     iosEmptyViewportScrollEnabled = true,
     navigationBarScrollEdgeOptions,
     nestedScrollEnabled,
@@ -112,4 +116,54 @@ export const ScrollView = forwardRef<any, ScrollViewProps>((props, ref) => {
       {...(restProps as any)}
     />
   );
+});
+
+const CustomScrollbarScrollView = forwardRef<any, ScrollViewProps>((props, ref) => {
+  const { customScrollbar, style, ...scrollViewProps } = props;
+  const nativeScrollRef = useRef<any>(null);
+  const customScrollbarOptions: ScrollTrackOptions =
+    typeof customScrollbar === "object" ? customScrollbar : {};
+  const scrollTrack = useScrollTrack({
+    ...customScrollbarOptions,
+    onContentSizeChange: scrollViewProps.onContentSizeChange,
+    onLayout: scrollViewProps.onLayout,
+    onScroll: scrollViewProps.onScroll,
+    scrollRef: nativeScrollRef,
+  });
+
+  useImperativeHandle(ref, () => nativeScrollRef.current);
+
+  return (
+    <View style={[style, styles.customScrollbarContainer]}>
+      <BaseScrollView
+        {...scrollViewProps}
+        ref={nativeScrollRef}
+        onContentSizeChange={scrollTrack.onContentSizeChange}
+        onLayout={scrollTrack.onLayout}
+        onScroll={scrollTrack.onScroll}
+        scrollEventThrottle={scrollViewProps.scrollEventThrottle ?? 16}
+        showsVerticalScrollIndicator={false}
+        style={styles.customScrollbarScrollView}
+      />
+      {scrollTrack.ScrollTrack}
+    </View>
+  );
+});
+CustomScrollbarScrollView.displayName = "CustomScrollbarScrollView";
+
+export const ScrollView = forwardRef<any, ScrollViewProps>((props, ref) => {
+  if (props.customScrollbar) {
+    return <CustomScrollbarScrollView ref={ref} {...props} />;
+  }
+
+  return <BaseScrollView ref={ref} {...props} />;
+});
+
+const styles = StyleSheet.create({
+  customScrollbarContainer: {
+    position: "relative",
+  },
+  customScrollbarScrollView: {
+    flex: 1,
+  },
 });

@@ -16,6 +16,7 @@ import {
   type NativeListSelectionId,
   NativeTrigger,
   NativeTriggerPressable,
+  ScrollView,
   Select,
   useKeyboardAvoidance,
   useKeyboardVisibility,
@@ -27,6 +28,8 @@ import {
   type NativeTriggerPressableProps,
   type NativeTriggerProps,
   type SelectProps,
+  type ScrollViewProps,
+  type CustomScrollbarOptions,
   Textarea,
 } from "rn-ui-kit";
 import {
@@ -45,6 +48,7 @@ void NativeListDropdownItem;
 void useNativeListEditMode;
 void NativeTrigger;
 void NativeTriggerPressable;
+void ScrollView;
 void Textarea;
 void useKeyboardAvoidance;
 void useKeyboardVisibility;
@@ -62,6 +66,8 @@ type PublicNativeListDropdownItemProps = NativeListDropdownItemProps;
 type PublicNativeListRootProps = NativeListRootProps;
 type PublicNativeListSelectionId = NativeListSelectionId;
 type PublicSelectProps = SelectProps;
+type PublicScrollViewProps = ScrollViewProps;
+type PublicCustomScrollbarOptions = CustomScrollbarOptions;
 type PublicDebugProps = RnUiKitDebugPanelProps;
 type PublicDebugPageScreenOptions = RnUiKitDebugPanelPageScreenOptions;
 type PublicDebugNativeSheetScreenOptions = RnUiKitDebugPanelNativeSheetScreenOptions;
@@ -165,6 +171,27 @@ const selectProps = {
 
 void selectProps;
 
+const customScrollbarOptions = {
+  alwaysVisible: true,
+  styling: {
+    thumbBorderRadius: 6,
+    thumbColor: "#666666",
+    thumbHoverColor: "#777777",
+    thumbPressedColor: "#888888",
+    trackBorderRadius: 4,
+    trackHoverColor: "#eeeeee",
+    trackPressedColor: "#dddddd",
+    trackWidth: 5,
+  },
+} satisfies CustomScrollbarOptions;
+
+const scrollViewProps = {
+  customScrollbar: customScrollbarOptions,
+} satisfies Pick<ScrollViewProps, "customScrollbar">;
+
+void customScrollbarOptions;
+void scrollViewProps;
+
 const nativeListMenuItemProps = {
   dropdownProps: {
     items: [{ label: "编辑", value: "edit" }],
@@ -220,5 +247,7 @@ export type {
   PublicNativeListContextMenuProps,
   PublicNativeListRootProps,
   PublicNativeListSelectionId,
+  PublicScrollViewProps,
+  PublicCustomScrollbarOptions,
   PublicSelectProps,
 };
