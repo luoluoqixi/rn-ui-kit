@@ -1,8 +1,18 @@
 import { cn } from "../utils/cn";
-import { Platform, TextInput } from "react-native";
-import { TextareaProps } from "./types";
+import { Platform, TextInput, type TextStyle } from "react-native";
+import type { TextareaProps, TextareaSize } from "./types";
 
 const WEB_PLACEHOLDER_TEXT_COLOR_CLASS_NAME = "accent-muted-foreground/50";
+
+const textareaTextStyles: Record<TextareaSize, TextStyle> = {
+  "2xs": { fontSize: 12 },
+  "xs": { fontSize: 12 },
+  "sm": { fontSize: 14 },
+  "md": { fontSize: 16 },
+  "lg": { fontSize: 16 },
+  "xl": { fontSize: 18 },
+  "2xl": { fontSize: 20 },
+};
 
 function Textarea({
   className,
@@ -10,13 +20,14 @@ function Textarea({
   multiline = true,
   numberOfLines = Platform.select({ web: 2, native: 8 }), // On web, numberOfLines also determines initial height. On native, it determines the maximum height.
   placeholderClassName,
+  size = "md",
   unstyled = false,
   ...props
 }: TextareaProps) {
   void placeholderClassName;
   const baseClassName = unstyled
     ? "text-foreground min-w-0 w-full flex-row outline-none"
-    : "text-foreground border-input dark:bg-input/30 flex min-h-16 w-full flex-row rounded-md border bg-transparent px-3 py-2 text-base shadow-sm shadow-black/5 md:text-sm";
+    : "text-foreground border-input dark:bg-input/30 flex min-h-16 w-full flex-row rounded-md border bg-transparent px-3 py-2 shadow-sm shadow-black/5";
   const hasExplicitResize = /(?:^|\s)resize(?:-|\s|$)/.test(className ?? "");
   return (
     <TextInput
@@ -40,6 +51,7 @@ function Textarea({
         (disabled || props.editable === false) && "opacity-50",
         className,
       )}
+      style={[!unstyled ? textareaTextStyles[size] : null, props.style]}
       multiline={multiline}
       editable={disabled ? false : props.editable}
       numberOfLines={numberOfLines}

@@ -17,6 +17,15 @@ export function TextAreaExample() {
           清空内容
         </Button>
       </ExampleBlock>
+      <ExampleBlock title="大小">
+        <Textarea size="2xs" placeholder="2xs" style={{ minHeight: 50, maxHeight: 50 }} />
+        <Textarea size="xs" placeholder="2xs" style={{ minHeight: 50, maxHeight: 50 }} />
+        <Textarea size="sm" placeholder="sm" style={{ minHeight: 50, maxHeight: 50 }} />
+        <Textarea size="md" placeholder="md" style={{ minHeight: 50, maxHeight: 50 }} />
+        <Textarea size="lg" placeholder="lg" style={{ minHeight: 55, maxHeight: 55 }} />
+        <Textarea size="xl" placeholder="xl" style={{ minHeight: 60, maxHeight: 60 }} />
+        <Textarea size="2xl" placeholder="2xl" style={{ minHeight: 80, maxHeight: 80 }} />
+      </ExampleBlock>
     </ExampleStack>
   );
 }
