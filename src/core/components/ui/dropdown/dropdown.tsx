@@ -11,6 +11,7 @@ import { Text, TextClassContext } from "../text";
 import { cn } from "../utils/cn";
 import { OverlayPortalWindow, useOverlayPortalContentStyle } from "../utils/overlay/overlay_portal";
 import { useScopedOverlayPortalHostName } from "../utils/overlay";
+import { semanticColorsToVariables, useUiTheme } from "../utils/theme";
 import * as DropdownPrimitive from "@rn-primitives/dropdown-menu";
 import { Check, ChevronDown, ChevronRight, ChevronUp } from "lucide-react-native";
 import * as React from "react";
@@ -117,8 +118,11 @@ function DropdownSubTrigger({
 
 function DropdownSubContent({
   className,
+  style,
   ...props
 }: React.ComponentProps<typeof DropdownPrimitive.SubContent>) {
+  const theme = useUiTheme();
+
   return (
     <NativeOnlyAnimatedView entering={FadeIn.reduceMotion(ReduceMotion.System)}>
       <DropdownPrimitive.SubContent
@@ -129,6 +133,14 @@ function DropdownSubContent({
           }),
           className,
         )}
+        // The web primitive renders SubContent through its own Radix portal,
+        // outside the provider-scoped variables applied by OverlayPortalWindow.
+        style={
+          [
+            Platform.OS === "web" ? (semanticColorsToVariables(theme) as any) : null,
+            style,
+          ] as any
+        }
         {...props}
       />
     </NativeOnlyAnimatedView>
@@ -209,7 +221,9 @@ function DropdownContent({
                   position: "fixed",
                   right: 0,
                   top: 0,
-                  zIndex: 1,
+                  // Keep the outside-click layer below Radix's nested submenu portal.
+                  // The menu content itself has a higher z-index and remains above this layer.
+                  zIndex: 0,
                 } as any)
               : StyleSheet.absoluteFillObject,
             overlayStyle,

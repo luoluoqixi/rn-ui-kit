@@ -119,7 +119,7 @@ export function DropdownExample() {
       </ExampleBlock>
       {!isWeb() && (
         <ExampleBlock title="原生项目菜单">
-          <DropdownPair native items={items} triggerLabel="Native Dropdown" />
+          <DropdownPair native items={items} triggerLabel="Native" />
           <Text variant="muted">最近动作：{action}</Text>
         </ExampleBlock>
       )}
