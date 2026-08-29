@@ -13,6 +13,7 @@ import {
   resolveToastText,
 } from "./toast_basic_shared";
 import type { BasicToastKind } from "./toast_basic_shared";
+import { useUiTheme } from "../utils/theme";
 
 let toastId = 0;
 
@@ -78,6 +79,7 @@ export function BasicToaster({
   closeButtonClassName: _closeButtonClassName,
   ...props
 }: ToastNativeToasterProps) {
+  const theme = useUiTheme();
   React.useEffect(() => {
     const runtimeConfig = {
       ...(basicHaptics !== undefined
@@ -92,6 +94,11 @@ export function BasicToaster({
   }, [basicHaptics, haptics, customToastViewProps]);
   const toastOptions = {
     ...sonnerNativeProps?.toastOptions,
+    style: {
+      // Use the UI theme surface on native, matching the Web basic Toast.
+      backgroundColor: theme.background,
+      ...sonnerNativeProps?.toastOptions?.style,
+    },
     toastContentStyle: {
       alignItems: "center" as const,
       ...sonnerNativeProps?.toastOptions?.toastContentStyle,

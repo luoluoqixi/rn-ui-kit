@@ -26,7 +26,7 @@ import {
 } from "react-native";
 import { FadeIn, ReduceMotion } from "react-native-reanimated";
 
-import type { MenubarItemData, MenubarProps } from "./types";
+import type { MenubarItemData, MenubarProps, MenubarTriggerProps } from "./types";
 
 const MENUBAR_MENU_MAX_HEIGHT_RATIO = 0.45;
 
@@ -124,15 +124,15 @@ function MenubarRoot({
 
 function MenubarTrigger({
   className,
+  cursorDefault = true,
   nativeHaptics,
   onPress,
   ...props
-}: React.ComponentProps<typeof MenubarPrimitive.Trigger> & {
-  nativeHaptics?: NativeHapticsSetting;
-}) {
+}: MenubarTriggerProps) {
   const { value } = MenubarPrimitive.useRootContext();
   const { value: itemValue } = MenubarPrimitive.useMenuContext();
   const contextHaptics = React.useContext(MenubarHapticsContext);
+  const hasCursorOverride = className?.split(/\s+/).some((token) => token.startsWith("cursor-"));
 
   return (
     <TextClassContext.Provider
@@ -145,7 +145,10 @@ function MenubarTrigger({
         className={cn(
           "group flex items-center rounded-md px-2 py-1.5 sm:py-1",
           Platform.select({
-            web: "hover:bg-accent hover:text-accent-foreground cursor-default outline-none",
+            web: cn(
+              "hover:bg-accent hover:text-accent-foreground outline-none",
+              cursorDefault && !hasCursorOverride && "!cursor-default",
+            ),
           }),
           value === itemValue && "bg-accent",
           className,

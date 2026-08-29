@@ -1,11 +1,14 @@
 import { Accordion, Text } from "rn-ui-kit/core";
+import Animated, { LinearTransition } from "react-native-reanimated";
 import { ExampleBlock, ExampleStack } from "../shared";
 
 export function AccordionExample() {
   return (
     <ExampleStack>
       <ExampleBlock>
-        <Text variant="h4">单项展开</Text>
+        <Animated.View layout={LinearTransition.duration(200)}>
+          <Text variant="h4">单项展开</Text>
+        </Animated.View>
         <Accordion
           nativeHaptics
           collapsible
@@ -29,7 +32,9 @@ export function AccordionExample() {
           ]}
         />
 
-        <Text variant="h4">多项展开</Text>
+        <Animated.View layout={LinearTransition.duration(200)}>
+          <Text variant="h4">多项展开</Text>
+        </Animated.View>
         <Accordion
           nativeHaptics
           type="multiple"

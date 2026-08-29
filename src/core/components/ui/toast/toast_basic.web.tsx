@@ -13,7 +13,7 @@ import {
   resolveToastContent,
 } from "./toast_basic_shared";
 import type { BasicToastKind } from "./toast_basic_shared";
-import { useUiColorScheme } from "../utils/theme";
+import { useUiColorScheme, useUiTheme } from "../utils/theme";
 
 let toastId = 0;
 const CLOSE_BUTTON_CLASS = "rn-ui-kit-toast-close-button";
@@ -70,6 +70,7 @@ export function BasicToaster({
   ...props
 }: ToastNativeToasterProps) {
   const colorScheme = useUiColorScheme();
+  const theme = useUiTheme();
   React.useEffect(() => {
     const runtimeConfig = {
       ...(basicHaptics !== undefined
@@ -107,6 +108,13 @@ export function BasicToaster({
     "--toast-close-button-start": "unset",
     "--toast-close-button-end": "16px",
     "--toast-close-button-transform": "translate(0, -50%)",
+    // A named toaster is mounted inside a TrueSheet. Sonner's fixed position
+    // otherwise uses the transformed sheet wrapper (which can be taller than
+    // the visible sheet) as its containing block and places the stack below
+    // the viewport. Keep an explicit user position untouched.
+    ...(viewportName != null && sonnerProps?.style?.position == null
+      ? { position: "absolute" as const }
+      : {}),
     ...sonnerProps?.style,
   } as React.CSSProperties;
   return (
@@ -126,6 +134,9 @@ export function BasicToaster({
         toastOptions={toastOptions}
       />
       <style>{`
+        [data-sonner-toast][data-styled="true"] {
+          background-color: ${theme.background};
+        }
         [data-sonner-toast][data-styled="true"] .${CLOSE_BUTTON_CLASS} {
           top: 50% !important;
           left: auto !important;

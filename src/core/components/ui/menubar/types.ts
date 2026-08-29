@@ -10,6 +10,12 @@ export type MenubarItemRenderContext = {
   value?: string;
 };
 
+export type MenubarTriggerProps = ComponentProps<typeof MenubarPrimitive.Trigger> & {
+  /** Keep the default cursor on web. Set false to manage the cursor yourself. */
+  cursorDefault?: boolean;
+  nativeHaptics?: NativeHapticsSetting;
+};
+
 export type MenubarItemData = {
   type?: "item" | "separator" | "submenu" | "checkbox" | "radio-group" | "radio" | "label";
   title?: RenderProp<MenubarItemRenderContext>;
@@ -41,7 +47,7 @@ export type MenubarMenuData = {
   title: RenderProp<MenubarItemRenderContext>;
   items: MenubarItemData[];
   nativeHaptics?: NativeHapticsSetting;
-  triggerProps?: Omit<ComponentProps<typeof MenubarPrimitive.Trigger>, "children">;
+  triggerProps?: Omit<MenubarTriggerProps, "children" | "nativeHaptics">;
   contentProps?: Omit<ComponentProps<typeof MenubarPrimitive.Content>, "children">;
 };
 

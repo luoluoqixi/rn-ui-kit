@@ -150,8 +150,14 @@ function OverlayToastLayer({
       : 0;
 
   const bottom = Math.max(bottomInset, detentVisibleOffset);
-  const layerStyle: ViewStyle[] | ViewStyle =
-    bottom > 0 ? [styles.toastLayer, { bottom }] : styles.toastLayer;
+  const layerStyle: ViewStyle[] | ViewStyle = [
+    styles.toastLayer,
+    // Sonner's scoped Web toaster is absolutely positioned against this
+    // layer. Explicitly filling the layer gives it the sheet's visible
+    // viewport instead of the content's intrinsic height.
+    ...(isWeb() ? [styles.webToastLayer] : []),
+    ...(bottom > 0 ? [{ bottom }] : []),
+  ];
 
   return (
     <View pointerEvents="box-none" style={layerStyle}>
@@ -295,6 +301,9 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 0,
     zIndex: 1,
+  },
+  webToastLayer: {
+    top: 0,
   },
   teleportLayer: {
     bottom: 0,
