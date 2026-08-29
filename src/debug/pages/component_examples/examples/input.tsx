@@ -14,6 +14,14 @@ export function InputExample() {
         <Input onChangeText={setSlug} placeholder="my-workspace" value={slug} />
         <Button>确定</Button>
       </ExampleBlock>
+      <ExampleBlock>
+        <Label nativeID="component-example-name">大小</Label>
+        <Input size="xs" placeholder="超小 Input" />
+        <Input size="sm" placeholder="小 Input" />
+        <Input size="md" placeholder="默认 Input" />
+        <Input size="lg" placeholder="大 Input" />
+        <Input size="xl" placeholder="超大 Input" />
+      </ExampleBlock>
     </ExampleStack>
   );
 }
