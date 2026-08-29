@@ -83,7 +83,7 @@ export const SelectDropdown = React.forwardRef<SelectHandle, SelectProps>(
         nativeTriggerLabelProps={props.nativeTriggerLabelProps}
         nativeTriggerProps={{
           ...props.nativeTriggerProps,
-          size: props.triggerSize ?? props.nativeTriggerProps?.size ?? "md",
+          size: props.triggerSize ?? props.nativeTriggerProps?.size ?? "default",
         }}
         nativeTriggerFeedbackOpacity={props.nativeTriggerFeedbackOpacity}
         nativeTriggerHoverBackground={props.nativeTriggerHoverBackground}

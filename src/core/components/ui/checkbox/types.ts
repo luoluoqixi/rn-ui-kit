@@ -6,7 +6,7 @@ import type { NativeHapticsSetting, RenderProp } from "../utils";
 
 type PrimitiveCheckboxProps = ComponentProps<typeof CheckboxPrimitive.Root>;
 
-export type CheckboxSize = "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+export type CheckboxSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
 
 export type CheckboxRenderContext = {
   card: boolean;

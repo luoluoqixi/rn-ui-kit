@@ -13,9 +13,10 @@ import { Platform } from "react-native";
 import type { TabsListProps, TabsProps, TabsSize, TabsTriggerProps } from "./types";
 
 const TabsHapticsContext = React.createContext<NativeHapticsSetting | undefined>(undefined);
-const TabsSizeContext = React.createContext<TabsSize>("md");
+const TabsSizeContext = React.createContext<TabsSize>("default");
 
 const tabsSizes: Record<TabsSize, { list: string; trigger: string; text: string }> = {
+  default: { list: "h-10 p-[3px]", trigger: "gap-1.5 px-2.5 py-1", text: "text-base" },
   "2xs": { list: "h-7 p-0.5", trigger: "gap-1 px-1.5 py-0.5", text: "text-xs" },
   "xs": { list: "h-8 p-0.5", trigger: "gap-1 px-2 py-1", text: "text-xs" },
   "sm": { list: "h-9 p-[3px]", trigger: "gap-1.5 px-2 py-1", text: "text-sm" },
@@ -39,7 +40,7 @@ function Tabs({
   items,
   listProps,
   nativeHaptics,
-  size = "md",
+  size = "default",
   triggerProps,
   ...props
 }: TabsProps) {

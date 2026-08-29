@@ -37,6 +37,7 @@ const badgeVariants = cva(
         }),
       },
       size: {
+        default: "h-7 gap-1 px-2.5",
         "2xs": "h-5 gap-0.5 px-1.5",
         xs: "h-6 gap-1 px-2",
         sm: "h-7 gap-1 px-2.5",
@@ -48,7 +49,7 @@ const badgeVariants = cva(
     },
     defaultVariants: {
       variant: "default",
-      size: "sm",
+      size: "default",
     },
   },
 );
@@ -62,6 +63,7 @@ const badgeTextVariants = cva("font-medium", {
       outline: "text-foreground",
     },
     size: {
+      default: "text-sm",
       "2xs": "text-[10px]",
       xs: "text-xs",
       sm: "text-sm",
@@ -73,7 +75,7 @@ const badgeTextVariants = cva("font-medium", {
   },
   defaultVariants: {
     variant: "default",
-    size: "sm",
+    size: "default",
   },
 });
 
@@ -101,7 +103,7 @@ function Badge({
   label,
   labelClassName,
   labelProps,
-  size,
+  size = "default",
   variant,
   asChild,
   children,
@@ -118,7 +120,7 @@ function Badge({
           className={cn(
             {
               "size-2.5": size === "2xs",
-              "size-3": size === "xs" || size === "sm" || size == null,
+              "size-3": size == null || size === "default" || size === "xs" || size === "sm",
               "size-3.5": size === "md",
               "size-4": size === "lg",
               "size-5": size === "xl",

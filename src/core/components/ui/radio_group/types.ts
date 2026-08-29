@@ -9,7 +9,7 @@ export type RadioGroupItemRenderContext = {
   value: string;
 };
 
-export type RadioGroupSize = "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+export type RadioGroupSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
 
 export interface RadioGroupItemData {
   "aria-label"?: string;

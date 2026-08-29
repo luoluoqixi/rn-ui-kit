@@ -11,6 +11,7 @@ import { SwitchNative } from "./switch_native";
 import type { SwitchProps } from "./types";
 
 const switchSizes = {
+  default: { track: "h-[22px] w-10", thumb: "size-[18px]", checked: "translate-x-5" },
   "2xs": { track: "h-3.5 w-6", thumb: "size-2.5", checked: "translate-x-3" },
   "xs": { track: "h-4 w-7", thumb: "size-3", checked: "translate-x-3.5" },
   "sm": { track: "h-[18px] w-8", thumb: "size-3.5", checked: "translate-x-4" },
@@ -21,6 +22,7 @@ const switchSizes = {
 } as const;
 
 const switchLabelSizes = {
+  default: "text-base",
   "2xs": "text-xs",
   "xs": "text-xs",
   "sm": "text-sm",
@@ -31,6 +33,7 @@ const switchLabelSizes = {
 } as const;
 
 const switchNativeScales = {
+  default: 1,
   "2xs": 0.75,
   "xs": 0.875,
   "sm": 0.9375,
@@ -52,7 +55,7 @@ function Switch({
   nativeHaptics,
   nativeSwiftProps,
   onCheckedChange,
-  size = "md",
+  size = "default",
   ...props
 }: SwitchProps) {
   const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics, {

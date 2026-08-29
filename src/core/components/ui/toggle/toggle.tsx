@@ -41,7 +41,7 @@ const toggleVariants = cva(
     },
     defaultVariants: {
       variant: "default",
-      size: "md",
+      size: "default",
     },
   },
 );
@@ -59,10 +59,10 @@ const toggleTextVariants = cva("text-foreground font-medium", {
       "default": "text-base",
     },
   },
-  defaultVariants: { size: "md" },
+  defaultVariants: { size: "default" },
 });
 
-export const ToggleSizeContext = React.createContext<ToggleSize>("md");
+export const ToggleSizeContext = React.createContext<ToggleSize>("default");
 const toggleIconSizes: Record<ToggleSize, string> = {
   "default": "size-4",
   "2xs": "size-3",
@@ -107,7 +107,7 @@ function Toggle({
     <TextClassContext.Provider
       value={cn(toggleTextVariants({ size }), props.pressed && "text-accent-foreground", className)}
     >
-      <ToggleSizeContext.Provider value={size === "default" ? "md" : (size ?? "md")}>
+      <ToggleSizeContext.Provider value={size ?? "default"}>
         <TogglePrimitive.Root
           {...props}
           className={cn(

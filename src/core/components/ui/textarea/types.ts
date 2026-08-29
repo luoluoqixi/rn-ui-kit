@@ -1,6 +1,6 @@
 import { TextInput } from "react-native";
 
-export type TextareaSize = "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+export type TextareaSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
 
 export type TextareaProps = Omit<React.ComponentProps<typeof TextInput>, "size"> &
   React.RefAttributes<TextInput> & {

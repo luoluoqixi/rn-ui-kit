@@ -20,7 +20,7 @@ export type SelectHandle = {
 };
 export type SelectNativeDropdownAlign = "start" | "center" | "end";
 export type SelectNativeTriggerIcon = NativeTriggerIcon;
-export type SelectTriggerSize = "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+export type SelectTriggerSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
 export type SelectNativePickerProps = Omit<
   ComponentProps<typeof Picker>,
   "children" | "mode" | "onValueChange" | "selectedValue"
@@ -173,7 +173,7 @@ export interface SelectProps extends Omit<ViewProps, "ref">, SelectRootPrimitive
   showScrollButtons?: boolean;
   /** Props for the generated non-native trigger Button. */
   triggerProps?: Omit<ButtonProps, "children">;
-  /** Shared size for every generated Select trigger. Defaults to `md`. */
+  /** Shared size for every generated Select trigger. Defaults to `default` (`md`). */
   triggerSize?: SelectTriggerSize;
   /** Font weight for generated Select trigger labels. Defaults to `500`. */
   triggerFontWeight?: TextStyle["fontWeight"];

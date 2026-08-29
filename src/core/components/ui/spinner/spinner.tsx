@@ -14,6 +14,7 @@ import { useUiTheme } from "../utils/theme";
 import type { SpinnerProps } from "./types";
 
 const spinnerSizes = {
+  default: 20,
   "2xs": 12,
   xs: 14,
   sm: 16,
@@ -27,7 +28,7 @@ export function Spinner({
   animating = true,
   color,
   hidesWhenStopped = true,
-  size = "md",
+  size = "default",
   style,
   ...props
 }: SpinnerProps) {

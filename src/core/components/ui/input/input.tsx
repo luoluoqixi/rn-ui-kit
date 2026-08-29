@@ -5,6 +5,7 @@ import type { InputProps, InputSize } from "./types";
 const WEB_PLACEHOLDER_TEXT_COLOR_CLASS_NAME = "accent-muted-foreground/50";
 
 const inputSizeStyles: Record<InputSize, TextStyle> = {
+  default: { fontSize: 16, height: 44, minHeight: 44, paddingHorizontal: 12 },
   "2xs": { fontSize: 12, height: 32, minHeight: 32, paddingHorizontal: 8 },
   "xs": { fontSize: 12, height: 36, minHeight: 36, paddingHorizontal: 10 },
   "sm": { fontSize: 14, height: 40, minHeight: 40, paddingHorizontal: 12 },
@@ -19,7 +20,7 @@ function Input({
   autoFocusNative,
   disabled,
   placeholderClassName,
-  size = "md",
+  size = "default",
   unstyled = false,
   ...props
 }: InputProps) {

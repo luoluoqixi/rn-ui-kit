@@ -4,7 +4,7 @@ import type { TextProps } from "../text";
 import type { PressableProps, StyleProp, TextStyle, ViewStyle } from "react-native";
 
 export type NativeTriggerIcon = "stacked" | "chevrons-up-down" | "none";
-export type NativeTriggerSize = "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+export type NativeTriggerSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
 
 export type TriggerIconColor = React.ComponentProps<typeof ChevronDown>["color"];
 
@@ -48,7 +48,7 @@ export type NativeTriggerFaceProps = {
   fontWeight?: TextStyle["fontWeight"];
   /** 要显示的 label。 */
   label: React.ReactNode;
-  /** Standard trigger size. Defaults to `md`. */
+  /** Standard trigger size. Defaults to `default` (`md`). */
   size?: NativeTriggerSize;
   /** 整个 trigger 的不透明度。 */
   opacity?: number;

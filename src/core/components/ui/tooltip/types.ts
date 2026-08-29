@@ -3,7 +3,7 @@ import type * as TooltipPrimitive from "@rn-primitives/tooltip";
 
 import type { RenderProp } from "../utils";
 
-export type TooltipSize = "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+export type TooltipSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
 
 export type TooltipRenderContext = {
   open?: boolean;

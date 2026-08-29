@@ -9,7 +9,7 @@ export type SwitchRenderContext = {
   disabled?: boolean;
 };
 
-export type SwitchSize = "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+export type SwitchSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
 
 export type SwitchProps = ComponentProps<typeof SwitchPrimitives.Root> & {
   containerClassName?: string;

@@ -102,7 +102,7 @@ const buttonVariants = cva(
     ],
     defaultVariants: {
       variant: "default",
-      size: "md",
+      size: "default",
     },
   },
 );
@@ -144,7 +144,7 @@ const buttonTextVariants = cva(
     },
     defaultVariants: {
       variant: "default",
-      size: "md",
+      size: "default",
     },
   },
 );
@@ -197,7 +197,7 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
     loading = false,
     loadingIcon,
     onPress,
-    size,
+    size = "default",
     style,
     title,
     variant,

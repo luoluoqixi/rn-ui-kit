@@ -14,6 +14,15 @@ export function AlertExample() {
           variant="destructive"
         />
       </ExampleBlock>
+      <ExampleBlock title="大小">
+        <Alert icon={CheckCircle} iconSize="2xs" title="最小 Icon" />
+        <Alert icon={CheckCircle} iconSize="xs" title="超小 Icon" />
+        <Alert icon={CheckCircle} iconSize="sm" title="小 Icon" />
+        <Alert icon={CheckCircle} iconSize="md" title="正常 Icon" />
+        <Alert icon={CheckCircle} iconSize="lg" title="大 Icon" />
+        <Alert icon={CheckCircle} iconSize="xl" title="超大 Icon" />
+        <Alert icon={CheckCircle} iconSize="2xl" title="最大 Icon" />
+      </ExampleBlock>
     </ExampleStack>
   );
 }

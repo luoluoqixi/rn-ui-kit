@@ -3,7 +3,7 @@ import type * as TabsPrimitive from "@rn-primitives/tabs";
 
 import type { NativeHapticsSetting, RenderProp } from "../utils";
 
-export type TabsSize = "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+export type TabsSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
 
 export type TabsItemData = {
   content: RenderProp<TabsItemData>;

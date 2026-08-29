@@ -10,6 +10,7 @@ import type { AvatarFallbackProps, AvatarImageProps, AvatarProps } from "./types
 export const avatarVariants = cva("relative flex shrink-0 overflow-hidden rounded-full", {
   variants: {
     size: {
+      default: "size-10",
       "2xs": "size-6",
       xs: "size-8",
       sm: "size-9",
@@ -19,12 +20,13 @@ export const avatarVariants = cva("relative flex shrink-0 overflow-hidden rounde
       "2xl": "size-16",
     },
   },
-  defaultVariants: { size: "md" },
+  defaultVariants: { size: "default" },
 });
 
 const avatarFallbackTextVariants = cva("font-medium", {
   variants: {
     size: {
+      default: "text-base",
       "2xs": "text-[10px]",
       xs: "text-xs",
       sm: "text-sm",
@@ -34,7 +36,7 @@ const avatarFallbackTextVariants = cva("font-medium", {
       "2xl": "text-2xl",
     },
   },
-  defaultVariants: { size: "md" },
+  defaultVariants: { size: "default" },
 });
 
 function normalizeAvatarChildren(children: React.ReactNode, className?: string) {
@@ -56,7 +58,7 @@ function Avatar({
   imageClassName,
   imageProps,
   src,
-  size,
+  size = "default",
   className,
   ...props
 }: AvatarProps) {

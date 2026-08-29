@@ -32,6 +32,8 @@ export const textVariants = cva(
         muted: "text-muted-foreground text-sm",
       },
       size: {
+        // `default` intentionally preserves the variant's own typography.
+        default: "",
         "2xs": "text-[10px]",
         xs: "text-xs",
         sm: "text-sm",

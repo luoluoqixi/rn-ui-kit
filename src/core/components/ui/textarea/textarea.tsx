@@ -5,6 +5,7 @@ import type { TextareaProps, TextareaSize } from "./types";
 const WEB_PLACEHOLDER_TEXT_COLOR_CLASS_NAME = "accent-muted-foreground/50";
 
 const textareaTextStyles: Record<TextareaSize, TextStyle> = {
+  default: { fontSize: 16 },
   "2xs": { fontSize: 12 },
   "xs": { fontSize: 12 },
   "sm": { fontSize: 14 },
@@ -20,7 +21,7 @@ function Textarea({
   multiline = true,
   numberOfLines = Platform.select({ web: 2, native: 8 }), // On web, numberOfLines also determines initial height. On native, it determines the maximum height.
   placeholderClassName,
-  size = "md",
+  size = "default",
   unstyled = false,
   ...props
 }: TextareaProps) {

@@ -7,12 +7,13 @@ import * as React from "react";
 import { View } from "react-native";
 
 const alertIconPaddingClasses = {
+  "default": "pl-7",
   "2xs": "pl-6",
-  xs: "pl-6",
-  sm: "pl-6",
-  md: "pl-6",
-  lg: "pl-8",
-  xl: "pl-9",
+  "xs": "pl-6",
+  "sm": "pl-6",
+  "md": "pl-7",
+  "lg": "pl-8",
+  "xl": "pl-9",
   "2xl": "pl-10",
 } as const;
 
@@ -41,7 +42,7 @@ function Alert({
   iconAlign = "center",
   iconContainerClassName,
   iconClassName,
-  iconSize = "md",
+  iconSize = "default",
   iconProps,
   title,
   titleClassName,

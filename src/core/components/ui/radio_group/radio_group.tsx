@@ -25,6 +25,7 @@ type RadioGroupInteraction = {
 };
 
 const radioSizes: Record<RadioGroupSize, { indicator: string; dot: string; label: string }> = {
+  default: { indicator: "size-[18px]", dot: "size-2.5", label: "text-base" },
   "2xs": { indicator: "size-3", dot: "size-1.5", label: "text-xs" },
   "xs": { indicator: "size-3.5", dot: "size-2", label: "text-xs" },
   "sm": { indicator: "size-4", dot: "size-2", label: "text-sm" },
@@ -46,7 +47,7 @@ function RadioGroup({
   itemProps,
   labelPosition,
   onValueChange,
-  size = "md",
+  size = "default",
   value,
   disabled = false,
   ...props
@@ -153,7 +154,7 @@ function RadioGroupItem({
   };
   const renderedLabel = resolveRenderProp(label, renderContext);
   const renderedDescription = resolveRenderProp(description, renderContext);
-  const resolvedSize = size ?? interaction?.size ?? "md";
+  const resolvedSize = size ?? interaction?.size ?? "default";
   const sizeStyles = radioSizes[resolvedSize];
 
   const normalizeText = (valueToNormalize: React.ReactNode, classNameToUse: string) =>

@@ -13,6 +13,7 @@ import { useUiTheme } from "../utils/theme";
 const DEFAULT_HIT_SLOP = 24;
 
 const checkboxSizeClasses: Record<CheckboxSize, string> = {
+  default: "size-5",
   "2xs": "size-3",
   "xs": "size-3.5",
   "sm": "size-4",
@@ -23,6 +24,7 @@ const checkboxSizeClasses: Record<CheckboxSize, string> = {
 };
 
 const checkboxIconSizes: Record<CheckboxSize, number> = {
+  default: 14,
   "2xs": 10,
   "xs": 11,
   "sm": 12,
@@ -67,7 +69,7 @@ function Checkbox({
   checked,
   onPressIn,
   onPressOut,
-  size = "md",
+  size = "default",
   ...props
 }: CheckboxProps) {
   const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics, {
@@ -159,7 +161,6 @@ function Checkbox({
             !props.disabled &&
             Platform.select({
               web: "hover:bg-accent/50 active:bg-accent/50",
-              native: "active:bg-accent/50",
             }),
           props.disabled && "opacity-50",
           containerClassName,

@@ -92,7 +92,7 @@ function SelectTrigger({ className, children, size = "default", ...props }: Sele
   return (
     <SelectPrimitive.Trigger
       className={cn(
-        "border-input bg-background flex h-10 flex-row items-center justify-between gap-2 rounded-md border px-3 py-2 shadow-sm shadow-black/5",
+        "border-input bg-background flex h-11 flex-row items-center justify-between gap-2 rounded-md border px-5 py-2.5 shadow-sm shadow-black/5",
         Platform.select({
           web: "focus-visible:border-ring focus-visible:ring-ring/50 w-fit whitespace-nowrap text-sm outline-none transition-[color,box-shadow] focus-visible:ring-[3px] disabled:cursor-not-allowed hover:bg-muted",
         }),

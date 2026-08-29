@@ -88,7 +88,7 @@ export function renderSelectText(
 
 export function getSelectTriggerFontSize(props: SelectProps) {
   const size = props.triggerSize ?? props.triggerProps?.size ?? props.nativeTriggerProps?.size;
-  return selectTriggerFontSizes[size == null ? "md" : String(size)] ?? 16;
+  return selectTriggerFontSizes[size == null ? "default" : String(size)] ?? 16;
 }
 
 export function SelectedLabel({
@@ -201,7 +201,7 @@ export const SelectNativeTrigger = React.forwardRef<any, SelectTriggerSharedProp
         keepPressedOpacity={props.nativeTriggerProps?.keepPressedOpacity ?? Platform.OS === "web"}
         label={label}
         labelProps={props.nativeTriggerLabelProps as any}
-        size={props.triggerSize ?? props.nativeTriggerProps?.size ?? "md"}
+        size={props.triggerSize ?? props.nativeTriggerProps?.size ?? "default"}
         onPress={onPress ?? props.nativeTriggerProps?.onPress ?? triggerProps.onPress}
         pressedOpacity={props.nativeTriggerProps?.pressedOpacity ?? true}
         ref={ref}
@@ -275,7 +275,7 @@ export const SelectBasicTrigger = React.forwardRef<
         typeof triggerProps.style === "function" ? triggerProps.style(state) : triggerProps.style,
       ]}
       variant={triggerProps.variant ?? configuredTriggerProps?.variant ?? "outline"}
-      size={props.triggerSize ?? triggerProps.size ?? configuredTriggerProps?.size ?? "md"}
+      size={props.triggerSize ?? triggerProps.size ?? configuredTriggerProps?.size ?? "default"}
     >
       {label ?? (
         <SelectedLabel

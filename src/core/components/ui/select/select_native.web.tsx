@@ -42,7 +42,7 @@ const nativeSelectChevronClasses: Record<string, string> = {
 };
 
 function resolveSelectSize(props: SelectProps) {
-  return String(props.triggerSize ?? props.triggerProps?.size ?? "md");
+  return String(props.triggerSize ?? props.triggerProps?.size ?? "default");
 }
 
 /** Browser native select. Keyboard navigation and mobile browser pickers are retained. */
@@ -125,7 +125,7 @@ export const SelectNative = React.forwardRef<SelectHandle, SelectProps>(function
       {React.cloneElement(nativeSelect, {
         className: cn(
           "border-border bg-background text-foreground w-fit cursor-default appearance-none rounded-md border font-medium shadow-sm shadow-black/5 transition-colors hover:bg-accent hover:text-accent-foreground active:bg-accent dark:bg-input/30 dark:border-input dark:active:bg-input/50 dark:hover:bg-input/50 focus:border-ring focus:ring-ring/50 focus:outline-none focus:ring-[3px] disabled:opacity-50",
-          nativeSelectSizeClasses[selectSize] ?? nativeSelectSizeClasses.md,
+          nativeSelectSizeClasses[selectSize] ?? nativeSelectSizeClasses.default,
           props.nativeSelectProps?.className,
           props.className,
         ),
@@ -141,7 +141,7 @@ export const SelectNative = React.forwardRef<SelectHandle, SelectProps>(function
         aria-hidden
         className={cn(
           "text-muted-foreground pointer-events-none absolute top-1/2 -translate-y-1/2 group-hover:text-accent-foreground group-active:text-accent-foreground",
-          nativeSelectChevronClasses[selectSize] ?? nativeSelectChevronClasses.md,
+          nativeSelectChevronClasses[selectSize] ?? nativeSelectChevronClasses.default,
         )}
       />
     </div>
@@ -210,7 +210,7 @@ const NativeSelectTrigger = React.forwardRef<
           )
         }
         labelProps={props.nativeTriggerLabelProps as any}
-        size={props.triggerSize ?? props.nativeTriggerProps?.size ?? "md"}
+        size={props.triggerSize ?? props.nativeTriggerProps?.size ?? "default"}
         pointerEvents="none"
         className={cn(
           hoverBackground &&

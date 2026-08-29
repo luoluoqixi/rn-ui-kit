@@ -13,9 +13,10 @@ import type { TooltipProps, TooltipSize } from "./types";
 
 const TooltipRoot = TooltipPrimitive.Root;
 const TooltipTrigger = TooltipPrimitive.Trigger;
-const TooltipSizeContext = React.createContext<TooltipSize>("md");
+const TooltipSizeContext = React.createContext<TooltipSize>("default");
 
 const tooltipSizes: Record<TooltipSize, { content: string; text: string }> = {
+  default: { content: "px-3 py-1.5", text: "text-sm" },
   "2xs": { content: "px-2 py-1", text: "text-[10px]" },
   "xs": { content: "px-2.5 py-1", text: "text-xs" },
   "sm": { content: "px-2.5 py-1.5", text: "text-sm" },
@@ -35,7 +36,7 @@ function TooltipRootComponent({
   children,
   content,
   contentProps,
-  size = "md",
+  size = "default",
   triggerProps,
   ...props
 }: TooltipProps) {

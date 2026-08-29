@@ -21,6 +21,7 @@ const StyledIcon = withUniwind(IconImpl, {
 });
 
 const iconSizeClasses: Record<IconSize, string> = {
+  default: "size-5",
   "2xs": "size-3",
   "xs": "size-3.5",
   "sm": "size-4",
@@ -54,7 +55,7 @@ function isIconSize(size: IconProps["size"]): size is IconSize {
  * @param {IconSize | string | number} size - One of the standard size names, or a native Lucide size.
  * @param {...LucideProps} ...props - Additional Lucide icon props passed to the "as" icon.
  */
-function Icon({ as: IconComponent, className, size = "md", ...props }: IconProps) {
+function Icon({ as: IconComponent, className, size = "default", ...props }: IconProps) {
   const textClass = React.useContext(TextClassContext);
   const isCustomSize = isIconSize(size);
   return (

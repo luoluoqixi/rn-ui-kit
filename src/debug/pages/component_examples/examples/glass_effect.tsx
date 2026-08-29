@@ -310,7 +310,7 @@ function GlassEffectPreview({
         <Button
           aria-label="加粗"
           variant="secondary"
-          buttonSize={{ height: 48, width: 60 }}
+          buttonSize={{ height: 48, width: 80 }}
           native={usesNativeEditorToolbar}
           nativeButtonStyle="glass"
           nativeSystemImage="bold"
@@ -322,7 +322,7 @@ function GlassEffectPreview({
         <Button
           aria-label="斜体"
           variant="secondary"
-          buttonSize={{ height: 48, width: 60 }}
+          buttonSize={{ height: 48, width: 80 }}
           native={usesNativeEditorToolbar}
           nativeButtonStyle="glass"
           nativeSystemImage="italic"
@@ -334,7 +334,7 @@ function GlassEffectPreview({
         <Button
           variant="secondary"
           aria-label="插入列表"
-          buttonSize={{ height: 48, width: 60 }}
+          buttonSize={{ height: 48, width: 80 }}
           native={usesNativeEditorToolbar}
           nativeButtonStyle="glass"
           nativeSystemImage="list.bullet"
@@ -347,7 +347,7 @@ function GlassEffectPreview({
         <Button
           variant="secondary"
           aria-label="插入链接"
-          buttonSize={{ height: 48, width: 60 }}
+          buttonSize={{ height: 48, width: 80 }}
           native={usesNativeEditorToolbar}
           nativeButtonStyle="glass"
           nativeSystemImage="link"

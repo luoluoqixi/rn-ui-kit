@@ -25,6 +25,7 @@ const nativeTriggerSizeStyles: Record<
   NativeTriggerSize,
   { gap: number; minHeight: number; paddingHorizontal: number }
 > = {
+  default: { gap: 8, minHeight: 44, paddingHorizontal: 20 },
   "2xs": { gap: 4, minHeight: 32, paddingHorizontal: 8 },
   xs: { gap: 4, minHeight: 36, paddingHorizontal: 12 },
   sm: { gap: 6, minHeight: 40, paddingHorizontal: 16 },
@@ -35,6 +36,7 @@ const nativeTriggerSizeStyles: Record<
 };
 
 const nativeTriggerLabelFontSizes: Record<NativeTriggerSize, number> = {
+  default: 16,
   "2xs": 12,
   xs: 12,
   sm: 14,
@@ -45,6 +47,7 @@ const nativeTriggerLabelFontSizes: Record<NativeTriggerSize, number> = {
 };
 
 const nativeTriggerIconSizes: Record<NativeTriggerSize, { chevron: number; stacked: number }> = {
+  default: { chevron: 16, stacked: 10 },
   "2xs": { chevron: 12, stacked: 8 },
   xs: { chevron: 12, stacked: 8 },
   sm: { chevron: 14, stacked: 9 },
@@ -119,7 +122,7 @@ export const NativeTriggerFace = React.forwardRef<View, NativeTriggerFaceProps>(
       labelProps,
       label,
       opacity = 1,
-      size = "md",
+      size = "default",
       fontWeight = "500",
     },
     forwardedRef,
@@ -190,7 +193,7 @@ export const NativeTrigger = React.forwardRef<View, NativeTriggerProps>(
       pressedOpacity = true,
       style,
       className,
-      size,
+      size = "default",
       onHoverIn,
       onHoverOut,
       ...pressableProps

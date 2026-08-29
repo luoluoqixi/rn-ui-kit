@@ -7,7 +7,7 @@ import type { avatarVariants } from "./avatar";
 export type AvatarRenderContext = {
   alt?: string;
   src?: string;
-  size?: "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | null;
+  size?: "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | null;
 };
 
 export type AvatarImageProps = ComponentProps<typeof AvatarPrimitive.Image>;
