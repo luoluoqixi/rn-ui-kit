@@ -123,9 +123,9 @@ function TabsTrigger({
   return (
     <TextClassContext.Provider
       value={cn(
-        "text-foreground dark:text-muted-foreground font-medium",
+        "text-muted-foreground font-medium",
         tabsSizes[resolvedSize].text,
-        isActive ? "dark:text-foreground" : inactiveTextInteractionClass,
+        isActive ? "text-foreground" : inactiveTextInteractionClass,
       )}
     >
       <TabsPrimitive.Trigger
