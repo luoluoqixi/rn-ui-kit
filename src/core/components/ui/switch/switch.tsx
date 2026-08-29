@@ -10,6 +10,36 @@ import { Platform, Pressable, View } from "react-native";
 import { SwitchNative } from "./switch_native";
 import type { SwitchProps } from "./types";
 
+const switchSizes = {
+  "2xs": { track: "h-3.5 w-6", thumb: "size-2.5", checked: "translate-x-3" },
+  "xs": { track: "h-4 w-7", thumb: "size-3", checked: "translate-x-3.5" },
+  "sm": { track: "h-[18px] w-8", thumb: "size-3.5", checked: "translate-x-4" },
+  "md": { track: "h-[22px] w-10", thumb: "size-[18px]", checked: "translate-x-5" },
+  "lg": { track: "h-[26px] w-12", thumb: "size-[22px]", checked: "translate-x-6" },
+  "xl": { track: "h-[30px] w-14", thumb: "size-[26px]", checked: "translate-x-7" },
+  "2xl": { track: "h-[34px] w-16", thumb: "size-[30px]", checked: "translate-x-8" },
+} as const;
+
+const switchLabelSizes = {
+  "2xs": "text-xs",
+  "xs": "text-xs",
+  "sm": "text-sm",
+  "md": "text-base",
+  "lg": "text-base",
+  "xl": "text-lg",
+  "2xl": "text-xl",
+} as const;
+
+const switchNativeScales = {
+  "2xs": 0.75,
+  "xs": 0.875,
+  "sm": 0.9375,
+  "md": 1,
+  "lg": 1.125,
+  "xl": 1.35,
+  "2xl": 1.6,
+} as const;
+
 function Switch({
   className,
   containerClassName,
@@ -22,6 +52,7 @@ function Switch({
   nativeHaptics,
   nativeSwiftProps,
   onCheckedChange,
+  size = "md",
   ...props
 }: SwitchProps) {
   const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics, {
@@ -46,6 +77,7 @@ function Switch({
     checked,
     disabled: props.disabled,
   });
+  const switchSize = switchSizes[size];
 
   const switchControl =
     native === true && Platform.OS !== "web" ? (
@@ -54,13 +86,19 @@ function Switch({
         nativeComposeProps={nativeComposeProps}
         nativeSwiftProps={nativeSwiftProps}
         onValueChange={handleCheckedChange}
-        style={props.style as never}
+        style={[
+          props.style as never,
+          switchNativeScales[size] === 1
+            ? undefined
+            : { transform: [{ scale: switchNativeScales[size] }] },
+        ]}
         value={checked}
       />
     ) : (
       <SwitchPrimitives.Root
         className={cn(
-          "flex h-[1.15rem] w-8 shrink-0 flex-row items-center rounded-full border border-transparent shadow-sm shadow-black/5",
+          "flex shrink-0 flex-row items-center rounded-full border border-transparent shadow-sm shadow-black/5",
+          switchSize.track,
           Platform.select({
             web: "focus-visible:border-ring focus-visible:ring-ring/50 peer inline-flex outline-none transition-all focus-visible:ring-[3px] disabled:cursor-not-allowed",
           }),
@@ -74,12 +112,13 @@ function Switch({
       >
         <SwitchPrimitives.Thumb
           className={cn(
-            "bg-background size-4 rounded-full transition-transform",
+            "bg-background rounded-full transition-transform",
+            switchSize.thumb,
             Platform.select({
               web: "pointer-events-none block ring-0",
             }),
             checked
-              ? "dark:bg-primary-foreground translate-x-3.5"
+              ? cn("dark:bg-primary-foreground", switchSize.checked)
               : "dark:bg-foreground translate-x-0",
           )}
         />
@@ -104,7 +143,9 @@ function Switch({
         onPress={handleLabelPress}
       >
         {typeof renderedLabel === "string" || typeof renderedLabel === "number" ? (
-          <Text className={cn("text-sm font-medium", labelClassName)}>{renderedLabel}</Text>
+          <Text className={cn(switchLabelSizes[size], "font-medium", labelClassName)}>
+            {renderedLabel}
+          </Text>
         ) : (
           renderedLabel
         )}

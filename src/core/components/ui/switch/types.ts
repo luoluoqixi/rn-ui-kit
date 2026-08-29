@@ -9,6 +9,8 @@ export type SwitchRenderContext = {
   disabled?: boolean;
 };
 
+export type SwitchSize = "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+
 export type SwitchProps = ComponentProps<typeof SwitchPrimitives.Root> & {
   containerClassName?: string;
   defaultChecked?: boolean;
@@ -19,6 +21,7 @@ export type SwitchProps = ComponentProps<typeof SwitchPrimitives.Root> & {
   nativeComposeProps?: Record<string, unknown>;
   nativeHaptics?: NativeHapticsSetting;
   nativeSwiftProps?: Record<string, unknown>;
+  size?: SwitchSize;
 };
 
 export type SwitchNativeProps = {
