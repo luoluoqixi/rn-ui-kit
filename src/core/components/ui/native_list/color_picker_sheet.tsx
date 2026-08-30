@@ -43,7 +43,11 @@ export function NativeListColorPickerSheet({
   // Keep the detent stable throughout presentation and dismissal. Measuring the
   // picker after the sheet mounts causes Android BottomSheet to reconfigure its
   // behavior mid-animation, which can briefly expand it to the largest height.
-  const detent = Math.min(1, Math.max(0.25, (pickerHeight + 32) / Math.max(1, windowHeight)));
+  const sheetChromeExtraHeight = confirmOnDone && usesIos26GlassButtons ? 48 : 32;
+  const detent = Math.min(
+    1,
+    Math.max(0.25, (pickerHeight + sheetChromeExtraHeight) / Math.max(1, windowHeight)),
+  );
   const resolvedDetents = React.useMemo(() => [detent], [detent]);
   const resolvedScrollableOptions = React.useMemo(
     () => ({ ...sheetProps?.scrollableOptions, scrollingExpandsSheet: false }),
@@ -90,7 +94,7 @@ export function NativeListColorPickerSheet({
               style={{
                 alignItems: "center",
                 flexDirection: "row",
-                height: usesIos26GlassButtons ? 64 : 52,
+                height: usesIos26GlassButtons ? 72 : 52,
                 justifyContent: "space-between",
               }}
             >
