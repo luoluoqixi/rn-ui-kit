@@ -69,6 +69,16 @@ const DEBUG_LARGE_TITLE_OPTIONS: NativeStackNavigationOptions =
         headerLargeTitleShadowVisible: false,
       }
     : {};
+// Host 模式复用同一个外层 Stack 路由；从大标题页面进入详情时必须显式清除
+// 上一次 setOptions 遗留的 large-title 状态，否则会同时显示大标题和普通标题。
+const DEBUG_REGULAR_TITLE_OPTIONS: NativeStackNavigationOptions =
+  Platform.OS === "ios"
+    ? {
+        headerLargeTitle: false,
+        headerLargeTitleEnabled: false,
+        headerLargeTitleShadowVisible: false,
+      }
+    : {};
 
 // ios26 中如果 Sheet 太高, 背景颜色会发生变化
 // 默认的背景颜色会变的和 NativeList 一样
@@ -277,7 +287,7 @@ function RnUiKitDebugHostPanel({
         headerBackTitle: showsExplicitRootBackLabel ? backButtonLabel : undefined,
         headerShown: true,
         title,
-        ...(usesLargeTitle ? DEBUG_LARGE_TITLE_OPTIONS : {}),
+        ...(usesLargeTitle ? DEBUG_LARGE_TITLE_OPTIONS : DEBUG_REGULAR_TITLE_OPTIONS),
         ...pageScreenOptions,
       }),
     );
