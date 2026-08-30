@@ -18,13 +18,13 @@ import type { SliderProps } from "./types";
 type SliderVisualSize = { root: number; track: number; thumb: number };
 
 const sliderVisualSizes: Record<NonNullable<SliderProps["size"]>, SliderVisualSize> = {
-  default: { root: 32, track: 6, thumb: 24 },
+  "default": { root: 32, track: 6, thumb: 24 },
   "2xs": { root: 20, track: 4, thumb: 16 },
-  xs: { root: 24, track: 4, thumb: 18 },
-  sm: { root: 28, track: 5, thumb: 20 },
-  md: { root: 32, track: 6, thumb: 24 },
-  lg: { root: 36, track: 7, thumb: 28 },
-  xl: { root: 42, track: 8, thumb: 32 },
+  "xs": { root: 24, track: 4, thumb: 18 },
+  "sm": { root: 28, track: 5, thumb: 20 },
+  "md": { root: 32, track: 6, thumb: 24 },
+  "lg": { root: 36, track: 7, thumb: 28 },
+  "xl": { root: 42, track: 8, thumb: 32 },
   "2xl": { root: 48, track: 10, thumb: 36 },
 };
 
@@ -129,7 +129,8 @@ function NonNativeSlider({
   const inactiveTrackColor = resolveColor(colors?.inactiveTrackColor, theme.muted);
   const thumbColor = resolveColor(colors?.thumbColor, theme.primary);
   const activeThumbBorderColor =
-    colorScheme === "dark" ? theme.foreground : withAlpha(thumbColor, 0.78);
+    colorScheme === "dark" ? theme.foreground : brightenColor(thumbColor, 0.3);
+  const defaultThumbBorderColor = withAlpha(theme.foreground, colorScheme === "dark" ? 0.18 : 0.04);
   const activeThumbIndex = pressedThumbIndex ?? hoveredThumbIndex;
   const percentages = values.map((item) =>
     range <= 0
@@ -180,8 +181,7 @@ function NonNativeSlider({
       {...props}
       className={className}
       hitSlop={
-        hitSlop ??
-        {
+        hitSlop ?? {
           bottom: visualSize.thumb / 2,
           left: visualSize.thumb / 2,
           right: visualSize.thumb / 2,
@@ -281,9 +281,7 @@ function NonNativeSlider({
                   backgroundColor:
                     activeThumbIndex === index ? brightenColor(thumbColor) : thumbColor,
                   borderColor:
-                    activeThumbIndex === index
-                      ? activeThumbBorderColor
-                      : withAlpha(theme.foreground, 0.18),
+                    activeThumbIndex === index ? activeThumbBorderColor : defaultThumbBorderColor,
                   borderRadius: visualSize.thumb / 2,
                   ...(orientation === "horizontal"
                     ? {
