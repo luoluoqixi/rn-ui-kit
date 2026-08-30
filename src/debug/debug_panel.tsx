@@ -14,7 +14,7 @@ import {
   type NativeStackNavigationOptions,
 } from "@react-navigation/native-stack";
 import { type ComponentProps, useLayoutEffect, useMemo, useState } from "react";
-import { Platform, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { useUiTheme } from "../core/components/ui/utils/theme";
 import {
   NativeSheet,
@@ -269,6 +269,19 @@ function RnUiKitDebugHostPanel({
   const usesLargeTitle = isRootRoute || sectionKey === "component-examples";
   const showsExplicitRootBackLabel =
     isRootRoute && backButtonLabel != null && backButtonLabel.trim().length > 0;
+  // Host 模式的 Header 是在外层 Expo Router route 上动态创建的。该 route
+  // 的初始配置是 hidden/transparent，必须在显示时明确恢复 iOS 15–25 的
+  // standard appearance 背景；否则 standard 与 scroll-edge 都是透明的。
+  const hostHeaderStyle = useMemo(
+    () =>
+      Platform.OS === "ios" && !isIos26Plus()
+        ? {
+            ...StyleSheet.flatten(debugStackScreenOptions.headerStyle),
+            backgroundColor: appBackgroundColors.header,
+          }
+        : debugStackScreenOptions.headerStyle,
+    [appBackgroundColors.header, debugStackScreenOptions.headerStyle],
+  );
   const title =
     exampleKey != null
       ? getRnUiKitComponentExampleTitle(exampleKey)
@@ -280,6 +293,7 @@ function RnUiKitDebugHostPanel({
     navigation.setOptions(
       withNativeBackButton({
         ...debugStackScreenOptions,
+        headerStyle: hostHeaderStyle,
         headerBackButtonDisplayMode:
           isIos26Plus() && !showsExplicitRootBackLabel ? "minimal" : "default",
         headerBackButtonMenuEnabled: true,
@@ -294,6 +308,7 @@ function RnUiKitDebugHostPanel({
   }, [
     backButtonLabel,
     debugStackScreenOptions,
+    hostHeaderStyle,
     navigation,
     pageScreenOptions,
     showsExplicitRootBackLabel,
