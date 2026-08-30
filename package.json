@@ -52,6 +52,7 @@
     "release:notes": "node scripts/release/generate-notes.cjs",
     "set-version": "node scripts/release/set-version.cjs",
     "clear-patch-cache": "bun scripts/clear-patch-cache.mjs",
+    "generate:default-themes": "bun scripts/generate-default-themes.js",
     "sync-patches": "bun scripts/sync-patches.mjs",
     "test": "bun test test",
     "typecheck": "bun run typecheck:library && bun run --cwd examples/app typecheck",
@@ -61,6 +62,7 @@
     "@babel/runtime": "7.29.7"
   },
   "dependencies": {
+    "@material/material-color-utilities": "^0.4.0",
     "@rn-primitives/accordion": "=1.5.2",
     "@rn-primitives/alert-dialog": "=1.5.2",
     "@rn-primitives/aspect-ratio": "=1.5.2",

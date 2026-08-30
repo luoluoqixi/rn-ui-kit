@@ -1,5 +1,6 @@
 export * from "./accent_theme";
 export * from "./app_background";
+export * from "./generate_ui_theme";
 export * from "./settings";
 export * from "./ui_theme";
 export * from "./use_app_background_colors";

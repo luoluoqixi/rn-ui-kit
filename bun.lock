@@ -5,6 +5,7 @@
     "": {
       "name": "rn-ui-kit",
       "dependencies": {
+        "@material/material-color-utilities": "^0.4.0",
         "@rn-primitives/accordion": "=1.5.2",
         "@rn-primitives/alert-dialog": "=1.5.2",
         "@rn-primitives/aspect-ratio": "=1.5.2",
@@ -395,6 +396,8 @@
     "@lodev09/react-native-true-sheet": ["@lodev09/react-native-true-sheet@3.11.12", "", { "peerDependencies": { "@radix-ui/react-dialog": ">=1", "@radix-ui/react-presence": ">=1", "@react-navigation/core": ">=7", "react": "*", "react-native": "*", "react-native-reanimated": ">=4", "react-native-worklets": "*" }, "optionalPeers": ["@radix-ui/react-dialog", "@radix-ui/react-presence", "@react-navigation/core", "react-native-reanimated", "react-native-worklets"] }, "sha512-eL7mfUw0p3dxqXKqck3k7H2Ja6UHGbPSqbVDRKeANuxZN4xctxF1iFSPYHj0LULVtheqxKBhWBiR4lJ25El57Q=="],
 
     "@luoluoqixi/expo-ui-55": ["@luoluoqixi/expo-ui-55@github:luoluoqixi/expo-ui-55#69bea62", { "dependencies": { "sf-symbols-typescript": "^2.1.0" }, "peerDependencies": { "expo": "*", "react": "*", "react-native": "*" } }, "luoluoqixi-expo-ui-55-69bea62", "sha512-j4Ln35UWlvutCVHTtINiDGCwy8lIeVMBynqkIdJ5ryz3KGjBj/rLDvCGAVVFy5pl0qhzymkWFkv+2A/CMbAgOA=="],
+
+    "@material/material-color-utilities": ["@material/material-color-utilities@0.4.0", "", {}, "sha512-dlq6VExJReb8dhjj3a/yTigr3ncNwoFmL5Iy2ENtbDX03EmNeOEdZ+vsaGrj7RTuO+mB7L58II4LCsl4NpM8uw=="],
 
     "@radix-ui/number": ["@radix-ui/number@1.1.3", "", {}, "sha512-Road2bidD0uu/1BGDOWNdPI06g0lIRy6IF9GZcIrDK2KGItfor8IQwQa+yM2ERgHM1MmHxaxpTzk0/Jp42lNfA=="],
 
