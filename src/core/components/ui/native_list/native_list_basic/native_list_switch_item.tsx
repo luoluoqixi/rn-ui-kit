@@ -5,6 +5,7 @@ import { Switch } from "../../switch";
 import { useResolvedNativeListHaptics } from "../haptics";
 import { useNativeListEditMode } from "../edit_mode";
 import type { NativeListSwitchItemProps } from "../types";
+import { isWeb } from "../../utils";
 
 export function NativeListSwitchItem(props: NativeListSwitchItemProps) {
   const { switchProps, ...itemProps } = props;
@@ -38,7 +39,8 @@ export function NativeListSwitchItem(props: NativeListSwitchItemProps) {
       trailing={
         <Switch
           {...switchProps}
-          size={switchProps.size ?? "xl"}
+          native={!isWeb()}
+          size={switchProps.size ?? (isWeb() ? "xl" : undefined)}
           checked={checked}
           disabled={disabled || editMode}
           nativeHaptics={inheritedHaptics ?? true}
