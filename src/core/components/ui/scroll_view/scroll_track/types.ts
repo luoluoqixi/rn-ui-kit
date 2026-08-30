@@ -13,6 +13,8 @@ export type ScrollTrackStyling = {
   thumbPressedColor?: ColorValue;
   thumbShadow?: {
     color?: ColorValue;
+    /** Android elevation used to render the shadow. Default: 0. */
+    elevation?: number;
     offset?: { height: number; width: number };
     opacity?: number;
     radius?: number;

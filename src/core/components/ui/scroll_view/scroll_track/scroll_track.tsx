@@ -91,8 +91,9 @@ export function ScrollTrack({
 
   const thumbShadowValue = {
     color: thumbShadow?.color ?? "#000000",
+    elevation: thumbShadow?.elevation ?? 0,
     offset: thumbShadow?.offset ?? { height: 1, width: 0 },
-    opacity: thumbShadow?.opacity ?? 0.18,
+    opacity: thumbShadow?.opacity ?? 0,
     radius: thumbShadow?.radius ?? 2,
   };
   const thumbHeight = useMemo(() => {
@@ -279,6 +280,7 @@ export function ScrollTrack({
         {
           backgroundColor: thumbFillColor,
           borderRadius: thumbBorderRadius,
+          elevation: dragging ? thumbShadowValue.elevation * 1.4 : thumbShadowValue.elevation,
           height: thumbHeight,
           opacity: thumbOpacityValue,
           shadowColor: thumbShadowValue.color,

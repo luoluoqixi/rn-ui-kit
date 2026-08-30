@@ -174,11 +174,17 @@ void selectProps;
 const customScrollbarOptions = {
   alwaysVisible: true,
   styling: {
-    thumbBorderRadius: 6,
-    thumbColor: "#666666",
-    thumbHoverColor: "#777777",
-    thumbPressedColor: "#888888",
-    trackBorderRadius: 4,
+      thumbBorderRadius: 6,
+      thumbColor: "#666666",
+      thumbHoverColor: "#777777",
+      thumbPressedColor: "#888888",
+      thumbShadow: {
+        elevation: 2,
+        offset: { height: 1, width: 0 },
+        opacity: 0.2,
+        radius: 3,
+      },
+      trackBorderRadius: 4,
     trackHoverColor: "#eeeeee",
     trackPressedColor: "#dddddd",
     trackWidth: 5,
