@@ -5,8 +5,15 @@ import type { ResolvedColorScheme } from "./settings";
 export type AppBackgroundLevel = "screen" | "sheet" | "card" | "header";
 
 export type AppBackgroundColors = Record<AppBackgroundLevel, string>;
+export type AppBackgroundColorsByScheme = Record<ResolvedColorScheme, AppBackgroundColors>;
 
-export const STANDARD_IOS_BACKGROUND_COLORS: Record<ResolvedColorScheme, AppBackgroundColors> = {
+/** 分别配置 backgroundFollowsTheme=true 和 false 时使用的应用背景。 */
+export type AppBackgroundColorsConfig = {
+  false: AppBackgroundColorsByScheme;
+  true: AppBackgroundColorsByScheme;
+};
+
+export const STANDARD_IOS_BACKGROUND_COLORS: AppBackgroundColorsByScheme = {
   light: {
     screen: "#F2F2F7",
     sheet: "#F2F2F7",
@@ -22,8 +29,6 @@ export const STANDARD_IOS_BACKGROUND_COLORS: Record<ResolvedColorScheme, AppBack
 };
 
 export { STANDARD_IOS_BACKGROUND_COLORS as defaultAppStandardAppBackgroundColors };
-
-export type AppBackgroundColorsConfig = Record<ResolvedColorScheme, AppBackgroundColors>;
 
 const AppBackgroundColorsContext = createContext<AppBackgroundColorsConfig | null>(null);
 

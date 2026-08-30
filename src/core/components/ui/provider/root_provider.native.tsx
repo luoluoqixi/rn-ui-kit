@@ -37,8 +37,11 @@ export function RootProvider({
     accentThemeName ?? resolvedPreferences.appearance.accentColor,
   );
   const semanticColors = resolveUiColors(resolvedColorScheme, resolvedAccentThemeName, theme);
+  const configuredBackgroundColors = appBackgroundColors?.[
+    resolvedPreferences.appearance.backgroundFollowsTheme ? "true" : "false"
+  ];
   const rootBackgroundColor =
-    appBackgroundColors?.[resolvedColorScheme]?.screen ??
+    configuredBackgroundColors?.[resolvedColorScheme]?.screen ??
     (resolvedPreferences.appearance.backgroundFollowsTheme
       ? semanticColors.primaryBackground
       : getAppWindowBackgroundColor(resolvedColorScheme));

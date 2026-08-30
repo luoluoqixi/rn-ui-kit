@@ -23,7 +23,7 @@ export interface UIProviderProps {
   defaultNativeHapticsEnabled?: boolean;
   keyboardAnimationProviderProps?: Omit<KeyboardProviderProps, "children">;
   preferences?: Partial<UiPreferences>;
-  /** Application background colors used by both fixed and theme-following backgrounds. */
+  /** Separate application background palettes for backgroundFollowsTheme=true and false. */
   appBackgroundColors?: AppBackgroundColorsConfig;
   /** Replaces the built-in Toast Toaster. */
   toaster?: ComponentType<ToastNativeToasterProps>;
