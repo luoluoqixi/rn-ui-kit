@@ -1,17 +1,11 @@
 import * as React from "react";
-import { Platform, View, useWindowDimensions } from "react-native";
-import {
-  BrightnessSlider,
-  ColorPicker,
-  HueSlider,
-  Panel1,
-  Preview,
-} from "../color_picker";
+import { View, useWindowDimensions } from "react-native";
+import { BrightnessSlider, ColorPicker, HueSlider, Panel1, Preview } from "../color_picker";
 import type { ColorFormatsObject } from "../color_picker";
 import { Button } from "../button";
 import { NativeSheet, NativeSheetScrollContent } from "../sheet/native_sheet";
 import { Text } from "../text";
-import { isIos26Plus } from "../utils/platform";
+import { isIos, isIos26Plus } from "../utils/platform";
 import type { ButtonProps } from "../button";
 import type { NativeListColorPickerItemProps } from "./types";
 
@@ -19,12 +13,7 @@ const DEFAULT_PICKER_HEIGHT = 480;
 
 export type NativeListColorPickerSheetProps = Pick<
   NativeListColorPickerItemProps,
-  | "color"
-  | "colorPickerProps"
-  | "confirmOnDone"
-  | "onColorChange"
-  | "pickerHeight"
-  | "sheetProps"
+  "color" | "colorPickerProps" | "confirmOnDone" | "onColorChange" | "pickerHeight" | "sheetProps"
 > & { open: boolean; onOpenChange: (open: boolean) => void };
 
 export function NativeListColorPickerSheet({
@@ -39,12 +28,7 @@ export function NativeListColorPickerSheet({
   nativeButtonSwiftProps,
 }: Pick<
   NativeListColorPickerItemProps,
-  | "color"
-  | "colorPickerProps"
-  | "confirmOnDone"
-  | "onColorChange"
-  | "pickerHeight"
-  | "sheetProps"
+  "color" | "colorPickerProps" | "confirmOnDone" | "onColorChange" | "pickerHeight" | "sheetProps"
 > & {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -109,8 +93,8 @@ export function NativeListColorPickerSheet({
             }}
           >
             <Button
-              buttonSize={{ height: 40, width: 80 }}
-              native={Platform.OS === "ios"}
+              buttonSize={{ height: 40, width: isIos() ? 65 : 80 }}
+              native={isIos()}
               nativeButtonStyle={usesIos26GlassButtons ? "glass" : "automatic"}
               nativeSwiftProps={nativeButtonSwiftProps}
               title="取消"
@@ -119,8 +103,8 @@ export function NativeListColorPickerSheet({
             />
             <Text className="text-base font-semibold">选择颜色</Text>
             <Button
-              buttonSize={{ height: 40, width: 80 }}
-              native={Platform.OS === "ios"}
+              buttonSize={{ height: 40, width: isIos() ? 65 : 80 }}
+              native={isIos()}
               nativeButtonStyle={usesIos26GlassButtons ? "glass" : "automatic"}
               nativeSwiftProps={nativeButtonSwiftProps}
               title="完成"
