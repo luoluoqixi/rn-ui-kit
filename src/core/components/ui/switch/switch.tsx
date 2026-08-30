@@ -103,7 +103,7 @@ function Switch({
           "flex shrink-0 flex-row items-center rounded-full border border-transparent shadow-sm shadow-black/5",
           switchSize.track,
           Platform.select({
-            web: "focus-visible:border-ring focus-visible:ring-ring/50 peer inline-flex outline-none transition-all focus-visible:ring-[3px] disabled:cursor-not-allowed",
+            web: "focus-visible:border-ring focus-visible:ring-ring/50 peer inline-flex outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed",
           }),
           checked ? "bg-primary" : "bg-input dark:bg-input/80",
           props.disabled && "opacity-50",
