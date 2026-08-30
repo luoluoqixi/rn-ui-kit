@@ -14,7 +14,7 @@ export function TrueSheetStackHeaderCloseButton({ title, onPress, ...buttonProps
     }
   };
   const defaultButtonSize = {
-    width: 40,
+    width: 50,
     height: isIos26Plus() ? 40 : 20,
   };
 
