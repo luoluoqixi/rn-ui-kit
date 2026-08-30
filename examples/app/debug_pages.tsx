@@ -1,7 +1,10 @@
 import { useMemo } from "react";
 import { Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { type RnUiKitDebugRouteDefinition } from "rn-ui-kit/debug";
+import {
+  type RnUiKitDebugRouteDefinition,
+  type RnUiKitDebugSectionContentProps,
+} from "rn-ui-kit/debug";
 import {
   NativeList,
   NativeListSection,
@@ -21,7 +24,7 @@ function createThemeDebugPage(
   usesHostNavigation: boolean,
   setUsesHostNavigation: (value: boolean) => void,
 ) {
-  return function AppThemeDebugPage() {
+  return function AppThemeDebugPage({ layoutHost }: RnUiKitDebugSectionContentProps) {
     const usesNativeIosScrollEdgeHeader = Platform.OS === "ios";
     const insets = useSafeAreaInsets();
     const tracksScrollEdgeHeader =
@@ -102,15 +105,17 @@ function createThemeDebugPage(
               title="背景跟随主题"
             />
           </NativeListSection>
-          <NativeListSection title="调试导航">
-            <NativeListSwitchItem
-              switchProps={{
-                checked: usesHostNavigation,
-                onCheckedChange: setUsesHostNavigation,
-              }}
-              title="使用 Host 导航模式"
-            />
-          </NativeListSection>
+          {layoutHost !== "nativeSheet" ? (
+            <NativeListSection title="调试导航">
+              <NativeListSwitchItem
+                switchProps={{
+                  checked: usesHostNavigation,
+                  onCheckedChange: setUsesHostNavigation,
+                }}
+                title="使用 Host 导航模式"
+              />
+            </NativeListSection>
+          ) : null}
         </NativeList>
       </View>
     );
