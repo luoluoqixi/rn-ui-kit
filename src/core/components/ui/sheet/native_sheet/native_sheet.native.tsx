@@ -229,6 +229,7 @@ export function NativeSheet({ ...props }: NativeSheetProps) {
     onOpenChange,
     onPositionChange,
     onSnapPointChange,
+    onWillDismiss,
     open: openProp,
     overlay,
     overlayPortalHostName: overlayPortalHostNameProp,
@@ -346,6 +347,16 @@ export function NativeSheet({ ...props }: NativeSheetProps) {
             return customResult;
           }
         : undefined,
+    onWillDismiss: (event) => {
+      // Gesture and overlay dismissals start in native code without changing the
+      // controlled `open` prop. Synchronize it before the animation finishes so
+      // the native sheet is never reconfigured to its fallback/max detent.
+      dismissingRef.current = true;
+      if (sheetState.open) {
+        sheetState.setOpen(false);
+      }
+      onWillDismiss?.(event);
+    },
     onPositionChange,
     onDetentChange: (event) => {
       onDetentChange?.(event);

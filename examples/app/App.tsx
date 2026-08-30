@@ -41,7 +41,8 @@ function parseStoredPreferences(value: string | null): UiPreferences | null {
 
     const accentColor =
       typeof appearance.accentColor === "string" &&
-      (accentThemeNames as readonly string[]).includes(appearance.accentColor)
+      ((accentThemeNames as readonly string[]).includes(appearance.accentColor) ||
+        /^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(appearance.accentColor))
         ? appearance.accentColor
         : defaultPreferences.appearance.accentColor;
     const themeMode =

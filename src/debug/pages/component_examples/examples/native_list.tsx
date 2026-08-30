@@ -23,6 +23,7 @@ import { StyleSheet, View } from "react-native";
 import {
   NativeList,
   NativeListInputItem,
+  NativeListColorPickerItem,
   NativeListItem,
   NativeListDropdownItem,
   NativeListNavigationItem,
@@ -147,6 +148,7 @@ export function NativeListExample() {
   const [lastAction, setLastAction] = useState("尚未点击");
   const [workspaceName, setWorkspaceName] = useState("rn-ui-kit");
   const [workspaceNote, setWorkspaceNote] = useState("");
+  const [accentColor, setAccentColor] = useState("#7c3aed");
 
   useEffect(() => {
     if (native) {
@@ -421,6 +423,18 @@ export function NativeListExample() {
                 title="主题模式"
                 valueColor="#7c3aed"
                 valueFontSize={15}
+              />
+              <NativeListColorPickerItem
+                color={accentColor}
+                colorPickerProps={{
+                  adaptSpectrum: true,
+                  thumbShape: "circle",
+                }}
+                icon={<Palette color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
+                onColorChange={setAccentColor}
+                sfSymbol="paintpalette.fill"
+                subtitle="点击整行打开 ColorPicker Sheet"
+                title="强调色"
               />
               <NativeListSelectItem
                 icon={<Timer color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}

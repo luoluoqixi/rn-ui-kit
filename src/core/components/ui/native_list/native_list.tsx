@@ -13,6 +13,7 @@ import { NativeListDropdownItem as BasicDropdownItem } from "./native_list_basic
 import { NativeListNavigationItem as BasicNavigationItem } from "./native_list_basic/native_list_navigation_item";
 import { NativeListSelectItem as BasicSelectItem } from "./native_list_basic/native_list_select_item";
 import { NativeListSwitchItem as BasicSwitchItem } from "./native_list_basic/native_list_switch_item";
+import { NativeListColorPickerItem as BasicColorPickerItem } from "./native_list_basic/native_list_color_picker_item";
 import { NativeListTextAreaItem as BasicTextAreaItem } from "./native_list_basic/native_list_text_area_item";
 import { NativeListActionItem as NativeActionItem } from "./native_list_native/native_list_action_item";
 import { NativeListButtonItem as NativeButtonItem } from "./native_list_native/native_list_button_item";
@@ -23,6 +24,7 @@ import { NativeListDropdownItem as NativeDropdownItem } from "./native_list_nati
 import { NativeListNavigationItem as NativeNavigationItem } from "./native_list_native/native_list_navigation_item";
 import { NativeListSelectItem as NativeSelectItem } from "./native_list_native/native_list_select_item";
 import { NativeListSwitchItem as NativeSwitchItem } from "./native_list_native/native_list_switch_item";
+import { NativeListColorPickerItem as NativeColorPickerItem } from "./native_list_native/native_list_color_picker_item";
 import { NativeListTextAreaItem as NativeTextAreaItem } from "./native_list_native/native_list_text_area_item";
 import type {
   NativeListActionItemProps,
@@ -36,6 +38,7 @@ import type {
   NativeListSectionProps,
   NativeListSelectItemProps,
   NativeListSwitchItemProps,
+  NativeListColorPickerItemProps,
   NativeListTextAreaItemProps,
 } from "./types";
 
@@ -90,6 +93,9 @@ export const NativeListNavigationItem = (
 ) => dispatchItem(props.native, NativeNavigationItem, BasicNavigationItem, props);
 export const NativeListSwitchItem = (props: NativeListSwitchItemProps & { native?: boolean }) =>
   dispatchItem(props.native, NativeSwitchItem, BasicSwitchItem, props);
+export const NativeListColorPickerItem = (
+  props: NativeListColorPickerItemProps & { native?: boolean },
+) => dispatchItem(props.native, NativeColorPickerItem, BasicColorPickerItem, props);
 export const NativeListSelectItem = (props: NativeListSelectItemProps & { native?: boolean }) =>
   dispatchItem(props.native, NativeSelectItem, BasicSelectItem, props);
 export const NativeListDropdownItem = (props: NativeListDropdownItemProps & { native?: boolean }) =>

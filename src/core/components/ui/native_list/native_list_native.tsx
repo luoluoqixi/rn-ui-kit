@@ -25,6 +25,9 @@ export function NativeListNavigationItem(props: any) {
 export function NativeListSwitchItem(props: any) {
   return renderBasic("NativeListSwitchItem", props);
 }
+export function NativeListColorPickerItem(props: any) {
+  return renderBasic("NativeListColorPickerItem", props);
+}
 export function NativeListSelectItem(props: any) {
   return renderBasic("NativeListSelectItem", props);
 }

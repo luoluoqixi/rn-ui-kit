@@ -96,6 +96,12 @@ describe("default accent themes", () => {
     expect(resolveGeneratedAccentTheme("ocean")).toBe(resolveGeneratedAccentTheme("ocean"));
   });
 
+  test("generates and caches custom hex accent themes", () => {
+    const generated = resolveGeneratedAccentTheme("#12abef");
+    expect(generated).toEqual(generateUiThemeFromPrimaryColor("#12abef"));
+    expect(resolveGeneratedAccentTheme(" #12ABEF ")).toBe(generated);
+  });
+
   test("falls back for unknown and inherited property names", () => {
     expect(resolveGeneratedAccentTheme("unknown")).toBe(resolveGeneratedAccentTheme("ocean"));
     expect(resolveGeneratedAccentTheme("toString")).toBe(resolveGeneratedAccentTheme("ocean"));

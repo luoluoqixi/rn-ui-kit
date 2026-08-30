@@ -4,6 +4,7 @@ export {
   NativeListActionItem,
   NativeListNavigationItem,
   NativeListSwitchItem,
+  NativeListColorPickerItem,
   NativeListSelectItem,
   NativeListDropdownItem,
   NativeListButtonItem,

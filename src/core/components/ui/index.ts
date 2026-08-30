@@ -7,6 +7,7 @@ export * from "./badge";
 export * from "./button";
 export * from "./card";
 export * from "./checkbox";
+export * from "./color_picker";
 export * from "./collapsible";
 export * from "./context_menu";
 export * from "./dialog";

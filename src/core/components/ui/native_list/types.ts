@@ -8,6 +8,8 @@ import type { DropdownProps } from "../dropdown";
 import type { SwitchProps } from "../switch";
 import type { InputProps } from "../input";
 import type { TextareaProps } from "../textarea";
+import type { ColorPickerProps } from "../color_picker";
+import type { NativeSheetProps } from "../sheet/native_sheet/types";
 import type { NativeHapticsSetting } from "../utils";
 import type { NavigationBarScrollEdgeTrackingProps } from "../utils/navigation";
 import type { RenderProp } from "../utils/render";
@@ -140,6 +142,24 @@ export type NativeListNavigationItemProps = NativeListItemBaseProps;
 
 export type NativeListSwitchItemProps = NativeListItemBaseProps & {
   switchProps: Omit<SwitchProps, "label" | "native">;
+};
+
+export type NativeListColorPickerItemProps = NativeListItemBaseProps & {
+  /** 当前颜色值，支持 color picker 的所有颜色格式。 */
+  color: string;
+  /** 颜色变化时回调，返回标准化后的 hex 颜色。 */
+  onColorChange?: (color: string) => void;
+  /** 是否等待点击“完成”后再回写颜色；默认开启。设为 false 时实时回写且隐藏操作按钮。 */
+  confirmOnDone?: boolean;
+  /** 透传给 color picker 的配置；value 与事件由列表项接管。 */
+  colorPickerProps?: Omit<ColorPickerProps, "value">;
+  /** 透传给 NativeSheet 的配置；open、detents、children 由列表项接管。 */
+  sheetProps?: Omit<
+    NativeSheetProps,
+    "children" | "content" | "open" | "onOpenChange" | "detents" | "snapPoints"
+  >;
+  /** picker 内容的估计高度，用于首次打开时选择合适的 detent。 */
+  pickerHeight?: number;
 };
 
 export type NativeListSelectItemProps = NativeListItemBaseProps & {

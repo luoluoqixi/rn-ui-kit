@@ -6,10 +6,16 @@ import {
   type RnUiKitDebugSectionContentProps,
 } from "rn-ui-kit/debug";
 import {
+  BrightnessSlider,
+  HueSlider,
   NativeList,
+  NativeListColorPickerItem,
   NativeListSection,
   NativeListSelectItem,
   NativeListSwitchItem,
+  Panel1,
+  Preview,
+  Swatches,
   accentThemeNames,
   accentThemeSwatchColors,
   isIos15,
@@ -17,6 +23,8 @@ import {
 } from "rn-ui-kit";
 
 type UpdatePreferences = (updater: (current: UiPreferences) => UiPreferences) => void;
+
+const PRESET_THEME_COLORS = accentThemeNames.map((name) => accentThemeSwatchColors[name]);
 
 function createThemeDebugPage(
   preferences: UiPreferences,
@@ -32,14 +40,24 @@ function createThemeDebugPage(
     const horizontalContentInset =
       Platform.OS === "ios" ? undefined : { paddingLeft: insets.left, paddingRight: insets.right };
     const accentOptions = useMemo(
-      () =>
-        accentThemeNames.map((value) => ({
-          label: value,
-          swatchColor: accentThemeSwatchColors[value],
-          value,
-        })),
-      [],
+      () => {
+        const customColor = isCustomAccentColor(preferences.appearance.accentColor)
+          ? preferences.appearance.accentColor
+          : "#7c3aed";
+        return [
+          ...accentThemeNames.map((value) => ({
+            label: value,
+            swatchColor: accentThemeSwatchColors[value],
+            value,
+          })),
+          { label: "自定义颜色", swatchColor: customColor, value: customColor },
+        ];
+      },
+      [preferences.appearance.accentColor],
     );
+    const customAccentColor = isCustomAccentColor(preferences.appearance.accentColor)
+      ? preferences.appearance.accentColor
+      : "#7c3aed";
 
     return (
       <View style={styles.nativeListHost}>
@@ -70,6 +88,40 @@ function createThemeDebugPage(
               }}
               title="主题色"
             />
+            {isCustomAccentColor(preferences.appearance.accentColor) ? (
+              <NativeListColorPickerItem
+                color={customAccentColor}
+                colorPickerProps={{
+                  adaptSpectrum: true,
+                  thumbShape: "circle",
+                  children: (
+                    <>
+                      <Preview style={{ height: 44, width: "100%" }} />
+                      <Panel1 style={{ height: 240, width: "100%" }} />
+                      <HueSlider />
+                      <BrightnessSlider />
+                      <Swatches
+                        colors={PRESET_THEME_COLORS}
+                        swatchStyle={{
+                          height: 26,
+                          marginBottom: 0,
+                          marginHorizontal: 2,
+                          width: 26,
+                        }}
+                      />
+                    </>
+                  ),
+                }}
+                onColorChange={(color) =>
+                  updatePreferences((current) => ({
+                    ...current,
+                    appearance: { ...current.appearance, accentColor: color },
+                  }))
+                }
+                subtitle="使用 ColorPicker 调整应用主色"
+                title="自定义主题颜色"
+              />
+            ) : null}
             <NativeListSelectItem
               iosSwiftNativeMenu={isIos15()}
               selectProps={{
@@ -120,6 +172,10 @@ function createThemeDebugPage(
       </View>
     );
   };
+}
+
+function isCustomAccentColor(value: string) {
+  return /^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(value.trim());
 }
 
 export function createAppDebugPages(

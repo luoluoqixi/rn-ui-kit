@@ -38,6 +38,7 @@ import { SkeletonExample } from "./examples/skeleton";
 import { ToggleExample } from "./examples/toggle";
 import { IconExample } from "./examples/icon";
 import { MenubarExample } from "./examples/menubar";
+import { ColorPickerExample } from "./examples/color_picker";
 
 import type { ComponentExampleDefinition } from "./types";
 
@@ -51,6 +52,7 @@ export const componentExampleDefinitions: ComponentExampleDefinition[] = [
   { Component: ButtonExample, key: "button", label: "Button" },
   { Component: CardExample, key: "card", label: "Card" },
   { Component: CheckboxExample, key: "checkbox", label: "Checkbox" },
+  { Component: ColorPickerExample, key: "color-picker", label: "ColorPicker" },
   { Component: CollapsibleExample, key: "collapsible", label: "Collapsible" },
   { Component: ContextMenuExample, key: "context-menu", label: "ContextMenu" },
   { Component: DialogExample, key: "dialog", label: "Dialog" },

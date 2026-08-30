@@ -89,6 +89,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react-native": "^1.21.0",
+    "reanimated-color-picker": "^5.1.3",
     "sf-symbols-typescript": "=2.2.0",
     "sonner": "2.0.8",
     "sonner-native": "0.27.0",
