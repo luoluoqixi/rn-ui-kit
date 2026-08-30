@@ -14,7 +14,8 @@ export function useAppBackgroundColors(): AppBackgroundColors {
 
   if (configuredColors != null) {
     const mode = preferences.appearance.backgroundFollowsTheme ? "true" : "false";
-    return configuredColors[mode][resolvedColorScheme];
+    const modeColors = configuredColors[mode];
+    if (modeColors != null) return modeColors[resolvedColorScheme];
   }
 
   if (preferences.appearance.backgroundFollowsTheme) {

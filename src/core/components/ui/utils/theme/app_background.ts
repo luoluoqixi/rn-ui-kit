@@ -9,8 +9,10 @@ export type AppBackgroundColorsByScheme = Record<ResolvedColorScheme, AppBackgro
 
 /** 分别配置 backgroundFollowsTheme=true 和 false 时使用的应用背景。 */
 export type AppBackgroundColorsConfig = {
-  false: AppBackgroundColorsByScheme;
-  true: AppBackgroundColorsByScheme;
+  /** backgroundFollowsTheme=false 时的覆盖色；未配置时使用标准默认色。 */
+  false?: AppBackgroundColorsByScheme;
+  /** backgroundFollowsTheme=true 时的覆盖色；未配置时使用当前 UI 主题色。 */
+  true?: AppBackgroundColorsByScheme;
 };
 
 export const STANDARD_IOS_BACKGROUND_COLORS: AppBackgroundColorsByScheme = {
