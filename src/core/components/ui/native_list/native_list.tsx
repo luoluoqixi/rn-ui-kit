@@ -3,6 +3,7 @@ import { Platform } from "react-native";
 
 import * as Basic from "./native_list_basic";
 import * as Native from "./native_list_native";
+import { NativeListTriggerFontWeightProvider } from "./native_trigger";
 import { NativeListActionItem as BasicActionItem } from "./native_list_basic/native_list_action_item";
 import { NativeListButtonItem as BasicButtonItem } from "./native_list_basic/native_list_button_item";
 import { NativeListCustomItem as BasicCustomItem } from "./native_list_basic/native_list_custom_item";
@@ -48,12 +49,14 @@ function useResolvedNativeMode(explicit?: boolean) {
 }
 
 /** iOS keeps the historical SwiftUI list as its default; other platforms use basic rows. */
-export function NativeListRoot({ native, ...props }: NativeListRootProps) {
+export function NativeListRoot({ native, nativeTriggerFontWeight, ...props }: NativeListRootProps) {
   const useNative = useResolvedNativeMode(native);
   const Component = useNative ? Native.NativeListRoot : Basic.NativeListRoot;
   return (
     <NativeListModeContext.Provider value={useNative}>
-      <Component {...props} />
+      <NativeListTriggerFontWeightProvider nativeTriggerFontWeight={nativeTriggerFontWeight}>
+        <Component {...props} />
+      </NativeListTriggerFontWeightProvider>
     </NativeListModeContext.Provider>
   );
 }
@@ -62,11 +65,16 @@ export const NativeList = NativeListRoot;
 
 export function NativeListSection({
   native,
+  nativeTriggerFontWeight,
   ...props
 }: NativeListSectionProps & { native?: boolean }) {
   const useNative = useResolvedNativeMode(native);
   const Component = useNative ? Native.NativeListSection : Basic.NativeListSection;
-  return <Component {...props} />;
+  return (
+    <NativeListTriggerFontWeightProvider nativeTriggerFontWeight={nativeTriggerFontWeight}>
+      <Component {...props} />
+    </NativeListTriggerFontWeightProvider>
+  );
 }
 
 function dispatchItem(native: boolean | undefined, NativeItem: any, BasicItem: any, props: any) {

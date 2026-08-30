@@ -96,6 +96,7 @@ function renderNativeListSortTrailing(context: NativeListSectionRenderContext) {
         alignItems: "center",
         flexDirection: "row",
         flexShrink: 1,
+        paddingHorizontal: 3,
         gap: 4,
         maxWidth: 180,
         minHeight: 32,

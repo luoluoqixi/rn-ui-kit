@@ -117,10 +117,14 @@ export function renderNativeListSelectTriggerLabel(
   const {
     color: configuredColor,
     opacity: configuredOpacity,
+    fontWeight: configuredFontWeight,
     style: configuredStyle,
     ...textProps
   } = (labelProps ?? {}) as any;
-  const resolvedTextStyle = [{ color: configuredColor }, configuredStyle];
+  const resolvedTextStyle = [
+    { color: configuredColor, fontWeight: configuredFontWeight },
+    configuredStyle,
+  ];
   const content =
     swatchColor == null ? (
       typeof label === "string" || typeof label === "number" ? (

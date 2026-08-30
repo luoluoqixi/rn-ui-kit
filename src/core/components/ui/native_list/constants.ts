@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, type TextStyle } from "react-native";
 
 /** Basic NativeList 默认列表样式。 */
 export const NATIVE_LIST_BASIC_DEFAULT_STYLE = "rounded" as const;
@@ -22,6 +22,9 @@ export const NATIVE_LIST_TRAILING_TRIGGER_OPACITY = 1;
 
 /** NativeList 右侧 Select/Dropdown trigger 使用的语义主题色键。 */
 export const NATIVE_LIST_TRAILING_TRIGGER_COLOR_TOKEN = "primary" as const;
+
+/** NativeList 右侧 Select/Dropdown trigger 的统一常规字重。 */
+export const NATIVE_LIST_TRAILING_TRIGGER_FONT_WEIGHT: TextStyle["fontWeight"] = "400";
 
 /** NativeList 右侧 Select/Dropdown trigger 悬浮时的透明度。 */
 export const NATIVE_LIST_TRAILING_TRIGGER_HOVER_OPACITY = 0.7;

@@ -45,6 +45,7 @@ import {
 import { resolveSelectItemGroups } from "../../select/select_grouping";
 import { useResolvedNativeListHaptics } from "../haptics";
 import { useNativeListEditMode, useNativeListEditRow } from "../edit_mode";
+import { useResolvedNativeListTriggerFontWeight } from "../native_trigger";
 import { useUiTheme } from "../../utils/theme";
 import type { NativeListSelectItemProps } from "../types";
 
@@ -185,6 +186,11 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
   const selectItems = resolvedItemGroups.flatMap((group) => group.items);
   const selectedValue = selectProps.value ?? selectProps.defaultValue;
   const selectedItem = selectItems.find((item) => item.value === selectedValue);
+  const triggerFontWeight =
+    itemProps.nativeTriggerFontWeight ??
+    selectProps.triggerFontWeight ??
+    selectProps.nativeTriggerProps?.fontWeight ??
+    useResolvedNativeListTriggerFontWeight();
   const nativeTriggerLabelProps = {
     ...selectProps.nativeTriggerLabelProps,
     color:
@@ -193,6 +199,7 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
       theme[NATIVE_LIST_TRAILING_TRIGGER_COLOR_TOKEN],
     opacity:
       (selectProps.nativeTriggerLabelProps as any)?.opacity ?? NATIVE_LIST_TRAILING_TRIGGER_OPACITY,
+    fontWeight: triggerFontWeight,
   } as any;
   const selectedLabel =
     selectedItem == null
@@ -247,6 +254,7 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
               nativeTriggerIcon="chevrons-up-down"
               nativeTriggerLabel={selectProps.nativeTriggerLabel ?? selectedTriggerLabel}
               nativeTriggerLabelProps={nativeTriggerLabelProps}
+              triggerFontWeight={triggerFontWeight}
               nativeTriggerProps={{
                 ...(selectProps.nativeTriggerProps as any),
                 size: selectProps.nativeTriggerProps?.size ?? "md",
@@ -317,6 +325,7 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
             }}
             nativeTriggerProps={{
               ...(selectProps.nativeTriggerProps as any),
+              fontWeight: triggerFontWeight,
               size: selectProps.nativeTriggerProps?.size ?? "md",
               iconColor:
                 itemProps.valueColor ??

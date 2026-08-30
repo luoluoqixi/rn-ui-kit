@@ -1,5 +1,5 @@
 import type { ReactElement, ReactNode } from "react";
-import type { ColorValue, ScrollViewProps, ViewStyle } from "react-native";
+import type { ColorValue, ScrollViewProps, TextStyle, ViewStyle } from "react-native";
 import type { SFSymbol } from "sf-symbols-typescript";
 
 import type { SelectProps } from "../select";
@@ -106,6 +106,8 @@ export type NativeListItemBaseProps = NativeListItemPaddingProps &
      */
     iconSlotWidth?: number;
     nativeHaptics?: NativeHapticsSetting;
+    /** NativeList 右侧 Select/Dropdown trigger 的默认字重；Section 或 item 可覆盖。 */
+    nativeTriggerFontWeight?: TextStyle["fontWeight"];
     /** iOS 原生 List 用于滚动定位的稳定 id。 */
     nativeScrollId?: string | number;
     onPress?: () => void;
@@ -242,6 +244,8 @@ export type NativeListSectionProps = {
   disabledStyle?: boolean;
   /** Section 内行默认使用的震动设置；覆盖 NativeList 根节点。 */
   nativeHaptics?: NativeHapticsSetting;
+  /** Section 内行默认使用的 NativeList trigger 字重；覆盖 NativeList 根节点。 */
+  nativeTriggerFontWeight?: TextStyle["fontWeight"];
   /** Footer RenderProp；需要使用 Hook 时请传入已包裹 Hook 的 React 元素。 */
   footer?: RenderProp<NativeListSectionRenderContext>;
   /** 标题右侧内容的 RenderProp，例如“全部显示”按钮。 */
@@ -268,6 +272,8 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
     disabledStyle?: boolean;
     /** 所有行默认使用的震动设置；Section 或 item 可逐级覆盖。 */
     nativeHaptics?: NativeHapticsSetting;
+    /** 所有行默认使用的 NativeList trigger 字重；Section 或 item 可逐级覆盖。 */
+    nativeTriggerFontWeight?: TextStyle["fontWeight"];
     /** 原生 List 内容顶部内边距。 */
     contentMarginTop?: number;
     /** 原生 List 内容底部内边距。 */

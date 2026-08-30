@@ -105,7 +105,9 @@ export function getNativeStackScrollEdgeHeaderOptions({
   return {
     headerShadowVisible: false,
     headerStyle: {
-      backgroundColor: headerBackgroundColor,
+      // Web 页面滚动容器会在离开顶部后切换到常规 header 色；初始状态应
+      // 与页面内容一致，即使当前页面没有可滚动容器也不会出现色差。
+      backgroundColor: screenBackgroundColor,
     },
     headerTransparent: false,
   };

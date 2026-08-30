@@ -182,6 +182,7 @@ export const NativeTrigger = React.forwardRef<View, NativeTriggerProps>(
       containerStyle,
       disabled,
       feedbackOpacity,
+      fontWeight = "500",
       icon,
       iconColor,
       keepPressedOpacity = false,
@@ -301,6 +302,7 @@ export const NativeTrigger = React.forwardRef<View, NativeTriggerProps>(
           iconColor={iconColor}
           label={label}
           labelProps={labelProps}
+          fontWeight={fontWeight}
           size={size}
         />
       </Pressable>

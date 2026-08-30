@@ -16,6 +16,7 @@ import {
 } from "../constants";
 import { useResolvedNativeListHaptics } from "../haptics";
 import { useNativeListEditMode } from "../edit_mode";
+import { useResolvedNativeListTriggerFontWeight } from "../native_trigger";
 import { resolveRenderProp } from "../../utils/render";
 import { Text } from "../../text";
 import { Select } from "../../select";
@@ -24,7 +25,7 @@ import { triggerNativeHaptics } from "../../utils";
 import type { NativeListSelectItemProps } from "../types";
 
 export function NativeListSelectItem(props: NativeListSelectItemProps) {
-  const { selectProps, ...itemProps } = props;
+  const { nativeTriggerFontWeight, selectProps, ...itemProps } = props;
   const theme = useUiTheme();
   const selectRef = React.useRef<SelectHandle | null>(null);
   const openingSelectRef = React.useRef(false);
@@ -127,6 +128,11 @@ export function NativeListSelectItem(props: NativeListSelectItemProps) {
     itemProps.valueColor ??
     selectProps.nativeTriggerLabelProps?.color ??
     (theme[NATIVE_LIST_TRAILING_TRIGGER_COLOR_TOKEN] as string);
+  const triggerFontWeight =
+    nativeTriggerFontWeight ??
+    selectProps.triggerFontWeight ??
+    selectProps.nativeTriggerProps?.fontWeight ??
+    useResolvedNativeListTriggerFontWeight();
   // Native dropdowns expose an early will-change callback. Use it as the
   // visual source so the later did-change callback cannot flash the row while
   // the iOS menu animation is finishing.
@@ -211,6 +217,7 @@ export function NativeListSelectItem(props: NativeListSelectItemProps) {
                 selectProps.nativeTriggerLabelProps?.opacity ??
                 NATIVE_LIST_TRAILING_TRIGGER_OPACITY,
             }}
+            triggerFontWeight={triggerFontWeight}
             nativeTriggerFeedbackOpacity={{
               disabled: NATIVE_LIST_TRAILING_TRIGGER_DISABLED_OPACITY,
               press: NATIVE_LIST_TRAILING_TRIGGER_PRESS_OPACITY,
@@ -220,6 +227,7 @@ export function NativeListSelectItem(props: NativeListSelectItemProps) {
             }}
             nativeTriggerProps={{
               ...selectProps.nativeTriggerProps,
+              fontWeight: triggerFontWeight,
               size: selectProps.nativeTriggerProps?.size ?? "md",
               iconColor:
                 itemProps.valueColor ??

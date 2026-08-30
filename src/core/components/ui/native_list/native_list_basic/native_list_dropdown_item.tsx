@@ -4,6 +4,7 @@ import { NativeListRow } from "../native_list_basic";
 import { Dropdown } from "../../dropdown";
 import { useResolvedNativeListHaptics } from "../haptics";
 import { useNativeListEditMode } from "../edit_mode";
+import { useResolvedNativeListTriggerFontWeight } from "../native_trigger";
 import {
   NATIVE_LIST_EDIT_VALUE_OPACITY,
   NATIVE_LIST_ITEM_OPEN_OPACITY,
@@ -20,7 +21,7 @@ import { triggerNativeHaptics } from "../../utils";
 import type { NativeListDropdownItemProps } from "../types";
 
 export function NativeListDropdownItem(props: NativeListDropdownItemProps) {
-  const { dropdownProps, ...itemProps } = props;
+  const { dropdownProps, nativeTriggerFontWeight, ...itemProps } = props;
   const theme = useUiTheme();
   const menuRef = React.useRef<{ presentMenu: () => void } | null>(null);
   const presentingMenuRef = React.useRef(false);
@@ -171,6 +172,10 @@ export function NativeListDropdownItem(props: NativeListDropdownItemProps) {
             nativeTriggerLabelProps={nativeTriggerLabelProps}
             nativeTriggerProps={{
               ...dropdownProps.nativeTriggerProps,
+              fontWeight:
+                nativeTriggerFontWeight ??
+                dropdownProps.nativeTriggerProps?.fontWeight ??
+                useResolvedNativeListTriggerFontWeight(),
               size: dropdownProps.nativeTriggerProps?.size ?? "md",
               iconColor:
                 itemProps.valueColor ??

@@ -22,6 +22,7 @@ import {
   useResolvedNativeListDisabledStyle,
 } from "./context_menu";
 import { NativeListHapticsProvider, useResolvedNativeListHaptics } from "./haptics";
+import { useResolvedNativeListTriggerFontWeight } from "./native_trigger";
 import {
   NATIVE_LIST_BASIC_DIVIDER_OPACITY,
   NATIVE_LIST_BASIC_DEFAULT_STYLE,
@@ -487,6 +488,11 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
     itemProps.valueColor ??
     selectProps.nativeTriggerLabelProps?.color ??
     theme[NATIVE_LIST_TRAILING_TRIGGER_COLOR_TOKEN];
+  const triggerFontWeight =
+    itemProps.nativeTriggerFontWeight ??
+    selectProps.triggerFontWeight ??
+    selectProps.nativeTriggerProps?.fontWeight ??
+    useResolvedNativeListTriggerFontWeight();
   const openSelect = () => {
     if (itemProps.disabled || selectProps.disabled || selectProps.isDisabled) return;
     selectRef.current?.open();
@@ -537,6 +543,7 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
             opacity:
               selectProps.nativeTriggerLabelProps?.opacity ?? NATIVE_LIST_TRAILING_TRIGGER_OPACITY,
           }}
+          triggerFontWeight={triggerFontWeight}
           nativeTriggerFeedbackOpacity={{
             disabled: NATIVE_LIST_TRAILING_TRIGGER_DISABLED_OPACITY,
             press: NATIVE_LIST_TRAILING_TRIGGER_PRESS_OPACITY,
@@ -546,6 +553,7 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
           }}
           nativeTriggerProps={{
             ...selectProps.nativeTriggerProps,
+            fontWeight: triggerFontWeight,
             size: selectProps.nativeTriggerProps?.size ?? "md",
             iconColor:
               itemProps.valueColor ??
@@ -589,6 +597,10 @@ export function NativeListDropdownItem({
     opacity: NATIVE_LIST_TRAILING_TRIGGER_OPACITY,
     style: [itemProps.valueColor != null ? { color: itemProps.valueColor } : undefined],
   };
+  const triggerFontWeight =
+    itemProps.nativeTriggerFontWeight ??
+    dropdownProps.nativeTriggerProps?.fontWeight ??
+    useResolvedNativeListTriggerFontWeight();
   const handleMenuOpenWillChange = (nextOpen: boolean) => {
     if (dropdownProps.open === undefined) {
       setUncontrolledWillOpen(nextOpen);
@@ -650,6 +662,7 @@ export function NativeListDropdownItem({
             nativeTriggerLabelProps={nativeTriggerLabelProps}
             nativeTriggerProps={{
               ...dropdownProps.nativeTriggerProps,
+              fontWeight: triggerFontWeight,
               size: dropdownProps.nativeTriggerProps?.size ?? "md",
               iconColor:
                 itemProps.valueColor ??

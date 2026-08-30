@@ -18,6 +18,7 @@ import {
   styles,
 } from "../native_list_native.ios";
 import { useResolvedNativeListHaptics } from "../haptics";
+import { useResolvedNativeListTriggerFontWeight } from "../native_trigger";
 import { useUiTheme } from "../../utils/theme";
 import type { NativeListDropdownItemProps } from "../types";
 
@@ -50,6 +51,10 @@ export function NativeListDropdownItem({
     opacity: NATIVE_LIST_TRAILING_TRIGGER_OPACITY,
     style: [itemProps.valueColor != null ? { color: itemProps.valueColor } : undefined],
   } as any;
+  const triggerFontWeight =
+    itemProps.nativeTriggerFontWeight ??
+    dropdownProps.nativeTriggerProps?.fontWeight ??
+    useResolvedNativeListTriggerFontWeight();
 
   return (
     <NativePressRow
@@ -81,6 +86,7 @@ export function NativeListDropdownItem({
             }}
             nativeTriggerProps={{
               ...dropdownProps.nativeTriggerProps,
+              fontWeight: triggerFontWeight,
               size: dropdownProps.nativeTriggerProps?.size ?? "md",
               iconColor:
                 itemProps.valueColor ??

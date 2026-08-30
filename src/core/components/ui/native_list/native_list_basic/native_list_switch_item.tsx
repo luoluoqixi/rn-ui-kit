@@ -38,6 +38,7 @@ export function NativeListSwitchItem(props: NativeListSwitchItemProps) {
       trailing={
         <Switch
           {...switchProps}
+          size={switchProps.size ?? "xl"}
           checked={checked}
           disabled={disabled || editMode}
           nativeHaptics={inheritedHaptics ?? true}
