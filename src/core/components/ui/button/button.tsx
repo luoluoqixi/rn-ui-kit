@@ -24,7 +24,7 @@ const buttonVariants = cva(
   cn(
     "group shrink-0 flex-row items-center justify-center gap-2 rounded-md shadow-none",
     Platform.select({
-      web: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive whitespace-nowrap outline-none transition-all focus-visible:ring-[3px] disabled:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+      web: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive whitespace-nowrap outline-none focus-visible:ring-[3px] disabled:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
     }),
   ),
   {
@@ -314,12 +314,13 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
         onPress={handlePress}
         ref={ref}
         role="button"
-        style={(state) => [
+        style={({ pressed }) => [
           buttonSizeStyle,
           isDisabled && variant === "outline" ? { backgroundColor: theme.background } : null,
-          typeof style === "function" ? style(state) : style,
-          variant === "link" && state.pressed ? { opacity: 0.7 } : null,
-          variant === "secondary" && state.pressed ? { backgroundColor: theme.input } : null,
+          // Keep the pre-Expo-types runtime contract: custom Button styles only receive `pressed`.
+          typeof style === "function" ? style({ pressed } as never) : style,
+          variant === "link" && pressed ? { opacity: 0.7 } : null,
+          variant === "secondary" && pressed ? { backgroundColor: theme.input } : null,
         ]}
       >
         {loading ? (

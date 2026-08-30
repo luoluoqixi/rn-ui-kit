@@ -7,13 +7,17 @@
     "noEmit": true,
     "strict": true,
     "paths": {
-      "rn-ui-kit": ["../../src/index.ts"],
-      "rn-ui-kit/*": ["../../src/*"]
+      "rn-ui-kit": [
+        "../../src/index.ts"
+      ],
+      "rn-ui-kit/*": [
+        "../../src/*"
+      ]
     }
   },
   "include": [
     "App.tsx",
-    "expo-env.d.ts",
+    "expo-types.d.ts",
     "styles.d.ts",
     "app.config.ts",
     "uniwind-types.d.ts",
@@ -21,5 +25,7 @@
     "../../src/**/*.ts",
     "../../src/**/*.tsx"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules"
+  ]
 }
