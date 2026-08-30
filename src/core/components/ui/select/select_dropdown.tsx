@@ -73,6 +73,9 @@ export const SelectDropdown = React.forwardRef<SelectHandle, SelectProps>(
         itemProps={props.itemProps as any}
         nativeAnchorAlignment={nativeDropdownAlign}
         nativeHaptics={props.nativeHaptics}
+        nativeShouldWaitForMenuToHideBeforeFiringOnPressMenuItem={
+          props.nativeShouldWaitForMenuToHideBeforeFiringOnPressMenuItem
+        }
         // Keep the native trigger signal on the native path. Android uses a
         // separate invisible MenuView anchor so opening the popup does not make
         // the visible trigger become a scroll/focus anchor.

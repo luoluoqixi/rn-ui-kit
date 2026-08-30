@@ -84,6 +84,8 @@ export type NativeDropdownRootExtensions = {
   itemNativeHaptics?: NativeHapticsSetting;
   nativeAnchorAlignment?: "start" | "center" | "end";
   nativeHaptics?: NativeHapticsSetting;
+  /** iOS 原生菜单是否等待菜单退出动画完成后再触发 item 回调，默认 `false`。 */
+  nativeShouldWaitForMenuToHideBeforeFiringOnPressMenuItem?: boolean;
   nativeSelectedItemBackgroundColor?: ColorValue;
   nativeTrigger?: boolean;
   nativeTriggerContainerStyle?: NativeTriggerFaceProps["containerStyle"];

@@ -125,6 +125,8 @@ export interface SelectProps extends Omit<ViewProps, "ref">, SelectRootPrimitive
   nativeDropdownAnchorWidth?: number;
   nativeDropdownEdgeOffset?: number;
   nativeHaptics?: NativeHapticsSetting;
+  /** iOS 原生 dropdown 是否等待菜单退出动画完成后再触发 item 回调，默认 `false`。 */
+  nativeShouldWaitForMenuToHideBeforeFiringOnPressMenuItem?: boolean;
   /** Additional props for the Android dialog and iOS wheel Pickers. */
   nativePickerProps?: SelectNativePickerProps;
   /** Text displayed by the iOS wheel cancel button. Defaults to `取消`. */

@@ -186,6 +186,7 @@ function NativeDropdownRoot({
   itemNativeHaptics,
   nativeAnchorAlignment = "center",
   nativeHaptics,
+  nativeShouldWaitForMenuToHideBeforeFiringOnPressMenuItem,
   nativeSelectedItemBackgroundColor,
   nativeTrigger,
   nativeTriggerContainerStyle,
@@ -336,7 +337,8 @@ function NativeDropdownRoot({
   // cause the parent ScrollView to reposition near the bottom of the page.
   const isAndroidDetachedTrigger =
     Platform.OS === "android" && (nativeTrigger === true || __nativeDetachedAnchor === true);
-  const { style: rootStyle, ...rootProps } = props as NativeDropdownProps & {
+  const { __unsafeIosProps, style: rootStyle, ...rootProps } = props as NativeDropdownProps & {
+    __unsafeIosProps?: Record<string, unknown>;
     style?: unknown;
   };
   const nativeAnchorStyle = isAndroidDetachedTrigger
@@ -364,6 +366,17 @@ function NativeDropdownRoot({
         isAnchoredToRight: nativeAnchorAlignment === "end",
         selectedItemBackgroundColor: nativeSelectedItemBackgroundColor,
       } as object)}
+      {...(Platform.OS === "ios"
+        ? {
+            __unsafeIosProps: {
+              ...(__unsafeIosProps ?? {}),
+              shouldWaitForMenuToHideBeforeFiringOnPressMenuItem:
+                nativeShouldWaitForMenuToHideBeforeFiringOnPressMenuItem ?? false,
+            },
+          }
+        : __unsafeIosProps == null
+          ? {}
+          : { __unsafeIosProps })}
       onOpenChange={handleOpenChange}
       {...({ onOpenWillChange: handleOpenWillChange } as object)}
     >
