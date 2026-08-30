@@ -13,6 +13,7 @@
   },
   "include": [
     "App.tsx",
+    "expo-env.d.ts",
     "styles.d.ts",
     "app.config.ts",
     "uniwind-types.d.ts",

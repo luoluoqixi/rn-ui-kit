@@ -96,7 +96,18 @@ function SelectValue({ className, ...props }: SelectValueProps) {
   );
 }
 
-function SelectTrigger({ className, children, size = "default", ...props }: SelectTriggerProps) {
+function SelectTrigger({
+  className,
+  children,
+  onHoverIn,
+  onHoverOut,
+  onPressIn,
+  onPressOut,
+  size = "default",
+  ...props
+}: SelectTriggerProps) {
+  const [pressed, setPressed] = React.useState(false);
+  const [hovered, setHovered] = React.useState(false);
   return (
     <SelectPrimitive.Trigger
       className={cn(
@@ -109,8 +120,26 @@ function SelectTrigger({ className, children, size = "default", ...props }: Sele
         className,
       )}
       {...props}
+      onHoverIn={(event) => {
+        setHovered(true);
+        onHoverIn?.(event);
+      }}
+      onHoverOut={(event) => {
+        setHovered(false);
+        onHoverOut?.(event);
+      }}
+      onPressIn={(event) => {
+        setPressed(true);
+        onPressIn?.(event);
+      }}
+      onPressOut={(event) => {
+        setPressed(false);
+        onPressOut?.(event);
+      }}
     >
-      {typeof children === "function" ? children({ pressed: false }) : normalizeText(children)}
+      {typeof children === "function"
+        ? normalizeText(children({ hovered, pressed }))
+        : normalizeText(children)}
       <Icon as={ChevronDown} aria-hidden className="text-muted-foreground size-4 shrink-0" />
     </SelectPrimitive.Trigger>
   );

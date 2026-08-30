@@ -25,7 +25,7 @@ type RadioGroupInteraction = {
 };
 
 const radioSizes: Record<RadioGroupSize, { indicator: string; dot: string; label: string }> = {
-  default: { indicator: "size-[18px]", dot: "size-2.5", label: "text-base" },
+  "default": { indicator: "size-[18px]", dot: "size-2.5", label: "text-base" },
   "2xs": { indicator: "size-3", dot: "size-1.5", label: "text-xs" },
   "xs": { indicator: "size-3.5", dot: "size-2", label: "text-xs" },
   "sm": { indicator: "size-4", dot: "size-2", label: "text-sm" },
@@ -129,6 +129,8 @@ function RadioGroupItem({
   onPress,
   onPressIn,
   onPressOut,
+  onHoverIn,
+  onHoverOut,
   value,
   size,
   disabled,
@@ -142,8 +144,11 @@ function RadioGroupItem({
   const checked = interaction?.value === value;
   const resolvedDisabled = disabled || interaction?.disabled;
   const [isPressed, setIsPressed] = React.useState(false);
+  const [isHovered, setIsHovered] = React.useState(false);
   const resolvedItemStyle =
-    typeof props.style === "function" ? props.style({ pressed: isPressed }) : props.style;
+    typeof props.style === "function"
+      ? props.style({ hovered: isHovered, pressed: isPressed })
+      : props.style;
   const pressedItemStyle =
     isPressed && !checked && !resolvedDisabled ? { backgroundColor: theme.accent } : undefined;
   const itemStyle = StyleSheet.flatten([resolvedItemStyle, pressedItemStyle]);
@@ -199,6 +204,14 @@ function RadioGroupItem({
         onPressOut={(event) => {
           setIsPressed(false);
           onPressOut?.(event);
+        }}
+        onHoverIn={(event) => {
+          setIsHovered(true);
+          onHoverIn?.(event);
+        }}
+        onHoverOut={(event) => {
+          setIsHovered(false);
+          onHoverOut?.(event);
         }}
       >
         <RadioGroupPrimitive.Item
@@ -281,6 +294,14 @@ function RadioGroupItem({
       onPressOut={(event) => {
         setIsPressed(false);
         onPressOut?.(event);
+      }}
+      onHoverIn={(event) => {
+        setIsHovered(true);
+        onHoverIn?.(event);
+      }}
+      onHoverOut={(event) => {
+        setIsHovered(false);
+        onHoverOut?.(event);
       }}
       value={value}
     >

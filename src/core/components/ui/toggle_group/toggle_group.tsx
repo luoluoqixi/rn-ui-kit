@@ -107,6 +107,8 @@ function ToggleGroupItem({
   onPress,
   onPressIn,
   onPressOut,
+  onHoverIn,
+  onHoverOut,
   ...props
 }: React.ComponentProps<typeof ToggleGroupPrimitive.Item> &
   VariantProps<typeof toggleVariants> & {
@@ -121,8 +123,11 @@ function ToggleGroupItem({
   const theme = useUiTheme();
   const pressed = ToggleGroupPrimitive.utils.getIsSelected(value, props.value);
   const [isPressed, setIsPressed] = React.useState(false);
+  const [isHovered, setIsHovered] = React.useState(false);
   const resolvedStyle =
-    typeof props.style === "function" ? props.style({ pressed: isPressed }) : props.style;
+    typeof props.style === "function"
+      ? props.style({ hovered: isHovered, pressed: isPressed })
+      : props.style;
   const interactionStyle = StyleSheet.flatten([
     resolvedStyle,
     isPressed && !pressed && !props.disabled ? { backgroundColor: theme.accent } : undefined,
@@ -136,10 +141,7 @@ function ToggleGroupItem({
 
   return (
     <TextClassContext.Provider
-      value={cn(
-        toggleTextVariants({ size: resolvedSize }),
-        pressed && "text-accent-foreground",
-      )}
+      value={cn(toggleTextVariants({ size: resolvedSize }), pressed && "text-accent-foreground")}
     >
       <ToggleSizeContext.Provider value={resolvedSize === "default" ? "md" : resolvedSize}>
         <ToggleGroupPrimitive.Item
@@ -173,6 +175,14 @@ function ToggleGroupItem({
           onPressOut={(event) => {
             setIsPressed(false);
             onPressOut?.(event);
+          }}
+          onHoverIn={(event) => {
+            setIsHovered(true);
+            onHoverIn?.(event);
+          }}
+          onHoverOut={(event) => {
+            setIsHovered(false);
+            onHoverOut?.(event);
           }}
         >
           {renderedTitle != null ? (

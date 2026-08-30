@@ -65,22 +65,22 @@ const buttonVariants = cva(
           "h-8 min-w-8 gap-1 rounded-md px-2 py-1",
           Platform.select({ web: "has-[>svg]:px-1.5" }),
         ),
-        xs: cn(
+        "xs": cn(
           "h-9 min-w-9 gap-1 rounded-md px-3 py-1.5",
           Platform.select({ web: "has-[>svg]:px-2" }),
         ),
-        sm: cn(
+        "sm": cn(
           "h-10 min-w-10 gap-1.5 rounded-md px-4 py-2",
           Platform.select({ web: "has-[>svg]:px-3" }),
         ),
-        md: cn("h-11 min-w-11 px-5 py-2.5", Platform.select({ web: "has-[>svg]:px-4" })),
+        "md": cn("h-11 min-w-11 px-5 py-2.5", Platform.select({ web: "has-[>svg]:px-4" })),
         // `default` remains an alias for the former default size.
-        default: cn("h-11 min-w-11 px-5 py-2.5", Platform.select({ web: "has-[>svg]:px-4" })),
-        lg: cn(
+        "default": cn("h-11 min-w-11 px-5 py-2.5", Platform.select({ web: "has-[>svg]:px-4" })),
+        "lg": cn(
           "h-12 min-w-12 rounded-md px-6 py-2.5",
           Platform.select({ web: "has-[>svg]:px-5" }),
         ),
-        xl: cn(
+        "xl": cn(
           "h-14 min-w-14 gap-2.5 rounded-md px-8 py-3",
           Platform.select({ web: "has-[>svg]:px-6" }),
         ),
@@ -133,12 +133,12 @@ const buttonTextVariants = cva(
       },
       size: {
         "2xs": "text-xs",
-        xs: "text-xs",
-        sm: "text-sm",
-        md: "text-base",
-        default: "text-base",
-        lg: "text-base",
-        xl: "text-lg",
+        "xs": "text-xs",
+        "sm": "text-sm",
+        "md": "text-base",
+        "default": "text-base",
+        "lg": "text-base",
+        "xl": "text-lg",
         "2xl": "text-xl",
       },
     },
@@ -220,6 +220,7 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
     "";
   const resolvedChildren = title ?? children;
   const isDisabled = props.disabled || loading;
+  const nativePressableState = { hovered: false, pressed: false };
   const handlePress: NonNullable<ButtonProps["onPress"]> = (event) => {
     onPress?.(event);
     if (!event.defaultPrevented) triggerNativeHaptics(nativeHaptics);
@@ -249,7 +250,7 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
           }
           style={
             (typeof style === "function"
-              ? style({ pressed: false } as never)
+              ? style(nativePressableState)
               : style) as StyleProp<ViewStyle>
           }
           title={resolvedTitle}
@@ -285,7 +286,7 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
         }
         style={
           (typeof style === "function"
-            ? style({ pressed: false } as never)
+            ? style(nativePressableState)
             : style) as StyleProp<ViewStyle>
         }
         title={resolvedTitle}
@@ -313,12 +314,12 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
         onPress={handlePress}
         ref={ref}
         role="button"
-        style={({ pressed }) => [
+        style={(state) => [
           buttonSizeStyle,
           isDisabled && variant === "outline" ? { backgroundColor: theme.background } : null,
-          typeof style === "function" ? style({ pressed } as never) : style,
-          variant === "link" && pressed ? { opacity: 0.7 } : null,
-          variant === "secondary" && pressed ? { backgroundColor: theme.input } : null,
+          typeof style === "function" ? style(state) : style,
+          variant === "link" && state.pressed ? { opacity: 0.7 } : null,
+          variant === "secondary" && state.pressed ? { backgroundColor: theme.input } : null,
         ]}
       >
         {loading ? (
