@@ -1,8 +1,8 @@
 import * as React from "react";
-import { Platform, View } from "react-native";
+import { View } from "react-native";
 
 import { NativeListColorPickerSheet } from "../color_picker_sheet";
-import { NativeListRow } from "../native_list_basic";
+import { NativePressRow, supportsNativeTextRow } from "../native_list_native.ios";
 import { OverlayScopedPortal } from "../../utils/overlay";
 import type { NativeListColorPickerItemProps } from "../types";
 
@@ -39,21 +39,12 @@ export function NativeListColorPickerItem({
     }
     setOpen(nextOpen);
   }, []);
-  const sheet = (
-    <NativeListColorPickerSheet
-      color={color}
-      colorPickerProps={colorPickerProps}
-      confirmOnDone={confirmOnDone}
-      onColorChange={onColorChange}
-      onOpenChange={handleOpenChange}
-      open={open}
-      pickerHeight={pickerHeight}
-      sheetProps={sheetProps}
-    />
-  );
+  if (!supportsNativeTextRow(itemProps.title, itemProps.subtitle)) {
+    throw new Error("NativeListColorPickerItem requires text title and subtitle on iOS.");
+  }
   return (
     <>
-      <NativeListRow
+      <NativePressRow
         {...itemProps}
         disabled={disabled}
         onPress={() => {
@@ -61,16 +52,22 @@ export function NativeListColorPickerItem({
           itemProps.onPress?.();
           handleOpenChange(true);
         }}
-        value={undefined}
-        trailing={<View style={{ backgroundColor: color, borderRadius: 999, height: 24, width: 24 }} />}
+        trailing={
+          <View style={{ backgroundColor: color, borderRadius: 999, height: 24, width: 24 }} />
+        }
       />
-      {Platform.OS === "web" ? (
-        sheet
-      ) : (
-        <OverlayScopedPortal name={`native-list-color-picker-sheet-${portalName}`}>
-          {sheet}
-        </OverlayScopedPortal>
-      )}
+      <OverlayScopedPortal name={`native-list-color-picker-sheet-${portalName}`}>
+        <NativeListColorPickerSheet
+          color={color}
+          colorPickerProps={colorPickerProps}
+          confirmOnDone={confirmOnDone}
+          onColorChange={onColorChange}
+          onOpenChange={handleOpenChange}
+          open={open}
+          pickerHeight={pickerHeight}
+          sheetProps={sheetProps}
+        />
+      </OverlayScopedPortal>
     </>
   );
 }
