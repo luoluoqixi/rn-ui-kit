@@ -984,6 +984,8 @@ export function NativeListRoot({
   children,
   contextMenuProps,
   contentContainerStyle,
+  contentMarginBottom,
+  contentMarginTop,
   defaultSelectedIds,
   disabledStyle,
   nativeHaptics,
@@ -1080,14 +1082,29 @@ export function NativeListRoot({
 
   if (!scrollable) {
     return (
-      <View style={[styles.root, { backgroundColor: backgrounds.screen }, style]}>{content}</View>
+      <View
+        style={[
+          styles.root,
+          { backgroundColor: backgrounds.screen },
+          style,
+          contentMarginTop != null && { paddingTop: contentMarginTop },
+          contentMarginBottom != null && { paddingBottom: contentMarginBottom },
+        ]}
+      >
+        {content}
+      </View>
     );
   }
 
   return (
     <ScrollView
       {...scrollViewProps}
-      contentContainerStyle={[styles.content, contentContainerStyle]}
+      contentContainerStyle={[
+        styles.content,
+        contentContainerStyle,
+        contentMarginTop != null && { paddingTop: contentMarginTop },
+        contentMarginBottom != null && { paddingBottom: contentMarginBottom },
+      ]}
       refreshControl={
         onRefresh == null ? undefined : (
           <RefreshControl
