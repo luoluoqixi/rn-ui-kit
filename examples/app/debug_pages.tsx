@@ -39,22 +39,19 @@ function createThemeDebugPage(
       Platform.OS === "android" || Platform.OS === "web" || usesNativeIosScrollEdgeHeader;
     const horizontalContentInset =
       Platform.OS === "ios" ? undefined : { paddingLeft: insets.left, paddingRight: insets.right };
-    const accentOptions = useMemo(
-      () => {
-        const customColor = isCustomAccentColor(preferences.appearance.accentColor)
-          ? preferences.appearance.accentColor
-          : "#7c3aed";
-        return [
-          ...accentThemeNames.map((value) => ({
-            label: value,
-            swatchColor: accentThemeSwatchColors[value],
-            value,
-          })),
-          { label: "自定义颜色", swatchColor: customColor, value: customColor },
-        ];
-      },
-      [preferences.appearance.accentColor],
-    );
+    const accentOptions = useMemo(() => {
+      const customColor = isCustomAccentColor(preferences.appearance.accentColor)
+        ? preferences.appearance.accentColor
+        : "#7c3aed";
+      return [
+        ...accentThemeNames.map((value) => ({
+          label: value,
+          swatchColor: accentThemeSwatchColors[value],
+          value,
+        })),
+        { label: "自定义颜色", swatchColor: customColor, value: customColor },
+      ];
+    }, [preferences.appearance.accentColor]);
     const customAccentColor = isCustomAccentColor(preferences.appearance.accentColor)
       ? preferences.appearance.accentColor
       : "#7c3aed";
@@ -118,7 +115,6 @@ function createThemeDebugPage(
                     appearance: { ...current.appearance, accentColor: color },
                   }))
                 }
-                subtitle="使用 ColorPicker 调整应用主色"
                 title="自定义主题颜色"
               />
             ) : null}
