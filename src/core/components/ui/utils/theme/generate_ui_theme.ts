@@ -1,6 +1,7 @@
 import {
   argbFromHex,
   hexFromArgb,
+  Hct,
   themeFromSourceColor,
   type Scheme,
 } from "@material/material-color-utilities";
@@ -18,6 +19,8 @@ function createSemanticColors(
   primaryBackground: string,
   card: string,
   popover: string,
+  primaryOverride?: string,
+  primaryForegroundOverride?: string,
 ): SemanticColors {
   return {
     accent: color(scheme, "primaryContainer"),
@@ -34,9 +37,9 @@ function createSemanticColors(
     mutedForeground: color(scheme, "onSurfaceVariant"),
     popover,
     popoverForeground: color(scheme, "onSurface"),
-    primary: color(scheme, "primary"),
-    primaryForeground: color(scheme, "onPrimary"),
-    ring: color(scheme, "primary"),
+    primary: primaryOverride ?? color(scheme, "primary"),
+    primaryForeground: primaryForegroundOverride ?? color(scheme, "onPrimary"),
+    ring: primaryOverride ?? color(scheme, "primary"),
     secondary: color(scheme, "secondaryContainer"),
     secondaryForeground: color(scheme, "onSecondaryContainer"),
   };
@@ -52,7 +55,16 @@ export function generateUiThemeFromPrimaryColor(primaryColor: string): UiThemeCo
     );
   }
 
-  const materialTheme = themeFromSourceColor(argbFromHex(normalized));
+  const sourceColor = argbFromHex(normalized);
+  const materialTheme = themeFromSourceColor(sourceColor);
+  // Material's default light primary is always tone 40. That is intentionally
+  // readable, but makes bright user-selected colors appear much darker than
+  // their source swatch. Preserve the source tone when it is bright enough,
+  // while retaining tone 40 as the floor for dark colors.
+  const sourceTone = Hct.fromInt(sourceColor).tone;
+  const lightPrimaryTone = Math.min(90, Math.max(40, sourceTone));
+  const lightPrimary = hexFromArgb(materialTheme.palettes.primary.tone(lightPrimaryTone));
+  const lightPrimaryForeground = lightPrimaryTone >= 60 ? "#000000" : "#ffffff";
   const lightPrimaryBackground = hexFromArgb(materialTheme.palettes.primary.tone(98));
   const darkPrimaryBackground = hexFromArgb(materialTheme.palettes.primary.tone(6));
   const lightCard = hexFromArgb(materialTheme.palettes.neutral.tone(100));
@@ -66,6 +78,8 @@ export function generateUiThemeFromPrimaryColor(primaryColor: string): UiThemeCo
       lightPrimaryBackground,
       lightCard,
       lightPopover,
+      lightPrimary,
+      lightPrimaryForeground,
     ),
     dark: createSemanticColors(
       materialTheme.schemes.dark,

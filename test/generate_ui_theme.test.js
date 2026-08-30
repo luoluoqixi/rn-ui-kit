@@ -82,6 +82,16 @@ describe("generateUiThemeFromPrimaryColor", () => {
       expect(contrastRatio(scheme.mutedForeground, scheme.muted)).toBeGreaterThanOrEqual(4.5);
     }
   });
+
+  test("keeps bright light-theme primaries close to the selected color", () => {
+    const theme = generateUiThemeFromPrimaryColor("#00d5e8");
+
+    expect(theme.light.primary).toBe("#00d5e8");
+    expect(theme.light.primaryForeground).toBe("#000000");
+    expect(contrastRatio(theme.light.primaryForeground, theme.light.primary)).toBeGreaterThanOrEqual(
+      4.5,
+    );
+  });
 });
 
 describe("default accent themes", () => {
