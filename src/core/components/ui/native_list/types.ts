@@ -37,6 +37,8 @@ export type NativeListBasicStyleOptions = {
   borderRadius?: number;
   /** Section 外框颜色；仅在 showBorder 生效时使用。 */
   borderColor?: ViewStyle["borderColor"];
+  /** Section 外框粗细；仅在 showBorder 生效时使用，默认为 hairlineWidth。 */
+  borderWidth?: ViewStyle["borderWidth"];
   /** 行分割线颜色；未传时使用主题中性色并自动降低透明度。 */
   dividerColor?: ViewStyle["borderBottomColor"];
   /** 行分割线左侧内缩距离；默认不内缩。 */
@@ -49,7 +51,7 @@ export type NativeListBasicStyleOptions = {
   sectionShadow?: boolean | ViewStyle;
   /** 所有 Basic 行的默认背景色；单行 backgroundColor 优先级更高。 */
   rowBackgroundColor?: ViewStyle["backgroundColor"];
-  /** 是否绘制 Section 外框；未传时 rounded 开启、plain/plainFullWidth 关闭。 */
+  /** 是否绘制 Section 外框；默认为关闭。 */
   showBorder?: boolean;
   /** 是否显示行分割线；默认开启。 */
   showDivider?: boolean;

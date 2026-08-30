@@ -72,6 +72,8 @@ const NativeListBasicBorderRadiusContext = React.createContext<number | undefine
 const NativeListBasicShowBorderContext = React.createContext<boolean | undefined>(undefined);
 const NativeListBasicBorderColorContext =
   React.createContext<NativeListBasicStyleOptions["borderColor"]>(undefined);
+const NativeListBasicBorderWidthContext =
+  React.createContext<NativeListBasicStyleOptions["borderWidth"]>(undefined);
 const NativeListBasicDividerColorContext =
   React.createContext<NativeListBasicStyleOptions["dividerColor"]>(undefined);
 const NativeListBasicRowBackgroundColorContext =
@@ -906,8 +908,11 @@ export function NativeListSection({
   const listStyle = React.useContext(NativeListBasicStyleContext);
   const borderRadius = React.useContext(NativeListBasicBorderRadiusContext);
   const sectionShadow = React.useContext(NativeListBasicSectionShadowContext);
-  const showBorder = React.useContext(NativeListBasicShowBorderContext) ?? listStyle === "rounded";
+  const showBorder = React.useContext(NativeListBasicShowBorderContext) ?? false;
   const borderColor = React.useContext(NativeListBasicBorderColorContext) ?? theme.border;
+  const borderWidth =
+    React.useContext(NativeListBasicBorderWidthContext) ??
+    NATIVE_LIST_BASIC_STYLE_DEFAULTS.borderWidth;
   const sectionRadius =
     borderRadius ?? (listStyle === "rounded" ? NATIVE_LIST_BASIC_STYLE_DEFAULTS.borderRadius : 0);
   const sectionShadowStyle =
@@ -953,7 +958,7 @@ export function NativeListSection({
                 styles.sectionBody,
                 listStyle !== "rounded" && styles.sectionBodyPlain,
                 { borderRadius: sectionRadius },
-                showBorder && styles.sectionBodyBorder,
+                showBorder && { borderWidth },
                 showBorder && { borderColor },
               ]}
             >
@@ -1013,6 +1018,7 @@ export function NativeListRoot({
   const theme = useUiTheme();
   const {
     borderColor,
+    borderWidth,
     borderRadius,
     dividerColor,
     dividerPaddingLeft,
@@ -1023,57 +1029,60 @@ export function NativeListRoot({
     showBorder,
     showDivider = NATIVE_LIST_BASIC_STYLE_DEFAULTS.showDivider,
   } = listStyleOptions ?? {};
-  const resolvedShowBorder = showBorder ?? listStyle === "rounded";
+  const resolvedShowBorder = showBorder ?? false;
   const [refreshing, setRefreshing] = useState(false);
   const content = (
     <NativeListBasicStyleContext.Provider value={listStyle}>
       <NativeListBasicBorderRadiusContext.Provider value={borderRadius}>
         <NativeListBasicShowBorderContext.Provider value={resolvedShowBorder}>
           <NativeListBasicBorderColorContext.Provider value={borderColor}>
-            <NativeListBasicDividerColorContext.Provider value={dividerColor}>
-              <NativeListBasicRowBackgroundColorContext.Provider value={rowBackgroundColor}>
-                <NativeListBasicSectionShadowContext.Provider value={sectionShadow}>
-                  <NativeListBasicShowDividerContext.Provider value={showDivider}>
-                    <NativeListBasicDividerWidthContext.Provider
-                      value={dividerWidth ?? NATIVE_LIST_BASIC_STYLE_DEFAULTS.dividerWidth}
-                    >
-                      <NativeListBasicDividerPaddingContext.Provider
-                        value={
-                          dividerPaddingLeft ?? NATIVE_LIST_BASIC_STYLE_DEFAULTS.dividerPaddingLeft
-                        }
+            <NativeListBasicBorderWidthContext.Provider value={borderWidth}>
+              <NativeListBasicDividerColorContext.Provider value={dividerColor}>
+                <NativeListBasicRowBackgroundColorContext.Provider value={rowBackgroundColor}>
+                  <NativeListBasicSectionShadowContext.Provider value={sectionShadow}>
+                    <NativeListBasicShowDividerContext.Provider value={showDivider}>
+                      <NativeListBasicDividerWidthContext.Provider
+                        value={dividerWidth ?? NATIVE_LIST_BASIC_STYLE_DEFAULTS.dividerWidth}
                       >
-                        <NativeListBasicDividerRightPaddingContext.Provider
+                        <NativeListBasicDividerPaddingContext.Provider
                           value={
-                            dividerPaddingRight ??
-                            NATIVE_LIST_BASIC_STYLE_DEFAULTS.dividerPaddingRight
+                            dividerPaddingLeft ??
+                            NATIVE_LIST_BASIC_STYLE_DEFAULTS.dividerPaddingLeft
                           }
                         >
-                          <NativeListContextMenuProvider
-                            contextMenuProps={contextMenuProps}
-                            disabledStyle={disabledStyle}
+                          <NativeListBasicDividerRightPaddingContext.Provider
+                            value={
+                              dividerPaddingRight ??
+                              NATIVE_LIST_BASIC_STYLE_DEFAULTS.dividerPaddingRight
+                            }
                           >
-                            <NativeListHapticsProvider nativeHaptics={nativeHaptics}>
-                              <NativeListEditModeProvider
-                                defaultSelectedIds={defaultSelectedIds}
-                                editMode={editMode}
-                                editModeIcon={editModeIcon}
-                                editModeSelectedIcon={editModeSelectedIcon}
-                                editModeSelectedSfSymbol={editModeSelectedSfSymbol}
-                                editModeSfSymbol={editModeSfSymbol}
-                                onSelectedIdsChange={onSelectedIdsChange}
-                                selectedIds={selectedIds}
-                              >
-                                {children}
-                              </NativeListEditModeProvider>
-                            </NativeListHapticsProvider>
-                          </NativeListContextMenuProvider>
-                        </NativeListBasicDividerRightPaddingContext.Provider>
-                      </NativeListBasicDividerPaddingContext.Provider>
-                    </NativeListBasicDividerWidthContext.Provider>
-                  </NativeListBasicShowDividerContext.Provider>
-                </NativeListBasicSectionShadowContext.Provider>
-              </NativeListBasicRowBackgroundColorContext.Provider>
-            </NativeListBasicDividerColorContext.Provider>
+                            <NativeListContextMenuProvider
+                              contextMenuProps={contextMenuProps}
+                              disabledStyle={disabledStyle}
+                            >
+                              <NativeListHapticsProvider nativeHaptics={nativeHaptics}>
+                                <NativeListEditModeProvider
+                                  defaultSelectedIds={defaultSelectedIds}
+                                  editMode={editMode}
+                                  editModeIcon={editModeIcon}
+                                  editModeSelectedIcon={editModeSelectedIcon}
+                                  editModeSelectedSfSymbol={editModeSelectedSfSymbol}
+                                  editModeSfSymbol={editModeSfSymbol}
+                                  onSelectedIdsChange={onSelectedIdsChange}
+                                  selectedIds={selectedIds}
+                                >
+                                  {children}
+                                </NativeListEditModeProvider>
+                              </NativeListHapticsProvider>
+                            </NativeListContextMenuProvider>
+                          </NativeListBasicDividerRightPaddingContext.Provider>
+                        </NativeListBasicDividerPaddingContext.Provider>
+                      </NativeListBasicDividerWidthContext.Provider>
+                    </NativeListBasicShowDividerContext.Provider>
+                  </NativeListBasicSectionShadowContext.Provider>
+                </NativeListBasicRowBackgroundColorContext.Provider>
+              </NativeListBasicDividerColorContext.Provider>
+            </NativeListBasicBorderWidthContext.Provider>
           </NativeListBasicBorderColorContext.Provider>
         </NativeListBasicShowBorderContext.Provider>
       </NativeListBasicBorderRadiusContext.Provider>
@@ -1183,7 +1192,6 @@ const styles = StyleSheet.create({
     borderRadius: NATIVE_LIST_BASIC_STYLE_DEFAULTS.borderRadius,
     overflow: "hidden",
   },
-  sectionBodyBorder: { borderWidth: NATIVE_LIST_BASIC_STYLE_DEFAULTS.borderWidth },
   // Android's native ContextMenu/MenuView can be measured outside an
   // unbordered plain section. Clipping that section hides the whole row;
   // plain lists do not need clipping because they have no rounded corners.
