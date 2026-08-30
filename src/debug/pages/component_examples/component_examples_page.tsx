@@ -21,12 +21,6 @@ import type { ComponentExampleDefinition } from "./types";
 
 type DebugPanelNavigationParamList = Record<string, undefined>;
 
-const sortedComponentExampleDefinitions = [...componentExampleDefinitions].sort(
-  (left, right) =>
-    left.label.localeCompare(right.label, "en", { numeric: true, sensitivity: "base" }) ||
-    left.key.localeCompare(right.key),
-);
-
 export function getComponentExampleRouteName(key: string) {
   return `component-example:${key}`;
 }
@@ -74,7 +68,7 @@ export function RnUiKitComponentExamplesDebugPage({
         tracksNavigationBarScrollEdge={tracksScrollEdgeHeader}
       >
         <NativeListSection>
-          {sortedComponentExampleDefinitions.map((definition) => (
+          {componentExampleDefinitions.map((definition) => (
             <NativeListNavigationItem
               key={definition.key}
               onPress={() => {
