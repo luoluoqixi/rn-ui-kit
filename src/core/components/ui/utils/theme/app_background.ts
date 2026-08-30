@@ -1,10 +1,12 @@
+import { type ReactNode, createContext, createElement, useContext } from "react";
+
 import type { ResolvedColorScheme } from "./settings";
 
 export type AppBackgroundLevel = "screen" | "sheet" | "card" | "header";
 
 export type AppBackgroundColors = Record<AppBackgroundLevel, string>;
 
-const STANDARD_IOS_BACKGROUND_COLORS: Record<ResolvedColorScheme, AppBackgroundColors> = {
+export const STANDARD_IOS_BACKGROUND_COLORS: Record<ResolvedColorScheme, AppBackgroundColors> = {
   light: {
     screen: "#F2F2F7",
     sheet: "#F2F2F7",
@@ -19,21 +21,28 @@ const STANDARD_IOS_BACKGROUND_COLORS: Record<ResolvedColorScheme, AppBackgroundC
   },
 };
 
-let appBackgroundColors = STANDARD_IOS_BACKGROUND_COLORS;
-
 export { STANDARD_IOS_BACKGROUND_COLORS as defaultAppStandardAppBackgroundColors };
 
-/**
- * 静态设置应用背景色。应在渲染 UI 之前调用。
- */
-export function setStandardAppBackgroundColors(
-  colors: Record<ResolvedColorScheme, AppBackgroundColors>,
-): void {
-  appBackgroundColors = colors;
+export type AppBackgroundColorsConfig = Record<ResolvedColorScheme, AppBackgroundColors>;
+
+const AppBackgroundColorsContext = createContext<AppBackgroundColorsConfig | null>(null);
+
+export function AppBackgroundColorsProvider({
+  children,
+  colors,
+}: {
+  children: ReactNode;
+  colors?: AppBackgroundColorsConfig;
+}) {
+  return createElement(AppBackgroundColorsContext.Provider, { value: colors ?? null }, children);
+}
+
+export function useConfiguredAppBackgroundColors(): AppBackgroundColorsConfig | null {
+  return useContext(AppBackgroundColorsContext);
 }
 
 export function getStandardAppBackgroundColors(
   colorScheme: ResolvedColorScheme,
 ): AppBackgroundColors {
-  return appBackgroundColors[colorScheme];
+  return STANDARD_IOS_BACKGROUND_COLORS[colorScheme];
 }

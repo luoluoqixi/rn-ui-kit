@@ -243,6 +243,7 @@ function RnUiKitDebugHostPanel({
 }) {
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   const route = useRoute();
+  const appBackgroundColors = useAppBackgroundColors();
   const debugStackScreenOptions = useDebugStackScreenOptions(pageScreenOptions);
   const headerTransparent = debugStackScreenOptions.headerTransparent === true;
   const routeParams = (route.params ?? {}) as Record<string, unknown>;
@@ -335,7 +336,10 @@ function RnUiKitDebugHostPanel({
   }
 
   return (
-    <View className="bg-background flex-1" {...props}>
+    <View
+      {...props}
+      style={[{ backgroundColor: appBackgroundColors.screen, flex: 1 }, props.style]}
+    >
       {content}
     </View>
   );
@@ -354,13 +358,17 @@ function RnUiKitDebugHostHomePage({
   panelSheetProps?: RnUiKitDebugPanelSheetProps;
 }) {
   const pages = getDebugPages(pagesProp);
+  const appBackgroundColors = useAppBackgroundColors();
   const [openSectionsInSheet, setOpenSectionsInSheet] = useState(false);
   const [panelSheetOpen, setPanelSheetOpen] = useState(false);
   const [sectionSheetPosition, setSectionSheetPosition] = useState(0);
   const [openSectionSheets, setOpenSectionSheets] = useState<Set<RnUiKitDebugRouteKey>>(new Set());
 
   return (
-    <View className="bg-background flex-1" {...props}>
+    <View
+      {...props}
+      style={[{ backgroundColor: appBackgroundColors.screen, flex: 1 }, props.style]}
+    >
       <RnUiKitDebugHomePage
         onRefresh={onRefreshHome}
         onOpenPanelSheet={() => setPanelSheetOpen(true)}
@@ -517,6 +525,7 @@ function RnUiKitDebugPanelContent({
   ...props
 }: RnUiKitDebugPanelProps & { pages: RnUiKitDebugRouteDefinition[] }) {
   const debugStackScreenOptions = useDebugStackScreenOptions(pageScreenOptions);
+  const appBackgroundColors = useAppBackgroundColors();
   const headerTransparent = debugStackScreenOptions.headerTransparent === true;
   const { resolvedColorScheme } = useColorSchemeSettings();
   const navigationTheme = resolvedColorScheme === "dark" ? DarkTheme : DefaultTheme;
@@ -526,7 +535,10 @@ function RnUiKitDebugPanelContent({
   const [openSectionSheets, setOpenSectionSheets] = useState<Set<RnUiKitDebugRouteKey>>(new Set());
 
   return (
-    <View className="bg-background flex-1" {...props}>
+    <View
+      {...props}
+      style={[{ backgroundColor: appBackgroundColors.screen, flex: 1 }, props.style]}
+    >
       <NavigationContainer theme={navigationTheme}>
         <Stack.Navigator
           id="rn-ui-kit-debug-stack"

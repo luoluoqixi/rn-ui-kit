@@ -5,6 +5,7 @@ import type { KeyboardProviderProps } from "react-native-keyboard-controller";
 import type {
   AccentThemeName,
   AccentThemeNames,
+  AppBackgroundColorsConfig,
   ResolvedColorScheme,
   UiThemeConfig,
   UiPreferences,
@@ -22,6 +23,8 @@ export interface UIProviderProps {
   defaultNativeHapticsEnabled?: boolean;
   keyboardAnimationProviderProps?: Omit<KeyboardProviderProps, "children">;
   preferences?: Partial<UiPreferences>;
+  /** Application background colors used by both fixed and theme-following backgrounds. */
+  appBackgroundColors?: AppBackgroundColorsConfig;
   /** Replaces the built-in Toast Toaster. */
   toaster?: ComponentType<ToastNativeToasterProps>;
   /** Props passed to the built-in or custom Toast Toaster. */

@@ -5,12 +5,18 @@ import { PortalProvider as TeleportPortalProvider } from "react-native-teleport"
 import { NativeDialogProvider } from "../native_dialog";
 import { Toaster } from "../toast/toaster";
 import { NativeHapticsProvider } from "../utils";
-import { resolveAccentThemeName, UiPreferencesProvider, UiThemeProvider } from "../utils/theme";
+import {
+  AppBackgroundColorsProvider,
+  resolveAccentThemeName,
+  UiPreferencesProvider,
+  UiThemeProvider,
+} from "../utils/theme";
 import type { UIProviderProps } from "./types";
 
 export function UIProvider({
   accentThemeName,
   accentThemeNames,
+  appBackgroundColors,
   children,
   colorScheme,
   defaultNativeHapticsEnabled = false,
@@ -33,19 +39,21 @@ export function UIProvider({
           followsSystem={preferences?.appearance?.themeMode === "system"}
           theme={theme}
         >
-          <TeleportPortalProvider>
-            <NativeDialogProvider>
-              <NativeHapticsProvider enabledByDefault={defaultNativeHapticsEnabled}>
-                {children}
-                <PortalHost />
-                {CustomToaster ? (
-                  <CustomToaster {...toasterProps} accentThemeName={resolvedAccentThemeName} />
-                ) : (
-                  <Toaster {...toasterProps} accentThemeName={resolvedAccentThemeName} />
-                )}
-              </NativeHapticsProvider>
-            </NativeDialogProvider>
-          </TeleportPortalProvider>
+          <AppBackgroundColorsProvider colors={appBackgroundColors}>
+            <TeleportPortalProvider>
+              <NativeDialogProvider>
+                <NativeHapticsProvider enabledByDefault={defaultNativeHapticsEnabled}>
+                  {children}
+                  <PortalHost />
+                  {CustomToaster ? (
+                    <CustomToaster {...toasterProps} accentThemeName={resolvedAccentThemeName} />
+                  ) : (
+                    <Toaster {...toasterProps} accentThemeName={resolvedAccentThemeName} />
+                  )}
+                </NativeHapticsProvider>
+              </NativeDialogProvider>
+            </TeleportPortalProvider>
+          </AppBackgroundColorsProvider>
         </UiThemeProvider>
       </UiPreferencesProvider>
     </KeyboardProvider>

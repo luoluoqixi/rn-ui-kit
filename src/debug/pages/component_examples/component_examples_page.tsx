@@ -41,6 +41,7 @@ export function RnUiKitComponentExamplesDebugPage({
 }: RnUiKitDebugSectionContentProps) {
   const navigation = useNavigation<NavigationProp<DebugPanelNavigationParamList>>();
   const isNativeIosPage = Platform.OS === "ios";
+  const appBackgroundColors = useAppBackgroundColors();
   const insets = useSafeAreaInsets();
   const tracksScrollEdgeHeader =
     Platform.OS === "android" || Platform.OS === "web" || isNativeIosPage;
@@ -62,6 +63,7 @@ export function RnUiKitComponentExamplesDebugPage({
         </View>
       ) : null}
       <NativeList
+        backgroundColor={appBackgroundColors.screen}
         automaticallyAdjustsScrollIndicatorInsets={isNativeIosPage ? true : undefined}
         contentInsetAdjustmentBehavior={isNativeIosPage ? "automatic" : undefined}
         contentContainerStyle={horizontalContentInset}

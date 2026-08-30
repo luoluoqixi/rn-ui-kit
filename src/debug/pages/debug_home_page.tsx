@@ -11,6 +11,7 @@ import {
   NativeListSection,
   NativeListSwitchItem,
   Slider,
+  useAppBackgroundColors,
 } from "../../core/components/ui";
 import type { RnUiKitDebugRouteDefinition, RnUiKitDebugRouteKey } from "../types";
 
@@ -37,6 +38,7 @@ export function RnUiKitDebugHomePage({
   onOpenSectionsInSheetChange?: (openInSheet: boolean) => void;
 }) {
   const isNativeIosPage = Platform.OS === "ios";
+  const appBackgroundColors = useAppBackgroundColors();
   const insets = useSafeAreaInsets();
   const tracksScrollEdgeHeader =
     Platform.OS === "android" || Platform.OS === "web" || isNativeIosPage;
@@ -54,6 +56,7 @@ export function RnUiKitDebugHomePage({
 
   return (
     <NativeList
+      backgroundColor={appBackgroundColors.screen}
       onRefresh={onRefresh}
       automaticallyAdjustsScrollIndicatorInsets={isNativeIosPage ? true : undefined}
       contentInsetAdjustmentBehavior={isNativeIosPage ? "automatic" : undefined}

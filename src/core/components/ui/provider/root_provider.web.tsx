@@ -19,6 +19,7 @@ import { UIProvider } from "./ui_provider";
 
 export function RootProvider({
   accentThemeName,
+  appBackgroundColors,
   children,
   colorScheme,
   navigationTheme,
@@ -35,9 +36,11 @@ export function RootProvider({
     accentThemeName ?? resolvedPreferences.appearance.accentColor,
   );
   const semanticColors = resolveUiColors(resolvedColorScheme, resolvedAccentThemeName, theme);
-  const rootBackgroundColor = resolvedPreferences.appearance.backgroundFollowsTheme
-    ? semanticColors.primaryBackground
-    : semanticColors.background;
+  const rootBackgroundColor =
+    appBackgroundColors?.[resolvedColorScheme]?.screen ??
+    (resolvedPreferences.appearance.backgroundFollowsTheme
+      ? semanticColors.primaryBackground
+      : semanticColors.background);
   const resolvedNavigationTheme =
     navigationTheme ?? (resolvedColorScheme === "dark" ? DarkTheme : DefaultTheme);
 
@@ -47,6 +50,7 @@ export function RootProvider({
         <UIProvider
           {...providerProps}
           accentThemeName={resolvedAccentThemeName}
+          appBackgroundColors={appBackgroundColors}
           colorScheme={resolvedColorScheme}
           preferences={resolvedPreferences}
           theme={theme}

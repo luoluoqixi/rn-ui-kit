@@ -1,7 +1,12 @@
 import { Linking, Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { NativeList, NativeListItem, NativeListSection } from "../../../core/components/ui";
+import {
+  NativeList,
+  NativeListItem,
+  NativeListSection,
+  useAppBackgroundColors,
+} from "../../../core/components/ui";
 import debugPackage from "../../../../package.json";
 
 const GITHUB_URL = "https://github.com/luoluoqixi/rn-ui-kit";
@@ -9,6 +14,7 @@ const platformNames: Record<string, string> = { android: "Android", ios: "iOS", 
 
 export function RnUiKitAboutDebugPage() {
   const usesNativeIosScrollEdgeHeader = Platform.OS === "ios";
+  const appBackgroundColors = useAppBackgroundColors();
   const insets = useSafeAreaInsets();
   const tracksScrollEdgeHeader =
     Platform.OS === "android" || Platform.OS === "web" || usesNativeIosScrollEdgeHeader;
@@ -18,6 +24,7 @@ export function RnUiKitAboutDebugPage() {
   return (
     <View style={styles.nativeListHost}>
       <NativeList
+        backgroundColor={appBackgroundColors.screen}
         automaticallyAdjustsScrollIndicatorInsets={usesNativeIosScrollEdgeHeader ? true : undefined}
         contentInsetAdjustmentBehavior={usesNativeIosScrollEdgeHeader ? "automatic" : undefined}
         contentContainerStyle={horizontalContentInset}
