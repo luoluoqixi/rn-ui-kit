@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 
-type TrueSheetStackHostContextValue = {
+export type TrueSheetStackHostContextValue = {
   onRequestClose: () => void;
 };
 

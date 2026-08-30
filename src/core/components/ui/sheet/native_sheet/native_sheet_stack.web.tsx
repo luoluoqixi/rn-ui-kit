@@ -42,6 +42,8 @@ function NativeSheetStackRoot({
   onOpenChange,
   open = false,
   overlayPortalHostName,
+  headerLeft,
+  headerRightButtonProps,
   screenOptions,
   sheetProps,
 }: NativeSheetStackProps) {
@@ -72,6 +74,8 @@ function NativeSheetStackRoot({
         onRequestClose={() => onOpenChange?.(false)}
         onDidDismiss={() => onOpenChange?.(false)}
         overlayPortalHostName={overlayPortalHostName}
+        headerLeft={headerLeft}
+        headerRightButtonProps={headerRightButtonProps}
         screenOptions={screenOptions}
         sheetProps={{
           dismissible: hasOpenSheetAbove ? false : undefined,
@@ -95,6 +99,8 @@ function NativeSheetStackRoot({
       onRequestClose={() => onOpenChange?.(false)}
       onDidDismiss={() => onOpenChange?.(false)}
       overlayPortalHostName={overlayPortalHostName}
+      headerLeft={headerLeft}
+      headerRightButtonProps={headerRightButtonProps}
       screenOptions={screenOptions}
       sheetProps={{
         ...(trueSheetProps as Omit<TrueSheetProps, "children" | "header" | "name">),

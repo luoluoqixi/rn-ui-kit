@@ -7,6 +7,7 @@ import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { BackHandler, Platform, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
+import type { ButtonProps } from "../../../button";
 import { isIos26Plus, os } from "../../../utils/platform";
 import { withNativeBackButton } from "../../../utils/navigation";
 import { ScreenOverlayPortalProvider } from "../../../utils/overlay";
@@ -42,6 +43,10 @@ export type TrueSheetStackHostProps<ParamList extends ParamListBase = ParamListB
   children: ReactNode;
   /** 当前 True Sheet Stack 宿主专属 overlay host；省略时按 `name` 自动生成。 */
   overlayPortalHostName?: string;
+  /** 可选的 Stack Header 左侧内容；默认不注入。 */
+  headerLeft?: TrueSheetInnerStackScreenOptions["headerLeft"];
+  /** 内置 iOS 右侧关闭按钮的完整 Button 属性；`onPress` 执行后仍会请求关闭。 */
+  headerRightButtonProps?: ButtonProps;
   /** 关闭 Sheet 时重置栈到该路由名 */
   initialRouteName?: keyof ParamList & string;
   name: string;
@@ -88,6 +93,8 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
   onDidPresent,
   onRequestClose,
   overlayPortalHostName,
+  headerLeft,
+  headerRightButtonProps,
   screenOptions,
   sheetProps,
 }: TrueSheetStackHostProps<ParamList>) {
@@ -214,8 +221,11 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
           ),
           headerBackTitle: "返回",
         }),
+    ...(headerLeft === undefined ? {} : { headerLeft }),
     headerRight:
-      platform === "ios" ? () => <TrueSheetStackHeaderCloseButton title="关闭" /> : undefined,
+      platform === "ios"
+        ? () => <TrueSheetStackHeaderCloseButton {...headerRightButtonProps} />
+        : undefined,
     headerShown: true,
     ...screenOptions,
   };

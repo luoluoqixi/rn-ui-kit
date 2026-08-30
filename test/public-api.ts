@@ -11,8 +11,11 @@ import {
   type NativeListContextMenuProps,
   type NativeListInputItemProps,
   NativeListDropdownItem,
+  NativeSheetStack,
+  useTrueSheetStackHost,
   useNativeListEditMode,
   type NativeListRootProps,
+  type NativeSheetStackProps,
   type NativeListSelectionId,
   NativeTrigger,
   NativeTriggerPressable,
@@ -45,6 +48,8 @@ void GlassEffect;
 void GlassEffectSearchBar;
 void Dropdown;
 void NativeListDropdownItem;
+void NativeSheetStack;
+void useTrueSheetStackHost;
 void useNativeListEditMode;
 void NativeTrigger;
 void NativeTriggerPressable;
@@ -64,6 +69,7 @@ type PublicNativeTriggerProps = NativeTriggerProps;
 type PublicNativeTriggerPressableProps = NativeTriggerPressableProps;
 type PublicNativeListDropdownItemProps = NativeListDropdownItemProps;
 type PublicNativeListRootProps = NativeListRootProps;
+type PublicNativeSheetStackProps = NativeSheetStackProps;
 type PublicNativeListSelectionId = NativeListSelectionId;
 type PublicSelectProps = SelectProps;
 type PublicScrollViewProps = ScrollViewProps;
@@ -197,6 +203,24 @@ const scrollViewProps = {
 
 void customScrollbarOptions;
 void scrollViewProps;
+void ({} as PublicNativeSheetStackProps);
+
+const nativeSheetStackProps = {
+  children: null,
+  headerLeft: () => null,
+  headerRightButtonProps: {
+    native: true,
+    nativeSystemImage: "xmark",
+    nativeSystemImageSize: 22,
+    onPress: () => {},
+    title: "关闭",
+  },
+} satisfies Pick<
+  PublicNativeSheetStackProps,
+  "children" | "headerLeft" | "headerRightButtonProps"
+>;
+
+void nativeSheetStackProps;
 
 const nativeListMenuItemProps = {
   dropdownProps: {

@@ -20,6 +20,8 @@ function TrueSheetNativeSheetStackRoot({
   onOpenChange,
   open = false,
   overlayPortalHostName,
+  headerLeft,
+  headerRightButtonProps,
   screenOptions,
   sheetProps,
 }: NativeSheetStackProps) {
@@ -107,6 +109,8 @@ function TrueSheetNativeSheetStackRoot({
         onOpenChange?.(false);
       }}
       overlayPortalHostName={resolvedOverlayPortalHostName}
+      headerLeft={headerLeft}
+      headerRightButtonProps={headerRightButtonProps}
       screenOptions={screenOptions}
       sheetProps={resolvedSheetProps as any}
     >
