@@ -15,7 +15,12 @@ import {
 
 type UpdatePreferences = (updater: (current: UiPreferences) => UiPreferences) => void;
 
-function createThemeDebugPage(preferences: UiPreferences, updatePreferences: UpdatePreferences) {
+function createThemeDebugPage(
+  preferences: UiPreferences,
+  updatePreferences: UpdatePreferences,
+  usesHostNavigation: boolean,
+  setUsesHostNavigation: (value: boolean) => void,
+) {
   return function AppThemeDebugPage() {
     const usesNativeIosScrollEdgeHeader = Platform.OS === "ios";
     const insets = useSafeAreaInsets();
@@ -97,6 +102,15 @@ function createThemeDebugPage(preferences: UiPreferences, updatePreferences: Upd
               title="背景跟随主题"
             />
           </NativeListSection>
+          <NativeListSection title="调试导航">
+            <NativeListSwitchItem
+              switchProps={{
+                checked: usesHostNavigation,
+                onCheckedChange: setUsesHostNavigation,
+              }}
+              title="使用 Host 导航模式"
+            />
+          </NativeListSection>
         </NativeList>
       </View>
     );
@@ -106,10 +120,17 @@ function createThemeDebugPage(preferences: UiPreferences, updatePreferences: Upd
 export function createAppDebugPages(
   preferences: UiPreferences,
   updatePreferences: UpdatePreferences,
+  usesHostNavigation: boolean,
+  setUsesHostNavigation: (value: boolean) => void,
 ): RnUiKitDebugRouteDefinition[] {
   return [
     {
-      Page: createThemeDebugPage(preferences, updatePreferences),
+      Page: createThemeDebugPage(
+        preferences,
+        updatePreferences,
+        usesHostNavigation,
+        setUsesHostNavigation,
+      ),
       description: "切换示例应用的主题色、模式和背景行为。",
       key: "app-theme",
       label: "主题切换",

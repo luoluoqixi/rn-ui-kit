@@ -2,6 +2,8 @@ import "rn-ui-kit/initialize";
 
 import "./global.css";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import {
   accentThemeNames,
   AppStatusBar,
@@ -26,6 +28,8 @@ const defaultPreferences = {
 type StoredPreferences = {
   appearance?: Partial<UiPreferences["appearance"]>;
 };
+
+const Stack = createNativeStackNavigator();
 
 function parseStoredPreferences(value: string | null): UiPreferences | null {
   if (value == null) return null;
@@ -71,6 +75,7 @@ function DemoStatusBar() {
 
 export default function App() {
   const [currentPreferences, setCurrentPreferences] = useState<UiPreferences>(defaultPreferences);
+  const [usesHostNavigation, setUsesHostNavigation] = useState(true);
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
 
   useEffect(() => {
@@ -102,14 +107,30 @@ export default function App() {
   }, [currentPreferences, preferencesLoaded]);
 
   const pages = useMemo(
-    () => createAppDebugPages(currentPreferences, (updater) => setCurrentPreferences(updater)),
-    [currentPreferences],
+    () =>
+      createAppDebugPages(
+        currentPreferences,
+        (updater) => setCurrentPreferences(updater),
+        usesHostNavigation,
+        setUsesHostNavigation,
+      ),
+    [currentPreferences, usesHostNavigation],
   );
 
   return (
     <RootProvider accentThemeNames={accentThemeNames} preferences={currentPreferences}>
       <DemoStatusBar />
-      <RnUiKitDebugPanel pages={pages} />
+      {usesHostNavigation ? (
+        <NavigationContainer>
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="debug">
+              {() => <RnUiKitDebugPanel navigationMode="host" pages={pages} />}
+            </Stack.Screen>
+          </Stack.Navigator>
+        </NavigationContainer>
+      ) : (
+        <RnUiKitDebugPanel pages={pages} />
+      )}
     </RootProvider>
   );
 }

@@ -277,20 +277,26 @@ function RnUiKitDebugHostPanel({
         : `${RN_UI_KIT_PACKAGE_NAME} - ${RN_UI_KIT_PACKAGE_VERSION}`;
 
   useLayoutEffect(() => {
-    navigation.setOptions(
-      withNativeBackButton({
-        ...debugStackScreenOptions,
-        headerBackButtonDisplayMode:
-          isIos26Plus() && !showsExplicitRootBackLabel ? "minimal" : "default",
-        headerBackButtonMenuEnabled: true,
-        // 普通页面必须保持 undefined，让 UIKit 使用上一层真实 title 构建历史菜单。
-        headerBackTitle: showsExplicitRootBackLabel ? backButtonLabel : undefined,
-        headerShown: true,
-        title,
-        ...(usesLargeTitle ? DEBUG_LARGE_TITLE_OPTIONS : DEBUG_REGULAR_TITLE_OPTIONS),
-        ...pageScreenOptions,
-      }),
-    );
+    const options = withNativeBackButton({
+      ...debugStackScreenOptions,
+      headerBackButtonDisplayMode:
+        isIos26Plus() && !showsExplicitRootBackLabel ? "minimal" : "default",
+      headerBackButtonMenuEnabled: true,
+      // 普通页面必须保持 undefined，让 UIKit 使用上一层真实 title 构建历史菜单。
+      headerBackTitle: showsExplicitRootBackLabel ? backButtonLabel : undefined,
+      headerShown: true,
+      title,
+      ...(usesLargeTitle ? DEBUG_LARGE_TITLE_OPTIONS : DEBUG_REGULAR_TITLE_OPTIONS),
+      ...pageScreenOptions,
+    });
+    navigation.setOptions(options);
+
+    // Host 路由通过 setOptions 动态切换 Header，push 转场期间原生
+    // RNSScreenStackHeaderConfig 可能暂时跳过当前 ViewController 的 appearance 更新。
+    // 转场结束后重新提交一次，确保 iOS 15–25 的 scrollEdgeAppearance 生效。
+    return navigation.addListener("transitionEnd", () => {
+      navigation.setOptions(options);
+    });
   }, [
     backButtonLabel,
     debugStackScreenOptions,
@@ -343,6 +349,13 @@ function RnUiKitDebugHostPanel({
         panelSheetProps={panelSheetProps}
       />
     );
+  }
+
+  // 普通 host 详情页的 ScrollView 需要直接成为 RNSScreen 的内容根节点，
+  // 让 UIKit 能像 independent/TrueSheet Stack 一样自动识别 scroll-edge 容器。
+  // 首页保留根 View，因为它还承载面板 Sheet 与分区 Sheet 的 overlay host。
+  if (!isRootRoute && Object.keys(props).length === 0) {
+    return content;
   }
 
   return (
