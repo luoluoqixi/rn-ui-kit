@@ -9,6 +9,7 @@ import type {
 import { NativeOnlyAnimatedView } from "../utils/native_only_animated_view";
 import {
   triggerNativeHaptics,
+  type NativeHapticsDelay,
   useResolvedNativeHaptics,
   type NativeHapticsSetting,
 } from "../utils";
@@ -72,6 +73,7 @@ const DropdownContentSizeContext = React.createContext<DropdownSize>("default");
 
 const DropdownHapticsContext = React.createContext<{
   item?: NativeHapticsSetting;
+  itemDelay?: NativeHapticsDelay;
 }>({});
 
 function DropdownSubTrigger({
@@ -80,6 +82,7 @@ function DropdownSubTrigger({
   children,
   iconClassName,
   nativeHaptics,
+  nativeHapticsDelay,
   onPress,
   ...props
 }: React.ComponentProps<typeof DropdownPrimitive.SubTrigger> & {
@@ -87,6 +90,7 @@ function DropdownSubTrigger({
   iconClassName?: string;
   inset?: boolean;
   nativeHaptics?: NativeHapticsSetting;
+  nativeHapticsDelay?: NativeHapticsDelay;
 }) {
   const { open } = DropdownPrimitive.useSubContext();
   const contextHaptics = React.useContext(DropdownHapticsContext);
@@ -121,7 +125,9 @@ function DropdownSubTrigger({
           if (disabled) return;
           onPress?.(event);
           if (!event.defaultPrevented) {
-            triggerNativeHaptics(nativeHaptics ?? contextHaptics.item);
+            triggerNativeHaptics(nativeHaptics ?? contextHaptics.item, {
+              delay: nativeHapticsDelay ?? contextHaptics.itemDelay,
+            });
           }
         }}
       >
@@ -180,6 +186,7 @@ function DropdownContent({
   children,
   side: sideProp,
   itemNativeHaptics,
+  itemNativeHapticsDelay,
   overlayClassName,
   overlayStyle,
   portalHost,
@@ -189,6 +196,7 @@ function DropdownContent({
 }: DropdownContentProps & {
   /** Internal value used to preserve item haptics across the primitive portal host. */
   itemNativeHaptics?: NativeHapticsSetting;
+  itemNativeHapticsDelay?: NativeHapticsDelay;
   overlayStyle?: StyleProp<ViewStyle>;
   overlayClassName?: string;
   portalHost?: string;
@@ -267,7 +275,9 @@ function DropdownContent({
             {Platform.OS !== "web" ? (
               <Pressable onPress={handleNativeOverlayPress} style={StyleSheet.absoluteFillObject} />
             ) : null}
-            <DropdownHapticsContext.Provider value={{ item: itemNativeHaptics }}>
+            <DropdownHapticsContext.Provider
+              value={{ item: itemNativeHaptics, itemDelay: itemNativeHapticsDelay }}
+            >
               <DropdownContentSizeContext.Provider value={size}>
                 <TextClassContext.Provider
                   value={cn("text-popover-foreground", menuTextSizeClasses[size])}
@@ -333,6 +343,7 @@ function DropdownItem({
   disabled,
   inset,
   nativeHaptics,
+  nativeHapticsDelay,
   onPress,
   variant,
   ...props
@@ -340,6 +351,7 @@ function DropdownItem({
   className?: string;
   inset?: boolean;
   nativeHaptics?: NativeHapticsSetting;
+  nativeHapticsDelay?: NativeHapticsDelay;
   variant?: "default" | "destructive";
 }) {
   const contextHaptics = React.useContext(DropdownHapticsContext);
@@ -382,7 +394,9 @@ function DropdownItem({
           if (disabled) return;
           onPress?.(event);
           if (!event.defaultPrevented) {
-            triggerNativeHaptics(nativeHaptics ?? contextHaptics.item);
+            triggerNativeHaptics(nativeHaptics ?? contextHaptics.item, {
+              delay: nativeHapticsDelay ?? contextHaptics.itemDelay,
+            });
           }
         }}
       />
@@ -637,9 +651,11 @@ function Dropdown({
   items,
   itemProps,
   itemNativeHaptics,
+  itemNativeHapticsDelay,
   native = Platform.OS !== "web",
   nativeAnchorAlignment,
   nativeHaptics,
+  nativeHapticsDelay,
   nativeShouldWaitForMenuToHideBeforeFiringOnPressMenuItem,
   nativeSelectedItemBackgroundColor,
   nativeTrigger,
@@ -671,8 +687,10 @@ function Dropdown({
       items,
       itemProps,
       itemNativeHaptics,
+      itemNativeHapticsDelay,
       nativeAnchorAlignment,
       nativeHaptics,
+      nativeHapticsDelay,
       nativeShouldWaitForMenuToHideBeforeFiringOnPressMenuItem,
       nativeSelectedItemBackgroundColor,
       nativeTrigger,
@@ -699,6 +717,7 @@ function Dropdown({
   // setting was supplied. This keeps generated items consistent with the
   // trigger and with native dropdown rendering.
   const resolvedItemHaptics = useResolvedNativeHaptics(itemNativeHaptics ?? nativeHaptics);
+  const resolvedItemHapticsDelay = itemNativeHapticsDelay ?? nativeHapticsDelay;
   const generated = items != null || trigger != null || nativeTrigger === true;
   const resolvedDisabled = disabled ?? triggerProps?.disabled;
   const triggerRef = React.useRef<any>(null);
@@ -714,7 +733,9 @@ function Dropdown({
   }, [__menuRef]);
 
   return (
-    <DropdownHapticsContext.Provider value={{ item: resolvedItemHaptics }}>
+    <DropdownHapticsContext.Provider
+      value={{ item: resolvedItemHaptics, itemDelay: resolvedItemHapticsDelay }}
+    >
       <DropdownContentSizeContext.Provider value={contentSize ?? "default"}>
         <DropdownPrimitiveRoot
           {...props}

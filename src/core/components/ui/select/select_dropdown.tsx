@@ -73,6 +73,7 @@ export const SelectDropdown = React.forwardRef<SelectHandle, SelectProps>(
         itemProps={props.itemProps as any}
         nativeAnchorAlignment={nativeDropdownAlign}
         nativeHaptics={props.nativeHaptics}
+        nativeHapticsDelay={props.nativeHapticsDelay}
         nativeShouldWaitForMenuToHideBeforeFiringOnPressMenuItem={
           props.nativeShouldWaitForMenuToHideBeforeFiringOnPressMenuItem
         }

@@ -4,6 +4,7 @@ import * as Zeego from "zeego/dropdown-menu";
 
 import {
   triggerNativeHaptics,
+  type NativeHapticsDelay,
   useResolvedNativeHaptics,
   type NativeHapticsSetting,
 } from "../utils";
@@ -18,15 +19,15 @@ import { DropdownDefaultTrigger, DropdownDisabledTrigger, DropdownNativeTrigger 
 
 const NativeDropdownHapticsContext = React.createContext<{
   item?: NativeHapticsSetting;
+  itemDelay?: NativeHapticsDelay;
 }>({});
 
-function triggerNativeDropdownItemHaptics(setting: NativeHapticsSetting | undefined) {
-  if (Platform.OS === "ios") {
-    // iOS 似乎有一定几率丢掉震动
-    requestAnimationFrame(() => triggerNativeHaptics(setting));
-    return;
-  }
-  triggerNativeHaptics(setting);
+function triggerNativeDropdownItemHaptics(
+  setting: NativeHapticsSetting | undefined,
+  delay?: NativeHapticsDelay,
+) {
+  // 必须在业务回调前同步发起，否则打开 sheet、导航等更新会让触觉落后于菜单动画。
+  triggerNativeHaptics(setting, { delay });
 }
 
 function textValue(node: React.ReactNode): string {
@@ -78,9 +79,10 @@ function renderItem(
   const iconProps = resolvedItem.iconProps;
   const key = `${depth}:${resolvedItem.value}`;
   const onSelect = resolvedItem.onSelect ?? resolvedItem.onPress;
+  const hapticsDelay = resolvedItem.nativeHapticsDelay as NativeHapticsDelay | undefined;
   const handleSelect = () => {
+    triggerNativeDropdownItemHaptics(resolvedItem.nativeHaptics, hapticsDelay);
     onSelect?.();
-    triggerNativeDropdownItemHaptics(resolvedItem.nativeHaptics);
   };
 
   if (resolvedItem.subMenu?.length) {
@@ -94,8 +96,8 @@ function renderItem(
           key={`${key}:trigger`}
           textValue={label}
           onSelect={() => {
+            triggerNativeDropdownItemHaptics(resolvedItem.nativeHaptics, hapticsDelay);
             triggerOnSelect?.();
-            triggerNativeDropdownItemHaptics(resolvedItem.nativeHaptics);
           }}
           {...({ separatorBefore } as object)}
         >
@@ -184,8 +186,10 @@ function NativeDropdownRoot({
   items,
   itemProps,
   itemNativeHaptics,
+  itemNativeHapticsDelay,
   nativeAnchorAlignment = "center",
   nativeHaptics,
+  nativeHapticsDelay,
   nativeShouldWaitForMenuToHideBeforeFiringOnPressMenuItem,
   nativeSelectedItemBackgroundColor,
   nativeTrigger,
@@ -224,6 +228,7 @@ function NativeDropdownRoot({
   // Generated native items follow the dropdown setting by default; callers
   // can still override it with itemNativeHaptics or per-item nativeHaptics.
   const resolvedItemHaptics = useResolvedNativeHaptics(itemNativeHaptics ?? nativeHaptics);
+  const resolvedItemHapticsDelay = itemNativeHapticsDelay ?? nativeHapticsDelay;
   const resolvedOpen = open ?? uncontrolledOpen;
   // iOS reports the final menu state after the native presentation animation.
   // Use the will-change state for trigger feedback so press/open opacity does
@@ -402,7 +407,11 @@ function NativeDropdownRoot({
           ) : null}
           {items != null ? (
             <Zeego.Content {...(nativeContentProps as object)}>
-              {renderItems(items, { nativeHaptics: resolvedItemHaptics, ...itemProps })}
+              {renderItems(items, {
+                nativeHaptics: resolvedItemHaptics,
+                nativeHapticsDelay: resolvedItemHapticsDelay,
+                ...itemProps,
+              })}
             </Zeego.Content>
           ) : null}
           {resolvedChildren}
@@ -446,7 +455,9 @@ function NativeDropdownRoot({
       },
     });
     return (
-      <NativeDropdownHapticsContext.Provider value={{ item: resolvedItemHaptics }}>
+      <NativeDropdownHapticsContext.Provider
+        value={{ item: resolvedItemHaptics, itemDelay: resolvedItemHapticsDelay }}
+      >
         <View style={{ position: "relative" }}>
           {visibleTrigger}
           <View
@@ -461,7 +472,9 @@ function NativeDropdownRoot({
   }
 
   return (
-    <NativeDropdownHapticsContext.Provider value={{ item: resolvedItemHaptics }}>
+    <NativeDropdownHapticsContext.Provider
+      value={{ item: resolvedItemHaptics, itemDelay: resolvedItemHapticsDelay }}
+    >
       {resolvedDisabled ? (
         <DropdownDisabledTrigger>{resolvedTrigger}</DropdownDisabledTrigger>
       ) : (
@@ -505,6 +518,7 @@ function NativeDropdownSubTrigger({
   children,
   disabled,
   nativeHaptics,
+  nativeHapticsDelay,
   onPress,
   onSelect,
   ...props
@@ -520,9 +534,12 @@ function NativeDropdownSubTrigger({
       {...props}
       disabled={disabled}
       onSelect={() => {
+        triggerNativeDropdownItemHaptics(
+          nativeHaptics ?? contextHaptics.item,
+          nativeHapticsDelay ?? contextHaptics.itemDelay,
+        );
         onPress?.();
         onSelect?.();
-        triggerNativeDropdownItemHaptics(nativeHaptics ?? contextHaptics.item);
       }}
       textValue={label}
     >
@@ -535,6 +552,7 @@ function NativeDropdownSubTrigger({
 function NativeDropdownItem({
   children,
   nativeHaptics,
+  nativeHapticsDelay,
   onPress,
   onSelect,
   variant,
@@ -551,8 +569,11 @@ function NativeDropdownItem({
       {...props}
       destructive={variant === "destructive" || props.destructive}
       onSelect={() => {
+        triggerNativeDropdownItemHaptics(
+          nativeHaptics ?? contextHaptics.item,
+          nativeHapticsDelay ?? contextHaptics.itemDelay,
+        );
         (onSelect ?? onPress)?.();
-        triggerNativeDropdownItemHaptics(nativeHaptics ?? contextHaptics.item);
       }}
       textValue={label}
     >
@@ -567,6 +588,7 @@ function NativeDropdownCheckboxItem({
   children,
   onCheckedChange,
   nativeHaptics,
+  nativeHapticsDelay,
   onValueChange,
   value,
   ...props
@@ -582,7 +604,10 @@ function NativeDropdownCheckboxItem({
     <Zeego.CheckboxItem
       {...props}
       onValueChange={(next: "mixed" | "on" | "off", previous: "mixed" | "on" | "off") => {
-        triggerNativeDropdownItemHaptics(nativeHaptics ?? contextHaptics.item);
+        triggerNativeDropdownItemHaptics(
+          nativeHaptics ?? contextHaptics.item,
+          nativeHapticsDelay ?? contextHaptics.itemDelay,
+        );
         onValueChange?.(next, previous);
         onCheckedChange?.(next === "on");
       }}

@@ -8,7 +8,7 @@ import type {
   NativeTriggerIcon,
   NativeTriggerProps,
 } from "../native_trigger";
-import type { NativeHapticsSetting, RenderProp } from "../utils";
+import type { NativeHapticsDelay, NativeHapticsSetting, RenderProp } from "../utils";
 import type * as Zeego from "zeego/dropdown-menu";
 import type * as DropdownPrimitive from "@rn-primitives/dropdown-menu";
 
@@ -57,6 +57,7 @@ export interface NativeDropdownItemData {
   "itemProps"?: Record<string, unknown>;
   "label"?: RenderProp<NativeDropdownItemData>;
   "nativeHaptics"?: NativeHapticsSetting;
+  "nativeHapticsDelay"?: NativeHapticsDelay;
   "onPress"?: () => void;
   "onSelect"?: () => void;
   "selected"?: boolean;
@@ -82,8 +83,10 @@ export type NativeDropdownRootExtensions = {
   items?: NativeDropdownItemData[];
   itemProps?: NativeDropdownItemProps;
   itemNativeHaptics?: NativeHapticsSetting;
+  itemNativeHapticsDelay?: NativeHapticsDelay;
   nativeAnchorAlignment?: "start" | "center" | "end";
   nativeHaptics?: NativeHapticsSetting;
+  nativeHapticsDelay?: NativeHapticsDelay;
   /** iOS 原生菜单是否等待菜单退出动画完成后再触发 item 回调，默认 `false`。 */
   nativeShouldWaitForMenuToHideBeforeFiringOnPressMenuItem?: boolean;
   nativeSelectedItemBackgroundColor?: ColorValue;

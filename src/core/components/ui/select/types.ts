@@ -9,7 +9,7 @@ import type {
   NativeTriggerIcon,
   NativeTriggerProps,
 } from "../native_trigger";
-import type { NativeHapticsSetting, RenderProp } from "../utils";
+import type { NativeHapticsDelay, NativeHapticsSetting, RenderProp } from "../utils";
 import type { NativeSheetProps } from "../sheet/native_sheet/types";
 import type { TextProps } from "../text";
 
@@ -125,6 +125,7 @@ export interface SelectProps extends Omit<ViewProps, "ref">, SelectRootPrimitive
   nativeDropdownAnchorWidth?: number;
   nativeDropdownEdgeOffset?: number;
   nativeHaptics?: NativeHapticsSetting;
+  nativeHapticsDelay?: NativeHapticsDelay;
   /** iOS 原生 dropdown 是否等待菜单退出动画完成后再触发 item 回调，默认 `false`。 */
   nativeShouldWaitForMenuToHideBeforeFiringOnPressMenuItem?: boolean;
   /** Additional props for the Android dialog and iOS wheel Pickers. */

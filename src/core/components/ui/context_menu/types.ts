@@ -2,7 +2,7 @@ import type { ComponentProps, ReactNode, RefObject } from "react";
 import type * as ContextMenuPrimitive from "@rn-primitives/context-menu";
 import type { StyleProp, TextProps, ViewStyle } from "react-native";
 
-import type { NativeHapticsSetting } from "../utils";
+import type { NativeHapticsDelay, NativeHapticsSetting } from "../utils";
 import type { RenderProp } from "../utils/render";
 
 export type ContextMenuSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
@@ -23,6 +23,7 @@ export type ContextMenuItemData = {
   "itemProps"?: Record<string, unknown>;
   "label"?: RenderProp<ContextMenuItemData>;
   "nativeHaptics"?: NativeHapticsSetting;
+  "nativeHapticsDelay"?: NativeHapticsDelay;
   "onPress"?: () => void;
   "onCheckedChange"?: (checked: boolean) => void;
   "onSelect"?: () => void;
@@ -44,6 +45,7 @@ export type ContextMenuSubTriggerProps = ComponentProps<typeof ContextMenuPrimit
   iconClassName?: string;
   inset?: boolean;
   nativeHaptics?: NativeHapticsSetting;
+  nativeHapticsDelay?: NativeHapticsDelay;
 };
 
 export type ContextMenuSubContentProps = Omit<
@@ -60,11 +62,13 @@ export type ContextMenuContentProps = ComponentProps<typeof ContextMenuPrimitive
   overlayClassName?: string;
   portalHost?: string;
   itemNativeHaptics?: NativeHapticsSetting;
+  itemNativeHapticsDelay?: NativeHapticsDelay;
 };
 
 export type ContextMenuItemComponentProps = ComponentProps<typeof ContextMenuPrimitive.Item> & {
   inset?: boolean;
   nativeHaptics?: NativeHapticsSetting;
+  nativeHapticsDelay?: NativeHapticsDelay;
   variant?: "default" | "destructive";
 };
 
@@ -72,10 +76,12 @@ export type ContextMenuCheckboxItemProps = ComponentProps<
   typeof ContextMenuPrimitive.CheckboxItem
 > & {
   nativeHaptics?: NativeHapticsSetting;
+  nativeHapticsDelay?: NativeHapticsDelay;
 };
 
 export type ContextMenuRadioItemProps = ComponentProps<typeof ContextMenuPrimitive.RadioItem> & {
   nativeHaptics?: NativeHapticsSetting;
+  nativeHapticsDelay?: NativeHapticsDelay;
 };
 
 export type ContextMenuLabelProps = ComponentProps<typeof ContextMenuPrimitive.Label> & {
@@ -105,10 +111,12 @@ export type ContextMenuRootExtensions = {
   items?: ContextMenuItemData[];
   itemProps?: ContextMenuItemProps;
   itemNativeHaptics?: NativeHapticsSetting;
+  itemNativeHapticsDelay?: NativeHapticsDelay;
   native?: boolean;
   /** Size of the generated non-native menu content. */
   contentSize?: ContextMenuSize;
   nativeHaptics?: NativeHapticsSetting;
+  nativeHapticsDelay?: NativeHapticsDelay;
   /** iOS native only. Defaults to false so item callbacks run before menu-dismiss animation. */
   nativeShouldWaitForMenuToHideBeforeFiringOnPressMenuItem?: boolean;
   onOpenWillChange?: (open: boolean) => void;

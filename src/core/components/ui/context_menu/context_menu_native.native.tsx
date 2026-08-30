@@ -5,6 +5,7 @@ import * as Zeego from "zeego/context-menu";
 import type { ContextMenuItemData, ContextMenuProps } from "./types";
 import {
   triggerNativeHaptics,
+  type NativeHapticsDelay,
   useResolvedNativeHaptics,
   type NativeHapticsSetting,
 } from "../utils";
@@ -71,12 +72,14 @@ function resolveItemTitleAndSubtitle(
 
 const NativeContextMenuHapticsContext = React.createContext<{
   item?: NativeHapticsSetting;
+  itemDelay?: NativeHapticsDelay;
 }>({});
 
 function renderItems(
   items: ContextMenuItemData[],
   itemProps?: Record<string, unknown>,
   defaultNativeHaptics?: NativeHapticsSetting,
+  defaultNativeHapticsDelay?: NativeHapticsDelay,
   depth = 0,
 ): React.ReactNode {
   if (Platform.OS === "ios") {
@@ -84,7 +87,13 @@ function renderItems(
     if (groups.length > 1) {
       return groups.map((group, index) => (
         <Zeego.Group key={`${depth}:group:${index}`}>
-          {renderItems(group, itemProps, defaultNativeHaptics, depth + 1)}
+          {renderItems(
+            group,
+            itemProps,
+            defaultNativeHaptics,
+            defaultNativeHapticsDelay,
+            depth + 1,
+          )}
         </Zeego.Group>
       ));
     }
@@ -104,6 +113,7 @@ function renderItems(
       resolvedItem.textValue ??
       (textValue(resolveRenderProp(resolvedItem.label, resolvedItem)) || resolvedItem.value);
     const itemHaptics = resolvedItem.nativeHaptics ?? defaultNativeHaptics;
+    const itemHapticsDelay = resolvedItem.nativeHapticsDelay ?? defaultNativeHapticsDelay;
     if (resolvedItem.subMenu?.length) {
       return (
         <Zeego.Sub {...resolvedItem.subMenuProps} key={key}>
@@ -113,8 +123,8 @@ function renderItems(
             disabled={resolvedItem.disabled}
             key={`${key}:trigger`}
             onSelect={() => {
+              triggerNativeHaptics(itemHaptics, { delay: itemHapticsDelay });
               (resolvedItem.triggerProps?.onSelect as (() => void) | undefined)?.();
-              triggerNativeHaptics(itemHaptics);
             }}
             textValue={label}
           >
@@ -129,7 +139,13 @@ function renderItems(
                 {textValue(resolveRenderProp(resolvedItem.subMenuTitle, resolvedItem))}
               </Zeego.Label>
             ) : null}
-            {renderItems(resolvedItem.subMenu, itemProps, defaultNativeHaptics, depth + 1)}
+            {renderItems(
+              resolvedItem.subMenu,
+              itemProps,
+              defaultNativeHaptics,
+              defaultNativeHapticsDelay,
+              depth + 1,
+            )}
           </Zeego.SubContent>
         </Zeego.Sub>
       );
@@ -142,9 +158,9 @@ function renderItems(
           disabled={resolvedItem.disabled}
           key={key}
           onValueChange={(next: "mixed" | "on" | "off", previous: "mixed" | "on" | "off") => {
+            triggerNativeHaptics(itemHaptics, { delay: itemHapticsDelay });
             resolvedItem.onCheckedChange?.(next === "on");
             resolvedItem.onSelect?.();
-            triggerNativeHaptics(itemHaptics);
             (
               resolvedItem.itemProps?.onValueChange as
                 | ((next: "mixed" | "on" | "off", previous: "mixed" | "on" | "off") => void)
@@ -166,9 +182,9 @@ function renderItems(
         disabled={resolvedItem.disabled}
         key={key}
         onSelect={() => {
+          triggerNativeHaptics(itemHaptics, { delay: itemHapticsDelay });
           (resolvedItem.onSelect ?? resolvedItem.onPress)?.();
           (resolvedItem.itemProps?.onSelect as (() => void) | undefined)?.();
-          triggerNativeHaptics(itemHaptics);
         }}
         {...({ separatorBefore } as object)}
         {...({ selected: resolvedItem.selected } as object)}
@@ -189,7 +205,9 @@ function ContextMenu({
   items,
   itemProps,
   itemNativeHaptics,
+  itemNativeHapticsDelay,
   nativeHaptics,
+  nativeHapticsDelay,
   onOpenChange,
   onOpenWillChange,
   trigger,
@@ -201,9 +219,12 @@ function ContextMenu({
 }: ContextMenuProps) {
   const haptics = useResolvedNativeHaptics(nativeHaptics);
   const itemHaptics = useResolvedNativeHaptics(itemNativeHaptics);
+  const itemHapticsDelay = itemNativeHapticsDelay ?? nativeHapticsDelay;
   const generated = items != null || trigger != null;
   return (
-    <NativeContextMenuHapticsContext.Provider value={{ item: itemHaptics }}>
+    <NativeContextMenuHapticsContext.Provider
+      value={{ item: itemHaptics, itemDelay: itemHapticsDelay }}
+    >
       <Zeego.Root
         {...(props as React.ComponentProps<typeof Zeego.Root>)}
         {...({ __menuRef } as object)}
@@ -233,7 +254,16 @@ function ContextMenu({
             ) : null}
             {items != null ? (
               <Zeego.Content>
-                {renderItems(items, { nativeHaptics: itemHaptics, ...itemProps }, itemHaptics)}
+                {renderItems(
+                  items,
+                  {
+                    nativeHaptics: itemHaptics,
+                    nativeHapticsDelay: itemHapticsDelay,
+                    ...itemProps,
+                  },
+                  itemHaptics,
+                  itemHapticsDelay,
+                )}
               </Zeego.Content>
             ) : null}
             {children}
@@ -275,8 +305,10 @@ function ContextMenuSubTrigger({ children, ...props }: any) {
     <Zeego.SubTrigger
       {...props}
       onSelect={() => {
+        triggerNativeHaptics(props.nativeHaptics ?? contextHaptics.item, {
+          delay: props.nativeHapticsDelay ?? contextHaptics.itemDelay,
+        });
         props.onSelect?.();
-        triggerNativeHaptics(props.nativeHaptics ?? contextHaptics.item);
       }}
       textValue={label}
     >
@@ -297,8 +329,10 @@ function ContextMenuItem({ children, variant, ...props }: any) {
       {...props}
       destructive={variant === "destructive" || props.destructive}
       onSelect={() => {
+        triggerNativeHaptics(props.nativeHaptics ?? contextHaptics.item, {
+          delay: props.nativeHapticsDelay ?? contextHaptics.itemDelay,
+        });
         (props.onSelect ?? props.onPress)?.();
-        triggerNativeHaptics(props.nativeHaptics ?? contextHaptics.item);
       }}
       textValue={label}
     >
@@ -318,9 +352,11 @@ function ContextMenuCheckboxItem({ children, checked, onCheckedChange, ...props 
     <Zeego.CheckboxItem
       {...props}
       onValueChange={(next: "mixed" | "on" | "off", previous: "mixed" | "on" | "off") => {
+        triggerNativeHaptics(props.nativeHaptics ?? contextHaptics.item, {
+          delay: props.nativeHapticsDelay ?? contextHaptics.itemDelay,
+        });
         props.onValueChange?.(next, previous);
         onCheckedChange?.(next === "on");
-        triggerNativeHaptics(props.nativeHaptics ?? contextHaptics.item);
       }}
       textValue={label}
       value={checked ? "on" : "off"}

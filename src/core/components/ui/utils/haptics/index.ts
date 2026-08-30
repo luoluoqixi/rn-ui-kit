@@ -5,6 +5,14 @@ import { isWeb, os } from "../platform";
 
 export type NativeHapticsLevel = "light" | "medium" | "heavy";
 export type NativeHapticsSetting = boolean | NativeHapticsLevel;
+export type NativeHapticsDelay = {
+  /** 延迟的 requestAnimationFrame 帧数。 */
+  frames?: number;
+  /** 延迟的毫秒数。 */
+  milliseconds?: number;
+  /** 延迟的秒数。 */
+  seconds?: number;
+};
 
 type NativeHapticsDefaultsContextValue = {
   enabledByDefault: boolean;
@@ -21,6 +29,7 @@ type ResolveNativeHapticsOptions = {
 
 type TriggerNativeHapticsOptions = {
   androidType?: Haptics.AndroidHaptics;
+  delay?: NativeHapticsDelay;
 };
 
 const NativeHapticsDefaultsContext = createContext<NativeHapticsDefaultsContextValue>({
@@ -74,11 +83,38 @@ export function triggerNativeHaptics(
   if (setting == null || setting === false || isWeb()) {
     return;
   }
-  const level = setting === true ? "light" : setting;
+  const frames = Math.max(0, Math.floor(options?.delay?.frames ?? 0));
+  const milliseconds = Math.max(
+    0,
+    (options?.delay?.milliseconds ?? 0) + (options?.delay?.seconds ?? 0) * 1000,
+  );
+  const trigger = () => triggerNativeHapticsNow(setting, options?.androidType);
+
+  if (milliseconds > 0) {
+    setTimeout(() => scheduleNativeHapticsFrames(trigger, frames), milliseconds);
+    return;
+  }
+  if (frames > 0) {
+    scheduleNativeHapticsFrames(trigger, frames);
+    return;
+  }
+  trigger();
+}
+
+function scheduleNativeHapticsFrames(trigger: () => void, frames: number) {
+  if (frames <= 0) {
+    trigger();
+    return;
+  }
+  requestAnimationFrame(() => scheduleNativeHapticsFrames(trigger, frames - 1));
+}
+
+function triggerNativeHapticsNow(setting: NativeHapticsSetting, androidType?: Haptics.AndroidHaptics) {
+  const level: NativeHapticsLevel = setting === true ? "light" : (setting as NativeHapticsLevel);
 
   if (os() === "android") {
     Haptics.performAndroidHapticsAsync(
-      options?.androidType ?? ANDROID_HAPTICS_TYPE_MAP[level],
+      androidType ?? ANDROID_HAPTICS_TYPE_MAP[level],
     ).catch((err: unknown) => {
       console.error("[Haptics] performAndroidHapticsAsync 失败:", err);
     });

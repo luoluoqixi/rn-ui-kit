@@ -27,7 +27,7 @@ import {
 import { ContextMenuNative } from "./context_menu_native";
 import { NativeOnlyAnimatedView } from "../utils/native_only_animated_view";
 import { triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
-import type { NativeHapticsSetting } from "../utils";
+import type { NativeHapticsDelay, NativeHapticsSetting } from "../utils";
 import { resolveRenderProp } from "../utils/render";
 import { Text, TextClassContext } from "../text";
 import { cn } from "../utils/cn";
@@ -58,6 +58,7 @@ const ContextMenuContentSizeContext =
 
 const ContextMenuHapticsContext = React.createContext<{
   item?: NativeHapticsSetting;
+  itemDelay?: NativeHapticsDelay;
 }>({});
 
 function ContextMenuSubTrigger({
@@ -66,6 +67,7 @@ function ContextMenuSubTrigger({
   children,
   iconClassName,
   nativeHaptics,
+  nativeHapticsDelay,
   onPress,
   ...props
 }: ContextMenuSubTriggerProps) {
@@ -102,7 +104,9 @@ function ContextMenuSubTrigger({
           if (disabled) return;
           onPress?.(event);
           if (!event.defaultPrevented) {
-            triggerNativeHaptics(nativeHaptics ?? contextHaptics.item);
+            triggerNativeHaptics(nativeHaptics ?? contextHaptics.item, {
+              delay: nativeHapticsDelay ?? contextHaptics.itemDelay,
+            });
           }
         }}
       >
@@ -162,6 +166,7 @@ function ContextMenuContent({
   portalHost,
   style,
   itemNativeHaptics,
+  itemNativeHapticsDelay,
   size: sizeProp,
   side: sideProp,
   children,
@@ -220,7 +225,10 @@ function ContextMenuContent({
                 value={cn("text-popover-foreground", menuTextSizeClasses[size])}
               >
                 <ContextMenuHapticsContext.Provider
-                  value={{ item: itemNativeHaptics ?? inheritedHaptics.item }}
+                  value={{
+                    item: itemNativeHaptics ?? inheritedHaptics.item,
+                    itemDelay: itemNativeHapticsDelay ?? inheritedHaptics.itemDelay,
+                  }}
                 >
                   <ContextMenuPrimitive.Content
                     style={
@@ -280,6 +288,7 @@ function ContextMenuItem({
   disabled,
   inset,
   nativeHaptics,
+  nativeHapticsDelay,
   onPress,
   variant,
   ...props
@@ -324,7 +333,9 @@ function ContextMenuItem({
           if (disabled) return;
           onPress?.(event);
           if (!event.defaultPrevented) {
-            triggerNativeHaptics(nativeHaptics ?? contextHaptics.item);
+            triggerNativeHaptics(nativeHaptics ?? contextHaptics.item, {
+              delay: nativeHapticsDelay ?? contextHaptics.itemDelay,
+            });
           }
         }}
       />
@@ -337,6 +348,7 @@ function ContextMenuCheckboxItem({
   children,
   disabled,
   nativeHaptics,
+  nativeHapticsDelay,
   onCheckedChange,
   ...props
 }: ContextMenuCheckboxItemProps) {
@@ -368,7 +380,9 @@ function ContextMenuCheckboxItem({
         onCheckedChange={(checked) => {
           if (disabled) return;
           onCheckedChange?.(checked);
-          triggerNativeHaptics(nativeHaptics ?? contextHaptics.item);
+          triggerNativeHaptics(nativeHaptics ?? contextHaptics.item, {
+            delay: nativeHapticsDelay ?? contextHaptics.itemDelay,
+          });
         }}
       >
         <View className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
@@ -599,9 +613,11 @@ function ContextMenu({
   items,
   itemProps,
   itemNativeHaptics,
+  itemNativeHapticsDelay,
   contentSize,
   native = Platform.OS !== "web",
   nativeHaptics,
+  nativeHapticsDelay,
   nativeShouldWaitForMenuToHideBeforeFiringOnPressMenuItem,
   __menuRef,
   __unsafeIosProps,
@@ -613,6 +629,7 @@ function ContextMenu({
 }: ContextMenuProps) {
   const resolvedHaptics = useResolvedNativeHaptics(nativeHaptics);
   const resolvedItemHaptics = useResolvedNativeHaptics(itemNativeHaptics);
+  const resolvedItemHapticsDelay = itemNativeHapticsDelay ?? nativeHapticsDelay;
   if (native && Platform.OS !== "web") {
     return React.createElement(ContextMenuNative as React.ComponentType<any>, {
       ...props,
@@ -620,7 +637,9 @@ function ContextMenu({
       items,
       itemProps,
       itemNativeHaptics,
+      itemNativeHapticsDelay,
       nativeHaptics,
+      nativeHapticsDelay,
       nativeShouldWaitForMenuToHideBeforeFiringOnPressMenuItem,
       __menuRef,
       __unsafeIosProps,
@@ -632,7 +651,9 @@ function ContextMenu({
   }
   const generated = items != null || trigger != null;
   return (
-    <ContextMenuHapticsContext.Provider value={{ item: resolvedItemHaptics }}>
+    <ContextMenuHapticsContext.Provider
+      value={{ item: resolvedItemHaptics, itemDelay: resolvedItemHapticsDelay }}
+    >
       <ContextMenuContentSizeContext.Provider value={contentSize ?? "default"}>
         <ContextMenuPrimitiveRoot
           {...props}
