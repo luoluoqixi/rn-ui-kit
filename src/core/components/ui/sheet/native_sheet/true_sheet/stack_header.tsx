@@ -1,32 +1,59 @@
-import { Button, type ButtonProps } from "../../../button";
-import { isIos, isIos26Plus } from "../../../utils";
+import { Pressable, PressableProps, StyleProp, TextStyle } from "react-native";
+import { type ButtonProps } from "../../../button";
+import { Text } from "../../../text";
 
 import { useTrueSheetStackHost } from "./stack_context";
+import { ReactNode } from "react";
+import React from "react";
+
+function normalizeButtonChildren(
+  children: React.ReactNode,
+  textClassName?: string,
+  textStyle?: StyleProp<TextStyle>,
+): React.ReactNode {
+  return React.Children.map(children, (child) =>
+    typeof child === "string" || typeof child === "number" ? (
+      <Text className={textClassName} style={textStyle}>
+        {child}
+      </Text>
+    ) : (
+      child
+    ),
+  ) as React.ReactNode;
+}
 
 /** 原生 Stack `headerRight`：关闭当前 True Sheet。 */
-export function TrueSheetStackHeaderCloseButton({ title, onPress, ...buttonProps }: ButtonProps) {
+export function TrueSheetStackHeaderCloseButton({
+  title,
+  titleClassName,
+  titleStyle,
+  onPress,
+  ...buttonProps
+}: PressableProps & {
+  title?: ReactNode;
+  titleClassName?: string;
+  titleStyle?: StyleProp<TextStyle>;
+}) {
   const { onRequestClose } = useTrueSheetStackHost();
-  const titleText = title ?? (buttonProps.children == null ? "关闭" : undefined);
+  const titleNode = title ?? (buttonProps.children == null ? "关闭" : undefined);
   const handlePress: NonNullable<ButtonProps["onPress"]> = (event) => {
     onPress?.(event);
     if (!event.defaultPrevented) {
       onRequestClose();
     }
   };
-  const defaultButtonSize = {
-    width: 60,
-    height: 40,
-  };
 
   return (
-    <Button
+    <Pressable
       {...buttonProps}
-      aria-label={buttonProps["aria-label"] ?? title ?? "关闭"}
-      native={buttonProps.native ?? isIos()}
-      nativeButtonStyle={buttonProps.nativeButtonStyle ?? (isIos26Plus() ? "glass" : undefined)}
-      buttonSize={buttonProps.buttonSize ?? defaultButtonSize}
-      title={titleText}
+      aria-label={buttonProps["aria-label"] ?? "Close"}
       onPress={handlePress}
-    />
+    >
+      {
+        (typeof titleNode === "function"
+          ? titleNode
+          : normalizeButtonChildren(titleNode, titleClassName, titleStyle)) as React.ReactNode
+      }
+    </Pressable>
   );
 }
