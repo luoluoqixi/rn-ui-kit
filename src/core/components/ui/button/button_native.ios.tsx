@@ -4,9 +4,11 @@ import {
   buttonStyle,
   disabled,
   frame,
+  foregroundStyle,
 } from "@luoluoqixi/expo-ui-55/swift-ui/modifiers";
 import { View } from "react-native";
 
+import { useUiTheme } from "../utils/theme";
 import type { ButtonNativeProps } from "./button_native";
 
 const DEFAULT_SYSTEM_IMAGE_SIZE = 20;
@@ -21,11 +23,13 @@ export function ButtonNative({
   nativeSystemImage,
   nativeSystemImageSize = DEFAULT_SYSTEM_IMAGE_SIZE,
   buttonSize,
+  buttonColor,
   nativeSwiftProps,
   onPress,
   style,
   title,
 }: ButtonNativeProps) {
+  const theme = useUiTheme();
   const {
     children: overriddenChildren,
     label: overriddenLabel,
@@ -52,7 +56,9 @@ export function ButtonNative({
             buttonStyle(nativeButtonStyle),
             disabled(isDisabled),
             swiftAccessibilityLabel(accessibilityLabel ?? title),
+            ...(buttonColor == null ? [foregroundStyle(theme.primary)] : []),
             ...(overriddenModifiers ?? []),
+            ...(buttonColor == null ? [] : [foregroundStyle(buttonColor)]),
           ]}
           onPress={onPress}
         >

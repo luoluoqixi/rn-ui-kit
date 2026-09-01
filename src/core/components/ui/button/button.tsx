@@ -15,7 +15,7 @@ import Animated, {
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
-import { Platform, Pressable, type StyleProp, type ViewStyle } from "react-native";
+import { Platform, Pressable, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
 import type { ButtonProps } from "./types";
 
 import { ButtonNative } from "./button_native";
@@ -149,9 +149,19 @@ const buttonTextVariants = cva(
   },
 );
 
-function normalizeButtonChildren(children: React.ReactNode): React.ReactNode {
+function normalizeButtonChildren(
+  children: React.ReactNode,
+  textClassName?: string,
+  textStyle?: StyleProp<TextStyle>,
+): React.ReactNode {
   return React.Children.map(children, (child) =>
-    typeof child === "string" || typeof child === "number" ? <Text>{child}</Text> : child,
+    typeof child === "string" || typeof child === "number" ? (
+      <Text className={textClassName} style={textStyle}>
+        {child}
+      </Text>
+    ) : (
+      child
+    ),
   ) as React.ReactNode;
 }
 
@@ -184,6 +194,7 @@ function ButtonLoadingIcon({ children }: { children: React.ReactNode }) {
 const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProps>(function Button(
   {
     buttonSize,
+    buttonColor,
     children,
     circular,
     className,
@@ -200,6 +211,8 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
     onPress,
     size = "default",
     style,
+    textClassName,
+    textStyle,
     title,
     variant,
     ...props
@@ -240,6 +253,7 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
             secondaryForeground: theme.secondaryForeground,
           }}
           buttonSize={resolvedButtonSize}
+          buttonColor={buttonColor}
           children={
             title == null && (typeof children === "string" || typeof children === "number")
               ? children
@@ -273,6 +287,7 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
           secondaryForeground: theme.secondaryForeground,
         }}
         buttonSize={resolvedButtonSize}
+        buttonColor={buttonColor}
         children={
           title == null && (typeof children === "string" || typeof children === "number")
             ? children
@@ -334,7 +349,10 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
         {
           (typeof resolvedChildren === "function"
             ? resolvedChildren
-            : normalizeButtonChildren(resolvedChildren)) as React.ReactNode
+            : normalizeButtonChildren(resolvedChildren, textClassName, [
+                textStyle,
+                buttonColor == null ? null : { color: buttonColor },
+              ])) as React.ReactNode
         }
       </Pressable>
     </TextClassContext.Provider>

@@ -159,6 +159,16 @@ const nativeTextButtonProps = {
 
 void nativeTextButtonProps;
 
+const textButtonProps = {
+  buttonColor: "#0f766e",
+  loadingIcon: null,
+  textClassName: "no-underline text-primary",
+  textStyle: { textDecorationLine: "none" },
+  title: "完成",
+} satisfies ButtonProps;
+
+void textButtonProps;
+
 const nativeTriggerProps = {
   accessibilityHint: "打开菜单",
   android_ripple: { borderless: true },

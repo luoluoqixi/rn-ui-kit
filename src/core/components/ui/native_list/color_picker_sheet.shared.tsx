@@ -103,7 +103,7 @@ export function NativeListColorPickerSheet({
             />
             <Text className="text-base font-semibold">选择颜色</Text>
             <Button
-              buttonSize={{ height: 40, width: isIos() ? 65 : 80 }}
+              buttonSize={{ height: 40, width: isIos() ? (isIos26Plus() ? 60 : 65) : 80 }}
               native={isIos()}
               nativeButtonStyle={usesIos26GlassButtons ? "glass" : "automatic"}
               nativeSwiftProps={nativeButtonSwiftProps}

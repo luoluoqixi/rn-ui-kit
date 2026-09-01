@@ -18,6 +18,7 @@ export type ButtonNativeProps = {
     secondaryForeground: string;
   };
   buttonSize?: ButtonProps["buttonSize"];
+  buttonColor?: ButtonProps["buttonColor"];
   children?: React.ReactNode;
   disabled: boolean;
   nativeButtonStyle?: ButtonProps["nativeButtonStyle"];

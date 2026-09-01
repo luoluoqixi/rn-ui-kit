@@ -14,8 +14,8 @@ export function TrueSheetStackHeaderCloseButton({ title, onPress, ...buttonProps
     }
   };
   const defaultButtonSize = {
-    width: 50,
-    height: isIos26Plus() ? 40 : 20,
+    width: 60,
+    height: 40,
   };
 
   return (
@@ -23,6 +23,7 @@ export function TrueSheetStackHeaderCloseButton({ title, onPress, ...buttonProps
       {...buttonProps}
       aria-label={buttonProps["aria-label"] ?? title ?? "关闭"}
       native={buttonProps.native ?? isIos()}
+      nativeButtonStyle={buttonProps.nativeButtonStyle ?? (isIos26Plus() ? "glass" : undefined)}
       buttonSize={buttonProps.buttonSize ?? defaultButtonSize}
       title={titleText}
       onPress={handlePress}

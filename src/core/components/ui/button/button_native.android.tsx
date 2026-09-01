@@ -73,6 +73,7 @@ function getButtonSizeModifiers(buttonSize: ButtonNativeProps["buttonSize"]) {
 export function ButtonNative({
   androidColors,
   buttonSize,
+  buttonColor,
   children,
   disabled: isDisabled,
   nativeComposeProps,
@@ -97,12 +98,16 @@ export function ButtonNative({
     modifiers: overriddenModifiers,
     ...composeButtonProps
   } = nativeComposeProps ?? {};
+  const resolvedButtonColors =
+    buttonColor == null
+      ? overriddenColors ?? buttonColors
+      : { ...(overriddenColors ?? buttonColors), contentColor: buttonColor };
 
   return (
     <Host matchContents style={style}>
       <Component
         {...composeButtonProps}
-        colors={(overriddenColors ?? buttonColors) as any}
+        colors={resolvedButtonColors as any}
         enabled={overriddenEnabled ?? !isDisabled}
         modifiers={overriddenModifiers ?? sizeModifiers}
         onClick={onPress}
