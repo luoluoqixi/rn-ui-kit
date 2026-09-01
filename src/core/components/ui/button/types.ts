@@ -19,7 +19,7 @@ export type ButtonProps = ComponentProps<typeof Pressable> &
     buttonSize?: ButtonSize;
     circular?: boolean;
     native?: ButtonNativeMode;
-    nativeMatchContents:
+    nativeMatchContents?:
       | boolean
       | {
           vertical?: boolean | undefined;
