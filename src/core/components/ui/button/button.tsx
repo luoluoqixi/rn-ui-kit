@@ -188,6 +188,7 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
     circular,
     className,
     native,
+    nativeMatchContents,
     nativeButtonStyle = "automatic",
     nativeComposeProps,
     nativeHaptics,
@@ -230,6 +231,7 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
     if (Platform.OS === "android") {
       return (
         <ButtonNative
+          matchContents={nativeMatchContents}
           androidColors={{
             destructive: theme.destructive,
             primary: theme.primary,
@@ -261,6 +263,7 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
 
     return (
       <ButtonNative
+        matchContents={nativeMatchContents}
         accessibilityLabel={props["aria-label"]}
         androidColors={{
           destructive: theme.destructive,

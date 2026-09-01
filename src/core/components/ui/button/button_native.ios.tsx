@@ -13,6 +13,7 @@ const DEFAULT_SYSTEM_IMAGE_SIZE = 20;
 
 /** Expo UI SwiftUI renderer used by the iOS native Button mode. */
 export function ButtonNative({
+  matchContents,
   accessibilityLabel,
   disabled: isDisabled,
   nativeButtonStyle = "automatic",
@@ -44,7 +45,7 @@ export function ButtonNative({
     ));
   return (
     <View style={{ opacity: nativeOpacity }}>
-      <Host ignoreSafeArea="all" matchContents style={style}>
+      <Host ignoreSafeArea="all" matchContents={matchContents ?? true} style={style}>
         <SwiftButton
           {...swiftButtonProps}
           modifiers={[

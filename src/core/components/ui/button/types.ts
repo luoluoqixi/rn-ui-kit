@@ -19,6 +19,12 @@ export type ButtonProps = ComponentProps<typeof Pressable> &
     buttonSize?: ButtonSize;
     circular?: boolean;
     native?: ButtonNativeMode;
+    nativeMatchContents:
+      | boolean
+      | {
+          vertical?: boolean | undefined;
+          horizontal?: boolean | undefined;
+        };
     nativeButtonStyle?: "automatic" | "glass" | "glassProminent";
     nativeComposeProps?: ButtonNativeComposeProps;
     nativeHaptics?: NativeHapticsSetting;

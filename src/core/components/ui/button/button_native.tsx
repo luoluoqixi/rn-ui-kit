@@ -3,6 +3,12 @@ import type { StyleProp, ViewStyle } from "react-native";
 import type * as React from "react";
 
 export type ButtonNativeProps = {
+  matchContents?:
+    | boolean
+    | {
+        vertical?: boolean | undefined;
+        horizontal?: boolean | undefined;
+      };
   accessibilityLabel?: string;
   androidColors?: {
     destructive: string;
