@@ -305,6 +305,29 @@ const IOS15_NATIVE_EDIT_ROW_LEADING_INSET = 64;
 const IOS15_NATIVE_EDIT_ROW_TRAILING_INSET = 20;
 const IOS15_NATIVE_EDIT_ROW_TOP_INSET = 6;
 
+/**
+ * `contentMargins` was introduced in iOS 17. Keep the same scrollable bottom
+ * space on iOS 15 by contributing a transparent, fixed-height list row.
+ */
+function NativeListIos15BottomSpacer({ length }: { length: number }) {
+  if (length <= 0) {
+    return null;
+  }
+
+  return (
+    <VStack
+      modifiers={[
+        ROW_INSETS,
+        frame({ height: length, maxWidth: 99999 }),
+        listRowBackground("clear"),
+        ios15ListRowSeparatorHidden(),
+      ]}
+    >
+      <SwiftText>{""}</SwiftText>
+    </VStack>
+  );
+}
+
 export function resolveRowPadding({
   paddingBottom,
   paddingHorizontal,
@@ -1022,6 +1045,11 @@ function NativeListRoot({
           safeAreaBottom: insets.bottom,
         })
       : 0;
+  const ios15BottomSpacerLength = isIos15()
+    ? insideTrueSheet
+      ? bottomPadding + (contentMarginBottom ?? 0)
+      : (contentMarginBottom ?? 0)
+    : 0;
   // 默认只关闭普通 native-stack 页面的重复自动调整，不注入窗口底部安全区。
   // 定高内嵌列表的安全区由外层滚动视图处理，不能再按页面级根列表自动调整。
   const manuallyAdjustNormalPageIndicator =
@@ -1146,6 +1174,7 @@ function NativeListRoot({
               {children}
             </NativeListHapticsProvider>
           </NativeListContextMenuProvider>
+          <NativeListIos15BottomSpacer length={ios15BottomSpacerLength} />
         </List>
       </Host>
     </NativeListEditModeProvider>
