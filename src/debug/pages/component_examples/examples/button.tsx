@@ -90,9 +90,7 @@ export function ButtonExample() {
             <Icon as={Mail} className="text-foreground" />
           </Button>
           <Button nativeHaptics={nativeHaptics} title="Button Link" variant="link" />
-          <Button nativeHaptics={nativeHaptics} native>
-            Native Button
-          </Button>
+          <Button nativeHaptics={nativeHaptics} native title="Native Button" />
           <Button
             native
             nativeHaptics={nativeHaptics}
@@ -101,9 +99,8 @@ export function ButtonExample() {
               width: 150,
               height: 80,
             }}
-          >
-            Native Button Size
-          </Button>
+            title="Native Button Size"
+          />
         </ExampleRow>
       </ExampleBlock>
     </ExampleStack>
