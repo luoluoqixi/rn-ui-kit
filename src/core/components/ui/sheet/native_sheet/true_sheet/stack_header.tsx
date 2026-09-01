@@ -22,6 +22,12 @@ function normalizeButtonChildren(
   ) as React.ReactNode;
 }
 
+export type HeaderCloseButtonType = PressableProps & {
+  title?: ReactNode;
+  titleClassName?: string;
+  titleStyle?: StyleProp<TextStyle>;
+};
+
 /** 原生 Stack `headerRight`：关闭当前 True Sheet。 */
 export function TrueSheetStackHeaderCloseButton({
   title,
@@ -29,11 +35,7 @@ export function TrueSheetStackHeaderCloseButton({
   titleStyle,
   onPress,
   ...buttonProps
-}: PressableProps & {
-  title?: ReactNode;
-  titleClassName?: string;
-  titleStyle?: StyleProp<TextStyle>;
-}) {
+}: HeaderCloseButtonType) {
   const { onRequestClose } = useTrueSheetStackHost();
   const titleNode = title ?? (buttonProps.children == null ? "关闭" : undefined);
   const handlePress: NonNullable<ButtonProps["onPress"]> = (event) => {

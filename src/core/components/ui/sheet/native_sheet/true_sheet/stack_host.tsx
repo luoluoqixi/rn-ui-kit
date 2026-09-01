@@ -7,7 +7,6 @@ import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { BackHandler, Platform, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-import type { ButtonProps } from "../../../button";
 import { isIos26Plus, os } from "../../../utils/platform";
 import { withNativeBackButton } from "../../../utils/navigation";
 import { ScreenOverlayPortalProvider } from "../../../utils/overlay";
@@ -19,7 +18,7 @@ import {
   getTrueSheetStackHostScrollableProps,
 } from "./platform_sheet_defaults";
 import { TrueSheetStackHostProvider } from "./stack_context";
-import { TrueSheetStackHeaderCloseButton } from "./stack_header";
+import { TrueSheetStackHeaderCloseButton, type HeaderCloseButtonType } from "./stack_header";
 import {
   TrueSheetStackNavigation,
   type TrueSheetStackNavigationRef,
@@ -46,7 +45,7 @@ export type TrueSheetStackHostProps<ParamList extends ParamListBase = ParamListB
   /** 可选的 Stack Header 左侧内容；默认不注入。 */
   headerLeft?: TrueSheetInnerStackScreenOptions["headerLeft"];
   /** 内置 iOS 右侧关闭按钮的完整 Button 属性；`onPress` 执行后仍会请求关闭。 */
-  headerRightButtonProps?: ButtonProps;
+  headerRightButtonProps?: HeaderCloseButtonType;
   /** 关闭 Sheet 时重置栈到该路由名 */
   initialRouteName?: keyof ParamList & string;
   name: string;
