@@ -3,8 +3,7 @@ import type { NativeStackNavigationOptions } from "@react-navigation/native-stac
 import type { StackNavigationOptions } from "@react-navigation/stack";
 import type { SheetDetent, TrueSheetProps } from "@lodev09/react-native-true-sheet";
 import type { ComponentType, ReactNode } from "react";
-
-import type { ButtonProps } from "../../button";
+import type { HeaderCloseButtonType } from "./true_sheet/stack_header";
 
 /** Percentage convenience value. Numbers are fractions (0..1), strings are CSS percentages. */
 export type NativeSheetSnapPoint = number | `${number}%`;
@@ -116,7 +115,7 @@ export interface NativeSheetStackProps<ParamList extends ParamListBase = ParamLi
   /** 可选的 Stack Header 左侧内容；默认不注入。 */
   headerLeft?: NativeSheetStackScreenOptions["headerLeft"];
   /** 内置 iOS 右侧关闭按钮的完整 Button 属性；`onPress` 执行后仍会请求关闭。 */
-  headerRightButtonProps?: ButtonProps;
+  headerRightButtonProps?: HeaderCloseButtonType;
   screenOptions?: NativeSheetStackScreenOptions;
   sheetProps?: NativeSheetStackSheetProps;
 }
