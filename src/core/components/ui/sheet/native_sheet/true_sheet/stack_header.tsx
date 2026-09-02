@@ -60,7 +60,7 @@ export function TrueSheetStackHeaderCloseButton({
       {
         (typeof titleNode === "function"
           ? titleNode
-          : normalizeButtonChildren(titleNode, cn("text-base", titleClassName), [
+          : normalizeButtonChildren(titleNode, cn("text-[17px]", titleClassName), [
               titleStyle,
               { color: buttonColor ?? theme.primary },
             ])) as React.ReactNode
