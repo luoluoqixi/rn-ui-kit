@@ -253,19 +253,17 @@ export function NativeSwiftUIContextMenu({
 }: {
   children: ReactElement;
   contextMenuProps: NativeListContextMenuProps;
-  /** Keep the SwiftUI wrapper mounted while suppressing its menu items. */
+  /** Keep the SwiftUI menu tree mounted while the native menu builder is disabled. */
   disabled?: boolean;
 }) {
   return (
-    <SwiftContextMenu>
+    <SwiftContextMenu enabled={!disabled}>
       <SwiftContextMenu.Trigger>{children}</SwiftContextMenu.Trigger>
       <SwiftContextMenu.Items>
-        {disabled ? null : (
-          <NativeSwiftUIContextMenuItems
-            itemProps={contextMenuProps.itemProps}
-            items={contextMenuProps.items ?? []}
-          />
-        )}
+        <NativeSwiftUIContextMenuItems
+          itemProps={contextMenuProps.itemProps}
+          items={contextMenuProps.items ?? []}
+        />
       </SwiftContextMenu.Items>
     </SwiftContextMenu>
   );
@@ -591,7 +589,7 @@ export function NativeRowContainer({
 }: {
   children: ReactNode;
   contextMenuProps?: NativeListContextMenuProps;
-  /** Keeps a ContextMenu wrapper stable while its menu items are unavailable. */
+  /** Keeps a ContextMenu wrapper stable while iOS 15 disables its interaction. */
   contextMenuDisabled?: boolean;
   disabled?: boolean;
   disabledStyle?: boolean;
@@ -950,7 +948,7 @@ export function NativePressRow({
         ? editRow.selectionId
         : undefined;
   // Keep the ContextMenu / Trigger wrapper in place on iOS 15 while editing.
-  // Its items are suppressed so the editing mode still has no row menu.
+  // The native interaction is disabled so editing mode still has no row menu.
   const keepsIos15ContextMenu = isIos15() && editRow.editMode;
 
   return (

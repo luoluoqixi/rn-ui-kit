@@ -41,7 +41,7 @@
       },
       "devDependencies": {
         "@lodev09/react-native-true-sheet": "=3.11.12",
-        "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_08_29",
+        "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_09_05",
         "@react-native-picker/picker": "=2.11.4",
         "@react-navigation/elements": "^2.9.38",
         "@react-navigation/native": "=7.3.16",
@@ -74,7 +74,7 @@
       },
       "peerDependencies": {
         "@lodev09/react-native-true-sheet": "=3.11.12",
-        "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_08_29",
+        "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_09_05",
         "@react-native-picker/picker": "^2.11.4",
         "@react-navigation/elements": "^2.9.38",
         "@react-navigation/native": "=7.3.16",
@@ -396,7 +396,7 @@
 
     "@lodev09/react-native-true-sheet": ["@lodev09/react-native-true-sheet@3.11.12", "", { "peerDependencies": { "@radix-ui/react-dialog": ">=1", "@radix-ui/react-presence": ">=1", "@react-navigation/core": ">=7", "react": "*", "react-native": "*", "react-native-reanimated": ">=4", "react-native-worklets": "*" }, "optionalPeers": ["@radix-ui/react-dialog", "@radix-ui/react-presence", "@react-navigation/core", "react-native-reanimated", "react-native-worklets"] }, "sha512-eL7mfUw0p3dxqXKqck3k7H2Ja6UHGbPSqbVDRKeANuxZN4xctxF1iFSPYHj0LULVtheqxKBhWBiR4lJ25El57Q=="],
 
-    "@luoluoqixi/expo-ui-55": ["@luoluoqixi/expo-ui-55@github:luoluoqixi/expo-ui-55#69bea62", { "dependencies": { "sf-symbols-typescript": "^2.1.0" }, "peerDependencies": { "expo": "*", "react": "*", "react-native": "*" } }, "luoluoqixi-expo-ui-55-69bea62", "sha512-j4Ln35UWlvutCVHTtINiDGCwy8lIeVMBynqkIdJ5ryz3KGjBj/rLDvCGAVVFy5pl0qhzymkWFkv+2A/CMbAgOA=="],
+    "@luoluoqixi/expo-ui-55": ["@luoluoqixi/expo-ui-55@github:luoluoqixi/expo-ui-55#5b32c76", { "dependencies": { "sf-symbols-typescript": "^2.1.0" }, "peerDependencies": { "expo": "*", "react": "*", "react-native": "*" } }, "luoluoqixi-expo-ui-55-5b32c76", "sha512-lsXDdNt7ddwt97md02F2TXCqx4ln8GV/426owHpYvBc+PRATHOmwtSJilKkO7E+AJbmheK9ZZA62bfc7XQGDuA=="],
 
     "@material/material-color-utilities": ["@material/material-color-utilities@0.4.0", "", {}, "sha512-dlq6VExJReb8dhjj3a/yTigr3ncNwoFmL5Iy2ENtbDX03EmNeOEdZ+vsaGrj7RTuO+mB7L58II4LCsl4NpM8uw=="],
 
