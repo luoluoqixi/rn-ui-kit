@@ -249,18 +249,23 @@ function NativeSwiftUIContextMenuItems({
 export function NativeSwiftUIContextMenu({
   children,
   contextMenuProps,
+  disabled = false,
 }: {
   children: ReactElement;
   contextMenuProps: NativeListContextMenuProps;
+  /** Keep the SwiftUI wrapper mounted while suppressing its menu items. */
+  disabled?: boolean;
 }) {
   return (
     <SwiftContextMenu>
       <SwiftContextMenu.Trigger>{children}</SwiftContextMenu.Trigger>
       <SwiftContextMenu.Items>
-        <NativeSwiftUIContextMenuItems
-          itemProps={contextMenuProps.itemProps}
-          items={contextMenuProps.items ?? []}
-        />
+        {disabled ? null : (
+          <NativeSwiftUIContextMenuItems
+            itemProps={contextMenuProps.itemProps}
+            items={contextMenuProps.items ?? []}
+          />
+        )}
       </SwiftContextMenu.Items>
     </SwiftContextMenu>
   );
@@ -303,7 +308,11 @@ const TEXT_AREA_VERTICAL_PADDING = 20;
 // background. Extend only the helper-row corner overlay back to the cell edge.
 const IOS15_NATIVE_EDIT_ROW_LEADING_INSET = 64;
 const IOS15_NATIVE_EDIT_ROW_TRAILING_INSET = 20;
-const IOS15_NATIVE_EDIT_ROW_TOP_INSET = 6;
+const IOS15_FIRST_ROW_TOP_INSET = 6;
+// iOS 15 vertically centers compact rows differently from rows with a subtitle.
+// Keep these independent so their corner coverage can be tuned on-device.
+const IOS15_PLAIN_TEXT_NO_SUBTITLE_FIRST_ROW_TOP_INSET = 12;
+const IOS15_NAVIGATION_NO_SUBTITLE_FIRST_ROW_TOP_INSET = 12;
 
 /**
  * `contentMargins` was introduced in iOS 17. Keep the same scrollable bottom
@@ -561,8 +570,11 @@ export function NativeRowLabel({
 export function NativeRowContainer({
   children,
   contextMenuProps,
+  contextMenuDisabled,
   disabled,
   disabledStyle,
+  ios15FirstRowTopInset = IOS15_FIRST_ROW_TOP_INSET,
+  nativeSelectionActive,
   nativeSelectionId,
   nativeScrollId,
   onPress,
@@ -579,8 +591,14 @@ export function NativeRowContainer({
 }: {
   children: ReactNode;
   contextMenuProps?: NativeListContextMenuProps;
+  /** Keeps a ContextMenu wrapper stable while its menu items are unavailable. */
+  contextMenuDisabled?: boolean;
   disabled?: boolean;
   disabledStyle?: boolean;
+  /** Extra top coverage only for a first visible row's iOS 15 corner overlay. */
+  ios15FirstRowTopInset?: number;
+  /** Whether the row is participating in the currently active native selection UI. */
+  nativeSelectionActive?: boolean;
   nativeSelectionId?: NativeListSelectionId;
   nativeScrollId?: string | number;
   onPress?: () => void;
@@ -591,6 +609,7 @@ export function NativeRowContainer({
 } & NativeListItemPaddingProps) {
   const theme = useTheme();
   const restoresIos15TopCorners = useContext(Ios15FirstVisibleRowContext);
+  const usesNativeSelectionStyle = nativeSelectionActive ?? nativeSelectionId != null;
   const primaryColor = toSwiftUIHexColor(theme.color.val) ?? theme.color.val;
   const resolvedTint = resolveNativeListBtnTintColor(btnTint, primaryColor);
   const resolvedDisabledStyle = useResolvedNativeListDisabledStyle(disabledStyle);
@@ -632,10 +651,16 @@ export function NativeRowContainer({
         ...(resolvedTint != null ? [tint(resolvedTint)] : []),
         ...(restoresIos15TopCorners
           ? [
-              ios15ListRowTopRoundedBackground(12, {
-                horizontal: 20,
-                top: 6,
-              }),
+              usesNativeSelectionStyle
+                ? ios15ListRowTopRoundedBackground(12, {
+                    leading: IOS15_NATIVE_EDIT_ROW_LEADING_INSET,
+                    trailing: IOS15_NATIVE_EDIT_ROW_TRAILING_INSET,
+                    top: ios15FirstRowTopInset,
+                  })
+                : ios15ListRowTopRoundedBackground(12, {
+                    horizontal: 20,
+                    top: ios15FirstRowTopInset,
+                  }),
             ]
           : []),
       ]}
@@ -661,7 +686,10 @@ export function NativeRowContainer({
     );
 
     return swiftUIContextMenuProps != null ? (
-      <NativeSwiftUIContextMenu contextMenuProps={swiftUIContextMenuProps}>
+      <NativeSwiftUIContextMenu
+        contextMenuProps={swiftUIContextMenuProps}
+        disabled={contextMenuDisabled}
+      >
         {button}
       </NativeSwiftUIContextMenu>
     ) : (
@@ -679,20 +707,26 @@ export function NativeRowContainer({
       : []),
     ...(restoresIos15TopCorners
       ? [
-          nativeSelectionId != null
+          usesNativeSelectionStyle
             ? ios15ListRowTopRoundedBackground(12, {
                 leading: IOS15_NATIVE_EDIT_ROW_LEADING_INSET,
                 trailing: IOS15_NATIVE_EDIT_ROW_TRAILING_INSET,
-                top: IOS15_NATIVE_EDIT_ROW_TOP_INSET,
+                top: ios15FirstRowTopInset,
               })
-            : ios15ListRowTopRoundedBackground(),
+            : ios15ListRowTopRoundedBackground(12, {
+                horizontal: 20,
+                top: ios15FirstRowTopInset,
+              }),
         ]
       : []),
   ];
 
   if (swiftUIContextMenuProps != null) {
     return (
-      <NativeSwiftUIContextMenu contextMenuProps={swiftUIContextMenuProps}>
+      <NativeSwiftUIContextMenu
+        contextMenuProps={swiftUIContextMenuProps}
+        disabled={contextMenuDisabled}
+      >
         <HStack alignment={rowAlignment} modifiers={rowModifiers} spacing={12}>
           {children}
         </HStack>
@@ -832,6 +866,7 @@ export function NativePressRow({
   preserveLeadingAnchor = false,
   rowAlignment = "center",
   rowMinHeight,
+  ios15RowType = "text",
 }: NativeListItemBaseProps & {
   trailingControl?: ReactNode;
   overlayTrailingControlOnValueSymbol?: boolean;
@@ -843,6 +878,7 @@ export function NativePressRow({
   rowMinHeight?: number;
   titleLineLimit?: number;
   valueSfSymbol?: SFSymbol;
+  ios15RowType?: "navigation" | "text";
 }) {
   const theme = useTheme();
   const inheritedNativeHaptics = useResolvedNativeListHaptics(nativeHaptics);
@@ -872,29 +908,66 @@ export function NativePressRow({
   const hasTrailingContent =
     valueText != null ||
     valueSfSymbol != null ||
+    (isIos15() && selected) ||
     (!editRow.editMode && selected) ||
     trailing != null ||
     trailingControl != null ||
     (!editRow.editMode && chevron);
   const showTrailingSpacer = hasTrailingContent && (titleText != null || subtitleText != null);
+  const isBarePlainTextRow =
+    subtitleText == null &&
+    !chevron &&
+    icon == null &&
+    sfSymbol == null &&
+    !selected &&
+    trailing == null &&
+    trailingControl == null &&
+    valueText == null &&
+    valueSfSymbol == null;
+  const ios15FirstRowTopInset =
+    subtitleText != null
+      ? IOS15_FIRST_ROW_TOP_INSET
+      : ios15RowType === "navigation"
+        ? IOS15_NAVIGATION_NO_SUBTITLE_FIRST_ROW_TOP_INSET
+        : isBarePlainTextRow
+          ? IOS15_PLAIN_TEXT_NO_SUBTITLE_FIRST_ROW_TOP_INSET
+          : IOS15_FIRST_ROW_TOP_INSET;
 
   const handlePress = editRow.onPress
     ? () => {
         editRow.onPress?.();
-        triggerNativeHaptics(resolvedHaptics);
+        if (editRow.editMode || onPress != null) {
+          triggerNativeHaptics(resolvedHaptics);
+        }
       }
     : undefined;
+  // iOS 15 exposes a UITableView-backed SwiftUI List. Keep selection metadata
+  // present across edit-mode transitions so rows are not structurally replaced.
+  const nativeSelectionId =
+    isIos15() && !disabled && !selectionDisabled
+      ? editRow.selectionId
+      : editRow.nativeSelection
+        ? editRow.selectionId
+        : undefined;
+  // Keep the ContextMenu / Trigger wrapper in place on iOS 15 while editing.
+  // Its items are suppressed so the editing mode still has no row menu.
+  const keepsIos15ContextMenu = isIos15() && editRow.editMode;
 
   return (
     <NativeRowContainer
       contextMenuProps={
-        disabled || editRow.editMode || resolvedContextMenuProps?.triggerProps?.disabled
+        disabled || resolvedContextMenuProps?.triggerProps?.disabled
           ? undefined
-          : resolvedContextMenuProps
+          : keepsIos15ContextMenu || !editRow.editMode
+            ? resolvedContextMenuProps
+            : undefined
       }
+      contextMenuDisabled={keepsIos15ContextMenu}
       disabled={disabled}
       disabledStyle={disabledStyle}
-      nativeSelectionId={editRow.nativeSelection ? editRow.selectionId : undefined}
+      ios15FirstRowTopInset={ios15FirstRowTopInset}
+      nativeSelectionActive={editRow.nativeSelection}
+      nativeSelectionId={nativeSelectionId}
       onPress={handlePress}
       btnStyle={btnStyle}
       btnTint={btnTint}
@@ -959,8 +1032,14 @@ export function NativePressRow({
           ) : null}
         </ZStack>
       ) : null}
-      {!editRow.editMode && selected ? (
-        <Image key="selected-checkmark" color={accentColor} size={18} systemName="checkmark" />
+      {selected && (!editRow.editMode || isIos15()) ? (
+        <Image
+          key="selected-checkmark"
+          color={accentColor}
+          modifiers={isIos15() ? [opacity(editRow.editMode ? 0 : 1)] : undefined}
+          size={18}
+          systemName="checkmark"
+        />
       ) : null}
       {trailing != null ? (
         <NativeTrailingContent key="custom-trailing">{trailing}</NativeTrailingContent>

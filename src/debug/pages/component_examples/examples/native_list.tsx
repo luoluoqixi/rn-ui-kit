@@ -137,6 +137,7 @@ export function NativeListExample() {
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
   const [customEditModeIcon, setCustomEditModeIcon] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [usesComplexSectionTrailing, setUsesComplexSectionTrailing] = useState(true);
   const [native, setNative] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Array<string | number>>([]);
   const [fallbackMounted, setFallbackMounted] = useState(true);
@@ -149,6 +150,9 @@ export function NativeListExample() {
   const [workspaceName, setWorkspaceName] = useState("rn-ui-kit");
   const [workspaceNote, setWorkspaceNote] = useState("");
   const [accentColor, setAccentColor] = useState("#7c3aed");
+  const testSectionTrailing = usesComplexSectionTrailing
+    ? renderNativeListSortTrailing
+    : undefined;
 
   useEffect(() => {
     if (native) {
@@ -189,6 +193,14 @@ export function NativeListExample() {
             }
           }}
         />
+        {isIos15() && native ? (
+          <Switch
+            checked={usesComplexSectionTrailing}
+            label="复杂 Section trailing（iOS15 调试）"
+            labelPosition="right"
+            onCheckedChange={setUsesComplexSectionTrailing}
+          />
+        ) : null}
         {!(isIos() && native) && (
           <Switch
             checked={customEditModeIcon}
@@ -338,7 +350,7 @@ export function NativeListExample() {
               footer="导航行适合跳转到更深层的设置页。"
               title="工作区"
               titleColor="#7c3aed"
-              trailing={renderNativeListSortTrailing}
+              trailing={testSectionTrailing}
             >
               <NativeListNavigationItem
                 chevronColor={NATIVE_LIST_ICON_COLOR}
@@ -387,6 +399,46 @@ export function NativeListExample() {
                 title="始终禁用"
               />
             </NativeListSection>
+            <NativeListSection
+              footer="用于单独观察普通行与 Section trailing 的 iOS 15 布局。"
+              title="普通行"
+              trailing={testSectionTrailing}
+            >
+              <NativeListItem title="纯文本行 1" />
+              <NativeListItem title="纯文本行 2" />
+              <NativeListItem title="纯文本行 3" />
+            </NativeListSection>
+            {isIos15() && native ? (
+              <>
+                <NativeListSection
+                  footer="用于观察带 subtitle 的纯文本行在 iOS 15 首行中的圆角。"
+                  title="普通行 + subtitle"
+                  trailing={testSectionTrailing}
+                >
+                  <NativeListItem subtitle="带 subtitle 的纯文本行" title="纯文本行 1" />
+                  <NativeListItem subtitle="带 subtitle 的纯文本行" title="纯文本行 2" />
+                  <NativeListItem subtitle="带 subtitle 的纯文本行" title="纯文本行 3" />
+                </NativeListSection>
+                <NativeListSection
+                  footer="用于观察不带 subtitle 的导航行在 iOS 15 首行中的圆角。"
+                  title="导航行"
+                  trailing={testSectionTrailing}
+                >
+                  <NativeListNavigationItem
+                    onPress={() => setLastAction("打开无 subtitle 导航行 1")}
+                    title="导航行 1"
+                  />
+                  <NativeListNavigationItem
+                    onPress={() => setLastAction("打开无 subtitle 导航行 2")}
+                    title="导航行 2"
+                  />
+                  <NativeListNavigationItem
+                    onPress={() => setLastAction("打开无 subtitle 导航行 3")}
+                    title="导航行 3"
+                  />
+                </NativeListSection>
+              </>
+            ) : null}
             <NativeListSection
               footer="numberOfLines 控制可见高度；超出内容可在整个输入区域内滚动。"
               title="备注"

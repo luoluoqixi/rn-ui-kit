@@ -7,5 +7,5 @@ export function NativeListNavigationItem(props: NativeListNavigationItemProps) {
   if (!supportsNativeTextRow(props.title, props.subtitle, props.value)) {
     throw new Error("NativeListNavigationItem requires text title, subtitle, and value on iOS.");
   }
-  return <NativePressRow {...props} chevron={props.chevron ?? true} />;
+  return <NativePressRow {...props} chevron={props.chevron ?? true} ios15RowType="navigation" />;
 }

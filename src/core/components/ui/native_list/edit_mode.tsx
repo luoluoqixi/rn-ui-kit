@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 
+import { isIos15 } from "../utils/platform";
 import type { NativeListRootProps, NativeListSelectionId } from "./types";
 
 type NativeListEditModeContextValue = {
@@ -173,11 +174,22 @@ export function useNativeListEditRow({
   const editingSelected = editMode && isSelected(resolvedSelectionId);
   const selectionEnabled = editMode && !selectionDisabled;
   const usesNativeSelection = selectionEnabled && nativeSelectionEnabled && nativeSelection;
+  const keepsIos15SelectionButton =
+    isIos15() && nativeSelection && !disabled && !selectionDisabled;
   const resolvedOnPress = editMode
-    ? disabled || selectionDisabled || usesNativeSelection
+    ? disabled || selectionDisabled
       ? undefined
-      : () => toggleSelection(resolvedSelectionId)
-    : onPress;
+      : usesNativeSelection
+        ? // iOS 15 List is backed by UITableView. Keep a pressable row tree while
+          // editing instead of replacing Button with HStack; selection still flows
+          // through the same controlled selectedIds state.
+          isIos15()
+          ? () => toggleSelection(resolvedSelectionId)
+          : undefined
+        : () => toggleSelection(resolvedSelectionId)
+    : keepsIos15SelectionButton
+      ? () => onPress?.()
+      : onPress;
 
   return {
     editMode,
