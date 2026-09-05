@@ -20,6 +20,7 @@ import {
   buttonStyle,
   contentMargins,
   contentShape,
+  createModifier,
   disabled as disabledModifier,
   font,
   foregroundStyle,
@@ -88,6 +89,11 @@ import type {
   NativeListSelectItemProps,
   NativeListTextAreaItemProps,
 } from "./types";
+
+// Construct locally so rn-ui-kit remains runtime-compatible with expo-ui-55
+// JavaScript builds from before the convenience export was added.
+const nativeAllowsHitTesting = (enabled: boolean) =>
+  createModifier("allowsHitTesting", { enabled });
 
 function getNativeContextMenuLabel(item: ContextMenuItemData) {
   if (typeof item.label === "string" || typeof item.label === "number") {
@@ -676,6 +682,11 @@ export function NativeRowContainer({
       <SwiftButton
         modifiers={[
           disabledModifier(disabled ?? false),
+          // Keep the Button node stable on iOS 15, but let the native List own
+          // edit-mode row touches so selection begins with the system control.
+          ...(isIos15()
+            ? [nativeAllowsHitTesting(!nativeSelectionActive || disabled === true)]
+            : []),
           buttonStyle(btnStyle ?? "automatic"),
           ...(nativeScrollId != null ? [viewID(nativeScrollId)] : []),
           ...(nativeSelectionId != null ? [tag(nativeSelectionId)] : []),
