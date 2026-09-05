@@ -28,8 +28,8 @@ export function resolveExpoStatusBarStyle(colorScheme: ResolvedColorScheme): Sta
 
 type StatusBarOptions = Pick<NativeStackNavigationOptions, "statusBarStyle" | "statusBarAnimation">;
 
-function iosStatusBarOptions(style: NativeStackStatusBarStyle): StatusBarOptions {
-  if (!usesNativeStackStatusBar()) {
+function mobileNativeStackStatusBarOptions(style: NativeStackStatusBarStyle): StatusBarOptions {
+  if (!isMobile()) {
     return {};
   }
 
@@ -41,7 +41,7 @@ function iosStatusBarOptions(style: NativeStackStatusBarStyle): StatusBarOptions
 
 /** 普通全屏 / push 路由：跟随应用主题，切换深浅色时会更新。 */
 export function nativeStackStatusBarOptions(colorScheme: ResolvedColorScheme): StatusBarOptions {
-  return iosStatusBarOptions(resolveNativeStackStatusBarStyle(colorScheme));
+  return mobileNativeStackStatusBarOptions(resolveNativeStackStatusBarStyle(colorScheme));
 }
 
 /**
@@ -49,5 +49,5 @@ export function nativeStackStatusBarOptions(colorScheme: ResolvedColorScheme): S
  * 仅用于 Sheet 呈现，不要用于首页等普通路由。
  */
 export function nativeStackSheetStatusBarOptions(): StatusBarOptions {
-  return iosStatusBarOptions("auto");
+  return mobileNativeStackStatusBarOptions("auto");
 }
