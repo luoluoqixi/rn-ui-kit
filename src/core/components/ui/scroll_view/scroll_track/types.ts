@@ -1,4 +1,4 @@
-import type { ColorValue } from "react-native";
+import type { ColorValue, Insets } from "react-native";
 
 export type ScrollTrackStyling = {
   /** Corner radius for the thumb. Default: 4. */
@@ -42,6 +42,15 @@ export type ScrollTrackOptions = {
   fadeOutDelay?: number;
   /** Expands the track's touch target, in pixels. Default: 22. */
   hitSlop?: number;
+  /**
+   * Insets applied to the custom scrollbar tracks and their drag targets.
+   * They do not affect the ScrollView content or its scrollable range.
+   *
+   * `top` and `bottom` bound the vertical track; `left` and `right` bound
+   * the horizontal track. `right` and `bottom` also keep the respective
+   * tracks away from those edges, mirroring iOS scrollIndicatorInsets.
+   */
+  insets?: Partial<Insets>;
   /** Minimum scroll distance before the indicator is shown. Default: 20. */
   minScrollDistanceToShow?: number;
   onDragEnd?: () => void;

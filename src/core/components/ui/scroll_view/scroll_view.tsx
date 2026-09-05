@@ -125,6 +125,7 @@ const CustomScrollbarScrollView = forwardRef<any, ScrollViewProps>((props, ref) 
     typeof customScrollbar === "object" ? customScrollbar : {};
   const scrollTrack = useScrollTrack({
     ...customScrollbarOptions,
+    horizontal: scrollViewProps.horizontal === true,
     onContentSizeChange: scrollViewProps.onContentSizeChange,
     onLayout: scrollViewProps.onLayout,
     onScroll: scrollViewProps.onScroll,
@@ -143,6 +144,7 @@ const CustomScrollbarScrollView = forwardRef<any, ScrollViewProps>((props, ref) 
         onScroll={scrollTrack.onScroll}
         scrollEventThrottle={scrollViewProps.scrollEventThrottle ?? 16}
         showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         style={styles.customScrollbarScrollView}
       />
       {scrollTrack.ScrollTrack}

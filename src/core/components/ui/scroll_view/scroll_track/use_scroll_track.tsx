@@ -6,14 +6,15 @@ import {
   type NativeSyntheticEvent,
 } from "react-native";
 
-import { ScrollTrack } from "./scroll_track";
+import { ScrollTrack } from "./scroll_tracks";
 import type { ScrollTrackOptions } from "./types";
 
 type ScrollableRef = {
-  scrollTo?: (options: { animated?: boolean; y: number }) => void;
+  scrollTo?: (options: { animated?: boolean; x?: number; y?: number }) => void;
 };
 
 type UseScrollTrackParams = ScrollTrackOptions & {
+  horizontal?: boolean;
   onContentSizeChange?: (width: number, height: number) => void;
   onLayout?: (event: LayoutChangeEvent) => void;
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
@@ -32,6 +33,8 @@ export function useScrollTrack({
   disableGestures = false,
   fadeOutDelay = DEFAULT_OPTIONS.fadeOutDelay,
   hitSlop = DEFAULT_OPTIONS.hitSlop,
+  horizontal = false,
+  insets,
   minScrollDistanceToShow = DEFAULT_OPTIONS.minScrollDistanceToShow,
   onContentSizeChange,
   onDragEnd,
@@ -43,14 +46,19 @@ export function useScrollTrack({
   scrollRef,
   styling = {},
 }: UseScrollTrackParams) {
-  const scrollPosition = useRef(new Animated.Value(0)).current;
-  const [containerHeight, setContainerHeight] = useState(0);
-  const [contentHeight, setContentHeight] = useState(0);
+  const horizontalScrollPosition = useRef(new Animated.Value(0)).current;
+  const verticalScrollPosition = useRef(new Animated.Value(0)).current;
+  const [containerSize, setContainerSize] = useState({ height: 0, width: 0 });
+  const [contentSize, setContentSize] = useState({ height: 0, width: 0 });
   const [autoHidden, setAutoHidden] = useState(!alwaysVisible);
   const draggingRef = useRef(false);
   const hoveredRef = useRef(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const scrollable = contentHeight - containerHeight > minScrollDistanceToShow;
+  const verticallyScrollable =
+    !horizontal && contentSize.height - containerSize.height > minScrollDistanceToShow;
+  const horizontallyScrollable =
+    horizontal && contentSize.width - containerSize.width > minScrollDistanceToShow;
+  const scrollable = verticallyScrollable || horizontallyScrollable;
 
   const clearHideTimer = useCallback(() => {
     if (hideTimer.current != null) {
@@ -87,33 +95,46 @@ export function useScrollTrack({
 
   const handleLayout = useCallback(
     (event: LayoutChangeEvent) => {
-      setContainerHeight(event.nativeEvent.layout.height);
+      setContainerSize({
+        height: event.nativeEvent.layout.height,
+        width: event.nativeEvent.layout.width,
+      });
       onLayout?.(event);
     },
     [onLayout],
   );
   const handleContentSizeChange = useCallback(
     (width: number, height: number) => {
-      setContentHeight(height);
+      setContentSize({ height, width });
       onContentSizeChange?.(width, height);
     },
     [onContentSizeChange],
   );
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      scrollPosition.setValue(Math.max(0, event.nativeEvent.contentOffset.y));
+      horizontalScrollPosition.setValue(Math.max(0, event.nativeEvent.contentOffset.x));
+      verticalScrollPosition.setValue(Math.max(0, event.nativeEvent.contentOffset.y));
       if (scrollable && !draggingRef.current) showTemporarily();
       onScroll?.(event);
     },
-    [onScroll, scrollPosition, scrollable, showTemporarily],
+    [horizontalScrollPosition, onScroll, scrollable, showTemporarily, verticalScrollPosition],
   );
   const scrollToPosition = useCallback(
-    (position: number) => {
-      const offset = Math.max(0, contentHeight - containerHeight) * position;
-      scrollRef.current?.scrollTo?.({ animated: !draggingRef.current, y: offset });
+    (axis: "horizontal" | "vertical", position: number) => {
+      const offset =
+        Math.max(
+          0,
+          axis === "horizontal"
+            ? contentSize.width - containerSize.width
+            : contentSize.height - containerSize.height,
+        ) * position;
+      scrollRef.current?.scrollTo?.({
+        animated: !draggingRef.current,
+        [axis === "horizontal" ? "x" : "y"]: offset,
+      });
       if (!draggingRef.current) showTemporarily();
     },
-    [containerHeight, contentHeight, scrollPosition, scrollRef, showTemporarily],
+    [containerSize, contentSize, scrollRef, showTemporarily],
   );
   const handleDragStart = useCallback(() => {
     draggingRef.current = true;
@@ -151,41 +172,68 @@ export function useScrollTrack({
   );
   const ScrollTrackElement = useMemo(
     () => (
-      <ScrollTrack
-        alwaysVisible={alwaysVisible}
-        containerHeight={containerHeight}
-        contentHeight={contentHeight}
-        disableGestures={disableGestures}
-        hitSlop={hitSlop}
-        onDragEnd={handleDragEnd}
-        onDragStart={handleDragStart}
-        onHoverChange={handleHoverChange}
-        onPressChange={handlePressChange}
-        onPressEnd={onPressEnd}
-        onPressStart={onPressStart}
-        onScrollToPosition={scrollToPosition}
-        scrollPosition={scrollPosition}
-        styling={styling}
-        visible={!autoHidden && scrollable}
-      />
+      <>
+        <ScrollTrack
+          alwaysVisible={alwaysVisible}
+          axis="vertical"
+          containerSize={containerSize.height}
+          contentSize={contentSize.height}
+          disableGestures={disableGestures}
+          hitSlop={hitSlop}
+          insets={insets}
+          onDragEnd={handleDragEnd}
+          onDragStart={handleDragStart}
+          onHoverChange={handleHoverChange}
+          onPressChange={handlePressChange}
+          onPressEnd={onPressEnd}
+          onPressStart={onPressStart}
+          onScrollToPosition={scrollToPosition}
+          scrollPosition={verticalScrollPosition}
+          styling={styling}
+          visible={!autoHidden && verticallyScrollable}
+        />
+        <ScrollTrack
+          alwaysVisible={alwaysVisible}
+          axis="horizontal"
+          containerSize={containerSize.width}
+          contentSize={contentSize.width}
+          disableGestures={disableGestures}
+          hitSlop={hitSlop}
+          insets={insets}
+          onDragEnd={handleDragEnd}
+          onDragStart={handleDragStart}
+          onHoverChange={handleHoverChange}
+          onPressChange={handlePressChange}
+          onPressEnd={onPressEnd}
+          onPressStart={onPressStart}
+          onScrollToPosition={scrollToPosition}
+          scrollPosition={horizontalScrollPosition}
+          styling={styling}
+          visible={!autoHidden && horizontallyScrollable}
+        />
+      </>
     ),
     [
       alwaysVisible,
       autoHidden,
-      containerHeight,
-      contentHeight,
+      containerSize,
+      contentSize,
       disableGestures,
       handleDragEnd,
       handleDragStart,
       handleHoverChange,
       handlePressChange,
       hitSlop,
+      horizontal,
       onPressEnd,
       onPressStart,
-      scrollPosition,
+      horizontalScrollPosition,
       scrollToPosition,
-      scrollable,
+      insets,
       styling,
+      verticallyScrollable,
+      horizontallyScrollable,
+      verticalScrollPosition,
     ],
   );
 
