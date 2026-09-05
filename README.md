@@ -117,6 +117,13 @@ export default function App() {
 }
 ```
 
+Toast 默认在 Android/iOS 使用 Burnt，Web 使用基础 Sonner Toast。可通过
+`toasterProps.defaultNative` 统一覆盖；单次调用传入的 `native` 优先级更高：
+
+```tsx
+<RootProvider toasterProps={{ defaultNative: false }}>{children}</RootProvider>
+```
+
 主题使用 RNR New York 风格的语义变量，如 `background`、`primaryBackground`、`foreground`、`primary`、`accent`、`muted`、`card`、`popover`、`border` 与 `ring`。内置强调色只覆盖强调色相关字段，不提供旧式编号色阶；完整自定义主题可覆盖全部语义字段。
 
 内置强调色：`mono`、`ocean`、`sakura`、`lavender`、`sunset`、`forest`、`ruby`、`golden`、`aqua`。

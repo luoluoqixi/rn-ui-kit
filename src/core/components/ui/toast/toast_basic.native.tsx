@@ -82,6 +82,7 @@ export function BasicToaster({
   accentThemeName: _accentThemeName,
   viewportName,
   offset,
+  defaultNative: _defaultNative,
   iconSize = "default",
   basicHaptics,
   haptics,

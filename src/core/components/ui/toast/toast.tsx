@@ -1,5 +1,4 @@
 import * as React from "react";
-import { Platform } from "react-native";
 import {
   dismissAllBasicToasts,
   dismissBasicToast,
@@ -17,20 +16,41 @@ import type {
   ToastPromiseData,
   ToastShowOptions,
 } from "./types";
-import { isIos, isWeb } from "../utils";
+import { isWeb } from "../utils";
 
 let toastId = 0;
 type ToastKind = "default" | "error" | "info" | "loading" | "success" | "warning";
 
-function useNative(options?: ToastShowOptions) {
+const ToastDefaultNativeContext = React.createContext<boolean | undefined>(undefined);
+
+export function ToastDefaultsProvider({
+  children,
+  defaultNative,
+}: {
+  children: React.ReactNode;
+  defaultNative?: boolean;
+}) {
+  return (
+    <ToastDefaultNativeContext.Provider value={defaultNative}>
+      {children}
+    </ToastDefaultNativeContext.Provider>
+  );
+}
+
+function useNative(options?: ToastShowOptions, defaultNative?: boolean) {
   if (isWeb()) return false;
   if (options?.native === undefined) {
-    return isIos();
+    return defaultNative ?? true;
   }
   return options.native === true;
 }
-function show(title: TitleToast, kind: ToastKind, options?: ToastShowOptions): string | number {
-  if (useNative(options)) {
+function show(
+  title: TitleToast,
+  kind: ToastKind,
+  options: ToastShowOptions | undefined,
+  defaultNative: boolean | undefined,
+): string | number {
+  if (useNative(options, defaultNative)) {
     return showNativeToast(title, kind, options) ?? getToastId(options?.id, () => ++toastId);
   }
   return showBasicToast(title, kind, options);
@@ -41,6 +61,7 @@ function resolvePromise<T>(value: ToastPromise<T>): Promise<T> {
 
 export function useToast(): ToastContext {
   const scopedPortalHost = useScopedOverlayPortalHostName();
+  const defaultNative = React.useContext(ToastDefaultNativeContext);
   // TrueSheet mounts a named Toaster in its own native window; route unqualified
   // Sonner toasts there so they render above the Sheet without a touch-blocking Modal.
   const resolveOptions = React.useCallback(
@@ -59,24 +80,24 @@ export function useToast(): ToastContext {
     [scopedPortalHost],
   );
   const message = (title: TitleToast, options?: ToastShowOptions) =>
-    show(title, "default", resolveOptions(options));
+    show(title, "default", resolveOptions(options), defaultNative);
   const info = (title: TitleToast, options?: ToastShowOptions) =>
-    show(title, "info", resolveOptions(options));
+    show(title, "info", resolveOptions(options), defaultNative);
   const success = (title: TitleToast, options?: ToastShowOptions) =>
-    show(title, "success", resolveOptions(options));
+    show(title, "success", resolveOptions(options), defaultNative);
   const error = (title: TitleToast, options?: ToastShowOptions) =>
-    show(title, "error", resolveOptions(options));
+    show(title, "error", resolveOptions(options), defaultNative);
   const warning = (title: TitleToast, options?: ToastShowOptions) =>
-    show(title, "warning", resolveOptions(options));
+    show(title, "warning", resolveOptions(options), defaultNative);
   const loading = (title: TitleToast, options?: ToastShowOptions) =>
-    show(title, "loading", resolveOptions(options));
+    show(title, "loading", resolveOptions(options), defaultNative);
   const custom = (jsx: (id: string | number) => React.ReactElement, options?: ToastShowOptions) =>
     showBasicCustom(jsx, resolveOptions(options));
   const promise = <ToastData,>(
     promiseValue: ToastPromise<ToastData>,
     data?: ToastPromiseData<ToastData>,
   ) => {
-    const native = useNative({ native: data?.native });
+    const native = useNative({ native: data?.native }, defaultNative);
     const loadingId =
       data?.loading != null
         ? loading(resolveRenderProp(data.loading, undefined), {

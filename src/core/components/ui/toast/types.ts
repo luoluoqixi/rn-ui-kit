@@ -105,6 +105,11 @@ export type ToastNativeToasterProps = {
   accentThemeName?: string;
   viewportName?: string;
   offset?: number;
+  /**
+   * Default adapter for Toast calls that do not specify `native`. Defaults to native on mobile;
+   * web always uses the basic adapter.
+   */
+  defaultNative?: boolean;
   /** Size of status icons rendered by the non-native Toast adapter. */
   iconSize?: IconProps["size"];
   /** Defaults to true for basic success/warning/error toasts on native platforms. */

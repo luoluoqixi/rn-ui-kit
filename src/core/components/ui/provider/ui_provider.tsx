@@ -4,6 +4,7 @@ import { PortalProvider as TeleportPortalProvider } from "react-native-teleport"
 
 import { NativeDialogProvider } from "../native_dialog";
 import { Toaster } from "../toast/toaster";
+import { ToastDefaultsProvider } from "../toast/toast";
 import { NativeHapticsProvider } from "../utils";
 import {
   AppBackgroundColorsProvider,
@@ -43,13 +44,15 @@ export function UIProvider({
             <TeleportPortalProvider>
               <NativeDialogProvider>
                 <NativeHapticsProvider enabledByDefault={defaultNativeHapticsEnabled}>
-                  {children}
-                  <PortalHost />
-                  {CustomToaster ? (
-                    <CustomToaster {...toasterProps} accentThemeName={resolvedAccentThemeName} />
-                  ) : (
-                    <Toaster {...toasterProps} accentThemeName={resolvedAccentThemeName} />
-                  )}
+                  <ToastDefaultsProvider defaultNative={toasterProps?.defaultNative}>
+                    {children}
+                    <PortalHost />
+                    {CustomToaster ? (
+                      <CustomToaster {...toasterProps} accentThemeName={resolvedAccentThemeName} />
+                    ) : (
+                      <Toaster {...toasterProps} accentThemeName={resolvedAccentThemeName} />
+                    )}
+                  </ToastDefaultsProvider>
                 </NativeHapticsProvider>
               </NativeDialogProvider>
             </TeleportPortalProvider>

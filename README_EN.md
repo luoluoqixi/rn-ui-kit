@@ -94,6 +94,13 @@ export default function App() {
 }
 ```
 
+Toast defaults to Burnt on Android and iOS, and the basic Sonner Toast on web. Override this
+globally with `toasterProps.defaultNative`; a per-call `native` option takes precedence:
+
+```tsx
+<RootProvider toasterProps={{ defaultNative: false }}>{children}</RootProvider>
+```
+
 Themes follow the RNR New York semantic variable model: `background`, `primaryBackground`, `foreground`, `primary`, `accent`, `muted`, `card`, `popover`, `border`, and `ring`. Built-in accents only override accent-related fields and do not expose numbered color scales; complete custom themes can override every semantic field.
 
 Built-in accents: `mono`, `ocean`, `sakura`, `lavender`, `sunset`, `forest`, `ruby`, `golden`, and `aqua`.
