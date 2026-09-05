@@ -20,7 +20,7 @@
   "dependencies": {
     "@expo/metro-runtime": "=6.1.2",
     "@lodev09/react-native-true-sheet": "=3.11.12",
-    "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_09_05",
+    "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_09_05_2",
     "@react-native-async-storage/async-storage": "=2.2.0",
     "@react-native-menu/menu": "=2.0.0",
     "@react-native-picker/picker": "^2.11.4",
