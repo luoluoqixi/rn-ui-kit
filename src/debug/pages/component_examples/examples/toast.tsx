@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Button, isIos, isWeb, Switch, Text, useToast } from "rn-ui-kit/core";
+import { Button, isWeb, Switch, Text, useToast } from "rn-ui-kit/core";
 import { View } from "react-native";
 
 import { ExampleBlock, ExampleRow, ExampleStack } from "../shared";
 
 export function ToastExample() {
   const { toast } = useToast();
-  const [isNative, setIsNative] = useState(isIos());
+  const [isNative, setIsNative] = useState(!isWeb());
 
   const showLoadingThenSuccess = () => {
     const id = toast.loading("正在刷新索引", {
