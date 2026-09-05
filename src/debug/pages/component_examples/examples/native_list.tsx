@@ -82,10 +82,10 @@ const NATIVE_LIST_BASIC_STYLE_OPTIONS: SelectItemData[] = [
 ];
 
 function renderNativeListSortTrailing(context: NativeListSectionRenderContext) {
-  const { editMode } = context;
+  const { disabled, editMode } = context;
   return (
     <Select
-      disabled={editMode}
+      disabled={disabled || editMode}
       value="defaultSort"
       renderValue={() => "排序方式"}
       options={NATIVE_LIST_SORT_LIST}
@@ -137,6 +137,7 @@ export function NativeListExample() {
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
   const [customEditModeIcon, setCustomEditModeIcon] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [rowsDisabled, setRowsDisabled] = useState(false);
   const [usesComplexSectionTrailing, setUsesComplexSectionTrailing] = useState(true);
   const [native, setNative] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Array<string | number>>([]);
@@ -150,9 +151,7 @@ export function NativeListExample() {
   const [workspaceName, setWorkspaceName] = useState("rn-ui-kit");
   const [workspaceNote, setWorkspaceNote] = useState("");
   const [accentColor, setAccentColor] = useState("#7c3aed");
-  const testSectionTrailing = usesComplexSectionTrailing
-    ? renderNativeListSortTrailing
-    : undefined;
+  const testSectionTrailing = usesComplexSectionTrailing ? renderNativeListSortTrailing : undefined;
 
   useEffect(() => {
     if (native) {
@@ -193,13 +192,21 @@ export function NativeListExample() {
             }
           }}
         />
+        <Switch
+          checked={rowsDisabled}
+          label="NativeList disabled"
+          labelPosition="right"
+          onCheckedChange={setRowsDisabled}
+        />
         {isIos15() && native ? (
-          <Switch
-            checked={usesComplexSectionTrailing}
-            label="复杂 Section trailing（iOS15 调试）"
-            labelPosition="right"
-            onCheckedChange={setUsesComplexSectionTrailing}
-          />
+          <>
+            <Switch
+              checked={usesComplexSectionTrailing}
+              label="复杂 Section trailing（iOS15 调试）"
+              labelPosition="right"
+              onCheckedChange={setUsesComplexSectionTrailing}
+            />
+          </>
         ) : null}
         {!(isIos() && native) && (
           <Switch
@@ -261,6 +268,7 @@ export function NativeListExample() {
       <View style={styles.nativeListFrame}>
         {native || fallbackMounted ? (
           <NativeList
+            disabled={rowsDisabled}
             nativeHaptics
             dismissKeyboardOnTap
             contextMenuProps={{

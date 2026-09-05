@@ -3,6 +3,10 @@ import { Platform } from "react-native";
 
 import * as Basic from "./native_list_basic";
 import * as Native from "./native_list_native";
+import {
+  NativeListDisabledProvider,
+  useResolvedNativeListDisabled,
+} from "./disabled";
 import { NativeListTriggerFontWeightProvider } from "./native_trigger";
 import { NativeListActionItem as BasicActionItem } from "./native_list_basic/native_list_action_item";
 import { NativeListButtonItem as BasicButtonItem } from "./native_list_basic/native_list_button_item";
@@ -52,38 +56,60 @@ function useResolvedNativeMode(explicit?: boolean) {
 }
 
 /** iOS keeps the historical SwiftUI list as its default; other platforms use basic rows. */
-export function NativeListRoot({ native, nativeTriggerFontWeight, ...props }: NativeListRootProps) {
+export function NativeListRoot({
+  disabled,
+  native,
+  nativeTriggerFontWeight,
+  ...props
+}: NativeListRootProps) {
   const useNative = useResolvedNativeMode(native);
   const Component = useNative ? Native.NativeListRoot : Basic.NativeListRoot;
   return (
-    <NativeListModeContext.Provider value={useNative}>
-      <NativeListTriggerFontWeightProvider nativeTriggerFontWeight={nativeTriggerFontWeight}>
-        <Component {...props} />
-      </NativeListTriggerFontWeightProvider>
-    </NativeListModeContext.Provider>
+    <NativeListDisabledProvider disabled={disabled}>
+      <NativeListModeContext.Provider value={useNative}>
+        <NativeListTriggerFontWeightProvider
+          nativeTriggerFontWeight={nativeTriggerFontWeight}
+        >
+          <Component {...props} />
+        </NativeListTriggerFontWeightProvider>
+      </NativeListModeContext.Provider>
+    </NativeListDisabledProvider>
   );
 }
 
 export const NativeList = NativeListRoot;
 
 export function NativeListSection({
+  disabled,
   native,
   nativeTriggerFontWeight,
   ...props
 }: NativeListSectionProps & { native?: boolean }) {
   const useNative = useResolvedNativeMode(native);
-  const Component = useNative ? Native.NativeListSection : Basic.NativeListSection;
+  const Component = useNative
+    ? Native.NativeListSection
+    : Basic.NativeListSection;
   return (
-    <NativeListTriggerFontWeightProvider nativeTriggerFontWeight={nativeTriggerFontWeight}>
-      <Component {...props} />
-    </NativeListTriggerFontWeightProvider>
+    <NativeListDisabledProvider disabled={disabled}>
+      <NativeListTriggerFontWeightProvider
+        nativeTriggerFontWeight={nativeTriggerFontWeight}
+      >
+        <Component {...props} />
+      </NativeListTriggerFontWeightProvider>
+    </NativeListDisabledProvider>
   );
 }
 
-function dispatchItem(native: boolean | undefined, NativeItem: any, BasicItem: any, props: any) {
+function dispatchItem(
+  native: boolean | undefined,
+  NativeItem: any,
+  BasicItem: any,
+  props: any,
+) {
   const useNative = useResolvedNativeMode(native);
+  const disabled = useResolvedNativeListDisabled(props.disabled);
   const Component = useNative ? NativeItem : BasicItem;
-  return <Component {...props} />;
+  return <Component {...props} disabled={disabled} />;
 }
 
 export const NativeListActionItem = (props: NativeListActionItemProps & { native?: boolean }) =>

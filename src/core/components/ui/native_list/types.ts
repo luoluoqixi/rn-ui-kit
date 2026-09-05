@@ -241,6 +241,8 @@ export type NativeListTextAreaItemProps = Omit<NativeListCustomItemProps, "child
 
 /** Section 各 RenderProp 可读取的 NativeList 状态。 */
 export type NativeListSectionRenderContext = {
+  /** 当前 Section 是否被 NativeList 或 Section 总控禁用。 */
+  disabled: boolean;
   /** 当前列表是否处于编辑模式。 */
   editMode: boolean;
   /** 当前 Section 解析后的 disabled 样式策略。 */
@@ -262,6 +264,8 @@ export type NativeListSectionProps = {
   children?: ReactNode;
   /** 当前 Section 内所有行的菜单；覆盖 NativeList 配置。传 `false` 可关闭继承菜单。 */
   contextMenuProps?: NativeListContextMenuProps | false;
+  /** 禁用当前 Section 内的所有行；NativeList 根节点禁用时不能在 Section 内重新启用。 */
+  disabled?: boolean;
   /** Section 内 disabled 行是否显示禁用视觉；覆盖 NativeList 设置，默认继承。 */
   disabledStyle?: boolean;
   /** Section 内行默认使用的震动设置；覆盖 NativeList 根节点。 */
@@ -290,6 +294,8 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
     iosPressFeedback?: NativeListIosPressFeedback;
     /** 所有行默认使用的菜单；Section 或 item 可逐级覆盖。 */
     contextMenuProps?: NativeListContextMenuProps;
+    /** 禁用列表中的所有行。 */
+    disabled?: boolean;
     /** 所有 disabled 行是否显示禁用视觉；Section 或 item 可逐级覆盖，默认 true。 */
     disabledStyle?: boolean;
     /** 所有行默认使用的震动设置；Section 或 item 可逐级覆盖。 */

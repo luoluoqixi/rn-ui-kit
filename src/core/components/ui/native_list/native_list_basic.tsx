@@ -47,6 +47,7 @@ import {
   useNativeListEditIcons,
   useNativeListEditRow,
 } from "./edit_mode";
+import { useResolvedNativeListDisabled } from "./disabled";
 import type {
   NativeListActionItemProps,
   NativeListButtonItemProps,
@@ -923,6 +924,7 @@ export function NativeListSection({
         : sectionShadow;
   const editMode = useNativeListEditMode();
   const editContext = useNativeListEditContext();
+  const resolvedDisabled = useResolvedNativeListDisabled();
   const resolvedContextMenuProps = useResolvedNativeListContextMenu(contextMenuProps);
   const resolvedDisabledStyle = useResolvedNativeListDisabledStyle(disabledStyle);
   const resolvedNativeHaptics = useResolvedNativeListHaptics(nativeHaptics);
@@ -930,6 +932,7 @@ export function NativeListSection({
   const sectionTextFontSize = titleFontSize ?? NATIVE_LIST_BASIC_SECTION_TEXT_FONT_SIZE;
   const renderContext = {
     contextMenuProps: resolvedContextMenuProps,
+    disabled: resolvedDisabled,
     disabledStyle: resolvedDisabledStyle,
     editMode,
     isSelected: editContext.isSelected,
