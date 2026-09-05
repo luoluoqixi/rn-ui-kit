@@ -276,6 +276,7 @@ type SwiftUIButtonStyle =
   | "borderless"
   | "glass"
   | "glassProminent"
+  | "noPressEffect"
   | "plain";
 
 export const Ios15FirstVisibleRowContext = createContext(false);
@@ -955,6 +956,11 @@ export function NativePressRow({
   // Keep the ContextMenu / Trigger wrapper in place on iOS 15 while editing or
   // disabled. Only its native interaction changes, preserving the List row tree.
   const preservesIos15ContextMenu = isIos15() && resolvedContextMenuProps != null;
+  // iOS 15 keeps an otherwise passive row inside a Button so entering edit mode
+  // does not replace HStack with Button. This style keeps the Button behavior and
+  // tree without applying pressed-state visuals to its label.
+  const resolvedBtnStyle =
+    isIos15() && onPress == null ? (btnStyle ?? "noPressEffect") : btnStyle;
 
   return (
     <NativeRowContainer
@@ -970,7 +976,7 @@ export function NativePressRow({
       nativeSelectionActive={editRow.nativeSelection}
       nativeSelectionId={nativeSelectionId}
       onPress={handlePress}
-      btnStyle={btnStyle}
+      btnStyle={resolvedBtnStyle}
       btnTint={btnTint}
       nativeScrollId={nativeScrollId}
       paddingBottom={paddingBottom}
