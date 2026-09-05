@@ -612,7 +612,9 @@ export function NativeRowContainer({
   const resolvedTint = resolveNativeListBtnTintColor(btnTint, primaryColor);
   const resolvedDisabledStyle = useResolvedNativeListDisabledStyle(disabledStyle);
   const swiftUIContextMenuProps =
-    !disabled && hasSwiftUIContextMenu(contextMenuProps) ? contextMenuProps : undefined;
+    (!disabled || contextMenuDisabled) && hasSwiftUIContextMenu(contextMenuProps)
+      ? contextMenuProps
+      : undefined;
   const baseModifiers = [
     ROW_INSETS,
     ...(disabled && resolvedDisabledStyle ? [opacity(NATIVE_LIST_DISABLED_OPACITY)] : []),
@@ -940,27 +942,28 @@ export function NativePressRow({
       }
     : undefined;
   // iOS 15 exposes a UITableView-backed SwiftUI List. Keep selection metadata
-  // present across edit-mode transitions so rows are not structurally replaced.
+  // present across edit-mode and disabled transitions so rows are not structurally replaced.
   const nativeSelectionId =
-    isIos15() && !disabled && !selectionDisabled
+    isIos15() && !selectionDisabled
       ? editRow.selectionId
       : editRow.nativeSelection
         ? editRow.selectionId
         : undefined;
-  // Keep the ContextMenu / Trigger wrapper in place on iOS 15 while editing.
-  // The native interaction is disabled so editing mode still has no row menu.
-  const keepsIos15ContextMenu = isIos15() && editRow.editMode;
+  const contextMenuUnavailable = Boolean(
+    disabled || editRow.editMode || resolvedContextMenuProps?.triggerProps?.disabled,
+  );
+  // Keep the ContextMenu / Trigger wrapper in place on iOS 15 while editing or
+  // disabled. Only its native interaction changes, preserving the List row tree.
+  const preservesIos15ContextMenu = isIos15() && resolvedContextMenuProps != null;
 
   return (
     <NativeRowContainer
       contextMenuProps={
-        disabled || resolvedContextMenuProps?.triggerProps?.disabled
-          ? undefined
-          : keepsIos15ContextMenu || !editRow.editMode
-            ? resolvedContextMenuProps
-            : undefined
+        preservesIos15ContextMenu || !contextMenuUnavailable
+          ? resolvedContextMenuProps
+          : undefined
       }
-      contextMenuDisabled={keepsIos15ContextMenu}
+      contextMenuDisabled={preservesIos15ContextMenu && contextMenuUnavailable}
       disabled={disabled}
       disabledStyle={disabledStyle}
       ios15FirstRowTopInset={ios15FirstRowTopInset}
