@@ -18,7 +18,6 @@ import {
   Swatches,
   accentThemeNames,
   accentThemeSwatchColors,
-  isIos15,
   type UiPreferences,
 } from "rn-ui-kit";
 
@@ -68,7 +67,6 @@ function createThemeDebugPage(
         >
           <NativeListSection title="主题">
             <NativeListSelectItem
-              iosSwiftNativeMenu={isIos15()}
               selectProps={{
                 options: accentOptions,
                 onValueChange: (value: string | null) => {
@@ -119,7 +117,6 @@ function createThemeDebugPage(
               />
             ) : null}
             <NativeListSelectItem
-              iosSwiftNativeMenu={isIos15()}
               selectProps={{
                 options: [
                   { label: "浅色", value: "light" },
