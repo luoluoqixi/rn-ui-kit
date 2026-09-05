@@ -98,7 +98,7 @@
   },
   "devDependencies": {
     "@lodev09/react-native-true-sheet": "=3.11.12",
-    "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_09_05_2",
+    "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_09_05_3",
     "@react-native-picker/picker": "=2.11.4",
     "@react-navigation/elements": "^2.9.38",
     "@react-navigation/native": "=7.3.16",
@@ -135,7 +135,7 @@
   },
   "peerDependencies": {
     "@lodev09/react-native-true-sheet": "=3.11.12",
-    "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_09_05_2",
+    "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_09_05_3",
     "@react-native-picker/picker": "^2.11.4",
     "@react-navigation/elements": "^2.9.38",
     "@react-navigation/native": "=7.3.16",
