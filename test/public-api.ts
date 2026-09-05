@@ -282,6 +282,10 @@ const nativeListMenuItemProps = {
 void nativeListMenuItemProps;
 
 const nativeListEditModeProps = {
+  basicScrollViewProps: {
+    customScrollbar: true,
+    scrollEnabled: false,
+  },
   editMode: true,
   onSelectedIdsChange: (_selectedIds: NativeListSelectionId[]) => {},
   refreshColor: "#7c3aed",

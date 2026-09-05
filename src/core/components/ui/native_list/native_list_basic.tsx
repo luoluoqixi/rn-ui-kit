@@ -989,6 +989,7 @@ export function NativeListSection({
 }
 
 export function NativeListRoot({
+  basicScrollViewProps,
   children,
   contextMenuProps,
   contentContainerStyle,
@@ -1034,6 +1035,12 @@ export function NativeListRoot({
   } = listStyleOptions ?? {};
   const resolvedShowBorder = showBorder ?? false;
   const [refreshing, setRefreshing] = useState(false);
+  const {
+    contentContainerStyle: basicContentContainerStyle,
+    refreshControl: basicRefreshControl,
+    style: basicScrollViewStyle,
+    ...basicScrollViewRestProps
+  } = basicScrollViewProps ?? {};
   const content = (
     <NativeListBasicStyleContext.Provider value={listStyle}>
       <NativeListBasicBorderRadiusContext.Provider value={borderRadius}>
@@ -1111,14 +1118,16 @@ export function NativeListRoot({
   return (
     <ScrollView
       {...scrollViewProps}
+      {...basicScrollViewRestProps}
       contentContainerStyle={[
         styles.content,
         contentContainerStyle,
+        basicContentContainerStyle,
         contentMarginTop != null && { paddingTop: contentMarginTop },
         contentMarginBottom != null && { paddingBottom: contentMarginBottom },
       ]}
       refreshControl={
-        onRefresh == null ? undefined : (
+        onRefresh == null ? basicRefreshControl : (
           <RefreshControl
             colors={[refreshColor ?? theme.primary]}
             enabled={!editMode}
@@ -1132,7 +1141,7 @@ export function NativeListRoot({
           />
         )
       }
-      style={[styles.root, { backgroundColor: backgrounds.screen }, style]}
+      style={[styles.root, { backgroundColor: backgrounds.screen }, style, basicScrollViewStyle]}
     >
       {content}
     </ScrollView>

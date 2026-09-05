@@ -10,6 +10,7 @@ import type { InputProps } from "../input";
 import type { TextareaProps } from "../textarea";
 import type { ColorPickerProps } from "../color_picker";
 import type { NativeSheetProps } from "../sheet/native_sheet/types";
+import type { ScrollViewProps as BasicScrollViewProps } from "../scroll_view";
 import type { NativeHapticsSetting } from "../utils";
 import type { NavigationBarScrollEdgeTrackingProps } from "../utils/navigation";
 import type { RenderProp } from "../utils/render";
@@ -287,6 +288,8 @@ export type NativeListSectionProps = {
 /** NativeList Root props */
 export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
   NavigationBarScrollEdgeTrackingProps & {
+    /** Basic List 内部 ScrollView 的配置；iOS 原生 List 会忽略此项。 */
+    basicScrollViewProps?: BasicScrollViewProps;
     /** 列表宿主背景色：iOS 原生 List 直接作用于 List，自定义 fallback 作用于根容器。 */
     backgroundColor?: ViewStyle["backgroundColor"];
     children?: ReactNode;
