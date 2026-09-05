@@ -43,7 +43,12 @@ function NativeSheetStackRoot({
   open = false,
   overlayPortalHostName,
   headerLeft,
+  headerLeftButtonProps,
+  headerLeftItems,
+  headerRight,
   headerRightButtonProps,
+  headerRightButtonVisible,
+  headerRightItems,
   screenOptions,
   sheetProps,
 }: NativeSheetStackProps) {
@@ -75,7 +80,12 @@ function NativeSheetStackRoot({
         onDidDismiss={() => onOpenChange?.(false)}
         overlayPortalHostName={overlayPortalHostName}
         headerLeft={headerLeft}
+        headerLeftButtonProps={headerLeftButtonProps}
+        headerLeftItems={headerLeftItems}
+        headerRight={headerRight}
         headerRightButtonProps={headerRightButtonProps}
+        headerRightButtonVisible={headerRightButtonVisible}
+        headerRightItems={headerRightItems}
         screenOptions={screenOptions}
         sheetProps={{
           dismissible: hasOpenSheetAbove ? false : undefined,
@@ -100,7 +110,12 @@ function NativeSheetStackRoot({
       onDidDismiss={() => onOpenChange?.(false)}
       overlayPortalHostName={overlayPortalHostName}
       headerLeft={headerLeft}
+      headerLeftButtonProps={headerLeftButtonProps}
+      headerLeftItems={headerLeftItems}
+      headerRight={headerRight}
       headerRightButtonProps={headerRightButtonProps}
+      headerRightButtonVisible={headerRightButtonVisible}
+      headerRightItems={headerRightItems}
       screenOptions={screenOptions}
       sheetProps={{
         ...(trueSheetProps as Omit<TrueSheetProps, "children" | "header" | "name">),

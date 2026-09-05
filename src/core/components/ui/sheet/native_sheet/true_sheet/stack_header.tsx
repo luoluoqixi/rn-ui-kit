@@ -1,70 +1,50 @@
-import { ColorValue, Pressable, PressableProps, StyleProp, TextStyle } from "react-native";
-import { type ButtonProps } from "../../../button";
-import { Text } from "../../../text";
+import { Button } from "../../../button";
+import { cn } from "../../../utils";
+import type { NativeSheetStackHeaderButtonProps } from "../types";
+import { shouldTrueSheetStackHeaderButtonClose } from "./stack_header_button";
 
-import { useTrueSheetStackHost } from "./stack_context";
-import { ReactNode } from "react";
-import React from "react";
-import { cn, useUiTheme, isWeb } from "../../../utils";
-
-function normalizeButtonChildren(
-  children: React.ReactNode,
-  textClassName?: string,
-  textStyle?: StyleProp<TextStyle>,
-): React.ReactNode {
-  return React.Children.map(children, (child) =>
-    typeof child === "string" || typeof child === "number" ? (
-      <Text className={textClassName} style={textStyle}>
-        {child}
-      </Text>
-    ) : (
-      child
-    ),
-  ) as React.ReactNode;
-}
-
-export type HeaderCloseButtonType = PressableProps & {
-  title?: ReactNode;
-  titleClassName?: string;
-  titleStyle?: StyleProp<TextStyle>;
-  buttonColor?: ColorValue;
+type CustomHeaderButtonOptions = {
+  buttonProps?: NativeSheetStackHeaderButtonProps;
+  defaultCloseSheetOnPress: boolean;
+  defaultLabel: string;
+  onRequestClose: () => void;
 };
 
-/** 原生 Stack `headerRight`：关闭当前 True Sheet。 */
-export function TrueSheetStackHeaderCloseButton({
-  title,
-  titleClassName,
-  titleStyle,
-  onPress,
-  buttonColor,
-  ...buttonProps
-}: HeaderCloseButtonType) {
-  const { onRequestClose } = useTrueSheetStackHost();
-  const theme = useUiTheme();
-
-  const titleNode = title ?? (buttonProps.children == null ? "关闭" : undefined);
-  const handlePress: NonNullable<ButtonProps["onPress"]> = (event) => {
-    onPress?.(event);
-    if (!event.defaultPrevented) {
-      onRequestClose();
-    }
-  };
+/** Android/Web Stack Header 使用的 React Button。 */
+export function TrueSheetStackCustomHeaderButton({
+  buttonProps,
+  defaultCloseSheetOnPress,
+  defaultLabel,
+  onRequestClose,
+}: CustomHeaderButtonOptions) {
+  const customButtonProps = buttonProps?.customButtonProps;
+  const { onPress: onCustomPress, ...restCustomButtonProps } = customButtonProps ?? {};
+  const resolvedLabel =
+    buttonProps?.label ??
+    buttonProps?.title ??
+    customButtonProps?.title ??
+    (customButtonProps?.children == null ? defaultLabel : undefined);
 
   return (
-    <Pressable
-      {...buttonProps}
-      className={cn("p-2 active:opacity-60", isWeb() && "hover:opacity-80", buttonProps.className)}
-      aria-label={buttonProps["aria-label"] ?? "Close"}
-      onPress={handlePress}
-    >
-      {
-        (typeof titleNode === "function"
-          ? titleNode
-          : normalizeButtonChildren(titleNode, cn("text-[17px]", titleClassName), [
-              titleStyle,
-              { color: buttonColor ?? theme.primary },
-            ])) as React.ReactNode
-      }
-    </Pressable>
+    <Button
+      {...restCustomButtonProps}
+      accessibilityHint={buttonProps?.accessibilityHint ?? customButtonProps?.accessibilityHint}
+      accessibilityLabel={buttonProps?.accessibilityLabel ?? customButtonProps?.accessibilityLabel}
+      buttonColor={buttonProps?.tintColor ?? customButtonProps?.buttonColor}
+      disabled={buttonProps?.disabled ?? customButtonProps?.disabled}
+      onPress={(event) => {
+        onCustomPress?.(event);
+        if (event.defaultPrevented) return;
+
+        buttonProps?.onPress?.();
+        if (shouldTrueSheetStackHeaderButtonClose(buttonProps, defaultCloseSheetOnPress)) {
+          onRequestClose();
+        }
+      }}
+      title={resolvedLabel}
+      variant={customButtonProps?.variant ?? "link"}
+      size={customButtonProps?.size ?? "lg"}
+      textClassName={cn("no-underline text-lg", customButtonProps?.textClassName)}
+    />
   );
 }

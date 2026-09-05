@@ -10,15 +10,21 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { isIos26Plus, os } from "../../../utils/platform";
 import { withNativeBackButton } from "../../../utils/navigation";
 import { ScreenOverlayPortalProvider } from "../../../utils/overlay";
-import { useAppBackgroundColors } from "../../../utils/theme";
+import { useAppBackgroundColors, useUiTheme } from "../../../utils/theme";
 
+import type {
+  NativeSheetStackHeaderButtonProps,
+  NativeSheetStackHeaderLeftItems,
+  NativeSheetStackHeaderRightItems,
+} from "../types";
 import { TrueSheetOverlayLayoutProvider } from "./overlay_layout_context";
 import {
   getTrueSheetGestureRootStyle,
   getTrueSheetStackHostScrollableProps,
 } from "./platform_sheet_defaults";
 import { TrueSheetStackHostProvider } from "./stack_context";
-import { TrueSheetStackHeaderCloseButton, type HeaderCloseButtonType } from "./stack_header";
+import { TrueSheetStackCustomHeaderButton } from "./stack_header";
+import { createTrueSheetStackNativeHeaderButton } from "./stack_header_button";
 import {
   TrueSheetStackNavigation,
   type TrueSheetStackNavigationRef,
@@ -42,10 +48,15 @@ export type TrueSheetStackHostProps<ParamList extends ParamListBase = ParamListB
   children: ReactNode;
   /** 当前 True Sheet Stack 宿主专属 overlay host；省略时按 `name` 自动生成。 */
   overlayPortalHostName?: string;
-  /** 可选的 Stack Header 左侧内容；默认不注入。 */
+  /** Android/Web Stack Header 左侧 React 内容。 */
   headerLeft?: TrueSheetInnerStackScreenOptions["headerLeft"];
-  /** 内置 iOS 右侧关闭按钮的完整 Button 属性；`onPress` 执行后仍会请求关闭。 */
-  headerRightButtonProps?: HeaderCloseButtonType;
+  headerLeftButtonProps?: NativeSheetStackHeaderButtonProps;
+  headerLeftItems?: NativeSheetStackHeaderLeftItems;
+  /** Android/Web Stack Header 右侧 React 内容。 */
+  headerRight?: TrueSheetInnerStackScreenOptions["headerRight"];
+  headerRightButtonProps?: NativeSheetStackHeaderButtonProps;
+  headerRightButtonVisible?: boolean;
+  headerRightItems?: NativeSheetStackHeaderRightItems;
   /** 关闭 Sheet 时重置栈到该路由名 */
   initialRouteName?: keyof ParamList & string;
   name: string;
@@ -93,11 +104,17 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
   onRequestClose,
   overlayPortalHostName,
   headerLeft,
+  headerLeftButtonProps,
+  headerLeftItems,
+  headerRight,
   headerRightButtonProps,
+  headerRightButtonVisible,
+  headerRightItems,
   screenOptions,
   sheetProps,
 }: TrueSheetStackHostProps<ParamList>) {
   const appBackgroundColors = useAppBackgroundColors();
+  const theme = useUiTheme();
   const navigationRef = navigationRefProp ?? createTrueSheetStackNavigationRef<ParamList>();
   const overlayLayoutSync = useTrueSheetOverlayLayoutSync(sheetProps);
   const customSheetBackHandler = sheetProps?.onBackPress;
@@ -208,6 +225,40 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
     [overlayLayoutSync, sheetProps?.onWillPresent],
   );
 
+  const customHeaderLeft =
+    headerLeftButtonProps == null
+      ? headerLeft
+      : () => (
+          <TrueSheetStackCustomHeaderButton
+            buttonProps={headerLeftButtonProps}
+            defaultCloseSheetOnPress={false}
+            defaultLabel="操作"
+            onRequestClose={handleRequestClose}
+          />
+        );
+  const shouldShowDefaultHeaderRightButton = headerRightButtonVisible ?? platform === "ios";
+  const customHeaderRight =
+    headerRightButtonProps != null
+      ? shouldShowDefaultHeaderRightButton
+        ? () => (
+            <TrueSheetStackCustomHeaderButton
+              buttonProps={headerRightButtonProps}
+              defaultCloseSheetOnPress
+              defaultLabel="关闭"
+              onRequestClose={handleRequestClose}
+            />
+          )
+        : headerRight
+      : headerRight ??
+        (shouldShowDefaultHeaderRightButton
+          ? () => (
+              <TrueSheetStackCustomHeaderButton
+                defaultCloseSheetOnPress
+                defaultLabel="关闭"
+                onRequestClose={handleRequestClose}
+              />
+            )
+          : undefined);
   const mergedScreenOptions: TrueSheetInnerStackScreenOptions = {
     // iOS Native Stack 会从上一页的 title/headerTitle 推导返回文案。
     ...(trueSheetUsesNativeStackNavigator
@@ -220,18 +271,58 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
           ),
           headerBackTitle: "返回",
         }),
-    ...(headerLeft === undefined ? {} : { headerLeft }),
-    headerRight:
-      platform === "ios"
-        ? () => <TrueSheetStackHeaderCloseButton {...headerRightButtonProps} />
-        : undefined,
+    ...(platform === "ios" || customHeaderLeft === undefined
+      ? {}
+      : { headerLeft: customHeaderLeft }),
+    ...(platform === "ios" || customHeaderRight === undefined
+      ? {}
+      : { headerRight: customHeaderRight }),
     headerShown: true,
+    headerTintColor: theme.primary,
+    headerTitleStyle: { color: theme.foreground },
     ...screenOptions,
   };
 
   const nativeScreenOptions = mergedScreenOptions as NativeStackNavigationOptions;
+  const configuredHeaderLeftItems =
+    headerLeftItems ?? nativeScreenOptions.unstable_headerLeftItems;
+  const configuredHeaderRightItems =
+    headerRightItems ?? nativeScreenOptions.unstable_headerRightItems;
+  const resolvedNativeScreenOptions: NativeStackNavigationOptions = {
+    ...nativeScreenOptions,
+    ...(configuredHeaderLeftItems != null
+      ? { unstable_headerLeftItems: configuredHeaderLeftItems }
+      : headerLeftButtonProps != null
+        ? {
+            unstable_headerLeftItems: ({ tintColor }) => [
+              createTrueSheetStackNativeHeaderButton({
+                buttonProps: headerLeftButtonProps,
+                defaultCloseSheetOnPress: false,
+                defaultLabel: "操作",
+                headerTintColor: tintColor,
+                onRequestClose: handleRequestClose,
+              }),
+            ],
+          }
+        : {}),
+    ...(configuredHeaderRightItems != null
+      ? { unstable_headerRightItems: configuredHeaderRightItems }
+      : shouldShowDefaultHeaderRightButton
+        ? {
+            unstable_headerRightItems: ({ tintColor }) => [
+              createTrueSheetStackNativeHeaderButton({
+                buttonProps: headerRightButtonProps,
+                defaultCloseSheetOnPress: true,
+                defaultLabel: "关闭",
+                headerTintColor: tintColor,
+                onRequestClose: handleRequestClose,
+              }),
+            ],
+          }
+        : {}),
+  };
   const resolvedScreenOptions: TrueSheetInnerStackScreenOptions = trueSheetUsesNativeStackNavigator
-    ? withNativeBackButton(nativeScreenOptions)
+    ? withNativeBackButton(resolvedNativeScreenOptions)
     : mergedScreenOptions;
 
   const insetAdjustment = sheetProps?.insetAdjustment ?? defaultSheetProps.insetAdjustment;

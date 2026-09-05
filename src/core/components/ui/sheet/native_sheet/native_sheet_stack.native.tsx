@@ -21,7 +21,12 @@ function TrueSheetNativeSheetStackRoot({
   open = false,
   overlayPortalHostName,
   headerLeft,
+  headerLeftButtonProps,
+  headerLeftItems,
+  headerRight,
   headerRightButtonProps,
+  headerRightButtonVisible,
+  headerRightItems,
   screenOptions,
   sheetProps,
 }: NativeSheetStackProps) {
@@ -110,7 +115,12 @@ function TrueSheetNativeSheetStackRoot({
       }}
       overlayPortalHostName={resolvedOverlayPortalHostName}
       headerLeft={headerLeft}
+      headerLeftButtonProps={headerLeftButtonProps}
+      headerLeftItems={headerLeftItems}
+      headerRight={headerRight}
       headerRightButtonProps={headerRightButtonProps}
+      headerRightButtonVisible={headerRightButtonVisible}
+      headerRightItems={headerRightItems}
       screenOptions={screenOptions}
       sheetProps={resolvedSheetProps as any}
     >

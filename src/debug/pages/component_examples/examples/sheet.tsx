@@ -1,17 +1,62 @@
+import { type NavigationProp, useNavigation } from "@react-navigation/native";
 import { useState } from "react";
-import { View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
-import { Button, NativeSheet, Text } from "rn-ui-kit/core";
+import {
+  Button,
+  NativeList,
+  NativeListButtonItem,
+  NativeListNavigationItem,
+  NativeListSection,
+  NativeSheet,
+  NativeSheetStack,
+  Text,
+  getNativeStackScrollEdgeHeaderOptions,
+  useAppBackgroundColors,
+} from "rn-ui-kit/core";
 
 import { ExampleBlock, ExampleRow, ExampleStack } from "../shared";
 
+type SheetStackParamList = {
+  index: undefined;
+  details: undefined;
+};
+
+function SheetStackIndexScreen() {
+  const navigation = useNavigation<NavigationProp<SheetStackParamList>>();
+
+  return (
+    <NativeList style={styles.stackList} tracksNavigationBarScrollEdge>
+      <NativeListSection footer="点击后会在当前 Sheet 内推入新的 Stack 页面。" title="导航">
+        <NativeListNavigationItem
+          onPress={() => navigation.navigate("details")}
+          subtitle="演示 Stack 的前进与返回"
+          title="打开详情页"
+        />
+      </NativeListSection>
+    </NativeList>
+  );
+}
+
+function SheetStackDetailsScreen({ onClose }: { onClose: () => void }) {
+  return (
+    <NativeList style={styles.stackList} tracksNavigationBarScrollEdge>
+      <NativeListSection footer="可使用导航栏返回按钮回到上一页。" title="详情">
+        <NativeListButtonItem onPress={onClose} title="关闭 Stack Sheet" />
+      </NativeListSection>
+    </NativeList>
+  );
+}
+
 export function SheetExample() {
+  const appBackgroundColors = useAppBackgroundColors();
   const [detentsOpen, setDetentsOpen] = useState(false);
   const [percentOpen, setPercentOpen] = useState(false);
   const [percentPosition, setPercentPosition] = useState(0);
   const [nestedOpen, setNestedOpen] = useState(false);
   const [nestedInnerOpen, setNestedInnerOpen] = useState(false);
   const [nestedPosition, setNestedPosition] = useState(0);
+  const [stackOpen, setStackOpen] = useState(false);
 
   return (
     <ExampleStack>
@@ -40,6 +85,13 @@ export function SheetExample() {
 
       <ExampleBlock description="detents={[0.4, 0.85]}" title="嵌套 TrueSheet">
         <Button onPress={() => setNestedOpen(true)}>打开嵌套 Sheet</Button>
+      </ExampleBlock>
+
+      <ExampleBlock
+        description="iOS 使用原生 Header item，Android/Web 使用 React Button"
+        title="Stack TrueSheet"
+      >
+        <Button onPress={() => setStackOpen(true)}>打开Stack Sheet</Button>
       </ExampleBlock>
 
       <NativeSheet detents={[0.4, 0.6, 1]} handle onOpenChange={setDetentsOpen} open={detentsOpen}>
@@ -112,6 +164,37 @@ export function SheetExample() {
           </Button>
         </View>
       </NativeSheet>
+
+      <NativeSheetStack
+        initialRouteName="index"
+        name="rn-ui-kit-sheet-example-stack"
+        onOpenChange={setStackOpen}
+        open={stackOpen}
+        headerRightButtonProps={{
+          accessibilityLabel: "关闭 Stack Sheet",
+          label: "关闭",
+        }}
+        screenOptions={getNativeStackScrollEdgeHeaderOptions({
+          headerBackgroundColor: appBackgroundColors.header,
+          screenBackgroundColor: appBackgroundColors.sheet,
+        })}
+        sheetProps={{
+          snapPoints: ["70%"],
+        }}
+      >
+        <NativeSheetStack.Screen name="index" options={{ title: "Stack Sheet" }}>
+          {() => <SheetStackIndexScreen />}
+        </NativeSheetStack.Screen>
+        <NativeSheetStack.Screen name="details" options={{ title: "详情" }}>
+          {() => <SheetStackDetailsScreen onClose={() => setStackOpen(false)} />}
+        </NativeSheetStack.Screen>
+      </NativeSheetStack>
     </ExampleStack>
   );
 }
+
+const styles = StyleSheet.create({
+  stackList: {
+    flex: 1,
+  },
+});

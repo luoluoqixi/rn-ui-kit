@@ -98,7 +98,21 @@ function TrueSheetStackNavigationInner({
             // 保持 false，避免 TrueSheet 内嵌 Stack 的 screens 容器干预布局。
             detachInactiveScreens={Platform.OS === "web" ? true : false}
             initialRouteName={initialRouteName}
-            screenOptions={screenOptions as StackNavigationOptions}
+            screenOptions={({ route }) => {
+              const configuredScreenOptions = screenOptions as StackNavigationOptions;
+
+              // Sheet 根页没有可返回的宿主页面。JS Stack 在场景切换期间可能保留
+              // previous scene，从而错误地绘制默认返回按钮；显式占用根页左侧位置。
+              // 屏幕级的 headerLeft 仍会覆盖此默认值。
+              if (
+                route.name === initialRouteName &&
+                configuredScreenOptions?.headerLeft === undefined
+              ) {
+                return { ...configuredScreenOptions, headerLeft: () => null };
+              }
+
+              return configuredScreenOptions;
+            }}
           >
             {children}
           </JsStack.Navigator>

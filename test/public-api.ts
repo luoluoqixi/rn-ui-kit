@@ -15,6 +15,9 @@ import {
   useTrueSheetStackHost,
   useNativeListEditMode,
   type NativeListRootProps,
+  type NativeSheetStackHeaderButtonProps,
+  type NativeSheetStackHeaderLeftItems,
+  type NativeSheetStackHeaderRightItems,
   type NativeSheetStackProps,
   type NativeListSelectionId,
   NativeTrigger,
@@ -70,6 +73,9 @@ type PublicNativeTriggerPressableProps = NativeTriggerPressableProps;
 type PublicNativeListDropdownItemProps = NativeListDropdownItemProps;
 type PublicNativeListRootProps = NativeListRootProps;
 type PublicNativeSheetStackProps = NativeSheetStackProps;
+type PublicNativeSheetStackHeaderButtonProps = NativeSheetStackHeaderButtonProps;
+type PublicNativeSheetStackHeaderLeftItems = NativeSheetStackHeaderLeftItems;
+type PublicNativeSheetStackHeaderRightItems = NativeSheetStackHeaderRightItems;
 type PublicNativeListSelectionId = NativeListSelectionId;
 type PublicSelectProps = SelectProps;
 type PublicScrollViewProps = ScrollViewProps;
@@ -218,11 +224,51 @@ void ({} as PublicNativeSheetStackProps);
 const nativeSheetStackProps = {
   children: null,
   headerLeft: () => null,
-  headerRightButtonProps: {
+  headerLeftButtonProps: {
+    accessibilityLabel: "添加",
+    customButtonProps: { size: "sm", variant: "link" },
+    iosButtonProps: {
+      icon: { name: "plus", type: "sfSymbol" },
+      variant: "plain",
+    },
+    label: "添加",
     onPress: () => {},
-    title: "关闭",
+  } satisfies PublicNativeSheetStackHeaderButtonProps,
+  headerLeftItems: (() => [
+    {
+      label: "添加",
+      onPress: () => {},
+      type: "button",
+    },
+  ]) satisfies PublicNativeSheetStackHeaderLeftItems,
+  headerRight: () => null,
+  headerRightButtonVisible: true,
+  headerRightButtonProps: {
+    accessibilityLabel: "关闭",
+    closeSheetOnPress: true,
+    customButtonProps: { nativeHaptics: true },
+    iosButtonProps: { variant: "done" },
+    onPress: () => {},
+    label: "关闭",
   },
-} satisfies Pick<PublicNativeSheetStackProps, "children" | "headerLeft" | "headerRightButtonProps">;
+  headerRightItems: (() => [
+    {
+      label: "关闭",
+      onPress: () => {},
+      type: "button",
+    },
+  ]) satisfies PublicNativeSheetStackHeaderRightItems,
+} satisfies Pick<
+  PublicNativeSheetStackProps,
+  | "children"
+  | "headerLeft"
+  | "headerLeftButtonProps"
+  | "headerLeftItems"
+  | "headerRight"
+  | "headerRightButtonVisible"
+  | "headerRightButtonProps"
+  | "headerRightItems"
+>;
 
 void nativeSheetStackProps;
 
