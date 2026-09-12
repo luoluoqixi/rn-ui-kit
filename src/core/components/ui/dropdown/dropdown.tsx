@@ -611,6 +611,35 @@ function renderDropdownItems(
         </DropdownSub>
       );
     }
+    const onSelect = (item.onSelect ??
+      item.onPress ??
+      (resolvedItemProps.onPress as ((event: any) => void) | undefined)) as
+      | (() => void)
+      | undefined;
+    const itemContent = (
+      <>
+        <Text>{label}</Text>
+        {resolveRenderProp(item.icon, item)}
+        {resolveRenderProp(item.indicator, item)}
+      </>
+    );
+    // 非原生菜单也将 selected 统一呈现为 checkbox，避免平台间丢失勾选状态。
+    if (item.selected !== undefined) {
+      return (
+        <DropdownCheckboxItem
+          {...resolvedItemProps}
+          aria-label={item["aria-label"] ?? (resolvedItemProps["aria-label"] as string | undefined)}
+          checked={item.selected}
+          disabled={item.disabled ?? (resolvedItemProps.disabled as boolean | undefined)}
+          key={key}
+          nativeHaptics={itemHaptics}
+          onCheckedChange={() => onSelect?.()}
+          textValue={item.textValue ?? (resolvedItemProps.textValue as string | undefined)}
+        >
+          {itemContent}
+        </DropdownCheckboxItem>
+      );
+    }
     return (
       <DropdownItem
         {...resolvedItemProps}
@@ -618,11 +647,7 @@ function renderDropdownItems(
         disabled={item.disabled ?? (resolvedItemProps.disabled as boolean | undefined)}
         key={key}
         nativeHaptics={itemHaptics}
-        onPress={
-          item.onSelect ??
-          item.onPress ??
-          (resolvedItemProps.onPress as ((event: any) => void) | undefined)
-        }
+        onPress={onSelect}
         textValue={item.textValue ?? (resolvedItemProps.textValue as string | undefined)}
         variant={
           item.destructive === true
@@ -632,9 +657,7 @@ function renderDropdownItems(
               : (resolvedItemProps.variant as "default" | "destructive" | undefined)
         }
       >
-        <Text>{label}</Text>
-        {resolveRenderProp(item.icon, item)}
-        {resolveRenderProp(item.indicator, item)}
+        {itemContent}
       </DropdownItem>
     );
   });

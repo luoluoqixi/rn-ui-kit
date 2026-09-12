@@ -111,8 +111,11 @@ function renderItem(
     );
   }
 
-  const ItemComponent: any =
-    Platform.OS === "ios" && resolvedItem.checkbox ? Zeego.CheckboxItem : Zeego.Item;
+  // `selected` 是 DropdownItemData 的通用选中状态；iOS 原生菜单需使用
+  // CheckboxItem 才会将该状态渲染为系统勾选标记。
+  const isCheckboxItem =
+    Platform.OS === "ios" && (resolvedItem.checkbox || resolvedItem.selected !== undefined);
+  const ItemComponent: any = isCheckboxItem ? Zeego.CheckboxItem : Zeego.Item;
   return (
     <ItemComponent
       aria-label={accessibilityLabel}
@@ -124,7 +127,7 @@ function renderItem(
       }}
       {...({ separatorBefore } as object)}
       {...({ selected: resolvedItem.selected } as object)}
-      {...(resolvedItem.checkbox && Platform.OS === "ios"
+      {...(isCheckboxItem
         ? {
             value: resolvedItem.selected === true,
             onValueChange: handleSelect,
@@ -342,7 +345,11 @@ function NativeDropdownRoot({
   // cause the parent ScrollView to reposition near the bottom of the page.
   const isAndroidDetachedTrigger =
     Platform.OS === "android" && (nativeTrigger === true || __nativeDetachedAnchor === true);
-  const { __unsafeIosProps, style: rootStyle, ...rootProps } = props as NativeDropdownProps & {
+  const {
+    __unsafeIosProps,
+    style: rootStyle,
+    ...rootProps
+  } = props as NativeDropdownProps & {
     __unsafeIosProps?: Record<string, unknown>;
     style?: unknown;
   };
