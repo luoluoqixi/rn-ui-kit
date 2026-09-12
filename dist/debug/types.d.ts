@@ -1,0 +1,40 @@
+import type { NativeStackNavigationOptions } from "@react-navigation/native-stack";
+import type { ComponentType, ReactNode } from "react";
+import type { ViewProps } from "react-native";
+import type { NativeSheetStackScreenOptions, NativeSheetStackSheetProps } from "../core/components/ui/sheet/native_sheet/types";
+export type RnUiKitDebugRouteKey = string;
+export type RnUiKitDebugSectionPresentation = "scroll" | "static";
+export type RnUiKitDebugPanelPageScreenOptions = NativeStackNavigationOptions;
+export type RnUiKitDebugPanelNativeSheetScreenOptions = NativeSheetStackScreenOptions;
+export type RnUiKitDebugPanelSheetProps = NativeSheetStackSheetProps;
+export type RnUiKitDebugSectionContentProps = {
+    header?: ReactNode;
+    headerTransparent?: boolean;
+    instanceId?: string;
+    layoutHost?: "default" | "nativeSheet";
+    onOpenComponentExample?: (key: string) => void;
+};
+export type RnUiKitDebugRouteDefinition = {
+    contentTitle?: string;
+    description?: string;
+    key: RnUiKitDebugRouteKey;
+    label: string;
+    order?: number;
+    Page: ComponentType<RnUiKitDebugSectionContentProps>;
+    presentation: RnUiKitDebugSectionPresentation;
+    section?: string;
+};
+export type RnUiKitDebugPanelProps = ViewProps & {
+    backButtonLabel?: string;
+    defaultOpen?: boolean;
+    initialRouteKey?: RnUiKitDebugRouteKey;
+    navigationMode?: "host" | "independent";
+    nativeSheetScreenOptions?: RnUiKitDebugPanelNativeSheetScreenOptions;
+    onOpenChange?: (open: boolean) => void;
+    open?: boolean;
+    pages?: RnUiKitDebugRouteDefinition[];
+    pageScreenOptions?: RnUiKitDebugPanelPageScreenOptions;
+    panelSheetProps?: RnUiKitDebugPanelSheetProps;
+    sheetMode?: boolean;
+};
+export type RnUiKitUiComponentsDebugPageProps = RnUiKitDebugSectionContentProps;
