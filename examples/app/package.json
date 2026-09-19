@@ -20,7 +20,7 @@
   "dependencies": {
     "@expo/metro-runtime": "=6.1.2",
     "@lodev09/react-native-true-sheet": "=3.11.12",
-    "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_09_05_3",
+    "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_09_20",
     "@react-native-async-storage/async-storage": "=2.2.0",
     "@react-native-menu/menu": "=2.0.0",
     "@react-native-picker/picker": "^2.11.4",
@@ -39,7 +39,7 @@
     "react-dom": "=19.2.5",
     "react-native": "=0.83.9",
     "react-native-gesture-handler": "=2.31.1",
-    "react-native-ios-context-menu": "^3.2.1",
+    "react-native-ios-context-menu": "=3.2.1",
     "react-native-ios-utilities": "=5.2.0",
     "react-native-keyboard-controller": "=1.22.4",
     "react-native-reanimated": "=4.3.0",

@@ -15,6 +15,7 @@ import {
   VStack,
   ZStack,
 } from "@luoluoqixi/expo-ui-55/swift-ui";
+import { NavigationContext } from "@react-navigation/native";
 import {
   background,
   buttonStyle,
@@ -46,10 +47,16 @@ import {
 import {
   Children,
   Fragment,
+  type ComponentProps,
+  type ComponentType,
   type ReactElement,
   type ReactNode,
   createContext,
+  useCallback,
   useContext,
+  useEffect,
+  useMemo,
+  useRef,
   useState,
 } from "react";
 import { StyleSheet, View } from "react-native";
@@ -86,6 +93,7 @@ import type {
   NativeListRootProps,
   NativeListSectionProps,
   NativeListSectionRenderContext,
+  NativeListNavigationSelectionControls,
   NativeListSelectionId,
   NativeListSelectItemProps,
   NativeListTextAreaItemProps,
@@ -95,6 +103,41 @@ import type {
 // JavaScript builds from before the convenience export was added.
 const nativeAllowsHitTesting = (enabled: boolean) =>
   createModifier("allowsHitTesting", { enabled });
+
+const DEFAULT_NAVIGATION_SELECTION_AUTO_CLEAR_DELAY = 300;
+
+// This type is intentionally local until the linked expo-ui-55 source is used.
+// It keeps rn-ui-kit source-compatible with older published expo-ui-55 builds.
+const NativeListWithNavigationSelection = List as ComponentType<
+  ComponentProps<typeof List> & {
+    clearsNavigationSelectionOnViewWillAppear?: boolean;
+    onNavigationSelectionCleared?: () => void;
+  }
+>;
+
+// Kept local until the linked expo-ui-55 source is in use, just like the List
+// bridge above. Only navigation rows pass this prop, so regular native Buttons
+// retain their existing behavior.
+const NativeNavigationSelectionButton = SwiftButton as ComponentType<
+  ComponentProps<typeof SwiftButton> & {
+    listSelectionId?: NativeListSelectionId;
+  }
+>;
+
+type NativeListNavigationSelectionContextValue = {
+  selectNavigationItem: (
+    selectionId: NativeListSelectionId,
+    options: {
+      autoClear: boolean;
+      autoClearDelay?: number;
+    },
+  ) => NativeListNavigationSelectionControls;
+};
+
+const NativeListNavigationSelectionContext =
+  createContext<NativeListNavigationSelectionContextValue>({
+    selectNavigationItem: () => ({ cancel: () => {}, confirm: () => {} }),
+  });
 
 function getNativeContextMenuLabel(item: ContextMenuItemData) {
   if (typeof item.label === "string" || typeof item.label === "number") {
@@ -582,6 +625,7 @@ export function NativeRowContainer({
   ios15FirstRowTopInset = IOS15_FIRST_ROW_TOP_INSET,
   nativeSelectionActive,
   nativeSelectionId,
+  nativeNavigationSelectionId,
   nativeScrollId,
   onPress,
   paddingBottom,
@@ -606,6 +650,8 @@ export function NativeRowContainer({
   /** Whether the row is participating in the currently active native selection UI. */
   nativeSelectionActive?: boolean;
   nativeSelectionId?: NativeListSelectionId;
+  /** Select this row in SwiftUI before its JS navigation callback is dispatched. */
+  nativeNavigationSelectionId?: NativeListSelectionId;
   nativeScrollId?: string | number;
   onPress?: () => void;
   btnStyle?: SwiftUIButtonStyle;
@@ -680,7 +726,7 @@ export function NativeRowContainer({
 
   if (onPress != null) {
     const button = (
-      <SwiftButton
+      <NativeNavigationSelectionButton
         modifiers={[
           disabledModifier(disabled ?? false),
           // Keep the Button node stable on iOS 15, but let the native List own
@@ -692,10 +738,11 @@ export function NativeRowContainer({
           ...(nativeScrollId != null ? [viewID(nativeScrollId)] : []),
           ...(nativeSelectionId != null ? [tag(nativeSelectionId)] : []),
         ]}
+        listSelectionId={nativeNavigationSelectionId}
         onPress={onPress}
       >
         {buttonContent}
-      </SwiftButton>
+      </NativeNavigationSelectionButton>
     );
 
     return swiftUIContextMenuProps != null ? (
@@ -880,6 +927,9 @@ export function NativePressRow({
   rowAlignment = "center",
   rowMinHeight,
   ios15RowType = "text",
+  iosNavigationSelection = false,
+  iosNavigationSelectionAutoClear = true,
+  iosNavigationSelectionAutoClearDelay,
 }: NativeListItemBaseProps & {
   trailingControl?: ReactNode;
   overlayTrailingControlOnValueSymbol?: boolean;
@@ -892,6 +942,12 @@ export function NativePressRow({
   titleLineLimit?: number;
   valueSfSymbol?: SFSymbol;
   ios15RowType?: "navigation" | "text";
+  /** Keeps a navigation row selected while its pushed screen is visible. iOS 16+. */
+  iosNavigationSelection?: boolean;
+  /** Whether an unconfirmed navigation selection clears itself. */
+  iosNavigationSelectionAutoClear?: boolean;
+  /** Fallback duration for an unconfirmed optimistic navigation selection. */
+  iosNavigationSelectionAutoClearDelay?: number;
 }) {
   const theme = useTheme();
   const inheritedNativeHaptics = useResolvedNativeListHaptics(nativeHaptics);
@@ -904,6 +960,7 @@ export function NativePressRow({
     selectionId,
     selectionDisabled,
   });
+  const navigationSelection = useContext(NativeListNavigationSelectionContext);
   const resolvedHaptics = useResolvedNativeHaptics(inheritedNativeHaptics);
   const accentColor = toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;
   const assistColor = resolveNativeListAssistColor(theme);
@@ -948,7 +1005,24 @@ export function NativePressRow({
 
   const handlePress = editRow.onPress
     ? () => {
-        editRow.onPress?.();
+        if (iosNavigationSelection && !editRow.editMode) {
+          const controls = isIos15()
+            ? undefined
+            : navigationSelection.selectNavigationItem(
+                editRow.selectionId,
+                {
+                  autoClear: iosNavigationSelectionAutoClear,
+                  autoClearDelay: iosNavigationSelectionAutoClearDelay,
+                },
+              );
+          // Navigation rows receive the optimistic-selection controls. All existing
+          // zero-argument callbacks are still invoked normally.
+          (onPress as ((selection?: NativeListNavigationSelectionControls) => void) | undefined)?.(
+            controls,
+          );
+        } else {
+          editRow.onPress?.();
+        }
         if (editRow.editMode || onPress != null) {
           triggerNativeHaptics(resolvedHaptics);
         }
@@ -957,11 +1031,17 @@ export function NativePressRow({
   // iOS 15 exposes a UITableView-backed SwiftUI List. Keep selection metadata
   // present across edit-mode and disabled transitions so rows are not structurally replaced.
   const nativeSelectionId =
-    isIos15() && !selectionDisabled
+    iosNavigationSelection &&
+    !editRow.editMode &&
+    !isIos15() &&
+    !disabled &&
+    handlePress != null
       ? editRow.selectionId
-      : editRow.nativeSelection
+      : isIos15() && !selectionDisabled
         ? editRow.selectionId
-        : undefined;
+        : editRow.nativeSelection
+          ? editRow.selectionId
+          : undefined;
   const contextMenuUnavailable = Boolean(
     disabled || editRow.editMode || resolvedContextMenuProps?.triggerProps?.disabled,
   );
@@ -971,15 +1051,12 @@ export function NativePressRow({
   // iOS 15 keeps an otherwise passive row inside a Button so entering edit mode
   // does not replace HStack with Button. This style keeps the Button behavior and
   // tree without applying pressed-state visuals to its label.
-  const resolvedBtnStyle =
-    isIos15() && onPress == null ? (btnStyle ?? "noPressEffect") : btnStyle;
+  const resolvedBtnStyle = isIos15() && onPress == null ? (btnStyle ?? "noPressEffect") : btnStyle;
 
   return (
     <NativeRowContainer
       contextMenuProps={
-        preservesIos15ContextMenu || !contextMenuUnavailable
-          ? resolvedContextMenuProps
-          : undefined
+        preservesIos15ContextMenu || !contextMenuUnavailable ? resolvedContextMenuProps : undefined
       }
       contextMenuDisabled={preservesIos15ContextMenu && contextMenuUnavailable}
       disabled={disabled}
@@ -987,6 +1064,15 @@ export function NativePressRow({
       ios15FirstRowTopInset={ios15FirstRowTopInset}
       nativeSelectionActive={editRow.nativeSelection}
       nativeSelectionId={nativeSelectionId}
+      nativeNavigationSelectionId={
+        iosNavigationSelection &&
+        !editRow.editMode &&
+        !isIos15() &&
+        !disabled &&
+        handlePress != null
+          ? editRow.selectionId
+          : undefined
+      }
       onPress={handlePress}
       btnStyle={resolvedBtnStyle}
       btnTint={btnTint}
@@ -1110,8 +1196,16 @@ function NativeListRoot({
   void _refreshColor;
   const insets = useSafeAreaInsets();
   const theme = useTheme();
+  const navigation = useContext(NavigationContext);
   const nativeEditTint = toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;
   const [nativeRefreshing, setNativeRefreshing] = useState(false);
+  const [navigationSelectionId, setNavigationSelectionId] = useState<
+    NativeListSelectionId | undefined
+  >(undefined);
+  const navigationSelectionIdRef = useRef<NativeListSelectionId | undefined>(undefined);
+  const navigationSelectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
   const [uncontrolledSelectedIds, setUncontrolledSelectedIds] = useState<NativeListSelectionId[]>(
     () => [...(defaultSelectedIds ?? [])],
   );
@@ -1134,6 +1228,86 @@ function NativeListRoot({
   const isNestedNativeList = nestedScrollEnabled === true;
   const usesNativeEditMode = editMode === true;
   const usesImmediatePressFeedback = iosPressFeedback === "immediate";
+
+  const clearNavigationSelection = useCallback((selectionId?: NativeListSelectionId) => {
+    if (selectionId != null && navigationSelectionIdRef.current !== selectionId) return;
+    if (navigationSelectionTimeoutRef.current != null) {
+      clearTimeout(navigationSelectionTimeoutRef.current);
+      navigationSelectionTimeoutRef.current = undefined;
+    }
+    navigationSelectionIdRef.current = undefined;
+    setNavigationSelectionId(undefined);
+  }, []);
+  const selectNavigationItem = useCallback(
+    (
+      selectionId: NativeListSelectionId,
+      {
+        autoClear,
+        autoClearDelay = DEFAULT_NAVIGATION_SELECTION_AUTO_CLEAR_DELAY,
+      }: {
+        autoClear: boolean;
+        autoClearDelay?: number;
+      },
+    ) => {
+      clearNavigationSelection();
+      navigationSelectionIdRef.current = selectionId;
+      setNavigationSelectionId(selectionId);
+
+      const cancel = () => clearNavigationSelection(selectionId);
+      const confirm = () => {
+        if (navigationSelectionIdRef.current !== selectionId) return;
+        if (navigationSelectionTimeoutRef.current != null) {
+          clearTimeout(navigationSelectionTimeoutRef.current);
+          navigationSelectionTimeoutRef.current = undefined;
+        }
+      };
+      if (autoClear) {
+        // The short grace period keeps immediate press feedback continuous while
+        // React Navigation schedules a normal push. Slow async flows can call confirm().
+        navigationSelectionTimeoutRef.current = setTimeout(() => {
+          if (navigationSelectionIdRef.current === selectionId) {
+            clearNavigationSelection(selectionId);
+          }
+        }, Math.max(0, autoClearDelay));
+      }
+
+      return { cancel, confirm };
+    },
+    [clearNavigationSelection],
+  );
+  const navigationSelectionContext = useMemo(
+    () => ({
+      selectNavigationItem,
+    }),
+    [selectNavigationItem],
+  );
+
+  useEffect(() => {
+    if (navigation == null || isIos15()) return;
+
+    const removeTransitionListener = navigation.addListener(
+      "transitionStart" as never,
+      (event: { data?: { closing?: boolean } }) => {
+        if (event.data?.closing !== true && navigationSelectionTimeoutRef.current != null) {
+          clearTimeout(navigationSelectionTimeoutRef.current);
+          navigationSelectionTimeoutRef.current = undefined;
+        }
+      },
+    );
+    const removeBlurListener = navigation.addListener("blur", () => {
+      if (navigationSelectionTimeoutRef.current != null) {
+        clearTimeout(navigationSelectionTimeoutRef.current);
+        navigationSelectionTimeoutRef.current = undefined;
+      }
+    });
+
+    return () => {
+      removeTransitionListener();
+      removeBlurListener();
+    };
+  }, [navigation]);
+
+  useEffect(() => () => clearNavigationSelection(), [clearNavigationSelection]);
 
   const bottomPadding =
     insideTrueSheet && scrollable && !isNestedNativeList
@@ -1177,82 +1351,74 @@ function NativeListRoot({
     }
   };
   return (
-    <NativeListEditModeProvider
-      defaultSelectedIds={defaultSelectedIds}
-      editMode={editMode}
-      nativeSelectionEnabled
-      onSelectedIdsChange={handleSelectedIdsChange}
-      selectedIds={resolvedSelectedIds}
-    >
-      <Host style={[styles.nativeRoot, style]}>
-        <List
-          // Native-stack 已将普通页面放在 header 下方，UIKit 再自动避让会让 indicator 重复下移。
-          // TrueSheet 仍需要系统根据 Sheet viewport 处理 indicator，因此保持开启。
-          automaticallyAdjustsScrollIndicatorInsets={
-            manuallyAdjustNormalPageIndicator ? false : automaticallyAdjustsScrollIndicatorInsets
-          }
-          contentInsetAdjustmentBehavior={resolvedContentInsetAdjustmentBehavior}
-          tracksNavigationBarScrollEdge={
-            (!insideTrueSheet || trueSheetPresentationActive) &&
-            (tracksNavigationBarScrollEdge ??
-              (!insideTrueSheet && resolvedContentInsetAdjustmentBehavior === "automatic"))
-          }
-          // 只有页面级根列表才需要按 TrueSheet 的可见 viewport 裁剪；
-          // 内嵌列表保留自身完整高度，由外层 ScrollView 决定何时进入可见区域。
-          compensatesForViewportClipping={compensatesForTrueSheetViewportClipping}
-          correctsNestedScrollIndicatorFrame={
-            isIos26Plus() && fixesIOS26NestedScrollIndicatorSafeArea === true
-          }
-          delaysContentTouches={!usesImmediatePressFeedback}
-          dismissKeyboardOnTap={dismissKeyboardOnTap}
-          initialScrollAnchor="center"
-          initialScrollTarget={initialScrollTarget}
-          nativeEditMode={usesNativeEditMode ? "active" : "inactive"}
-          nativeEditTint={nativeEditTint}
-          onSelectionChange={usesNativeEditMode ? handleSelectedIdsChange : undefined}
-          selection={usesNativeEditMode ? [...resolvedSelectedIds] : undefined}
-          onRefresh={handleNativeRefresh}
-          // 禁用时从 UIScrollView 解绑原生刷新控件；控件实例本身保持稳定，
-          // 不会像动态增删 SwiftUI modifier 一样重建 List。
-          refreshable={refreshControlEnabled}
-          refreshEnabled={refreshControlEnabled}
-          refreshing={refreshControlEnabled && nativeRefreshing}
-          modifiers={[
-            listStyle(iosListStyle),
-            listSectionSpacing("compact"),
-            /**
-             * iOS 15 的 SwiftUI List 不支持 `scrollContentBackground(.hidden)`，
-             * 因此即使这里传入自定义 `backgroundColor`，系统列表内容背景仍可能覆盖它。
-             */
-            scrollContentBackground("hidden"),
-            ...(resolvedBackgroundColor != null ? [background(resolvedBackgroundColor)] : []),
-            ...(contentMarginTop != null
-              ? [
-                  contentMargins({
-                    edges: "top",
-                    length: contentMarginTop,
-                    placement: "scrollContent",
-                  }),
-                ]
-              : []),
-            ...(!insideTrueSheet && contentMarginBottom != null
-              ? [
-                  contentMargins({
-                    edges: "bottom",
-                    length: contentMarginBottom,
-                    placement: "scrollContent",
-                  }),
-                ]
-              : []),
-            ...(insideTrueSheet && bottomPadding > 0
-              ? [
-                  contentMargins({
-                    edges: "bottom",
-                    length: bottomPadding + (contentMarginBottom ?? 0),
-                    placement: "scrollContent",
-                  }),
-                ]
-              : insideTrueSheet && contentMarginBottom != null
+    <NativeListNavigationSelectionContext.Provider value={navigationSelectionContext}>
+      <NativeListEditModeProvider
+        defaultSelectedIds={defaultSelectedIds}
+        editMode={editMode}
+        nativeSelectionEnabled
+        onSelectedIdsChange={handleSelectedIdsChange}
+        selectedIds={resolvedSelectedIds}
+      >
+        <Host style={[styles.nativeRoot, style]}>
+          <NativeListWithNavigationSelection
+            // Native-stack 已将普通页面放在 header 下方，UIKit 再自动避让会让 indicator 重复下移。
+            // TrueSheet 仍需要系统根据 Sheet viewport 处理 indicator，因此保持开启。
+            automaticallyAdjustsScrollIndicatorInsets={
+              manuallyAdjustNormalPageIndicator ? false : automaticallyAdjustsScrollIndicatorInsets
+            }
+            contentInsetAdjustmentBehavior={resolvedContentInsetAdjustmentBehavior}
+            tracksNavigationBarScrollEdge={
+              (!insideTrueSheet || trueSheetPresentationActive) &&
+              (tracksNavigationBarScrollEdge ??
+                (!insideTrueSheet && resolvedContentInsetAdjustmentBehavior === "automatic"))
+            }
+            // 只有页面级根列表才需要按 TrueSheet 的可见 viewport 裁剪；
+            // 内嵌列表保留自身完整高度，由外层 ScrollView 决定何时进入可见区域。
+            compensatesForViewportClipping={compensatesForTrueSheetViewportClipping}
+            correctsNestedScrollIndicatorFrame={
+              isIos26Plus() && fixesIOS26NestedScrollIndicatorSafeArea === true
+            }
+            delaysContentTouches={!usesImmediatePressFeedback}
+            dismissKeyboardOnTap={dismissKeyboardOnTap}
+            initialScrollAnchor="center"
+            initialScrollTarget={initialScrollTarget}
+            nativeEditMode={usesNativeEditMode ? "active" : "inactive"}
+            nativeEditTint={nativeEditTint}
+            clearsNavigationSelectionOnViewWillAppear={!usesNativeEditMode && !isIos15()}
+            onNavigationSelectionCleared={() => clearNavigationSelection()}
+            onSelectionChange={usesNativeEditMode ? handleSelectedIdsChange : undefined}
+            selection={
+              usesNativeEditMode
+                ? [...resolvedSelectedIds]
+                : navigationSelectionId == null
+                  ? []
+                  : [navigationSelectionId]
+            }
+            onRefresh={handleNativeRefresh}
+            // 禁用时从 UIScrollView 解绑原生刷新控件；控件实例本身保持稳定，
+            // 不会像动态增删 SwiftUI modifier 一样重建 List。
+            refreshable={refreshControlEnabled}
+            refreshEnabled={refreshControlEnabled}
+            refreshing={refreshControlEnabled && nativeRefreshing}
+            modifiers={[
+              listStyle(iosListStyle),
+              listSectionSpacing("compact"),
+              /**
+               * iOS 15 的 SwiftUI List 不支持 `scrollContentBackground(.hidden)`，
+               * 因此即使这里传入自定义 `backgroundColor`，系统列表内容背景仍可能覆盖它。
+               */
+              scrollContentBackground("hidden"),
+              ...(resolvedBackgroundColor != null ? [background(resolvedBackgroundColor)] : []),
+              ...(contentMarginTop != null
+                ? [
+                    contentMargins({
+                      edges: "top",
+                      length: contentMarginTop,
+                      placement: "scrollContent",
+                    }),
+                  ]
+                : []),
+              ...(!insideTrueSheet && contentMarginBottom != null
                 ? [
                     contentMargins({
                       edges: "bottom",
@@ -1261,21 +1427,39 @@ function NativeListRoot({
                     }),
                   ]
                 : []),
-            scrollDisabled(!scrollable),
-          ]}
-        >
-          <NativeListContextMenuProvider
-            contextMenuProps={contextMenuProps}
-            disabledStyle={disabledStyle}
+              ...(insideTrueSheet && bottomPadding > 0
+                ? [
+                    contentMargins({
+                      edges: "bottom",
+                      length: bottomPadding + (contentMarginBottom ?? 0),
+                      placement: "scrollContent",
+                    }),
+                  ]
+                : insideTrueSheet && contentMarginBottom != null
+                  ? [
+                      contentMargins({
+                        edges: "bottom",
+                        length: contentMarginBottom,
+                        placement: "scrollContent",
+                      }),
+                    ]
+                  : []),
+              scrollDisabled(!scrollable),
+            ]}
           >
-            <NativeListHapticsProvider nativeHaptics={nativeHaptics}>
-              {children}
-            </NativeListHapticsProvider>
-          </NativeListContextMenuProvider>
-          <NativeListIos15BottomSpacer length={ios15BottomSpacerLength} />
-        </List>
-      </Host>
-    </NativeListEditModeProvider>
+            <NativeListContextMenuProvider
+              contextMenuProps={contextMenuProps}
+              disabledStyle={disabledStyle}
+            >
+              <NativeListHapticsProvider nativeHaptics={nativeHaptics}>
+                {children}
+              </NativeListHapticsProvider>
+            </NativeListContextMenuProvider>
+            <NativeListIos15BottomSpacer length={ios15BottomSpacerLength} />
+          </NativeListWithNavigationSelection>
+        </Host>
+      </NativeListEditModeProvider>
+    </NativeListNavigationSelectionContext.Provider>
   );
 }
 

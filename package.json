@@ -98,7 +98,7 @@
   },
   "devDependencies": {
     "@lodev09/react-native-true-sheet": "=3.11.12",
-    "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_09_05_3",
+    "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_09_20",
     "@react-native-picker/picker": "=2.11.4",
     "@react-navigation/elements": "^2.9.38",
     "@react-navigation/native": "=7.3.16",
@@ -135,7 +135,7 @@
   },
   "peerDependencies": {
     "@lodev09/react-native-true-sheet": "=3.11.12",
-    "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_09_05_3",
+    "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_09_20",
     "@react-native-picker/picker": "^2.11.4",
     "@react-navigation/elements": "^2.9.38",
     "@react-navigation/native": "=7.3.16",
@@ -151,6 +151,7 @@
     "react-dom": "=19.2.5",
     "react-native": "=0.83.9",
     "react-native-gesture-handler": "=2.31.1",
+    "react-native-ios-context-menu": "=3.2.1",
     "react-native-keyboard-controller": "=1.22.4",
     "react-native-reanimated": "=4.3.0",
     "react-native-safe-area-context": "=5.7.0",

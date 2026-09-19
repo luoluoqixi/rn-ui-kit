@@ -422,7 +422,13 @@ export function NativeListActionItem(props: NativeListActionItemProps) {
 }
 
 export function NativeListNavigationItem(props: NativeListNavigationItemProps) {
-  return <NativeListRow {...props} chevron={props.chevron ?? true} />;
+  const {
+    iosNavigationSelection: _iosNavigationSelection,
+    iosNavigationSelectionAutoClear: _iosNavigationSelectionAutoClear,
+    iosNavigationSelectionAutoClearDelay: _iosNavigationSelectionAutoClearDelay,
+    ...itemProps
+  } = props;
+  return <NativeListRow {...itemProps} chevron={itemProps.chevron ?? true} />;
 }
 
 export function NativeListButtonItem(props: NativeListButtonItemProps) {

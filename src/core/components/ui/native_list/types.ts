@@ -17,6 +17,14 @@ import type { RenderProp } from "../utils/render";
 
 export type NativeListSelectionId = string | number;
 
+/** Controls the optimistic iOS selection shown while a navigation action is pending. */
+export type NativeListNavigationSelectionControls = {
+  /** The action will not navigate; remove the optimistic selected-row appearance now. */
+  cancel: () => void;
+  /** The action will navigate later; keep the appearance beyond the fallback timeout. */
+  confirm: () => void;
+};
+
 /** iOS 26 原生列表行按下反馈策略。 */
 export type NativeListIosPressFeedback = "automatic" | "immediate";
 
@@ -141,7 +149,32 @@ export type NativeListItemBaseProps = NativeListItemPaddingProps &
   };
 
 export type NativeListActionItemProps = NativeListItemBaseProps;
-export type NativeListNavigationItemProps = NativeListItemBaseProps;
+export type NativeListNavigationItemProps = NativeListItemBaseProps & {
+  /**
+   * Receives controls for the optimistic iOS navigation selection. Existing zero-argument
+   * callbacks remain valid. Call `confirm` before waiting for a slow navigation result,
+   * or `cancel` before showing a non-navigation UI such as an alert.
+   */
+  onPress?: (selection?: NativeListNavigationSelectionControls) => void;
+  /**
+   * Enables the native iOS navigation-row selection behavior. Set to `false` to restore
+   * the previous Button-only pressed appearance for flows that cannot navigate back.
+   * @default true
+   */
+  iosNavigationSelection?: boolean;
+  /**
+   * Automatically clears the selected appearance when `onPress` does not start a navigation
+   * transition. Disable this and use `selection.cancel()` for fully manual control.
+   * @default true
+   */
+  iosNavigationSelectionAutoClear?: boolean;
+  /**
+   * Delay before an unconfirmed navigation selection is automatically cleared, in milliseconds.
+   * Call `selection.confirm()` before a longer async navigation flow.
+   * @default 300
+   */
+  iosNavigationSelectionAutoClearDelay?: number;
+};
 
 export type NativeListSwitchItemProps = NativeListItemBaseProps & {
   switchProps: Omit<SwitchProps, "label" | "native">;
