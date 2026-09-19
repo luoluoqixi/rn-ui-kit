@@ -1,0 +1,21 @@
+import type { ReactElement, ReactNode } from "react";
+import type { ToastNativeToasterProps, ToastShowOptions, TitleToast, ToastCustomViewProps } from "./types";
+import type { NativeHapticsSetting } from "../utils/haptics";
+export type BasicToastKind = "default" | "error" | "info" | "loading" | "success" | "warning";
+type BasicToastRuntimeConfig = {
+    basicHaptics: NativeHapticsSetting;
+    haptics: NativeHapticsSetting;
+    customToastViewProps?: ToastCustomViewProps;
+};
+export declare function configureBasicToastRuntime(config: Partial<BasicToastRuntimeConfig>): void;
+export declare function getBasicToastRuntimeConfig(): BasicToastRuntimeConfig;
+export declare function resolveToastContent(value: TitleToast | undefined): ReactNode | undefined;
+export declare function resolveToastText(value: TitleToast | undefined): string | undefined;
+export declare function getToastMessage(options?: ToastShowOptions): ReactNode | undefined;
+export declare function getToastMessageText(options?: ToastShowOptions): string | undefined;
+export declare function resolveBasicOptionContent(value: ToastShowOptions["action"] | ToastShowOptions["cancel"] | ToastShowOptions["jsx"]): ReactNode | undefined;
+export declare function getToastId(id: string | number | undefined, next: () => number): string | number;
+export declare function getBasicOptions(options?: ToastShowOptions): Record<string, unknown>;
+export declare function BasicToasterFallback(_props: ToastNativeToasterProps): null;
+export type BasicCustom = (jsx: (id: string | number) => ReactElement, options?: ToastShowOptions) => string | number;
+export {};

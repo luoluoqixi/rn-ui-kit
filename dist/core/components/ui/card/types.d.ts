@@ -1,0 +1,27 @@
+import type { ComponentProps, ReactNode, RefAttributes } from "react";
+import type { Text, View } from "react-native";
+import type { RenderProp } from "../utils";
+export type CardRenderContext = Record<string, never>;
+export type CardHeaderProps = ComponentProps<typeof View> & RefAttributes<View>;
+export type CardContentProps = ComponentProps<typeof View> & RefAttributes<View>;
+export type CardFooterProps = ComponentProps<typeof View> & RefAttributes<View>;
+export type CardTitleProps = ComponentProps<typeof Text> & RefAttributes<Text>;
+export type CardDescriptionProps = ComponentProps<typeof Text> & RefAttributes<Text>;
+export type CardProps = Omit<ComponentProps<typeof View>, "children"> & RefAttributes<View> & {
+    children?: ReactNode;
+    content?: RenderProp<CardRenderContext>;
+    contentProps?: CardContentProps;
+    contentClassName?: string;
+    description?: RenderProp<CardRenderContext>;
+    descriptionProps?: CardDescriptionProps;
+    descriptionClassName?: string;
+    footer?: RenderProp<CardRenderContext>;
+    footerProps?: CardFooterProps;
+    footerClassName?: string;
+    header?: RenderProp<CardRenderContext>;
+    headerProps?: CardHeaderProps;
+    headerClassName?: string;
+    title?: RenderProp<CardRenderContext>;
+    titleProps?: CardTitleProps;
+    titleClassName?: string;
+};

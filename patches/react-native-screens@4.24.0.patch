@@ -1,0 +1,678 @@
+# react-native-screens 补丁：
+# - Android：允许自定义 header 子视图绘制按钮边界外的阴影。
+# - iOS < 26：修正取消交互式返回时导航栏 UIVisualEffectView 子树错误的 position 动画；默认仅在透明、
+#   模糊、大标题目标页与导航栏高度不一致时自动介入，也支持 TS 显式开关。
+# - iOS 26：保持已有的系统返回指示图主题色修复。
+# - iOS 15+：在保留 UIBarButtonItem 原生菜单的前提下，为菜单展示提供一次 haptic 回调。
+# - 新增 headerOpacity：保持原生 navigation bar / toolbar 挂载，仅以 alpha 动画隐藏，避免重建标题和滚动 inset。
+diff --git a/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfig.kt b/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfig.kt
+index 9a9cbf31..5219a2db 100644
+--- a/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfig.kt
++++ b/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfig.kt
+@@ -43,6 +43,7 @@ class ScreenStackHeaderConfig(
+     private var backgroundColor: Int? = null
+     private var isBackButtonHidden = false
+     private var isShadowHidden = false
++    private var headerOpacity = 1f
+     private var isDestroyed = false
+     private var backButtonInCustomView = false
+     private var tintColor = 0
+@@ -225,9 +226,13 @@ class ScreenStackHeaderConfig(
+         }
+ 
+         if (toolbar.parent == null) {
+-            screenFragment?.setToolbar(toolbar)
++          screenFragment?.setToolbar(toolbar)
+         }
+ 
++        toolbar.animate().cancel()
++        toolbar.animate().alpha(headerOpacity).setDuration(180).start()
++        toolbar.isEnabled = headerOpacity > 0.01f
++
+         activity.setSupportActionBar(toolbar)
+         // non-null toolbar is set in the line above and it is used here
+         val actionBar = requireNotNull(activity.supportActionBar)
+@@ -406,6 +411,10 @@ class ScreenStackHeaderConfig(
+         isShadowHidden = hideShadow
+     }
+ 
++    fun setHeaderOpacity(headerOpacity: Float) {
++        this.headerOpacity = headerOpacity.coerceIn(0f, 1f)
++    }
++
+     fun setHideBackButton(hideBackButton: Boolean) {
+         isBackButtonHidden = hideBackButton
+     }
+diff --git a/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfigViewManager.kt b/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfigViewManager.kt
+index 22a5710c..804e7f10 100644
+--- a/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfigViewManager.kt
++++ b/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfigViewManager.kt
+@@ -149,6 +149,14 @@ class ScreenStackHeaderConfigViewManager :
+         config.setHideShadow(hideShadow)
+     }
+ 
++    @ReactProp(name = "headerOpacity")
++    override fun setHeaderOpacity(
++        config: ScreenStackHeaderConfig,
++        headerOpacity: Float,
++    ) {
++        config.setHeaderOpacity(headerOpacity)
++    }
++
+     @ReactProp(name = "hideBackButton")
+     override fun setHideBackButton(
+         config: ScreenStackHeaderConfig,
+@@ -212,6 +220,12 @@ class ScreenStackHeaderConfigViewManager :
+         value: Boolean,
+     ) = Unit
+ 
++    // iOS-only workaround; keep a no-op setter so the shared native component schema is valid on Android.
++    override fun setCancelledTransitionHeaderGeometryFixMode(
++        config: ScreenStackHeaderConfig?,
++        value: Int,
++    ) = Unit
++
+     override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any> =
+         hashMapOf(
+             HeaderAttachedEvent.EVENT_NAME to hashMapOf("registrationName" to "onAttached"),
+diff --git a/android/src/paper/java/com/facebook/react/viewmanagers/RNSScreenStackHeaderConfigManagerDelegate.java b/android/src/paper/java/com/facebook/react/viewmanagers/RNSScreenStackHeaderConfigManagerDelegate.java
+index c5bc2301..6c4e4848 100644
+--- a/android/src/paper/java/com/facebook/react/viewmanagers/RNSScreenStackHeaderConfigManagerDelegate.java
++++ b/android/src/paper/java/com/facebook/react/viewmanagers/RNSScreenStackHeaderConfigManagerDelegate.java
+@@ -52,6 +52,9 @@ public class RNSScreenStackHeaderConfigManagerDelegate<T extends View, U extends
+       case "hideShadow":
+         mViewManager.setHideShadow(view, value == null ? false : (boolean) value);
+         break;
++      case "headerOpacity":
++        mViewManager.setHeaderOpacity(view, value == null ? 1f : ((Double) value).floatValue());
++        break;
+       case "largeTitle":
+         mViewManager.setLargeTitle(view, value == null ? false : (boolean) value);
+         break;
+@@ -118,6 +121,9 @@ public class RNSScreenStackHeaderConfigManagerDelegate<T extends View, U extends
+       case "synchronousShadowStateUpdatesEnabled":
+         mViewManager.setSynchronousShadowStateUpdatesEnabled(view, value == null ? false : (boolean) value);
+         break;
++      case "cancelledTransitionHeaderGeometryFixMode":
++        mViewManager.setCancelledTransitionHeaderGeometryFixMode(view, value == null ? 0 : ((Double) value).intValue());
++        break;
+       case "userInterfaceStyle":
+         mViewManager.setUserInterfaceStyle(view, (String) value);
+         break;
+diff --git a/android/src/paper/java/com/facebook/react/viewmanagers/RNSScreenStackHeaderConfigManagerInterface.java b/android/src/paper/java/com/facebook/react/viewmanagers/RNSScreenStackHeaderConfigManagerInterface.java
+index b1e50ec2..eb9d3764 100644
+--- a/android/src/paper/java/com/facebook/react/viewmanagers/RNSScreenStackHeaderConfigManagerInterface.java
++++ b/android/src/paper/java/com/facebook/react/viewmanagers/RNSScreenStackHeaderConfigManagerInterface.java
+@@ -24,6 +24,7 @@ public interface RNSScreenStackHeaderConfigManagerInterface<T extends View> exte
+   void setDirection(T view, @Nullable String value);
+   void setHidden(T view, boolean value);
+   void setHideShadow(T view, boolean value);
++  void setHeaderOpacity(T view, float value);
+   void setLargeTitle(T view, boolean value);
+   void setLargeTitleFontFamily(T view, @Nullable String value);
+   void setLargeTitleFontSize(T view, int value);
+@@ -46,5 +47,6 @@ public interface RNSScreenStackHeaderConfigManagerInterface<T extends View> exte
+   void setHeaderLeftBarButtonItems(T view, @Nullable ReadableArray value);
+   void setHeaderRightBarButtonItems(T view, @Nullable ReadableArray value);
+   void setSynchronousShadowStateUpdatesEnabled(T view, boolean value);
++  void setCancelledTransitionHeaderGeometryFixMode(T view, int value);
+   void setUserInterfaceStyle(T view, @Nullable String value);
+ }
+diff --git a/ios/RNSBarButtonItem.h b/ios/RNSBarButtonItem.h
+index ea5325ea..b2d1abc7 100644
+--- a/ios/RNSBarButtonItem.h
++++ b/ios/RNSBarButtonItem.h
+@@ -5,12 +5,14 @@
+ 
+ typedef void (^RNSBarButtonItemAction)(NSString *buttonId);
+ typedef void (^RNSBarButtonMenuItemAction)(NSString *menuId);
++typedef void (^RNSBarButtonMenuOpenAction)(NSString *buttonId);
+ 
+ @interface RNSBarButtonItem : UIBarButtonItem
+ 
+ - (instancetype)initWithConfig:(NSDictionary<NSString *, id> *)dict
+                         action:(RNSBarButtonItemAction)action
+                     menuAction:(RNSBarButtonMenuItemAction)menuAction
++                menuOpenAction:(RNSBarButtonMenuOpenAction)menuOpenAction
+                    imageLoader:(RCTImageLoader *)imageLoader;
+ 
+ @end
+diff --git a/ios/RNSBarButtonItem.mm b/ios/RNSBarButtonItem.mm
+index 0eb1f09d..6aeb32b3 100644
+--- a/ios/RNSBarButtonItem.mm
++++ b/ios/RNSBarButtonItem.mm
+@@ -14,6 +14,7 @@ @implementation RNSBarButtonItem {
+ - (instancetype)initWithConfig:(NSDictionary<NSString *, id> *)dict
+                         action:(RNSBarButtonItemAction)action
+                     menuAction:(RNSBarButtonMenuItemAction)menuAction
++                menuOpenAction:(RNSBarButtonMenuOpenAction)menuOpenAction
+                    imageLoader:(RCTImageLoader *)imageLoader
+ {
+   self = [super init];
+@@ -115,7 +116,10 @@ - (instancetype)initWithConfig:(NSDictionary<NSString *, id> *)dict
+   if (@available(tvOS 17.0, *)) {
+     NSDictionary *menu = dict[@"menu"];
+     if (menu) {
+-      self.menu = [[self class] initUIMenuWithDict:menu menuAction:menuAction imageLoader:imageLoader];
++      self.menu = [[self class] initUIMenuWithDict:menu
++                                        menuAction:menuAction
++                                    menuOpenAction:menuOpenAction
++                                       imageLoader:imageLoader];
+     }
+   }
+ #endif
+@@ -163,6 +167,7 @@ + (void)resolveImageFromConfig:(NSDictionary *)dict
+ 
+ + (UIMenu *)initUIMenuWithDict:(NSDictionary<NSString *, id> *)dict
+                     menuAction:(RNSBarButtonMenuItemAction)menuAction
++                menuOpenAction:(RNSBarButtonMenuOpenAction)menuOpenAction
+                    imageLoader:(RCTImageLoader *)imageLoader
+ {
+   NSArray *items = dict[@"items"];
+@@ -174,7 +179,10 @@ + (UIMenu *)initUIMenuWithDict:(NSDictionary<NSString *, id> *)dict
+         UIAction *actionItem = [self createActionItemFromConfig:item menuAction:menuAction imageLoader:imageLoader];
+         [elements addObject:actionItem];
+       } else {
+-        UIMenu *childMenu = [self initUIMenuWithDict:item menuAction:menuAction imageLoader:imageLoader];
++        UIMenu *childMenu = [self initUIMenuWithDict:item
++                                           menuAction:menuAction
++                                      menuOpenAction:nil
++                                         imageLoader:imageLoader];
+         if (childMenu) {
+           [elements addObject:childMenu];
+         }
+@@ -188,6 +196,21 @@ + (UIMenu *)initUIMenuWithDict:(NSDictionary<NSString *, id> *)dict
+                  image = img;
+                }];
+ 
++  NSString *menuOpenId = dict[@"menuOpenId"];
++  if (menuOpenId != nil && menuOpenAction != nil && @available(iOS 15.0, *)) {
++    NSArray<UIMenuElement *> *deferredElements = [elements copy];
++    UIDeferredMenuElement *deferredElement =
++        [UIDeferredMenuElement elementWithUncachedProvider:^(void (^completion)(NSArray<UIMenuElement *> *)) {
++          menuOpenAction(menuOpenId);
++          completion(deferredElements);
++        }];
++    return [UIMenu menuWithTitle:dict[@"title"]
++                            image:image
++                       identifier:nil
++                          options:RNSMakeUIMenuOptionsFromConfig(dict)
++                         children:@[ deferredElement ]];
++  }
++
+   return [UIMenu menuWithTitle:dict[@"title"]
+                          image:image
+                     identifier:nil
+diff --git a/ios/RNSScreenStackHeaderConfig.h b/ios/RNSScreenStackHeaderConfig.h
+index d5ea95f5..71aaa82c 100644
+--- a/ios/RNSScreenStackHeaderConfig.h
++++ b/ios/RNSScreenStackHeaderConfig.h
+@@ -18,6 +18,12 @@
+ 
+ @end
+ 
++typedef NS_ENUM(NSInteger, RNSCancelledTransitionHeaderGeometryFixMode) {
++  RNSCancelledTransitionHeaderGeometryFixModeAuto = 0,
++  RNSCancelledTransitionHeaderGeometryFixModeEnabled = 1,
++  RNSCancelledTransitionHeaderGeometryFixModeDisabled = 2,
++};
++
+ @interface RNSScreenStackHeaderConfig :
+ #ifdef RCT_NEW_ARCH_ENABLED
+     RCTViewComponentView
+@@ -56,6 +62,7 @@ NS_ASSUME_NONNULL_BEGIN
+ @property (nonatomic) BOOL hideBackButton;
+ @property (nonatomic) BOOL disableBackButtonMenu;
+ @property (nonatomic) BOOL hideShadow;
++@property (nonatomic) CGFloat headerOpacity;
+ @property (nonatomic) BOOL translucent;
+ @property (nonatomic) BOOL backButtonInCustomView;
+ @property (nonatomic) UISemanticContentAttribute direction;
+@@ -68,6 +75,7 @@ NS_ASSUME_NONNULL_BEGIN
+ @property (nonatomic) RCTDirectEventBlock onPressHeaderBarButtonMenuItem;
+ #endif
+ @property (nonatomic, readwrite) BOOL synchronousShadowStateUpdatesEnabled;
++@property (nonatomic) RNSCancelledTransitionHeaderGeometryFixMode cancelledTransitionHeaderGeometryFixMode;
+ 
+ NS_ASSUME_NONNULL_END
+ 
+@@ -75,6 +83,9 @@ NS_ASSUME_NONNULL_END
+                       animated:(BOOL)animated
+                     withConfig:(nonnull RNSScreenStackHeaderConfig *)config;
+ 
+++ (void)prepareCancelledTransitionHeaderGeometryFixForNavigationBar:(nonnull UINavigationBar *)navigationBar
++                                                         withConfig:(nullable RNSScreenStackHeaderConfig *)config;
++
+ /**
+  * Returns true iff subview of given `type` is present.
+  *
+diff --git a/ios/RNSScreenStackHeaderConfig.mm b/ios/RNSScreenStackHeaderConfig.mm
+index 7d8e4947..b5bfa5a3 100644
+--- a/ios/RNSScreenStackHeaderConfig.mm
++++ b/ios/RNSScreenStackHeaderConfig.mm
+@@ -33,6 +33,7 @@
+ #import "RNSScreen.h"
+ #import "RNSScreenStackHeaderConfig.h"
+ #import "RNSSearchBar.h"
++#import <objc/runtime.h>
+ 
+ #ifdef RCT_NEW_ARCH_ENABLED
+ namespace react = facebook::react;
+@@ -40,6 +41,108 @@
+ 
+ static const NSNumber *const DEFAULT_TITLE_FONT_SIZE = @17;
+ static const NSNumber *const DEFAULT_TITLE_LARGE_FONT_SIZE = @34;
++static char RNSHeaderCancelledTransitionFixStateKey;
++static NSString *const RNSHeaderCancelledTransitionEffectPositionAnimationKey =
++    @"rns_cancelledTransitionEffectPosition";
++
++@interface RNSHeaderCancelledTransitionFixState : NSObject
++
++@property (nonatomic, weak) UIView *background;
++@property (nonatomic) CGFloat navigationBarHeight;
++@property (nonatomic) RNSCancelledTransitionHeaderGeometryFixMode mode;
++
++@end
++
++@implementation RNSHeaderCancelledTransitionFixState
++@end
++
++static BOOL RNSHeaderContainsVisualEffectView(UIView *view)
++{
++  if ([view isKindOfClass:[UIVisualEffectView class]]) {
++    return YES;
++  }
++  for (UIView *subview in view.subviews) {
++    if (RNSHeaderContainsVisualEffectView(subview)) {
++      return YES;
++    }
++  }
++  return NO;
++}
++
++static UIView *RNSHeaderFindBarBackground(UINavigationBar *navigationBar)
++{
++  CGFloat navigationBarWidth = CGRectGetWidth(navigationBar.bounds);
++  for (UIView *subview in navigationBar.subviews) {
++    BOOL spansNavigationBar = CGRectGetWidth(subview.bounds) >= navigationBarWidth - 1.0;
++    BOOL startsAtOrAboveNavigationBar = CGRectGetMinY(subview.frame) <= 0.5;
++    if (spansNavigationBar && startsAtOrAboveNavigationBar && RNSHeaderContainsVisualEffectView(subview)) {
++      return subview;
++    }
++  }
++  return nil;
++}
++
++static void RNSHeaderAnimateEffectPosition(UIView *view, CFTimeInterval duration)
++{
++  CALayer *layer = view.layer;
++  CALayer *presentation = (CALayer *)layer.presentationLayer;
++  if (presentation == nil) {
++    return;
++  }
++
++  CABasicAnimation *positionAnimation = [CABasicAnimation animationWithKeyPath:@"position"];
++  positionAnimation.fromValue = [NSValue valueWithCGPoint:presentation.position];
++  positionAnimation.toValue = [NSValue valueWithCGPoint:layer.position];
++  positionAnimation.duration = MAX(duration, 0.01);
++  positionAnimation.fillMode = kCAFillModeForwards;
++  positionAnimation.removedOnCompletion = NO;
++  [layer addAnimation:positionAnimation forKey:RNSHeaderCancelledTransitionEffectPositionAnimationKey];
++}
++
++static void RNSHeaderAnimateEffectViewTreePositions(UIView *view, CFTimeInterval duration)
++{
++  RNSHeaderAnimateEffectPosition(view, duration);
++  for (UIView *subview in view.subviews) {
++    RNSHeaderAnimateEffectViewTreePositions(subview, duration);
++  }
++}
++
++static void RNSHeaderAnimateVisualEffectPositions(UIView *background, CFTimeInterval duration)
++{
++  for (UIView *subview in background.subviews) {
++    if ([subview isKindOfClass:[UIVisualEffectView class]]) {
++      RNSHeaderAnimateEffectViewTreePositions(subview, duration);
++    }
++  }
++}
++
++static void RNSHeaderRemoveEffectViewTreePositionAnimations(UIView *view)
++{
++  [view.layer removeAnimationForKey:RNSHeaderCancelledTransitionEffectPositionAnimationKey];
++  for (UIView *subview in view.subviews) {
++    RNSHeaderRemoveEffectViewTreePositionAnimations(subview);
++  }
++}
++
++static void RNSHeaderRemoveVisualEffectPositionAnimations(UIView *background)
++{
++  for (UIView *subview in background.subviews) {
++    if ([subview isKindOfClass:[UIVisualEffectView class]]) {
++      RNSHeaderRemoveEffectViewTreePositionAnimations(subview);
++    }
++  }
++}
++
++static void RNSHeaderClearGeometryFixState(UINavigationBar *navigationBar)
++{
++  RNSHeaderCancelledTransitionFixState *state =
++      objc_getAssociatedObject(navigationBar, &RNSHeaderCancelledTransitionFixStateKey);
++  if (state.background != nil) {
++    RNSHeaderRemoveVisualEffectPositionAnimations(state.background);
++  }
++  objc_setAssociatedObject(
++      navigationBar, &RNSHeaderCancelledTransitionFixStateKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
++}
+ 
+ #if !defined(RCT_NEW_ARCH_ENABLED)
+ // Some RN private method hacking below. Couldn't figure out better way to access image data
+@@ -133,6 +236,7 @@ - (instancetype)initWithBridge:(RCTBridge *)bridge
+ - (void)initProps
+ {
+   self.hidden = YES;
++  _headerOpacity = 1.0;
+   _reactSubviews = [NSMutableArray new];
+   _backTitleVisible = YES;
+   _blurEffect = RNSBlurEffectStyleNone;
+@@ -435,6 +539,27 @@ + (void)willShowViewController:(UIViewController *)vc
+   }
+ }
+ 
+++ (void)prepareCancelledTransitionHeaderGeometryFixForNavigationBar:(UINavigationBar *)navigationBar
++                                                         withConfig:(RNSScreenStackHeaderConfig *)config
++{
++  RNSHeaderClearGeometryFixState(navigationBar);
++#if RNS_IPHONE_OS_VERSION_AVAILABLE(26_0)
++  if (@available(iOS 26.0, *)) {
++    return;
++  }
++#endif
++  if (config.cancelledTransitionHeaderGeometryFixMode ==
++      RNSCancelledTransitionHeaderGeometryFixModeDisabled) {
++    return;
++  }
++
++  RNSHeaderCancelledTransitionFixState *state = [RNSHeaderCancelledTransitionFixState new];
++  state.navigationBarHeight = CGRectGetHeight(navigationBar.bounds);
++  state.mode = config.cancelledTransitionHeaderGeometryFixMode;
++  objc_setAssociatedObject(
++      navigationBar, &RNSHeaderCancelledTransitionFixStateKey, state, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
++}
++
+ + (UINavigationBarAppearance *)buildAppearance:(UIViewController *)vc withConfig:(RNSScreenStackHeaderConfig *)config
+ {
+   UINavigationBarAppearance *appearance = [UINavigationBarAppearance new];
+@@ -536,6 +661,18 @@ + (UINavigationBarAppearance *)buildAppearance:(UIViewController *)vc withConfig
+   UIImage *backButtonImage = [config loadBackButtonImageInViewController:vc];
+   if (backButtonImage) {
+     [appearance setBackIndicatorImage:backButtonImage transitionMaskImage:backButtonImage];
++#if RNS_IPHONE_OS_VERSION_AVAILABLE(26_0)
++  } else if (@available(iOS 26.0, *)) {
++    // On iOS 26 the system-generated back indicator does not reliably inherit
++    // UINavigationBar.tintColor. Supplying an always-original indicator keeps
++    // the native back item and its menu while preserving the configured color.
++    UIImageSymbolConfiguration *symbolConfig =
++        [UIImageSymbolConfiguration configurationWithPointSize:17 weight:UIImageSymbolWeightSemibold];
++    UIImage *maskImage = [UIImage systemImageNamed:@"chevron.backward" withConfiguration:symbolConfig];
++    UIImage *tintedImage =
++        [maskImage imageWithTintColor:config.color renderingMode:UIImageRenderingModeAlwaysOriginal];
++    [appearance setBackIndicatorImage:tintedImage transitionMaskImage:maskImage];
++#endif
+   } else if (appearance.backIndicatorImage) {
+     [appearance setBackIndicatorImage:nil transitionMaskImage:nil];
+   }
+@@ -584,6 +721,14 @@ + (void)updateViewController:(UIViewController *)vc
+   }
+ 
+   navctr.navigationBar.overrideUserInterfaceStyle = config.userInterfaceStyle;
++  navctr.navigationBar.userInteractionEnabled = config.headerOpacity > 0.01;
++  [UIView animateWithDuration:0.18
++                   delay:0
++                 options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionCurveEaseInOut
++              animations:^{
++                navctr.navigationBar.alpha = config.headerOpacity;
++              }
++              completion:nil];
+ 
+ #if !TARGET_OS_TV
+   [config configureBackItem:prevItem withPrevVC:prevVC];
+@@ -737,7 +882,42 @@ + (void)updateViewController:(UIViewController *)vc
+     // the transition animation block does not get triggered. This is ok, because with both of those
+     // types of transitions there is no "shared" navigation bar that needs to be updated in an animated
+     // way.
+-    [vc.transitionCoordinator
++    id<UIViewControllerTransitionCoordinator> coordinator = vc.transitionCoordinator;
++    if (coordinator.isInteractive) {
++      [coordinator
++          notifyWhenInteractionChangesUsingBlock:^(id<UIViewControllerTransitionCoordinatorContext> context) {
++            if (!context.isCancelled) {
++              return;
++            }
++            UINavigationBar *navigationBar = ((UINavigationController *)vc.parentViewController).navigationBar;
++            RNSHeaderCancelledTransitionFixState *state =
++                objc_getAssociatedObject(navigationBar, &RNSHeaderCancelledTransitionFixStateKey);
++            if (state == nil) {
++              return;
++            }
++
++            BOOL forceEnabled = state.mode == RNSCancelledTransitionHeaderGeometryFixModeEnabled;
++            CALayer *navigationBarPresentation = (CALayer *)navigationBar.layer.presentationLayer;
++            CGFloat transitionNavigationBarHeight = MAX(
++                CGRectGetHeight(navigationBar.bounds),
++                navigationBarPresentation != nil ? CGRectGetHeight(navigationBarPresentation.bounds) : 0.0);
++            BOOL autoConditionsMatch = config.largeTitle && config.largeTitleBackgroundColor != nil &&
++                CGColorGetAlpha(config.largeTitleBackgroundColor.CGColor) <= 0.01 &&
++                config.blurEffect != RNSBlurEffectStyleNone &&
++                state.navigationBarHeight + 1.0 < transitionNavigationBarHeight;
++            if (!forceEnabled && !autoConditionsMatch) {
++              return;
++            }
++
++            state.background = RNSHeaderFindBarBackground(navigationBar);
++            if (state.background == nil) {
++              return;
++            }
++            CFTimeInterval remainingDuration = context.transitionDuration * context.percentComplete;
++            RNSHeaderAnimateVisualEffectPositions(state.background, remainingDuration);
++          }];
++    }
++    [coordinator
+         animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> _Nonnull context) {
+           [self setAnimatedConfig:vc withConfig:config];
+         }
+@@ -751,7 +931,12 @@ + (void)updateViewController:(UIViewController *)vc
+                 break;
+               }
+             }
++            UINavigationBar *navigationBar = ((UINavigationController *)fromVC.parentViewController).navigationBar;
+             [self setAnimatedConfig:fromVC withConfig:config];
++            RNSHeaderClearGeometryFixState(navigationBar);
++          } else {
++            UINavigationBar *navigationBar = ((UINavigationController *)vc.parentViewController).navigationBar;
++            RNSHeaderClearGeometryFixState(navigationBar);
+           }
+         }];
+   } else {
+@@ -892,6 +1077,21 @@ - (void)applySemanticContentAttributeIfNeededToNavCtrl:(UINavigationController *
+             if (self.onPressHeaderBarButtonMenuItem && menuId) {
+               self.onPressHeaderBarButtonMenuItem(@{@"menuId" : menuId});
+             }
++#endif
++          }
++          menuOpenAction:^(NSString *buttonId) {
++#if RCT_NEW_ARCH_ENABLED
++            auto eventEmitter = std::static_pointer_cast<const facebook::react::RNSScreenStackHeaderConfigEventEmitter>(
++                self->_eventEmitter);
++            if (eventEmitter && buttonId) {
++              eventEmitter->onPressHeaderBarButtonItem(
++                  facebook::react::RNSScreenStackHeaderConfigEventEmitter::OnPressHeaderBarButtonItem{
++                      .buttonId = std::string([buttonId UTF8String])});
++            }
++#else
++            if (self.onPressHeaderBarButtonItem && buttonId) {
++              self.onPressHeaderBarButtonItem(@{@"buttonId" : buttonId});
++            }
+ #endif
+           }
+ #if RCT_NEW_ARCH_ENABLED
+@@ -1125,6 +1325,7 @@ - (void)updateProps:(react::Props::Shared const &)props oldProps:(react::Props::
+   _titleFontWeight = RCTNSStringFromStringNilIfEmpty(newScreenProps.titleFontWeight);
+   _titleFontSize = [self getFontSizePropValue:newScreenProps.titleFontSize];
+   _hideShadow = newScreenProps.hideShadow;
++  _headerOpacity = newScreenProps.headerOpacity;
+ 
+   _largeTitle = newScreenProps.largeTitle;
+   if (newScreenProps.largeTitleFontFamily != oldScreenProps.largeTitleFontFamily) {
+@@ -1197,6 +1398,8 @@ - (void)updateProps:(react::Props::Shared const &)props oldProps:(react::Props::
+   }
+ 
+   _synchronousShadowStateUpdatesEnabled = newScreenProps.synchronousShadowStateUpdatesEnabled;
++  _cancelledTransitionHeaderGeometryFixMode =
++      (RNSCancelledTransitionHeaderGeometryFixMode)newScreenProps.cancelledTransitionHeaderGeometryFixMode;
+ 
+   _initialPropsSet = YES;
+   _props = std::static_pointer_cast<react::RNSScreenStackHeaderConfigProps const>(props);
+@@ -1294,6 +1497,7 @@ - (RCTShadowView *)shadowView
+ RCT_EXPORT_VIEW_PROPERTY(largeTitleHideShadow, BOOL)
+ RCT_EXPORT_VIEW_PROPERTY(hideBackButton, BOOL)
+ RCT_EXPORT_VIEW_PROPERTY(hideShadow, BOOL)
++RCT_EXPORT_VIEW_PROPERTY(headerOpacity, CGFloat)
+ RCT_EXPORT_VIEW_PROPERTY(backButtonInCustomView, BOOL)
+ RCT_EXPORT_VIEW_PROPERTY(disableBackButtonMenu, BOOL)
+ RCT_EXPORT_VIEW_PROPERTY(backButtonDisplayMode, UINavigationItemBackButtonDisplayMode)
+@@ -1304,6 +1508,7 @@ - (RCTShadowView *)shadowView
+ RCT_EXPORT_VIEW_PROPERTY(headerRightBarButtonItems, NSArray)
+ RCT_EXPORT_VIEW_PROPERTY(onPressHeaderBarButtonItem, RCTDirectEventBlock);
+ RCT_EXPORT_VIEW_PROPERTY(onPressHeaderBarButtonMenuItem, RCTDirectEventBlock);
++RCT_EXPORT_VIEW_PROPERTY(cancelledTransitionHeaderGeometryFixMode, NSInteger)
+ 
+ @end
+ 
+diff --git a/lib/typescript/fabric/ScreenStackHeaderConfigNativeComponent.d.ts b/lib/typescript/fabric/ScreenStackHeaderConfigNativeComponent.d.ts
+index 1e40b704..d83a6af8 100644
+--- a/lib/typescript/fabric/ScreenStackHeaderConfigNativeComponent.d.ts
++++ b/lib/typescript/fabric/ScreenStackHeaderConfigNativeComponent.d.ts
+@@ -22,6 +22,7 @@ export interface NativeProps extends ViewProps {
+     color?: ColorValue;
+     direction?: CT.WithDefault<DirectionType, 'ltr'>;
+     hidden?: boolean;
++    headerOpacity?: CT.WithDefault<CT.Float, 1.0>;
+     hideShadow?: boolean;
+     largeTitle?: boolean;
+     largeTitleFontFamily?: string;
+@@ -47,8 +48,9 @@ export interface NativeProps extends ViewProps {
+     onPressHeaderBarButtonItem?: CT.DirectEventHandler<OnPressHeaderBarButtonItemEvent>;
+     onPressHeaderBarButtonMenuItem?: CT.DirectEventHandler<OnPressHeaderBarButtonMenuItemEvent>;
+     synchronousShadowStateUpdatesEnabled?: CT.WithDefault<boolean, false>;
++    cancelledTransitionHeaderGeometryFixMode?: CT.WithDefault<CT.Int32, 0>;
+     userInterfaceStyle?: CT.WithDefault<UserInterfaceStyle, 'unspecified'>;
+ }
+ declare const _default: import("react-native").HostComponent<NativeProps>;
+ export default _default;
+-//# sourceMappingURL=ScreenStackHeaderConfigNativeComponent.d.ts.map
+\ No newline at end of file
++//# sourceMappingURL=ScreenStackHeaderConfigNativeComponent.d.ts.map
+diff --git a/lib/typescript/types.d.ts b/lib/typescript/types.d.ts
+index 8ca5ccd6..69b9a2c6 100644
+--- a/lib/typescript/types.d.ts
++++ b/lib/typescript/types.d.ts
+@@ -554,6 +554,20 @@ export interface ScreenStackProps extends ViewProps, GestureProps {
+     ref?: React.MutableRefObject<React.Ref<View>>;
+ }
+ export interface ScreenStackHeaderConfigProps extends ViewProps {
++    /**
++     * Controls header visibility without removing the native navigation bar or toolbar.
++     *
++     * @platform ios android
++     */
++    headerOpacity?: number;
++    /**
++     * Controls the iOS workaround for stale navigation bar background geometry after
++     * cancelling an interactive transition. By default, it is enabled automatically
++     * only for affected large-title transitions on iOS versions below 26.
++     *
++     * @platform ios
++     */
++    cancelledTransitionHeaderGeometryFixEnabled?: boolean;
+     /**
+      * Whether to show the back button with custom left side of the header.
+      */
+@@ -1106,6 +1120,12 @@ export interface HeaderBarButtonItemSubmenu {
+ }
+ export interface HeaderBarButtonItemWithMenu extends SharedHeaderBarButtonItem {
+     type: 'menu';
++    /**
++     * Function to call when the system menu is presented.
++     *
++     * @platform ios
++     */
++    onOpen?: () => void;
+     menu: {
+         title?: string;
+         items: (HeaderBarButtonItemMenuAction | HeaderBarButtonItemSubmenu)[];
+@@ -1171,4 +1191,4 @@ export interface GestureProviderProps extends GestureProps {
+ }
+ export type * from './components/tabs';
+ export type * from './components/shared/types';
+-//# sourceMappingURL=types.d.ts.map
+\ No newline at end of file
++//# sourceMappingURL=types.d.ts.map
+diff --git a/src/fabric/ScreenStackHeaderConfigNativeComponent.ts b/src/fabric/ScreenStackHeaderConfigNativeComponent.ts
+index fcbb2683..a8cf28ce 100644
+--- a/src/fabric/ScreenStackHeaderConfigNativeComponent.ts
++++ b/src/fabric/ScreenStackHeaderConfigNativeComponent.ts
+@@ -51,6 +51,7 @@ export interface NativeProps extends ViewProps {
+   color?: ColorValue;
+   direction?: CT.WithDefault<DirectionType, 'ltr'>;
+   hidden?: boolean;
++  headerOpacity?: CT.WithDefault<CT.Float, 1.0>;
+   hideShadow?: boolean;
+   largeTitle?: boolean;
+   largeTitleFontFamily?: string;
+@@ -77,6 +78,7 @@ export interface NativeProps extends ViewProps {
+   onPressHeaderBarButtonItem?: CT.DirectEventHandler<OnPressHeaderBarButtonItemEvent>;
+   onPressHeaderBarButtonMenuItem?: CT.DirectEventHandler<OnPressHeaderBarButtonMenuItemEvent>;
+   synchronousShadowStateUpdatesEnabled?: CT.WithDefault<boolean, false>;
++  cancelledTransitionHeaderGeometryFixMode?: CT.WithDefault<CT.Int32, 0>;
+ 
+   // Experimental
+   userInterfaceStyle?: CT.WithDefault<UserInterfaceStyle, 'unspecified'>;
+diff --git a/src/types.tsx b/src/types.tsx
+index a4798d99..cce7ff1e 100644
+--- a/src/types.tsx
++++ b/src/types.tsx
+@@ -657,6 +657,20 @@ export interface ScreenStackProps extends ViewProps, GestureProps {
+ }
+ 
+ export interface ScreenStackHeaderConfigProps extends ViewProps {
++  /**
++   * Controls header visibility without removing the native navigation bar or toolbar.
++   *
++   * @platform ios android
++   */
++  headerOpacity?: number;
++  /**
++   * Controls the iOS workaround for stale navigation bar background geometry after
++   * cancelling an interactive transition. By default, it is enabled automatically
++   * only for affected large-title transitions on iOS versions below 26.
++   *
++   * @platform ios
++   */
++  cancelledTransitionHeaderGeometryFixEnabled?: boolean;
+   /**
+    * Whether to show the back button with custom left side of the header.
+    */
+@@ -1227,6 +1241,12 @@ export interface HeaderBarButtonItemSubmenu {
+ 
+ export interface HeaderBarButtonItemWithMenu extends SharedHeaderBarButtonItem {
+   type: 'menu';
++  /**
++   * Function to call when the system menu is presented.
++   *
++   * @platform ios
++   */
++  onOpen?: () => void;
+   menu: {
+     title?: string;
+     items: (HeaderBarButtonItemMenuAction | HeaderBarButtonItemSubmenu)[];
