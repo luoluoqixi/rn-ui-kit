@@ -7,7 +7,7 @@
       "dependencies": {
         "@expo/metro-runtime": "=6.1.2",
         "@lodev09/react-native-true-sheet": "=3.11.12",
-        "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_09_05_3",
+        "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_09_20",
         "@react-native-async-storage/async-storage": "=2.2.0",
         "@react-native-menu/menu": "=2.0.0",
         "@react-native-picker/picker": "^2.11.4",
@@ -26,7 +26,7 @@
         "react-dom": "=19.2.5",
         "react-native": "=0.83.9",
         "react-native-gesture-handler": "=2.31.1",
-        "react-native-ios-context-menu": "^3.2.1",
+        "react-native-ios-context-menu": "=3.2.1",
         "react-native-ios-utilities": "=5.2.0",
         "react-native-keyboard-controller": "=1.22.4",
         "react-native-reanimated": "=4.3.0",
@@ -51,15 +51,15 @@
     },
   },
   "patchedDependencies": {
-    "react-native-screens@4.24.0": "patches/react-native-screens@4.24.0.patch",
-    "react-native-ios-utilities@5.2.0": "patches/react-native-ios-utilities@5.2.0.patch",
     "@react-navigation/native-stack@7.18.8": "patches/@react-navigation+native-stack@7.18.8.patch",
-    "expo-modules-core@55.0.25": "patches/expo-modules-core@55.0.25.patch",
     "zeego@3.0.6": "patches/zeego@3.0.6.patch",
-    "@expo/cli@55.0.32": "patches/@expo+cli@55.0.32.patch",
     "@react-native-picker/picker@2.11.4": "patches/@react-native-picker+picker@2.11.4.patch",
     "expo-haptics@55.0.14": "patches/expo-haptics@55.0.14.patch",
+    "react-native-ios-utilities@5.2.0": "patches/react-native-ios-utilities@5.2.0.patch",
+    "expo-modules-core@55.0.25": "patches/expo-modules-core@55.0.25.patch",
     "react-native-ios-context-menu@3.2.1": "patches/react-native-ios-context-menu@3.2.1.patch",
+    "@expo/cli@55.0.32": "patches/@expo+cli@55.0.32.patch",
+    "react-native-screens@4.24.0": "patches/react-native-screens@4.24.0.patch",
     "@lodev09/react-native-true-sheet@3.11.12": "patches/@lodev09+react-native-true-sheet@3.11.12.patch",
     "@react-native-menu/menu@2.0.0": "patches/@react-native-menu+menu@2.0.0.patch",
     "react-native@0.83.9": "patches/react-native@0.83.9.patch",
@@ -378,7 +378,7 @@
 
     "@lodev09/react-native-true-sheet": ["@lodev09/react-native-true-sheet@3.11.12", "", { "peerDependencies": { "@radix-ui/react-dialog": ">=1", "@radix-ui/react-presence": ">=1", "@react-navigation/core": ">=7", "react": "*", "react-native": "*", "react-native-reanimated": ">=4", "react-native-worklets": "*" }, "optionalPeers": ["@radix-ui/react-dialog", "@radix-ui/react-presence", "@react-navigation/core", "react-native-reanimated", "react-native-worklets"] }, "sha512-eL7mfUw0p3dxqXKqck3k7H2Ja6UHGbPSqbVDRKeANuxZN4xctxF1iFSPYHj0LULVtheqxKBhWBiR4lJ25El57Q=="],
 
-    "@luoluoqixi/expo-ui-55": ["@luoluoqixi/expo-ui-55@github:luoluoqixi/expo-ui-55#35b6afe", { "dependencies": { "sf-symbols-typescript": "^2.1.0" }, "peerDependencies": { "expo": "*", "react": "*", "react-native": "*" } }, "luoluoqixi-expo-ui-55-35b6afe", "sha512-wvbwPL/9C4/IVtdMzfaoKjLmRvkx7yOvY8yrjKlcDCqsPRq7IL/BX6P6dlsIiR6tt2rmlWukiS1cbTkHpgRA5g=="],
+    "@luoluoqixi/expo-ui-55": ["@luoluoqixi/expo-ui-55@github:luoluoqixi/expo-ui-55#dbffd7f", { "dependencies": { "sf-symbols-typescript": "^2.1.0" }, "peerDependencies": { "expo": "*", "react": "*", "react-native": "*" } }, "luoluoqixi-expo-ui-55-dbffd7f", "sha512-E9sspFCvn0PMjPA8pR7w9X8K2oNLyrX+/IcMJ0U6nr2LDb2XiHo6touu18rcpIhr12XL0uUGdyQKRhrp6plaKA=="],
 
     "@radix-ui/primitive": ["@radix-ui/primitive@1.1.7", "", {}, "sha512-rqWnm76nYT8HoNNqEjpgJ7Pw/DrBj5iBTrmEPo6HTX5+VJyBNOqTdv4g89G63HuR5g0AaENoAcH7Is5fF2kZ8Q=="],
 
