@@ -2,6 +2,8 @@ import { type ConfigContext, type ExpoConfig } from "expo/config";
 
 import pkg from "./package.json";
 
+const IOS_DEPLOYMENT_TARGET = "15.1";
+
 // const bundleIdentifier = "com.luoluoqixi.rnuikitexample";
 // const name = "rnuikit-dev";
 const bundleIdentifier = "com.luoluoqixi.rnuikitexample.release";
@@ -36,9 +38,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       {
         ios: {
           buildReactNativeFromSource: true,
+          deploymentTarget: IOS_DEPLOYMENT_TARGET,
         },
       },
     ],
+    [
+      "./plugins/with-ios-pods-deployment-target.cjs",
+      { deploymentTarget: IOS_DEPLOYMENT_TARGET },
+    ],
+    "./plugins/with-ios-scene-lifecycle.cjs",
     "./plugins/with-force-android-js-bundle.cjs",
   ],
   experiments: {
