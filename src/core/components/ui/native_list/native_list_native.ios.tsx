@@ -1251,6 +1251,18 @@ function NativeListRoot({
     },
     [],
   );
+  const resetNavigationSelectionForNewPress = useCallback(() => {
+    // A new touch replaces the old optimistic interaction synchronously in
+    // UIKit. It must cancel the old JS fallback timer, but must not send a
+    // native clear token: React can deliver that old token after the new cell
+    // has already been selected, which would incorrectly clear the new press.
+    if (navigationSelectionTimeoutRef.current != null) {
+      clearTimeout(navigationSelectionTimeoutRef.current);
+      navigationSelectionTimeoutRef.current = undefined;
+    }
+    navigationSelectionIdRef.current = undefined;
+    setNavigationSelectionId(undefined);
+  }, []);
   const confirmNavigationSelection = useCallback(() => {
     const selectionId = navigationSelectionIdRef.current;
     if (selectionId != null) {
@@ -1275,7 +1287,7 @@ function NativeListRoot({
         autoClearDelay?: number;
       },
     ) => {
-      clearNavigationSelection();
+      resetNavigationSelectionForNewPress();
       navigationSelectionIdRef.current = selectionId;
 
       const cancel = () => clearNavigationSelection(selectionId);
@@ -1298,7 +1310,7 @@ function NativeListRoot({
 
       return { cancel, confirm };
     },
-    [clearNavigationSelection],
+    [clearNavigationSelection, resetNavigationSelectionForNewPress],
   );
   const navigationSelectionContext = useMemo(
     () => ({
