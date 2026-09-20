@@ -111,6 +111,8 @@ const DEFAULT_NAVIGATION_SELECTION_AUTO_CLEAR_DELAY = 300;
 const NativeListWithNavigationSelection = List as ComponentType<
   ComponentProps<typeof List> & {
     clearsNavigationSelectionOnViewWillAppear?: boolean;
+    navigationSelectionClearToken?: number;
+    onNavigationSelectionConfirmed?: () => void;
     onNavigationSelectionCleared?: () => void;
   }
 >;
@@ -1202,6 +1204,7 @@ function NativeListRoot({
   const [navigationSelectionId, setNavigationSelectionId] = useState<
     NativeListSelectionId | undefined
   >(undefined);
+  const [navigationSelectionClearToken, setNavigationSelectionClearToken] = useState(0);
   const navigationSelectionIdRef = useRef<NativeListSelectionId | undefined>(undefined);
   const navigationSelectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
@@ -1229,14 +1232,37 @@ function NativeListRoot({
   const usesNativeEditMode = editMode === true;
   const usesImmediatePressFeedback = iosPressFeedback === "immediate";
 
-  const clearNavigationSelection = useCallback((selectionId?: NativeListSelectionId) => {
-    if (selectionId != null && navigationSelectionIdRef.current !== selectionId) return;
+  const clearNavigationSelection = useCallback(
+    (selectionId?: NativeListSelectionId, synchronizesNative = true) => {
+      if (selectionId != null && navigationSelectionIdRef.current !== selectionId) return;
+      const hadNavigationSelection = navigationSelectionIdRef.current != null;
+      if (navigationSelectionTimeoutRef.current != null) {
+        clearTimeout(navigationSelectionTimeoutRef.current);
+        navigationSelectionTimeoutRef.current = undefined;
+      }
+      navigationSelectionIdRef.current = undefined;
+      setNavigationSelectionId(undefined);
+      // Do not render a JS selected value on touch-up: that reconciliation can
+      // race React Navigation's push. A separate, cancellation-only token asks
+      // the native cell to clear after a non-navigation press instead.
+      if (synchronizesNative && hadNavigationSelection) {
+        setNavigationSelectionClearToken((token) => token + 1);
+      }
+    },
+    [],
+  );
+  const confirmNavigationSelection = useCallback(() => {
+    const selectionId = navigationSelectionIdRef.current;
+    if (selectionId != null) {
+      // The source screen is already covered when native UIKit confirms this
+      // update. Retain the id for a source List recreation without touching
+      // SwiftUI's List selection in the push transaction itself.
+      setNavigationSelectionId(selectionId);
+    }
     if (navigationSelectionTimeoutRef.current != null) {
       clearTimeout(navigationSelectionTimeoutRef.current);
       navigationSelectionTimeoutRef.current = undefined;
     }
-    navigationSelectionIdRef.current = undefined;
-    setNavigationSelectionId(undefined);
   }, []);
   const selectNavigationItem = useCallback(
     (
@@ -1251,7 +1277,6 @@ function NativeListRoot({
     ) => {
       clearNavigationSelection();
       navigationSelectionIdRef.current = selectionId;
-      setNavigationSelectionId(selectionId);
 
       const cancel = () => clearNavigationSelection(selectionId);
       const confirm = () => {
@@ -1385,7 +1410,9 @@ function NativeListRoot({
             nativeEditMode={usesNativeEditMode ? "active" : "inactive"}
             nativeEditTint={nativeEditTint}
             clearsNavigationSelectionOnViewWillAppear={!usesNativeEditMode && !isIos15()}
-            onNavigationSelectionCleared={() => clearNavigationSelection()}
+            navigationSelectionClearToken={navigationSelectionClearToken}
+            onNavigationSelectionConfirmed={confirmNavigationSelection}
+            onNavigationSelectionCleared={() => clearNavigationSelection(undefined, false)}
             onSelectionChange={usesNativeEditMode ? handleSelectedIdsChange : undefined}
             selection={
               usesNativeEditMode
