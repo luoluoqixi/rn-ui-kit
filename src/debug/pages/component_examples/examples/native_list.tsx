@@ -381,6 +381,7 @@ export function NativeListExample() {
                 title="详情"
                 titleColor="#7c3aed"
                 titleFontSize={18}
+                iosNavigationSelection={false}
               />
               <NativeListNavigationItem
                 icon={<Users color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
@@ -388,6 +389,7 @@ export function NativeListExample() {
                 onPress={() => setLastAction("打开成员管理")}
                 subtitle="邀请、角色与访问权限"
                 title="成员"
+                iosNavigationSelection={false}
               />
               <NativeListItem
                 icon={<CircleOff color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}

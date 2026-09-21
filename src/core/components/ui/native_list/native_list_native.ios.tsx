@@ -1201,9 +1201,6 @@ function NativeListRoot({
   const navigation = useContext(NavigationContext);
   const nativeEditTint = toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;
   const [nativeRefreshing, setNativeRefreshing] = useState(false);
-  const [navigationSelectionId, setNavigationSelectionId] = useState<
-    NativeListSelectionId | undefined
-  >(undefined);
   const [navigationSelectionClearToken, setNavigationSelectionClearToken] = useState(0);
   const navigationSelectionIdRef = useRef<NativeListSelectionId | undefined>(undefined);
   const navigationSelectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
@@ -1241,10 +1238,9 @@ function NativeListRoot({
         navigationSelectionTimeoutRef.current = undefined;
       }
       navigationSelectionIdRef.current = undefined;
-      setNavigationSelectionId(undefined);
-      // Do not render a JS selected value on touch-up: that reconciliation can
-      // race React Navigation's push. A separate, cancellation-only token asks
-      // the native cell to clear after a non-navigation press instead.
+      // A separate, cancellation-only token asks the native cell to clear.
+      // Navigation selection is deliberately never fed back into SwiftUI's
+      // List(selection:) binding.
       if (synchronizesNative && hadNavigationSelection) {
         setNavigationSelectionClearToken((token) => token + 1);
       }
@@ -1261,16 +1257,8 @@ function NativeListRoot({
       navigationSelectionTimeoutRef.current = undefined;
     }
     navigationSelectionIdRef.current = undefined;
-    setNavigationSelectionId(undefined);
   }, []);
   const confirmNavigationSelection = useCallback(() => {
-    const selectionId = navigationSelectionIdRef.current;
-    if (selectionId != null) {
-      // The source screen is already covered when native UIKit confirms this
-      // update. Retain the id for a source List recreation without touching
-      // SwiftUI's List selection in the push transaction itself.
-      setNavigationSelectionId(selectionId);
-    }
     if (navigationSelectionTimeoutRef.current != null) {
       clearTimeout(navigationSelectionTimeoutRef.current);
       navigationSelectionTimeoutRef.current = undefined;
@@ -1429,9 +1417,7 @@ function NativeListRoot({
             selection={
               usesNativeEditMode
                 ? [...resolvedSelectedIds]
-                : navigationSelectionId == null
-                  ? []
-                  : [navigationSelectionId]
+                : []
             }
             onRefresh={handleNativeRefresh}
             // 禁用时从 UIScrollView 解绑原生刷新控件；控件实例本身保持稳定，
