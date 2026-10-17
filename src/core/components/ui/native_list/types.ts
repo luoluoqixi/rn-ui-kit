@@ -17,7 +17,7 @@ import type { RenderProp } from "../utils/render";
 
 export type NativeListSelectionId = string | number;
 
-/** Controls the optimistic iOS selection shown while a navigation action is pending. */
+/** Controls the optimistic row selection shown while a navigation action is pending. */
 export type NativeListNavigationSelectionControls = {
   /** The action will not navigate; remove the optimistic selected-row appearance now. */
   cancel: () => void;
@@ -151,11 +151,30 @@ export type NativeListItemBaseProps = NativeListItemPaddingProps &
 export type NativeListActionItemProps = NativeListItemBaseProps;
 export type NativeListNavigationItemProps = NativeListItemBaseProps & {
   /**
-   * Receives controls for the optimistic iOS navigation selection. Existing zero-argument
+   * Receives controls for the enabled iOS or basic navigation selection. Existing zero-argument
    * callbacks remain valid. Call `confirm` before waiting for a slow navigation result,
    * or `cancel` before showing a non-navigation UI such as an alert.
    */
   onPress?: (selection?: NativeListNavigationSelectionControls) => void;
+  /**
+   * Basic 实现中，点击后保留 pressBackgroundColor（默认主题 accent），返回并恢复焦点后延迟清除。
+   * 未导航时默认 300ms 后清除；异步导航可先调用 selection.confirm()，不导航可调用 cancel()。
+   * 设为 false 恢复原有按下反馈；不影响 iOS 原生列表及 iosNavigationSelection 相关选项。
+   * @default true
+   */
+  basicNavigationSelection?: boolean;
+  /**
+   * Basic 未确认导航时自动清除选中态的等待时间，单位毫秒。
+   * 慢速异步导航可先调用 selection.confirm() 取消此定时器。
+   * @default 300
+   */
+  basicNavigationSelectionAutoClearDelay?: number;
+  /**
+   * Basic 成功返回并恢复页面焦点后，继续保留选中态的时间，单位毫秒。
+   * 设为 0 立即清除；不受 selection.confirm() 影响。
+   * @default 300
+   */
+  basicNavigationSelectionReturnClearDelay?: number;
   /**
    * Enables the native iOS navigation-row selection behavior. Set to `false` to restore
    * the previous Button-only pressed appearance for flows that cannot navigate back.

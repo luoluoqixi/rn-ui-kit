@@ -48,6 +48,10 @@ import {
   useNativeListEditRow,
 } from "./edit_mode";
 import { useResolvedNativeListDisabled } from "./disabled";
+import {
+  BasicNavigationSelectionContext,
+  useBasicNavigationSelection,
+} from "./use_basic_navigation_selection";
 import type {
   NativeListActionItemProps,
   NativeListButtonItemProps,
@@ -256,6 +260,7 @@ export function NativeListRow({
   labelOpacity = 1,
   pressedOpacity = 1,
   suppressPressBackground = false,
+  navigationSelected = false,
   pressBackgroundColor,
   selectionDisabled,
   selectionId,
@@ -271,6 +276,7 @@ export function NativeListRow({
   labelOpacity?: number;
   pressedOpacity?: number;
   suppressPressBackground?: boolean;
+  navigationSelected?: boolean;
   cursorDefault?: boolean;
   valueOpacity?: number;
   rowMinHeight?: number;
@@ -321,7 +327,8 @@ export function NativeListRow({
           alignSelf: "stretch",
           backgroundColor: edit.editingSelected
             ? theme.accent
-            : pressed && edit.onPress != null && !suppressPressBackground
+            : (pressed || (!edit.editMode && navigationSelected)) &&
+                edit.onPress != null && !suppressPressBackground
               ? (pressBackgroundColor ?? theme.accent)
               : hovered && edit.onPress != null && !disabled
                 ? (hoverBackgroundColor ?? theme.muted)
@@ -423,12 +430,28 @@ export function NativeListActionItem(props: NativeListActionItemProps) {
 
 export function NativeListNavigationItem(props: NativeListNavigationItemProps) {
   const {
+    basicNavigationSelection = true,
+    basicNavigationSelectionAutoClearDelay,
+    basicNavigationSelectionReturnClearDelay,
     iosNavigationSelection: _iosNavigationSelection,
     iosNavigationSelectionAutoClear: _iosNavigationSelectionAutoClear,
     iosNavigationSelectionAutoClearDelay: _iosNavigationSelectionAutoClearDelay,
     ...itemProps
   } = props;
-  return <NativeListRow {...itemProps} chevron={itemProps.chevron ?? true} />;
+  const editMode = useNativeListEditMode();
+  const selection = useBasicNavigationSelection(
+    basicNavigationSelection && !editMode && !itemProps.disabled,
+    itemProps.onPress,
+    { basicNavigationSelectionAutoClearDelay, basicNavigationSelectionReturnClearDelay },
+  );
+  return (
+    <NativeListRow
+      {...itemProps}
+      chevron={itemProps.chevron ?? true}
+      navigationSelected={selection.selected}
+      onPress={selection.onPress}
+    />
+  );
 }
 
 export function NativeListButtonItem(props: NativeListButtonItemProps) {
@@ -1041,6 +1064,9 @@ export function NativeListRoot({
   } = listStyleOptions ?? {};
   const resolvedShowBorder = showBorder ?? false;
   const [refreshing, setRefreshing] = useState(false);
+  const navigationSelection = React.useRef<
+    NonNullable<React.ContextType<typeof BasicNavigationSelectionContext>>["current"]
+  >(undefined);
   const {
     contentContainerStyle: basicContentContainerStyle,
     refreshControl: basicRefreshControl,
@@ -1087,7 +1113,9 @@ export function NativeListRoot({
                                   onSelectedIdsChange={onSelectedIdsChange}
                                   selectedIds={selectedIds}
                                 >
-                                  {children}
+                                  <BasicNavigationSelectionContext.Provider value={navigationSelection}>
+                                    {children}
+                                  </BasicNavigationSelectionContext.Provider>
                                 </NativeListEditModeProvider>
                               </NativeListHapticsProvider>
                             </NativeListContextMenuProvider>
