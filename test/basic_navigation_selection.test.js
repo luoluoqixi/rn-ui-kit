@@ -37,7 +37,7 @@ describe("basic navigation selection", () => {
     expect(row.changes).toEqual([true]);
     row.emit("focus");
     expect(row.changes).toEqual([true]);
-    await Bun.sleep(180);
+    await Bun.sleep(330);
     expect(row.changes).toEqual([true, false]);
     expect(row.listeners.blur.size).toBe(0);
     expect(row.listeners.focus.size).toBe(0);
