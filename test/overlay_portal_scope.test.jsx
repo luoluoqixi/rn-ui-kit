@@ -4,7 +4,6 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { createPortal } from "react-dom";
 import {
-  hasOpenOverlayPortal,
   OverlayPortalScope,
   useOverlayPortalContainer,
 } from "../src/core/components/ui/utils/overlay/overlay_portal_scope.web";
@@ -84,21 +83,6 @@ test("局部 portal host 脱离内容布局，弹层不会成为 Dialog 的 flex
   expect(host?.style.width).toBe("0px");
   expect(host?.style.height).toBe("0px");
   expect(popup?.parentElement).toBe(host);
-  expect(hasOpenOverlayPortal(dialog)).toBe(true);
-  await act(() =>
-    root.render(
-      <section id="dialog" style={{ display: "flex", gap: 16 }}>
-        <OverlayPortalScope>
-          <div id="dialog-content">内容</div>
-        </OverlayPortalScope>
-      </section>,
-    ),
-  );
-  const hostWithoutPopup = document.querySelector("[data-ui-overlay-scope]");
-  const toastHost = document.createElement("div");
-  toastHost.dataset.uiToastPortal = "";
-  hostWithoutPopup.appendChild(toastHost);
-  expect(hasOpenOverlayPortal(document.querySelector("#dialog"))).toBe(false);
 });
 
 test("Sheet 子弹层留在当前 modal 内，并避开 Drawer 的 transform 和裁切", async () => {

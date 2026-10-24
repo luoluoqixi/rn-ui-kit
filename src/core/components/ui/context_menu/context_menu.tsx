@@ -1,4 +1,7 @@
 import { ScopedSubContent } from "./scoped_sub_content";
+import {
+  preventNextClickAfterOutsidePointerDown,
+} from "./prevent_next_click_after_outside_pointer_down";
 import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
 import { Icon } from "../icon";
 import type {
@@ -204,6 +207,7 @@ function ContextMenuContent({
   size: sizeProp,
   side: sideProp,
   children,
+  onPointerDownOutside,
   ...props
 }: ContextMenuContentProps) {
   const { height: windowHeight } = useWindowDimensions();
@@ -246,6 +250,12 @@ function ContextMenuContent({
     setPressPosition(null);
     setContentLayout(null);
     setOpen(false);
+  };
+  const handlePointerDownOutside: NonNullable<
+    ContextMenuContentProps["onPointerDownOutside"]
+  > = (event) => {
+    onPointerDownOutside?.(event);
+    preventNextClickAfterOutsidePointerDown(event);
   };
 
   return (
@@ -311,6 +321,7 @@ function ContextMenuContent({
                     )}
                     side={resolvedSide}
                     {...props}
+                    onPointerDownOutside={handlePointerDownOutside}
                     asChild
                     // The primitive Content claims the responder on touch start by
                     // default. Let the nested ScrollView own drag gestures instead.
