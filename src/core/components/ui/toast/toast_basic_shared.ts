@@ -117,14 +117,16 @@ export type BasicCustom = (
   options?: ToastShowOptions,
 ) => string | number;
 
-/** Native 通知跟随当前原生窗口，Web 通知交给全局 modal host。 */
+/** Android 优先使用当前可见窗口；iOS 保留局部路由，Web 交给全局 modal host。 */
 export function resolveToastViewportOptions(
   options: ToastShowOptions | undefined,
   scopedPortalHost: string | undefined,
   web: boolean,
+  activeAndroidPortalHost?: string,
 ): ToastShowOptions | undefined {
-  if (web || scopedPortalHost == null) return options;
+  const host = activeAndroidPortalHost ?? scopedPortalHost;
+  if (web || host == null) return options;
   if (options?.toasterId != null || options?.viewportName != null)
     return options;
-  return { ...options, toasterId: scopedPortalHost };
+  return { ...options, toasterId: host };
 }

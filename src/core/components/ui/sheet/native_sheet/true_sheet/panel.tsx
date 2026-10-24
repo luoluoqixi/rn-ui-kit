@@ -201,6 +201,7 @@ function TrueSheetPanelInner({
     <ScreenOverlayPortalProvider
       hostName={resolvedOverlayPortalHostName}
       overlayLayout={getTrueSheetPanelOverlayLayout()}
+      toastPortalActive={presented}
     >
       {children}
     </ScreenOverlayPortalProvider>

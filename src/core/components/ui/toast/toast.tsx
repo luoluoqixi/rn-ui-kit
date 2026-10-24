@@ -7,6 +7,7 @@ import {
 } from "./toast_basic";
 import { dismissNativeToast, dismissAllNativeToasts, showNativeToast } from "./toast_native";
 import { getToastId, resolveToastViewportOptions } from "./toast_basic_shared";
+import { getAndroidToastPortalHost } from "./android_toast_portal_host";
 import { resolveRenderProp } from "../utils/render";
 import { useScopedOverlayPortalHostName } from "../utils/overlay";
 import type {
@@ -16,7 +17,7 @@ import type {
   ToastPromiseData,
   ToastShowOptions,
 } from "./types";
-import { isWeb } from "../utils";
+import { isAndroid, isWeb } from "../utils/platform";
 
 let toastId = 0;
 type ToastKind = "default" | "error" | "info" | "loading" | "success" | "warning";
@@ -62,11 +63,16 @@ function resolvePromise<T>(value: ToastPromise<T>): Promise<T> {
 export function useToast(): ToastContext {
   const scopedPortalHost = useScopedOverlayPortalHostName();
   const defaultNative = React.useContext(ToastDefaultNativeContext);
-  // Native 通知跟随当前原生窗口；Web 的全局 Toast host 会跟随最上层 modal，
-  // 避免仍路由到下层 Sheet 中的命名 Toaster。
+  // Android callbacks may be created outside a Modal/Sheet. Resolve the visible
+  // window at call time, including callbacks retained by promises.
   const resolveOptions = React.useCallback(
     (options?: ToastShowOptions): ToastShowOptions | undefined => {
-      return resolveToastViewportOptions(options, scopedPortalHost, isWeb());
+      return resolveToastViewportOptions(
+        options,
+        scopedPortalHost,
+        isWeb(),
+        isAndroid() ? getAndroidToastPortalHost() : undefined,
+      );
     },
     [scopedPortalHost],
   );

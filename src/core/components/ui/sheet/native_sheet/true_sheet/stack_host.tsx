@@ -369,7 +369,10 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
         presentationActive={presented}
       >
         <GestureHandlerRootView style={[styles.gestureRoot, backgroundStyle]}>
-          <ScreenOverlayPortalProvider hostName={resolvedOverlayPortalHostName}>
+          <ScreenOverlayPortalProvider
+            hostName={resolvedOverlayPortalHostName}
+            toastPortalActive={presented}
+          >
             {stackNavigation}
           </ScreenOverlayPortalProvider>
         </GestureHandlerRootView>

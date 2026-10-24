@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -24,6 +25,7 @@ import {
   shouldApplyIosTrueSheetToastLayerInset,
 } from "../../sheet/native_sheet/true_sheet/overlay_toast_layout";
 import { Toaster } from "../../toast/toaster";
+import { registerAndroidToastPortalHost } from "../../toast/android_toast_portal_host";
 import { ScreenOverlayFloatingProvider } from "./screen_overlay_floating";
 
 const ScreenOverlayPortalContext = createContext<string | null>(null);
@@ -51,11 +53,20 @@ export function ScreenOverlayPortalProvider({
   children,
   hostName,
   overlayLayout = "wrap",
+  toastPortalActive = true,
 }: {
   children: ReactNode;
   hostName: string;
   overlayLayout?: ScreenOverlayPortalLayout;
+  /** Hidden/pre-mounted sheets must not receive page-level Android toasts. */
+  toastPortalActive?: boolean;
 }) {
+  const parentHostName = useContext(ScreenOverlayPortalContext);
+  useEffect(() => {
+    if (os() !== "android" || !toastPortalActive) return;
+    return registerAndroidToastPortalHost(hostName, parentHostName);
+  }, [hostName, parentHostName, toastPortalActive]);
+
   const [modalLockCount, setModalLockCount] = useState(0);
   const [portalOffset, setPortalOffset] = useState<ScreenOverlayPortalOffset | null>(null);
   const [teleportHostNode, setTeleportHostNode] = useState<View | null>(null);
