@@ -1,3 +1,4 @@
+import { SheetContentScope } from "./sheet_content_scope";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import type { TrueSheetProps } from "@lodev09/react-native-true-sheet";
 import type { ReactElement, ReactNode } from "react";
@@ -249,7 +250,7 @@ function TrueSheetPanelInner({
       onWillPresent={handleWillPresent}
       style={mergeTrueSheetContentStyle(mergedScrollable, [sheetProps?.style, backgroundStyle])}
     >
-      {sheetBody}
+      <SheetContentScope>{sheetBody}</SheetContentScope>
     </TrueSheet>
   );
 }

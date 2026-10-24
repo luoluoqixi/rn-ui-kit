@@ -1,3 +1,5 @@
+import { ModalContentScope } from "../utils/overlay/modal_content_scope";
+import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
 import { Icon } from "../icon";
 import { Button } from "../button";
 import { Text } from "../text";
@@ -31,8 +33,15 @@ import type {
 const DialogTrigger = DialogPrimitive.Trigger;
 
 function DialogPortal({ hostName, ...props }: React.ComponentProps<typeof DialogPrimitive.Portal>) {
+  const portalContainer = useOverlayPortalContainer();
   const scopedPortalHost = useScopedOverlayPortalHostName();
-  return <DialogPrimitive.Portal {...props} hostName={hostName ?? scopedPortalHost} />;
+  return (
+    <DialogPrimitive.Portal
+      {...props}
+      hostName={hostName ?? scopedPortalHost}
+      container={props.container ?? portalContainer}
+    />
+  );
 }
 
 const DialogClose = DialogPrimitive.Close;
@@ -246,7 +255,7 @@ function DialogContent({
           className={cn(
             "bg-background border-border z-50 mx-auto flex w-full flex-col gap-4 rounded-lg border p-6 shadow-lg shadow-black/5 sm:max-w-2xl",
             Platform.select({
-              web: "animate-in fade-in-0 zoom-in-95 web:max-w-[calc(100%-2rem)] duration-200",
+              web: "animate-in fade-in-0 web:max-w-[calc(100%-2rem)] duration-200",
             }),
             className,
           )}
@@ -262,22 +271,24 @@ function DialogContent({
           {...props}
           onStartShouldSetResponder={onStartShouldSetResponder ?? (() => false)}
         >
-          <>{children}</>
-          <DialogPrimitive.Close
-            className={cn(
-              "absolute right-4 top-4 rounded opacity-70 active:opacity-100",
-              Platform.select({
-                web: "ring-offset-background focus:ring-ring data-[state=open]:bg-accent transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-2",
-              }),
-            )}
-            hitSlop={12}
-          >
-            <Icon
-              as={X}
-              className={cn("text-accent-foreground web:pointer-events-none size-4 shrink-0")}
-            />
-            <Text className="sr-only">Close</Text>
-          </DialogPrimitive.Close>
+          <ModalContentScope>
+            <>{children}</>
+            <DialogPrimitive.Close
+              className={cn(
+                "absolute right-4 top-4 rounded opacity-70 active:opacity-100",
+                Platform.select({
+                  web: "ring-offset-background focus:ring-ring data-[state=open]:bg-accent transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-2",
+                }),
+              )}
+              hitSlop={12}
+            >
+              <Icon
+                as={X}
+                className={cn("text-accent-foreground web:pointer-events-none size-4 shrink-0")}
+              />
+              <Text className="sr-only">Close</Text>
+            </DialogPrimitive.Close>
+          </ModalContentScope>
         </DialogPrimitive.Content>
       </DialogOverlay>
     </DialogPortal>

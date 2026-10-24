@@ -1,3 +1,4 @@
+import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
 import { Icon } from "../icon";
 import type {
   DropdownContentProps,
@@ -62,8 +63,15 @@ function DropdownPortal({
   hostName,
   ...props
 }: React.ComponentProps<typeof DropdownPrimitive.Portal>) {
+  const portalContainer = useOverlayPortalContainer();
   const scopedPortalHost = useScopedOverlayPortalHostName();
-  return <DropdownPrimitive.Portal {...props} hostName={hostName ?? scopedPortalHost} />;
+  return (
+    <DropdownPrimitive.Portal
+      {...props}
+      hostName={hostName ?? scopedPortalHost}
+      container={props.container ?? portalContainer}
+    />
+  );
 }
 
 const DropdownSub = DropdownPrimitive.Sub;
@@ -220,6 +228,7 @@ function DropdownContent({
       : availableBelow < estimatedHeight && availableAbove > availableBelow
         ? "top"
         : "bottom";
+  const portalContainer = useOverlayPortalContainer();
   const scopedPortalHost = useScopedOverlayPortalHostName();
   const resolvedPortalHost = portalHost ?? scopedPortalHost;
   const contentStyle = useOverlayPortalContentStyle(style);
@@ -246,7 +255,7 @@ function DropdownContent({
   };
 
   return (
-    <DropdownPrimitive.Portal hostName={resolvedPortalHost}>
+    <DropdownPrimitive.Portal hostName={resolvedPortalHost} container={portalContainer}>
       <OverlayPortalWindow portalHost={resolvedPortalHost}>
         <DropdownPrimitive.Overlay
           style={[
@@ -276,7 +285,10 @@ function DropdownContent({
               <Pressable onPress={handleNativeOverlayPress} style={StyleSheet.absoluteFillObject} />
             ) : null}
             <DropdownHapticsContext.Provider
-              value={{ item: itemNativeHaptics, itemDelay: itemNativeHapticsDelay }}
+              value={{
+                item: itemNativeHaptics,
+                itemDelay: itemNativeHapticsDelay,
+              }}
             >
               <DropdownContentSizeContext.Provider value={size}>
                 <TextClassContext.Provider
@@ -290,7 +302,9 @@ function DropdownContent({
                               maxHeight: windowHeight * DROPDOWN_MENU_MAX_HEIGHT_RATIO,
                               zIndex: 50,
                             }
-                          : { maxHeight: windowHeight * DROPDOWN_MENU_MAX_HEIGHT_RATIO },
+                          : {
+                              maxHeight: windowHeight * DROPDOWN_MENU_MAX_HEIGHT_RATIO,
+                            },
                         contentStyle as any,
                       ] as any
                     }
@@ -321,7 +335,9 @@ function DropdownContent({
                           nestedScrollEnabled
                           showsVerticalScrollIndicator
                           onMoveShouldSetResponderCapture={() => true}
-                          style={{ maxHeight: windowHeight * DROPDOWN_MENU_MAX_HEIGHT_RATIO }}
+                          style={{
+                            maxHeight: windowHeight * DROPDOWN_MENU_MAX_HEIGHT_RATIO,
+                          }}
                         >
                           {resolvedChildren}
                         </ScrollView>
@@ -817,7 +833,10 @@ function Dropdown({
                   <DropdownDefaultTrigger
                     className={triggerClassName}
                     disabled={resolvedDisabled}
-                    label={resolveRenderProp(triggerLabel, { native: false, open: false })}
+                    label={resolveRenderProp(triggerLabel, {
+                      native: false,
+                      open: false,
+                    })}
                     props={triggerProps}
                   />
                 </DropdownTrigger>

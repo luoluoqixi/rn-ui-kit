@@ -442,7 +442,10 @@ export function NativeListNavigationItem(props: NativeListNavigationItemProps) {
   const selection = useBasicNavigationSelection(
     basicNavigationSelection && !editMode && !itemProps.disabled,
     itemProps.onPress,
-    { basicNavigationSelectionAutoClearDelay, basicNavigationSelectionReturnClearDelay },
+    {
+      basicNavigationSelectionAutoClearDelay,
+      basicNavigationSelectionReturnClearDelay,
+    },
   );
   return (
     <NativeListRow
@@ -680,7 +683,13 @@ export function NativeListDropdownItem({
       suppressPressBackground
       value={undefined}
       trailing={
-        <View style={{ alignItems: "center", alignSelf: "stretch", justifyContent: "center" }}>
+        <View
+          style={{
+            alignItems: "center",
+            alignSelf: "stretch",
+            justifyContent: "center",
+          }}
+        >
           <Dropdown
             {...dropdownProps}
             // 行本身也是触发器；使用同一个受控状态，保证点击整行和点击右侧
@@ -1064,9 +1073,10 @@ export function NativeListRoot({
   } = listStyleOptions ?? {};
   const resolvedShowBorder = showBorder ?? false;
   const [refreshing, setRefreshing] = useState(false);
-  const navigationSelection = React.useRef<
-    NonNullable<React.ContextType<typeof BasicNavigationSelectionContext>>["current"]
-  >(undefined);
+  const navigationSelection =
+    React.useRef<NonNullable<React.ContextType<typeof BasicNavigationSelectionContext>>["current"]>(
+      undefined,
+    );
   const {
     contentContainerStyle: basicContentContainerStyle,
     refreshControl: basicRefreshControl,
@@ -1080,7 +1090,9 @@ export function NativeListRoot({
           <NativeListBasicBorderColorContext.Provider value={borderColor}>
             <NativeListBasicBorderWidthContext.Provider value={borderWidth}>
               <NativeListBasicDividerColorContext.Provider value={dividerColor}>
-                <NativeListBasicRowBackgroundColorContext.Provider value={rowBackgroundColor}>
+                <NativeListBasicRowBackgroundColorContext.Provider
+                  value={rowBackgroundColor ?? backgrounds.card}
+                >
                   <NativeListBasicSectionShadowContext.Provider value={sectionShadow}>
                     <NativeListBasicShowDividerContext.Provider value={showDivider}>
                       <NativeListBasicDividerWidthContext.Provider
@@ -1161,7 +1173,9 @@ export function NativeListRoot({
         contentMarginBottom != null && { paddingBottom: contentMarginBottom },
       ]}
       refreshControl={
-        onRefresh == null ? basicRefreshControl : (
+        onRefresh == null ? (
+          basicRefreshControl
+        ) : (
           <RefreshControl
             colors={[refreshColor ?? theme.primary]}
             enabled={!editMode}

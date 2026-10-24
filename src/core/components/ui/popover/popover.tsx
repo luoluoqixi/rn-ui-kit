@@ -1,3 +1,4 @@
+import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
 import { NativeOnlyAnimatedView } from "../utils/native_only_animated_view";
 import { TextClassContext } from "../text";
 import { Text } from "../text";
@@ -58,12 +59,13 @@ function PopoverContent({
   style,
   ...props
 }: import("./types").PopoverContentProps) {
+  const portalContainer = useOverlayPortalContainer();
   const scopedPortalHost = useScopedOverlayPortalHostName();
   const resolvedPortalHost = portalHost ?? scopedPortalHost;
   const contentStyle = useOverlayPortalContentStyle(style);
 
   return (
-    <PopoverPrimitive.Portal hostName={resolvedPortalHost}>
+    <PopoverPrimitive.Portal hostName={resolvedPortalHost} container={portalContainer}>
       <OverlayPortalWindow portalHost={resolvedPortalHost}>
         <PopoverPrimitive.Overlay
           style={Platform.select({ native: StyleSheet.absoluteFill })}

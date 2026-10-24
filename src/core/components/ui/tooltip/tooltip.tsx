@@ -1,3 +1,4 @@
+import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
 import { NativeOnlyAnimatedView } from "../utils/native_only_animated_view";
 import { TextClassContext } from "../text";
 import { Text } from "../text";
@@ -18,11 +19,11 @@ const TooltipSizeContext = React.createContext<TooltipSize>("default");
 const tooltipSizes: Record<TooltipSize, { content: string; text: string }> = {
   default: { content: "px-3 py-1.5", text: "text-sm" },
   "2xs": { content: "px-2 py-1", text: "text-[10px]" },
-  "xs": { content: "px-2.5 py-1", text: "text-xs" },
-  "sm": { content: "px-2.5 py-1.5", text: "text-sm" },
-  "md": { content: "px-3 py-1.5", text: "text-sm" },
-  "lg": { content: "px-3.5 py-2", text: "text-lg" },
-  "xl": { content: "px-4 py-2.5", text: "text-xl" },
+  xs: { content: "px-2.5 py-1", text: "text-xs" },
+  sm: { content: "px-2.5 py-1.5", text: "text-sm" },
+  md: { content: "px-3 py-1.5", text: "text-sm" },
+  lg: { content: "px-3.5 py-2", text: "text-lg" },
+  xl: { content: "px-4 py-2.5", text: "text-xl" },
   "2xl": { content: "px-5 py-3", text: "text-2xl" },
 };
 
@@ -80,12 +81,13 @@ function TooltipContent({
   ...props
 }: import("./types").TooltipContentProps) {
   const size = sizeProp ?? React.useContext(TooltipSizeContext);
+  const portalContainer = useOverlayPortalContainer();
   const scopedPortalHost = useScopedOverlayPortalHostName();
   const resolvedPortalHost = portalHost ?? scopedPortalHost;
   const contentStyle = useOverlayPortalContentStyle(style);
 
   return (
-    <TooltipPrimitive.Portal hostName={resolvedPortalHost}>
+    <TooltipPrimitive.Portal hostName={resolvedPortalHost} container={portalContainer}>
       <OverlayPortalWindow portalHost={resolvedPortalHost}>
         <TooltipPrimitive.Overlay
           style={Platform.select({ native: StyleSheet.absoluteFill })}
@@ -151,8 +153,15 @@ const Tooltip = Object.assign(TooltipRootComponent, {
     hostName,
     ...props
   }: React.ComponentProps<typeof TooltipPrimitive.Portal>) {
+    const portalContainer = useOverlayPortalContainer();
     const scopedPortalHost = useScopedOverlayPortalHostName();
-    return <TooltipPrimitive.Portal {...props} hostName={hostName ?? scopedPortalHost} />;
+    return (
+      <TooltipPrimitive.Portal
+        {...props}
+        hostName={hostName ?? scopedPortalHost}
+        container={props.container ?? portalContainer}
+      />
+    );
   },
   Root: TooltipRoot,
   Trigger: TooltipTrigger,

@@ -56,6 +56,11 @@
 }
 
 @layer utilities {
+  /* TrueSheetProvider 的 portal anchor 不参与 Dialog 的 flex/gap 排版。 */
+  .ui-modal-content-scope > div:last-child {
+    display: contents;
+  }
+
   .ui-menu-scrollbar {
     scrollbar-color: color-mix(in srgb, var(--color-muted-foreground) 45%, transparent) transparent;
     scrollbar-gutter: stable;

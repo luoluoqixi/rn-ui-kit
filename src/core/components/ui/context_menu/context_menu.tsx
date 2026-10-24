@@ -1,3 +1,4 @@
+import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
 import { Icon } from "../icon";
 import type {
   ContextMenuArrowProps,
@@ -184,13 +185,18 @@ function ContextMenuContent({
   const availableBelow = triggerPosition
     ? windowHeight - triggerPosition.pageY - triggerPosition.height
     : windowHeight;
-  const estimatedHeight = contentLayout?.height ?? windowHeight * CONTEXT_MENU_MAX_HEIGHT_RATIO;
+  const estimatedHeight =
+    contentLayout?.height ??
+    (Platform.OS === "web"
+      ? Math.max(0, windowHeight - 24)
+      : windowHeight * CONTEXT_MENU_MAX_HEIGHT_RATIO);
   const resolvedSide =
     Platform.OS === "web" || sideProp != null
       ? sideProp
       : availableBelow < estimatedHeight && availableAbove > availableBelow
         ? "top"
         : "bottom";
+  const portalContainer = useOverlayPortalContainer();
   const scopedPortalHost = useScopedOverlayPortalHostName();
   const resolvedPortalHost = portalHost ?? scopedPortalHost;
   const contentStyle = useOverlayPortalContentStyle(style);
@@ -207,7 +213,7 @@ function ContextMenuContent({
   };
 
   return (
-    <ContextMenuPrimitive.Portal hostName={resolvedPortalHost}>
+    <ContextMenuPrimitive.Portal hostName={resolvedPortalHost} container={portalContainer}>
       <OverlayPortalWindow portalHost={resolvedPortalHost}>
         <ContextMenuPrimitive.Overlay
           style={[Platform.OS === "web" ? undefined : StyleSheet.absoluteFillObject, overlayStyle]}
@@ -233,7 +239,10 @@ function ContextMenuContent({
                   <ContextMenuPrimitive.Content
                     style={
                       {
-                        maxHeight: windowHeight * CONTEXT_MENU_MAX_HEIGHT_RATIO,
+                        maxHeight:
+                          Platform.OS === "web"
+                            ? Math.max(0, windowHeight - 24)
+                            : windowHeight * CONTEXT_MENU_MAX_HEIGHT_RATIO,
                         ...resolvedContentStyle,
                       } as any
                     }
@@ -242,7 +251,7 @@ function ContextMenuContent({
                       Platform.select({
                         web: cn(
                           cn(
-                            "animate-in fade-in-0 zoom-in-95 max-h-[45vh] overflow-y-auto origin-(--radix-context-menu-content-transform-origin) z-50 cursor-default",
+                            "animate-in fade-in-0 zoom-in-95 max-h-[calc(100vh-24px)] overflow-y-auto origin-(--radix-context-menu-content-transform-origin) z-50 cursor-default",
                             "ui-menu-scrollbar",
                           ),
                           resolvedSide === "bottom" && "slide-in-from-top-2",
@@ -266,7 +275,9 @@ function ContextMenuContent({
                           nestedScrollEnabled
                           showsVerticalScrollIndicator
                           onMoveShouldSetResponderCapture={() => true}
-                          style={{ maxHeight: windowHeight * CONTEXT_MENU_MAX_HEIGHT_RATIO }}
+                          style={{
+                            maxHeight: windowHeight * CONTEXT_MENU_MAX_HEIGHT_RATIO,
+                          }}
                         >
                           {children}
                         </ScrollView>
@@ -546,7 +557,10 @@ function renderContextMenuItems(
     const key = `${depth}:${item.value}:${index}`;
     if (item.separator) return <ContextMenuSeparator key={key} />;
     const label = resolveRenderProp(item.label, item) ?? item.textValue ?? item.value;
-    const resolvedItemProps = { ...(itemProps ?? {}), ...(item.itemProps ?? {}) };
+    const resolvedItemProps = {
+      ...(itemProps ?? {}),
+      ...(item.itemProps ?? {}),
+    };
     const itemHaptics = item.nativeHaptics ?? defaultNativeHaptics;
     if (item.subMenu?.length) {
       return (
@@ -667,7 +681,12 @@ function ContextMenu({
             <>
               {trigger != null ? (
                 <ContextMenuTrigger {...(triggerProps as object)} asChild>
-                  {resolveRenderProp(trigger, { native: false, open: false }) as React.ReactElement}
+                  {
+                    resolveRenderProp(trigger, {
+                      native: false,
+                      open: false,
+                    }) as React.ReactElement
+                  }
                 </ContextMenuTrigger>
               ) : null}
               {items != null ? (

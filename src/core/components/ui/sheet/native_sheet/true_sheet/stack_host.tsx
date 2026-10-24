@@ -1,3 +1,4 @@
+import { SheetContentScope } from "./sheet_content_scope";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import type { TrueSheetProps } from "@lodev09/react-native-true-sheet";
 import type { ParamListBase } from "@react-navigation/native";
@@ -391,7 +392,7 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
       onPositionChange={handlePositionChange}
       onWillPresent={handleWillPresent}
     >
-      {sheetBody}
+      <SheetContentScope>{sheetBody}</SheetContentScope>
     </TrueSheet>
   );
 }

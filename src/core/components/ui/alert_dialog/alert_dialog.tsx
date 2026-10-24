@@ -1,3 +1,5 @@
+import { ModalContentScope } from "../utils/overlay/modal_content_scope";
+import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
 import { buttonTextVariants, buttonVariants } from "../button";
 import { NativeOnlyAnimatedView } from "../utils/native_only_animated_view";
 import { TextClassContext } from "../text";
@@ -30,8 +32,15 @@ function AlertDialogPortal({
   hostName,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Portal>) {
+  const portalContainer = useOverlayPortalContainer();
   const scopedPortalHost = useScopedOverlayPortalHostName();
-  return <AlertDialogPrimitive.Portal {...props} hostName={hostName ?? scopedPortalHost} />;
+  return (
+    <AlertDialogPrimitive.Portal
+      {...props}
+      hostName={hostName ?? scopedPortalHost}
+      container={props.container ?? portalContainer}
+    />
+  );
 }
 
 type AlertDialogChildren =
@@ -272,6 +281,7 @@ function AlertDialogContent({
   portalHost,
   portalProps,
   overlayProps,
+  children,
   ...props
 }: AlertDialogContentProps) {
   const scopedPortalHost = useScopedOverlayPortalHostName();
@@ -284,12 +294,14 @@ function AlertDialogContent({
           className={cn(
             "bg-background border-border z-50 flex flex-col gap-4 rounded-lg border p-6 shadow-lg shadow-black/5 sm:max-w-lg",
             Platform.select({
-              web: "animate-in fade-in-0 zoom-in-95 web:max-w-[calc(100%-2rem)] duration-200",
+              web: "animate-in fade-in-0 web:max-w-[calc(100%-2rem)] duration-200",
             }),
             className,
           )}
           {...props}
-        />
+        >
+          <ModalContentScope>{children}</ModalContentScope>
+        </AlertDialogPrimitive.Content>
       </AlertDialogOverlay>
     </AlertDialogPortal>
   );

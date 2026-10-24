@@ -1,3 +1,4 @@
+import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
 import { Icon } from "../icon";
 import { NativeOnlyAnimatedView } from "../utils/native_only_animated_view";
 import { Text, TextClassContext } from "../text";
@@ -176,7 +177,10 @@ function SelectContent({
   const scrollToSelectedItem = React.useCallback(() => {
     if (Platform.OS === "web" || !open || didAutoScrollRef.current) return;
     didAutoScrollRef.current = true;
-    scrollRef.current?.scrollTo({ animated: false, y: Math.max(0, initialScrollOffset) });
+    scrollRef.current?.scrollTo({
+      animated: false,
+      y: Math.max(0, initialScrollOffset),
+    });
   }, [initialScrollOffset, open]);
 
   React.useEffect(() => {
@@ -186,6 +190,7 @@ function SelectContent({
     }
     requestAnimationFrame(scrollToSelectedItem);
   }, [open, scrollToSelectedItem]);
+  const portalContainer = useOverlayPortalContainer();
   const scopedHost = useScopedOverlayPortalHostName();
   const resolvedHost = portalHost ?? scopedHost;
   const contentStyle = useOverlayPortalContentStyle(props.style);
@@ -195,7 +200,7 @@ function SelectContent({
     | undefined;
   const size = sizeProp ?? React.useContext(SelectContentSizeContext);
   return (
-    <SelectPrimitive.Portal hostName={resolvedHost}>
+    <SelectPrimitive.Portal hostName={resolvedHost} container={portalContainer}>
       <OverlayPortalWindow portalHost={resolvedHost}>
         <SelectPrimitive.Overlay
           // On web the primitive renders Overlay and Content as siblings. Keep
@@ -264,7 +269,9 @@ function SelectContent({
                       className={cn(
                         "p-1",
                         position === "popper" &&
-                          Platform.select({ web: "min-w-[var(--radix-select-trigger-width)]" }),
+                          Platform.select({
+                            web: "min-w-[var(--radix-select-trigger-width)]",
+                          }),
                         !showScrollButtons &&
                           cn("max-h-[45vh] overflow-y-auto", "ui-menu-scrollbar"),
                         viewportProps?.className,
@@ -289,7 +296,9 @@ function SelectContent({
                       nestedScrollEnabled
                       showsVerticalScrollIndicator
                       onContentSizeChange={scrollToSelectedItem}
-                      style={{ maxHeight: windowHeight * SELECT_MENU_MAX_HEIGHT_RATIO }}
+                      style={{
+                        maxHeight: windowHeight * SELECT_MENU_MAX_HEIGHT_RATIO,
+                      }}
                     >
                       <SelectPrimitive.Viewport
                         {...viewportProps}
@@ -703,7 +712,15 @@ export const SelectBasic = React.forwardRef<SelectHandle, SelectProps>(function 
           viewportProps={viewportProps}
         >
           {renderGeneratedItems(
-            { ...props, itemProps, itemIndicatorProps, itemTextProps, items, itemGroups, options },
+            {
+              ...props,
+              itemProps,
+              itemIndicatorProps,
+              itemTextProps,
+              items,
+              itemGroups,
+              options,
+            },
             selectedValue,
           )}
         </SelectContent>
