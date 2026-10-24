@@ -31,25 +31,16 @@ export function OverlayPortalWindow({
   // scoped CSS variables. Re-apply the current semantic tokens at the portal
   // boundary so popup text and surfaces keep the active light/dark theme.
   const themedChildren = (
-    <ScopedVariables variables={semanticColorsToVariables(theme)}>
-      {children}
-    </ScopedVariables>
+    <ScopedVariables variables={semanticColorsToVariables(theme)}>{children}</ScopedVariables>
   );
   const scopedHostName = useScopedOverlayPortalHostName();
   const isScopedHost =
-    scopedHostName != null &&
-    (portalHost == null || portalHost === scopedHostName);
+    scopedHostName != null && (portalHost == null || portalHost === scopedHostName);
 
   // Dialog 使用原生 Modal 参与控制器呈现顺序；FullWindowOverlay 会始终盖住其子 TrueSheet。
   if (forceFullScreen && Platform.OS !== "web") {
     return (
       <Modal
-        // Android Modal windows are software-rendered unless this is enabled. A TrueSheet
-        // hosted inside the modal uses BottomSheetBehavior for swipe dismissal; removing
-        // its final native animation layer can otherwise expose the dialog window's blank
-        // backing buffer for one frame. App-root sheets do not hit this because the
-        // Activity window is already hardware accelerated.
-        hardwareAccelerated={Platform.OS === "android"}
         navigationBarTranslucent
         onRequestClose={onRequestClose}
         statusBarTranslucent
@@ -70,8 +61,7 @@ export function OverlayPortalWindow({
     );
   }
 
-  const WindowOverlay =
-    Platform.OS === "ios" && !isScopedHost ? RNFullWindowOverlay : null;
+  const WindowOverlay = Platform.OS === "ios" && !isScopedHost ? RNFullWindowOverlay : null;
 
   if (WindowOverlay == null) {
     return <>{themedChildren}</>;
@@ -85,9 +75,7 @@ export function OverlayPortalWindow({
  * inside a TrueSheet has a local origin, so translate positioned content back
  * to the same coordinate space as the trigger measurement.
  */
-export function useOverlayPortalContentStyle(
-  style?: StyleProp<ViewStyle>,
-): StyleProp<ViewStyle> {
+export function useOverlayPortalContentStyle(style?: StyleProp<ViewStyle>): StyleProp<ViewStyle> {
   const offset = useScreenOverlayPortalOffset();
 
   if (offset == null || (offset.x === 0 && offset.y === 0)) {
