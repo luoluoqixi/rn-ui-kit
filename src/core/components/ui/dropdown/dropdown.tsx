@@ -1,3 +1,4 @@
+import { ScopedSubContent } from "./scoped_sub_content";
 import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
 import { Icon } from "../icon";
 import type {
@@ -17,11 +18,19 @@ import {
 import { resolveRenderProp } from "../utils/render";
 import { Text, TextClassContext } from "../text";
 import { cn } from "../utils/cn";
-import { OverlayPortalWindow, useOverlayPortalContentStyle } from "../utils/overlay/overlay_portal";
+import {
+  OverlayPortalWindow,
+  useOverlayPortalContentStyle,
+} from "../utils/overlay/overlay_portal";
 import { useScopedOverlayPortalHostName } from "../utils/overlay";
 import { semanticColorsToVariables, useUiTheme } from "../utils/theme";
 import * as DropdownPrimitive from "@rn-primitives/dropdown-menu";
-import { Check, ChevronDown, ChevronRight, ChevronUp } from "lucide-react-native";
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+} from "lucide-react-native";
 import * as React from "react";
 import {
   Platform,
@@ -43,7 +52,11 @@ import {
 const DROPDOWN_MENU_MAX_HEIGHT_RATIO = 0.45;
 
 import { DropdownNative } from "./dropdown_native";
-import { DropdownDefaultTrigger, DropdownNativeTrigger, resolveDropdownTrigger } from "./shared";
+import {
+  DropdownDefaultTrigger,
+  DropdownNativeTrigger,
+  resolveDropdownTrigger,
+} from "./shared";
 
 const DropdownNativeTriggerWithContext = React.forwardRef<
   View,
@@ -104,7 +117,8 @@ function DropdownSubTrigger({
   const contextHaptics = React.useContext(DropdownHapticsContext);
   const size = React.useContext(DropdownContentSizeContext);
   const disabled = props.disabled === true;
-  const icon = Platform.OS === "web" ? ChevronRight : open ? ChevronUp : ChevronDown;
+  const icon =
+    Platform.OS === "web" ? ChevronRight : open ? ChevronUp : ChevronDown;
   return (
     <TextClassContext.Provider
       value={cn(
@@ -142,7 +156,11 @@ function DropdownSubTrigger({
         <>{children}</>
         <Icon
           as={icon}
-          className={cn("text-foreground shrink-0", menuIconSizeClasses[size], iconClassName)}
+          className={cn(
+            "text-foreground shrink-0",
+            menuIconSizeClasses[size],
+            iconClassName,
+          )}
         />
       </DropdownPrimitive.SubTrigger>
     </TextClassContext.Provider>
@@ -161,7 +179,7 @@ function DropdownSubContent({
 
   return (
     <NativeOnlyAnimatedView entering={FadeIn.reduceMotion(ReduceMotion.System)}>
-      <DropdownPrimitive.SubContent
+      <ScopedSubContent
         className={cn(
           "bg-popover border-border overflow-hidden rounded-md border p-1 shadow-lg shadow-black/5",
           Platform.select({
@@ -169,10 +187,14 @@ function DropdownSubContent({
           }),
           className,
         )}
-        // The web primitive renders SubContent through its own Radix portal,
-        // outside the provider-scoped variables applied by OverlayPortalWindow.
+        // 显式提供主题变量，兼容自定义容器和独立子菜单。
         style={
-          [Platform.OS === "web" ? (semanticColorsToVariables(theme) as any) : null, style] as any
+          [
+            Platform.OS === "web"
+              ? (semanticColorsToVariables(theme) as any)
+              : null,
+            style,
+          ] as any
         }
         {...props}
       >
@@ -183,7 +205,7 @@ function DropdownSubContent({
             {children}
           </TextClassContext.Provider>
         </DropdownContentSizeContext.Provider>
-      </DropdownPrimitive.SubContent>
+      </ScopedSubContent>
     </NativeOnlyAnimatedView>
   );
 }
@@ -221,7 +243,8 @@ function DropdownContent({
   const availableBelow = triggerPosition
     ? windowHeight - triggerPosition.pageY - triggerPosition.height
     : windowHeight;
-  const estimatedHeight = contentLayout?.height ?? windowHeight * DROPDOWN_MENU_MAX_HEIGHT_RATIO;
+  const estimatedHeight =
+    contentLayout?.height ?? windowHeight * DROPDOWN_MENU_MAX_HEIGHT_RATIO;
   const resolvedSide =
     Platform.OS === "web" || sideProp != null
       ? sideProp
@@ -234,11 +257,14 @@ function DropdownContent({
   const contentStyle = useOverlayPortalContentStyle(style);
   const size = sizeProp ?? React.useContext(DropdownContentSizeContext);
   const resolvedChildren =
-    typeof children === "function" ? children({ pressed: false } as any) : children;
+    typeof children === "function"
+      ? children({ pressed: false } as any)
+      : children;
   const handleNativeOverlayPress = (event: any) => {
     const target = event?.target ?? event?.nativeEvent?.target;
     const currentTarget = event?.currentTarget;
-    if (target != null && currentTarget != null && target !== currentTarget) return;
+    if (target != null && currentTarget != null && target !== currentTarget)
+      return;
     setTriggerPosition(null);
     setContentLayout(null);
     setOpen(false);
@@ -255,7 +281,10 @@ function DropdownContent({
   };
 
   return (
-    <DropdownPrimitive.Portal hostName={resolvedPortalHost} container={portalContainer}>
+    <DropdownPrimitive.Portal
+      hostName={resolvedPortalHost}
+      container={portalContainer}
+    >
       <OverlayPortalWindow portalHost={resolvedPortalHost}>
         <DropdownPrimitive.Overlay
           style={[
@@ -277,12 +306,22 @@ function DropdownContent({
           pointerEvents="auto"
           className={overlayClassName}
           closeOnPress={Platform.OS === "web" ? undefined : false}
-          onPress={Platform.OS === "web" ? handleWebOverlayPress : handleNativeOverlayPress}
+          onPress={
+            Platform.OS === "web"
+              ? handleWebOverlayPress
+              : handleNativeOverlayPress
+          }
           asChild={Platform.OS !== "web"}
         >
-          <NativeOnlyAnimatedView entering={FadeIn.reduceMotion(ReduceMotion.System)} as="View">
+          <NativeOnlyAnimatedView
+            entering={FadeIn.reduceMotion(ReduceMotion.System)}
+            as="View"
+          >
             {Platform.OS !== "web" ? (
-              <Pressable onPress={handleNativeOverlayPress} style={StyleSheet.absoluteFillObject} />
+              <Pressable
+                onPress={handleNativeOverlayPress}
+                style={StyleSheet.absoluteFillObject}
+              />
             ) : null}
             <DropdownHapticsContext.Provider
               value={{
@@ -292,18 +331,23 @@ function DropdownContent({
             >
               <DropdownContentSizeContext.Provider value={size}>
                 <TextClassContext.Provider
-                  value={cn("text-popover-foreground", menuTextSizeClasses[size])}
+                  value={cn(
+                    "text-popover-foreground",
+                    menuTextSizeClasses[size],
+                  )}
                 >
                   <DropdownPrimitive.Content
                     style={
                       [
                         Platform.OS === "web"
                           ? {
-                              maxHeight: windowHeight * DROPDOWN_MENU_MAX_HEIGHT_RATIO,
+                              maxHeight:
+                                windowHeight * DROPDOWN_MENU_MAX_HEIGHT_RATIO,
                               zIndex: 50,
                             }
                           : {
-                              maxHeight: windowHeight * DROPDOWN_MENU_MAX_HEIGHT_RATIO,
+                              maxHeight:
+                                windowHeight * DROPDOWN_MENU_MAX_HEIGHT_RATIO,
                             },
                         contentStyle as any,
                       ] as any
@@ -336,7 +380,8 @@ function DropdownContent({
                           showsVerticalScrollIndicator
                           onMoveShouldSetResponderCapture={() => true}
                           style={{
-                            maxHeight: windowHeight * DROPDOWN_MENU_MAX_HEIGHT_RATIO,
+                            maxHeight:
+                              windowHeight * DROPDOWN_MENU_MAX_HEIGHT_RATIO,
                           }}
                         >
                           {resolvedChildren}
@@ -378,7 +423,9 @@ function DropdownItem({
         cn(menuTextSizeClasses[size], "select-none text-popover-foreground"),
         !disabled && "group-active:text-popover-foreground",
         variant === "destructive" && "text-destructive",
-        variant === "destructive" && !disabled && "group-active:text-destructive",
+        variant === "destructive" &&
+          !disabled &&
+          "group-active:text-destructive",
       )}
     >
       <DropdownPrimitive.Item
@@ -391,7 +438,8 @@ function DropdownItem({
           Platform.select({
             web: cn(
               "focus:bg-accent focus:text-accent-foreground cursor-default outline-none data-[disabled]:pointer-events-none",
-              variant === "destructive" && "focus:bg-destructive/10 dark:focus:bg-destructive/20",
+              variant === "destructive" &&
+                "focus:bg-destructive/10 dark:focus:bg-destructive/20",
             ),
           }),
           !disabled &&
@@ -573,7 +621,10 @@ function DropdownSeparator({
   );
 }
 
-function DropdownShortcut({ className, ...props }: React.ComponentProps<typeof Text>) {
+function DropdownShortcut({
+  className,
+  ...props
+}: React.ComponentProps<typeof Text>) {
   const size = React.useContext(DropdownContentSizeContext);
   return (
     <Text
@@ -596,7 +647,8 @@ function renderDropdownItems(
   return items.map((item, index) => {
     const key = `${depth}:${item.value}:${index}`;
     if (item.separator) return <DropdownSeparator key={key} />;
-    const label = resolveRenderProp(item.label, item) ?? item.textValue ?? item.value;
+    const label =
+      resolveRenderProp(item.label, item) ?? item.textValue ?? item.value;
     const resolvedItemProps = {
       ...(itemProps ?? {}),
       ...(item.itemProps ?? {}),
@@ -611,18 +663,29 @@ function renderDropdownItems(
           <DropdownSubTrigger
             {...(item.triggerProps as object)}
             aria-label={
-              item["aria-label"] ?? (item.triggerProps?.["aria-label"] as string | undefined)
+              item["aria-label"] ??
+              (item.triggerProps?.["aria-label"] as string | undefined)
             }
-            disabled={item.disabled ?? (item.triggerProps?.disabled as boolean | undefined)}
+            disabled={
+              item.disabled ??
+              (item.triggerProps?.disabled as boolean | undefined)
+            }
             nativeHaptics={itemHaptics}
           >
             <Text>{label}</Text>
           </DropdownSubTrigger>
           <DropdownSubContent {...(item.contentProps as object)}>
             {item.subMenuTitle === false ? null : (
-              <DropdownLabel>{resolveRenderProp(item.subMenuTitle, item) ?? label}</DropdownLabel>
+              <DropdownLabel>
+                {resolveRenderProp(item.subMenuTitle, item) ?? label}
+              </DropdownLabel>
             )}
-            {renderDropdownItems(item.subMenu, itemProps, defaultNativeHaptics, depth + 1)}
+            {renderDropdownItems(
+              item.subMenu,
+              itemProps,
+              defaultNativeHaptics,
+              depth + 1,
+            )}
           </DropdownSubContent>
         </DropdownSub>
       );
@@ -644,13 +707,21 @@ function renderDropdownItems(
       return (
         <DropdownCheckboxItem
           {...resolvedItemProps}
-          aria-label={item["aria-label"] ?? (resolvedItemProps["aria-label"] as string | undefined)}
+          aria-label={
+            item["aria-label"] ??
+            (resolvedItemProps["aria-label"] as string | undefined)
+          }
           checked={item.selected}
-          disabled={item.disabled ?? (resolvedItemProps.disabled as boolean | undefined)}
+          disabled={
+            item.disabled ?? (resolvedItemProps.disabled as boolean | undefined)
+          }
           key={key}
           nativeHaptics={itemHaptics}
           onCheckedChange={() => onSelect?.()}
-          textValue={item.textValue ?? (resolvedItemProps.textValue as string | undefined)}
+          textValue={
+            item.textValue ??
+            (resolvedItemProps.textValue as string | undefined)
+          }
         >
           {itemContent}
         </DropdownCheckboxItem>
@@ -659,18 +730,28 @@ function renderDropdownItems(
     return (
       <DropdownItem
         {...resolvedItemProps}
-        aria-label={item["aria-label"] ?? (resolvedItemProps["aria-label"] as string | undefined)}
-        disabled={item.disabled ?? (resolvedItemProps.disabled as boolean | undefined)}
+        aria-label={
+          item["aria-label"] ??
+          (resolvedItemProps["aria-label"] as string | undefined)
+        }
+        disabled={
+          item.disabled ?? (resolvedItemProps.disabled as boolean | undefined)
+        }
         key={key}
         nativeHaptics={itemHaptics}
         onPress={onSelect}
-        textValue={item.textValue ?? (resolvedItemProps.textValue as string | undefined)}
+        textValue={
+          item.textValue ?? (resolvedItemProps.textValue as string | undefined)
+        }
         variant={
           item.destructive === true
             ? "destructive"
             : item.destructive === false
               ? "default"
-              : (resolvedItemProps.variant as "default" | "destructive" | undefined)
+              : (resolvedItemProps.variant as
+                  | "default"
+                  | "destructive"
+                  | undefined)
         }
       >
         {itemContent}
@@ -755,7 +836,9 @@ function Dropdown({
   // Item feedback inherits the dropdown setting unless an item-specific
   // setting was supplied. This keeps generated items consistent with the
   // trigger and with native dropdown rendering.
-  const resolvedItemHaptics = useResolvedNativeHaptics(itemNativeHaptics ?? nativeHaptics);
+  const resolvedItemHaptics = useResolvedNativeHaptics(
+    itemNativeHaptics ?? nativeHaptics,
+  );
   const resolvedItemHapticsDelay = itemNativeHapticsDelay ?? nativeHapticsDelay;
   const generated = items != null || trigger != null || nativeTrigger === true;
   const resolvedDisabled = disabled ?? triggerProps?.disabled;

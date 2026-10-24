@@ -1,3 +1,4 @@
+import { ScopedSubContent } from "./scoped_sub_content";
 import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
 import { Icon } from "../icon";
 import type {
@@ -32,11 +33,19 @@ import type { NativeHapticsDelay, NativeHapticsSetting } from "../utils";
 import { resolveRenderProp } from "../utils/render";
 import { Text, TextClassContext } from "../text";
 import { cn } from "../utils/cn";
-import { OverlayPortalWindow, useOverlayPortalContentStyle } from "../utils/overlay/overlay_portal";
+import {
+  OverlayPortalWindow,
+  useOverlayPortalContentStyle,
+} from "../utils/overlay/overlay_portal";
 import { useScopedOverlayPortalHostName } from "../utils/overlay";
 import { semanticColorsToVariables, useUiTheme } from "../utils/theme";
 import * as ContextMenuPrimitive from "@rn-primitives/context-menu";
-import { Check, ChevronDown, ChevronRight, ChevronUp } from "lucide-react-native";
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+} from "lucide-react-native";
 import * as React from "react";
 import {
   Platform,
@@ -47,6 +56,21 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { FadeIn, ReduceMotion } from "react-native-reanimated";
+
+function ContextMenuPortal({
+  hostName,
+  ...props
+}: React.ComponentProps<typeof ContextMenuPrimitive.Portal>) {
+  const container = useOverlayPortalContainer();
+  const scopedHost = useScopedOverlayPortalHostName();
+  return (
+    <ContextMenuPrimitive.Portal
+      {...props}
+      hostName={hostName ?? scopedHost}
+      container={props.container ?? container}
+    />
+  );
+}
 
 const ContextMenuPrimitiveRoot = ContextMenuPrimitive.Root;
 const ContextMenuTrigger = ContextMenuPrimitive.Trigger;
@@ -76,7 +100,8 @@ function ContextMenuSubTrigger({
   const contextHaptics = React.useContext(ContextMenuHapticsContext);
   const size = React.useContext(ContextMenuContentSizeContext);
   const disabled = props.disabled === true;
-  const icon = Platform.OS === "web" ? ChevronRight : open ? ChevronUp : ChevronDown;
+  const icon =
+    Platform.OS === "web" ? ChevronRight : open ? ChevronUp : ChevronDown;
   return (
     <TextClassContext.Provider
       value={cn(
@@ -114,7 +139,11 @@ function ContextMenuSubTrigger({
         <>{children}</>
         <Icon
           as={icon}
-          className={cn("text-foreground shrink-0", menuIconSizeClasses[size], iconClassName)}
+          className={cn(
+            "text-foreground shrink-0",
+            menuIconSizeClasses[size],
+            iconClassName,
+          )}
         />
       </ContextMenuPrimitive.SubTrigger>
     </TextClassContext.Provider>
@@ -133,7 +162,7 @@ function ContextMenuSubContent({
 
   return (
     <NativeOnlyAnimatedView entering={FadeIn.reduceMotion(ReduceMotion.System)}>
-      <ContextMenuPrimitive.SubContent
+      <ScopedSubContent
         className={cn(
           "bg-popover border-border overflow-hidden rounded-md border p-1 shadow-lg shadow-black/5",
           Platform.select({
@@ -141,10 +170,14 @@ function ContextMenuSubContent({
           }),
           className,
         )}
-        // The web primitive renders SubContent through its own Radix portal,
-        // outside the provider-scoped variables applied by OverlayPortalWindow.
+        // 显式提供主题变量，兼容自定义容器和独立子菜单。
         style={
-          [Platform.OS === "web" ? (semanticColorsToVariables(theme) as any) : null, style] as any
+          [
+            Platform.OS === "web"
+              ? (semanticColorsToVariables(theme) as any)
+              : null,
+            style,
+          ] as any
         }
         {...props}
       >
@@ -155,7 +188,7 @@ function ContextMenuSubContent({
             {children}
           </TextClassContext.Provider>
         </ContextMenuContentSizeContext.Provider>
-      </ContextMenuPrimitive.SubContent>
+      </ScopedSubContent>
     </NativeOnlyAnimatedView>
   );
 }
@@ -200,31 +233,46 @@ function ContextMenuContent({
   const scopedPortalHost = useScopedOverlayPortalHostName();
   const resolvedPortalHost = portalHost ?? scopedPortalHost;
   const contentStyle = useOverlayPortalContentStyle(style);
-  const resolvedContentStyle = StyleSheet.flatten(contentStyle as any) as Record<string, unknown>;
+  const resolvedContentStyle = StyleSheet.flatten(
+    contentStyle as any,
+  ) as Record<string, unknown>;
   const inheritedHaptics = React.useContext(ContextMenuHapticsContext);
   const size = sizeProp ?? React.useContext(ContextMenuContentSizeContext);
   const handleNativeOverlayPress = (event: any) => {
     const target = event?.target ?? event?.nativeEvent?.target;
     const currentTarget = event?.currentTarget;
-    if (target != null && currentTarget != null && target !== currentTarget) return;
+    if (target != null && currentTarget != null && target !== currentTarget)
+      return;
     setPressPosition(null);
     setContentLayout(null);
     setOpen(false);
   };
 
   return (
-    <ContextMenuPrimitive.Portal hostName={resolvedPortalHost} container={portalContainer}>
+    <ContextMenuPrimitive.Portal
+      hostName={resolvedPortalHost}
+      container={portalContainer}
+    >
       <OverlayPortalWindow portalHost={resolvedPortalHost}>
         <ContextMenuPrimitive.Overlay
-          style={[Platform.OS === "web" ? undefined : StyleSheet.absoluteFillObject, overlayStyle]}
+          style={[
+            Platform.OS === "web" ? undefined : StyleSheet.absoluteFillObject,
+            overlayStyle,
+          ]}
           className={overlayClassName}
           closeOnPress={Platform.OS === "web" ? undefined : false}
           onPress={Platform.OS === "web" ? undefined : handleNativeOverlayPress}
           asChild={Platform.OS !== "web"}
         >
-          <NativeOnlyAnimatedView entering={FadeIn.reduceMotion(ReduceMotion.System)} as="View">
+          <NativeOnlyAnimatedView
+            entering={FadeIn.reduceMotion(ReduceMotion.System)}
+            as="View"
+          >
             {Platform.OS !== "web" ? (
-              <Pressable onPress={handleNativeOverlayPress} style={StyleSheet.absoluteFillObject} />
+              <Pressable
+                onPress={handleNativeOverlayPress}
+                style={StyleSheet.absoluteFillObject}
+              />
             ) : null}
             <ContextMenuContentSizeContext.Provider value={size}>
               <TextClassContext.Provider
@@ -233,7 +281,8 @@ function ContextMenuContent({
                 <ContextMenuHapticsContext.Provider
                   value={{
                     item: itemNativeHaptics ?? inheritedHaptics.item,
-                    itemDelay: itemNativeHapticsDelay ?? inheritedHaptics.itemDelay,
+                    itemDelay:
+                      itemNativeHapticsDelay ?? inheritedHaptics.itemDelay,
                   }}
                 >
                   <ContextMenuPrimitive.Content
@@ -276,7 +325,8 @@ function ContextMenuContent({
                           showsVerticalScrollIndicator
                           onMoveShouldSetResponderCapture={() => true}
                           style={{
-                            maxHeight: windowHeight * CONTEXT_MENU_MAX_HEIGHT_RATIO,
+                            maxHeight:
+                              windowHeight * CONTEXT_MENU_MAX_HEIGHT_RATIO,
                           }}
                         >
                           {children}
@@ -312,7 +362,9 @@ function ContextMenuItem({
         cn(menuTextSizeClasses[size], "select-none text-popover-foreground"),
         !disabled && "group-active:text-popover-foreground",
         variant === "destructive" && "text-destructive",
-        variant === "destructive" && !disabled && "group-active:text-destructive",
+        variant === "destructive" &&
+          !disabled &&
+          "group-active:text-destructive",
       )}
     >
       <ContextMenuPrimitive.Item
@@ -325,7 +377,8 @@ function ContextMenuItem({
           Platform.select({
             web: cn(
               "focus:bg-accent focus:text-accent-foreground cursor-default outline-none data-[disabled]:pointer-events-none",
-              variant === "destructive" && "focus:bg-destructive/10 dark:focus:bg-destructive/20",
+              variant === "destructive" &&
+                "focus:bg-destructive/10 dark:focus:bg-destructive/20",
             ),
           }),
           !disabled &&
@@ -465,7 +518,11 @@ function ContextMenuRadioItem({
   );
 }
 
-function ContextMenuLabel({ className, inset, ...props }: ContextMenuLabelProps) {
+function ContextMenuLabel({
+  className,
+  inset,
+  ...props
+}: ContextMenuLabelProps) {
   const size = React.useContext(ContextMenuContentSizeContext);
   return (
     <ContextMenuPrimitive.Label
@@ -483,7 +540,10 @@ function ContextMenuLabel({ className, inset, ...props }: ContextMenuLabelProps)
   );
 }
 
-function ContextMenuSeparator({ className, ...props }: ContextMenuSeparatorProps) {
+function ContextMenuSeparator({
+  className,
+  ...props
+}: ContextMenuSeparatorProps) {
   return (
     <ContextMenuPrimitive.Separator
       className={cn("bg-border -mx-1 my-1 h-px", className)}
@@ -494,7 +554,10 @@ function ContextMenuSeparator({ className, ...props }: ContextMenuSeparatorProps
   );
 }
 
-function ContextMenuShortcut({ className, ...props }: ContextMenuShortcutProps) {
+function ContextMenuShortcut({
+  className,
+  ...props
+}: ContextMenuShortcutProps) {
   const size = React.useContext(ContextMenuContentSizeContext);
   return (
     <Text
@@ -508,21 +571,35 @@ function ContextMenuShortcut({ className, ...props }: ContextMenuShortcutProps) 
   );
 }
 
-function ContextMenuItemTitle({ className, ...props }: ContextMenuItemTitleProps) {
+function ContextMenuItemTitle({
+  className,
+  ...props
+}: ContextMenuItemTitleProps) {
   const size = React.useContext(ContextMenuContentSizeContext);
   return (
     <Text
-      className={cn(menuTextSizeClasses[size], "text-popover-foreground", className)}
+      className={cn(
+        menuTextSizeClasses[size],
+        "text-popover-foreground",
+        className,
+      )}
       {...props}
     />
   );
 }
 
-function ContextMenuItemSubtitle({ className, ...props }: ContextMenuItemSubtitleProps) {
+function ContextMenuItemSubtitle({
+  className,
+  ...props
+}: ContextMenuItemSubtitleProps) {
   const size = React.useContext(ContextMenuContentSizeContext);
   return (
     <Text
-      className={cn("text-muted-foreground", menuTextSizeClasses[size], className)}
+      className={cn(
+        "text-muted-foreground",
+        menuTextSizeClasses[size],
+        className,
+      )}
       {...props}
     />
   );
@@ -556,7 +633,8 @@ function renderContextMenuItems(
   return items.map((item, index) => {
     const key = `${depth}:${item.value}:${index}`;
     if (item.separator) return <ContextMenuSeparator key={key} />;
-    const label = resolveRenderProp(item.label, item) ?? item.textValue ?? item.value;
+    const label =
+      resolveRenderProp(item.label, item) ?? item.textValue ?? item.value;
     const resolvedItemProps = {
       ...(itemProps ?? {}),
       ...(item.itemProps ?? {}),
@@ -567,7 +645,10 @@ function renderContextMenuItems(
         <ContextMenuSub key={key}>
           <ContextMenuSubTrigger
             {...(item.triggerProps as object)}
-            disabled={item.disabled ?? (item.triggerProps?.disabled as boolean | undefined)}
+            disabled={
+              item.disabled ??
+              (item.triggerProps?.disabled as boolean | undefined)
+            }
             nativeHaptics={itemHaptics}
           >
             <Text>{label}</Text>
@@ -578,7 +659,12 @@ function renderContextMenuItems(
                 {resolveRenderProp(item.subMenuTitle, item) ?? label}
               </ContextMenuLabel>
             )}
-            {renderContextMenuItems(item.subMenu, itemProps, defaultNativeHaptics, depth + 1)}
+            {renderContextMenuItems(
+              item.subMenu,
+              itemProps,
+              defaultNativeHaptics,
+              depth + 1,
+            )}
           </ContextMenuSubContent>
         </ContextMenuSub>
       );
@@ -588,15 +674,19 @@ function renderContextMenuItems(
         <ContextMenuCheckboxItem
           {...(resolvedItemProps as object)}
           checked={item.checked}
-          disabled={item.disabled ?? (resolvedItemProps.disabled as boolean | undefined)}
+          disabled={
+            item.disabled ?? (resolvedItemProps.disabled as boolean | undefined)
+          }
           key={key}
           nativeHaptics={itemHaptics}
           onCheckedChange={(checked) => {
             item.onCheckedChange?.(checked);
             item.onSelect?.();
-            (resolvedItemProps.onCheckedChange as ((checked: boolean) => void) | undefined)?.(
-              checked,
-            );
+            (
+              resolvedItemProps.onCheckedChange as
+                | ((checked: boolean) => void)
+                | undefined
+            )?.(checked);
           }}
           textValue={item.textValue}
         >
@@ -607,10 +697,14 @@ function renderContextMenuItems(
     return (
       <ContextMenuItem
         {...(resolvedItemProps as object)}
-        disabled={item.disabled ?? (resolvedItemProps.disabled as boolean | undefined)}
+        disabled={
+          item.disabled ?? (resolvedItemProps.disabled as boolean | undefined)
+        }
         key={key}
         nativeHaptics={itemHaptics}
-        onPress={item.onSelect ?? item.onPress ?? (resolvedItemProps.onPress as any)}
+        onPress={
+          item.onSelect ?? item.onPress ?? (resolvedItemProps.onPress as any)
+        }
         textValue={item.textValue}
         variant={item.destructive ? "destructive" : "default"}
       >
@@ -691,7 +785,11 @@ function ContextMenu({
               ) : null}
               {items != null ? (
                 <ContextMenuContent itemNativeHaptics={resolvedItemHaptics}>
-                  {renderContextMenuItems(items, itemProps, resolvedItemHaptics)}
+                  {renderContextMenuItems(
+                    items,
+                    itemProps,
+                    resolvedItemHaptics,
+                  )}
                 </ContextMenuContent>
               ) : null}
               {children}
@@ -718,7 +816,7 @@ const ContextMenuComponent = Object.assign(ContextMenu, {
   ItemSubtitle: ContextMenuItemSubtitle,
   ItemTitle: ContextMenuItemTitle,
   Label: ContextMenuLabel,
-  Portal: ContextMenuPrimitive.Portal,
+  Portal: ContextMenuPortal,
   Preview: ContextMenuPreview,
   RadioGroup: ContextMenuRadioGroup,
   RadioItem: ContextMenuRadioItem,
