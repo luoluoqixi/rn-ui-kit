@@ -258,6 +258,7 @@ export function NativeSheet({ ...props }: NativeSheetProps) {
   const [mounted, setMounted] = useState(() => modal !== false && sheetState.open);
   const presentedRef = useRef(false);
   const dismissingRef = useRef(false);
+  const androidDismissSyncFrameRef = useRef<number | null>(null);
   // iOS 15 下若让 initialDetentIndex 跟随受控 position 回写，首次切到上一档后会被原生 props 更新拉回初始档位。
   const initialDetentIndexRef = useRef<number | null>(null);
   const lastRequestedPositionRef = useRef<number | null>(null);
@@ -306,6 +307,15 @@ export function NativeSheet({ ...props }: NativeSheetProps) {
     dismissTrueSheet(sheetName).catch(() => undefined);
   }, [modal, mounted, resolvedDetentIndex, sheetName, sheetState.open]);
 
+  useEffect(
+    () => () => {
+      if (androidDismissSyncFrameRef.current != null) {
+        cancelAnimationFrame(androidDismissSyncFrameRef.current);
+      }
+    },
+    [],
+  );
+
   useEffect(() => {
     if (!presentedRef.current || lastRequestedPositionRef.current === resolvedDetentIndex) {
       return;
@@ -349,10 +359,15 @@ export function NativeSheet({ ...props }: NativeSheetProps) {
         : undefined,
     onWillDismiss: (event) => {
       // Gesture and overlay dismissals start in native code without changing the
-      // controlled `open` prop. Synchronize it before the animation finishes so
-      // the native sheet is never reconfigured to its fallback/max detent.
+      // controlled `open` prop. iOS reports this before the animation finishes, so
+      // synchronize there before native props can be reconfigured.
       dismissingRef.current = true;
-      if (sheetState.open) {
+      // Android only reports a committed gesture dismissal after BottomSheetBehavior
+      // has reached STATE_HIDDEN. Updating a controlled parent here can reconcile the
+      // React Native Modal portal while its reparented sheet content is still being
+      // detached, briefly leaving that window with no content. Let onDidDismiss first
+      // remove the native sheet host, then synchronize the parent on the next frame.
+      if (sheetState.open && os() !== "android") {
         sheetState.setOpen(false);
       }
       onWillDismiss?.(event);
@@ -367,11 +382,22 @@ export function NativeSheet({ ...props }: NativeSheetProps) {
     onDidDismiss: (event) => {
       onDidDismiss?.(event);
       presentedRef.current = false;
-      dismissingRef.current = false;
       initialDetentIndexRef.current = null;
       lastRequestedPositionRef.current = null;
       setMounted(false);
-      sheetState.setOpen(false);
+
+      if (os() === "android" && sheetState.open) {
+        androidDismissSyncFrameRef.current = requestAnimationFrame(() => {
+          androidDismissSyncFrameRef.current = null;
+          sheetState.setOpen(false);
+          dismissingRef.current = false;
+        });
+      } else {
+        if (sheetState.open) {
+          sheetState.setOpen(false);
+        }
+        dismissingRef.current = false;
+      }
       onAnimationComplete?.({ open: false });
     },
     onDidPresent: (event) => {
