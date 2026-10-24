@@ -11,6 +11,9 @@ function getButtonComponent(button: NativeDialogButton) {
   if (button.style === "cancel") {
     return AlertDialog.Cancel;
   }
+  if (button.style === "destructive") {
+    return AlertDialog.Destructive;
+  }
   return AlertDialog.Action;
 }
 
@@ -58,7 +61,6 @@ export function NativeDialogProvider({ children }: { children: ReactNode }) {
       const Action = getButtonComponent(button);
       return (
         <Action
-          className={button.style === "destructive" ? "bg-destructive" : undefined}
           key={button.key}
           onPress={() => {
             // NativeDialog previously used a haptic-enabled Button for every action.
