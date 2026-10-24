@@ -163,7 +163,6 @@ function AccordionTrigger({
     <TextClassContext.Provider
       value={cn(
         "text-left text-sm font-medium",
-        Platform.select({ web: isPressed && "underline" }),
       )}
     >
       <AccordionPrimitive.Header {...headerProps}>
