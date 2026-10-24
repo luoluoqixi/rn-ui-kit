@@ -14,7 +14,12 @@ export type TooltipContentProps = ComponentProps<typeof TooltipPrimitive.Content
   size?: TooltipSize;
 };
 
-export type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> & {
+export type TooltipRootProps = ComponentProps<typeof TooltipPrimitive.Root> & {
+  /** Allow pressing the trigger to open the tooltip. Disabled by default. */
+  openOnPress?: boolean;
+};
+
+export type TooltipProps = TooltipRootProps & {
   content?: RenderProp<TooltipRenderContext>;
   contentProps?: Omit<TooltipContentProps, "children">;
   triggerProps?: Omit<ComponentProps<typeof TooltipPrimitive.Trigger>, "children">;
