@@ -250,7 +250,12 @@ function TrueSheetPanelInner({
       onWillPresent={handleWillPresent}
       style={mergeTrueSheetContentStyle(mergedScrollable, [sheetProps?.style, backgroundStyle])}
     >
-      <SheetContentScope>{sheetBody}</SheetContentScope>
+      <SheetContentScope
+        dismissOnOverlayPress={sheetProps?.dismissible !== false}
+        onRequestClose={handleClose}
+      >
+        {sheetBody}
+      </SheetContentScope>
     </TrueSheet>
   );
 }

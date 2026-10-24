@@ -97,6 +97,46 @@ test("真实 Drawer 的子弹层保留在外层 Dialog 内，不被裁切或 ari
   input.focus();
   expect(document.activeElement).toBe(input);
 });
+test("Web Sheet 遮罩直接请求关闭，并遵守 dismissible", async () => {
+  let closeCount = 0;
+  function Probe({ dismissible }) {
+    return (
+      <Drawer.Root open modal dismissible={dismissible}>
+        <Drawer.Portal>
+          <Drawer.Overlay />
+          <Drawer.Content aria-describedby={undefined}>
+            <Drawer.Title>Sheet</Drawer.Title>
+            <SheetContentScope
+              dismissOnOverlayPress={dismissible}
+              onRequestClose={() => closeCount++}
+            >
+              <div>内容</div>
+            </SheetContentScope>
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
+    );
+  }
+  const mount = document.createElement("div");
+  document.body.append(mount);
+  root = createRoot(mount);
+  await act(() => root.render(<Probe dismissible={false} />));
+  const overlay = document.querySelector("[data-vaul-overlay]");
+  expect(overlay).not.toBeNull();
+  await act(() =>
+    overlay.dispatchEvent(
+      new win.PointerEvent("pointerdown", { bubbles: true, cancelable: true }),
+    ),
+  );
+  expect(closeCount).toBe(0);
+  await act(() => root.render(<Probe dismissible />));
+  await act(() =>
+    overlay.dispatchEvent(
+      new win.PointerEvent("pointerdown", { bubbles: true, cancelable: true }),
+    ),
+  );
+  expect(closeCount).toBe(1);
+});
 test("Dropdown 与 ContextMenu 二级菜单跟随 Dialog scope，不挂到 body", async () => {
   const { OverlayPortalScope } =
     await import("../src/core/components/ui/utils/overlay/overlay_portal_scope.web");

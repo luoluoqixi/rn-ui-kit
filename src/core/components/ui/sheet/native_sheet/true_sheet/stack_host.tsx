@@ -392,7 +392,12 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
       onPositionChange={handlePositionChange}
       onWillPresent={handleWillPresent}
     >
-      <SheetContentScope>{sheetBody}</SheetContentScope>
+      <SheetContentScope
+        dismissOnOverlayPress={resolvedSheetProps.dismissible !== false}
+        onRequestClose={handleRequestClose}
+      >
+        {sheetBody}
+      </SheetContentScope>
     </TrueSheet>
   );
 }
