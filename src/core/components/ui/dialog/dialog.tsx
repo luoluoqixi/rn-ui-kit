@@ -1,5 +1,8 @@
 import { ModalContentScope } from "../utils/overlay/modal_content_scope";
-import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
+import {
+  hasOpenOverlayPortal,
+  useOverlayPortalContainer,
+} from "../utils/overlay/overlay_portal_scope";
 import { Icon } from "../icon";
 import { Button } from "../button";
 import { Text } from "../text";
@@ -190,9 +193,22 @@ function DialogOverlay({
   portalHost?: string;
 }) {
   const { onOpenChange } = DialogPrimitive.useRootContext();
+  const nestedOverlayWasOpenOnPointerDownRef = React.useRef(false);
+
+  function onOverlayPointerDownCapture(event: GestureResponderEvent) {
+    if (Platform.OS !== "web") return;
+
+    const overlay = event.currentTarget as unknown as HTMLElement;
+    nestedOverlayWasOpenOnPointerDownRef.current = hasOpenOverlayPortal(overlay);
+  }
 
   function onOverlayPress(event: GestureResponderEvent) {
     onPress?.(event);
+    const nestedOverlayWasOpenOnPointerDown = nestedOverlayWasOpenOnPointerDownRef.current;
+    nestedOverlayWasOpenOnPointerDownRef.current = false;
+    if (Platform.OS === "web" && nestedOverlayWasOpenOnPointerDown) {
+      return;
+    }
     if (event.target === event.currentTarget && !event.isDefaultPrevented()) {
       onOpenChange(false);
     }
@@ -214,8 +230,11 @@ function DialogOverlay({
         )}
         {...props}
         // Handle dismissal here so presses on dialog controls are not treated as overlay presses.
-        closeOnPress={Platform.OS === "web" ? undefined : false}
+        closeOnPress={false}
         onPress={onOverlayPress}
+        {...(Platform.OS === "web"
+          ? ({ onPointerDownCapture: onOverlayPointerDownCapture } as object)
+          : null)}
         asChild={Platform.OS !== "web"}
       >
         <NativeOnlyAnimatedView
