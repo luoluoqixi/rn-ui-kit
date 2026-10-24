@@ -24,7 +24,7 @@ const buttonVariants = cva(
   cn(
     "group shrink-0 flex-row items-center justify-center gap-2 rounded-md shadow-none",
     Platform.select({
-      web: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive whitespace-nowrap outline-none focus-visible:ring-[3px] disabled:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+      web: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive whitespace-nowrap outline-none focus-visible:ring-[3px] [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
     }),
   ),
   {
@@ -209,6 +209,7 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
     loading = false,
     loadingIcon,
     onPress,
+    pointerEvents,
     size = "default",
     style,
     textClassName,
@@ -317,7 +318,10 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
     <TextClassContext.Provider
       value={cn(
         buttonTextVariants({ variant, size }),
-        isDisabled && "group-hover:text-foreground group-active:text-foreground",
+        isDisabled &&
+          variant === "outline" &&
+          "group-hover:text-foreground group-active:text-foreground",
+        isDisabled && variant === "link" && "group-hover:opacity-100",
       )}
     >
       <Pressable
@@ -330,6 +334,7 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
           className,
         )}
         onPress={handlePress}
+        pointerEvents={Platform.OS === "web" && isDisabled ? "none" : pointerEvents}
         ref={ref}
         role="button"
         style={({ pressed }) => [
