@@ -6,7 +6,7 @@ import {
   showBasicToast,
 } from "./toast_basic";
 import { dismissNativeToast, dismissAllNativeToasts, showNativeToast } from "./toast_native";
-import { getToastId } from "./toast_basic_shared";
+import { getToastId, resolveToastViewportOptions } from "./toast_basic_shared";
 import { resolveRenderProp } from "../utils/render";
 import { useScopedOverlayPortalHostName } from "../utils/overlay";
 import type {
@@ -62,20 +62,11 @@ function resolvePromise<T>(value: ToastPromise<T>): Promise<T> {
 export function useToast(): ToastContext {
   const scopedPortalHost = useScopedOverlayPortalHostName();
   const defaultNative = React.useContext(ToastDefaultNativeContext);
-  // TrueSheet mounts a named Toaster in its own native window; route unqualified
-  // Sonner toasts there so they render above the Sheet without a touch-blocking Modal.
+  // Native 通知跟随当前原生窗口；Web 的全局 Toast host 会跟随最上层 modal，
+  // 避免仍路由到下层 Sheet 中的命名 Toaster。
   const resolveOptions = React.useCallback(
     (options?: ToastShowOptions): ToastShowOptions | undefined => {
-      if (scopedPortalHost == null) {
-        return options;
-      }
-      if (options == null) {
-        return { toasterId: scopedPortalHost };
-      }
-      if (options.toasterId != null || options.viewportName != null) {
-        return options;
-      }
-      return { ...options, toasterId: scopedPortalHost };
+      return resolveToastViewportOptions(options, scopedPortalHost, isWeb());
     },
     [scopedPortalHost],
   );

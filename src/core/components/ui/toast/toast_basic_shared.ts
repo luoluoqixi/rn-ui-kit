@@ -116,3 +116,15 @@ export type BasicCustom = (
   jsx: (id: string | number) => ReactElement,
   options?: ToastShowOptions,
 ) => string | number;
+
+/** Native 通知跟随当前原生窗口，Web 通知交给全局 modal host。 */
+export function resolveToastViewportOptions(
+  options: ToastShowOptions | undefined,
+  scopedPortalHost: string | undefined,
+  web: boolean,
+): ToastShowOptions | undefined {
+  if (web || scopedPortalHost == null) return options;
+  if (options?.toasterId != null || options?.viewportName != null)
+    return options;
+  return { ...options, toasterId: scopedPortalHost };
+}

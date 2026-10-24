@@ -1,3 +1,4 @@
+import { useToastPortalScope } from "../../../toast/toast_portal.web";
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { OverlayPortalContainerContext } from "../../../utils/overlay/overlay_portal_scope.web";
 
@@ -5,6 +6,8 @@ import { OverlayPortalContainerContext } from "../../../utils/overlay/overlay_po
 export function SheetContentScope({ children }: { children?: ReactNode }) {
   const marker = useRef<HTMLDivElement>(null);
   const [container, setContainer] = useState<HTMLDivElement>();
+
+  useToastPortalScope(container);
 
   useLayoutEffect(() => {
     const wrapper = marker.current?.closest("[data-vaul-detached-wrapper]");

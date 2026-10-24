@@ -11,11 +11,13 @@ import {
   Select,
   Text,
   Tooltip,
+  useToast,
 } from "rn-ui-kit/core";
 import { View } from "react-native";
 import { ExampleBlock, ExampleStack } from "../shared";
 
 export function DialogExample() {
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("组件实验室");
   const [saved, setSaved] = useState("尚未保存");
@@ -90,10 +92,24 @@ export function DialogExample() {
               <AlertDialog
                 title="Dialog 内的确认"
                 description="取消后应保留外层 Dialog。"
+                actions={
+                  <Button
+                    onPress={() =>
+                      toast.info("AlertDialog 内提示", { native: false })
+                    }
+                  >
+                    显示确认框 Toast
+                  </Button>
+                }
                 trigger={<Button variant="outline">打开子 AlertDialog</Button>}
                 cancelLabel="取消"
                 actionLabel="确认"
               />
+              <Button
+                onPress={() => toast.info("Dialog 内提示", { native: false })}
+              >
+                显示 Toast
+              </Button>
               <Button onPress={() => setSheetOpen(true)}>打开子 Sheet</Button>
               <NativeSheet
                 name="dialog-child-sheet"
@@ -103,6 +119,13 @@ export function DialogExample() {
               >
                 <View className="gap-3 p-6">
                   <Text>Dialog 中的 Sheet</Text>
+                  <Button
+                    onPress={() =>
+                      toast.success("Sheet 内提示", { native: false })
+                    }
+                  >
+                    显示 Sheet Toast
+                  </Button>
                   <Input placeholder="检查输入焦点" />
                   <Select
                     native={false}

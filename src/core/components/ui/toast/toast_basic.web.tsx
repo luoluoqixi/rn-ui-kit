@@ -1,4 +1,6 @@
 import * as React from "react";
+import { ScopedVariables } from "uniwind";
+import { ToastPortal } from "./toast_portal.web";
 import * as Sonner from "sonner";
 import type { ReactElement } from "react";
 import { CheckCircle2, CircleX, Info, TriangleAlert, X } from "lucide-react-native";
@@ -14,7 +16,7 @@ import {
   resolveToastContent,
 } from "./toast_basic_shared";
 import type { BasicToastKind } from "./toast_basic_shared";
-import { useUiColorScheme, useUiTheme } from "../utils/theme";
+import { semanticColorsToVariables, useUiColorScheme, useUiTheme } from "../utils/theme";
 
 let toastId = 0;
 const CLOSE_BUTTON_CLASS = "rn-ui-kit-toast-close-button";
@@ -123,6 +125,7 @@ export function BasicToaster({
     ...sonnerProps?.icons,
   };
   const style = {
+    pointerEvents: "auto" as const,
     "--toast-close-button-start": "unset",
     "--toast-close-button-end": "16px",
     "--toast-close-button-transform": "translate(0, -50%)",
@@ -135,8 +138,8 @@ export function BasicToaster({
       : {}),
     ...sonnerProps?.style,
   } as React.CSSProperties;
-  return (
-    <>
+  const content = (
+    <ScopedVariables variables={semanticColorsToVariables(theme)}>
       <Sonner.Toaster
         position={viewportName == null ? "bottom-right" : "bottom-center"}
         duration={5000}
@@ -171,6 +174,8 @@ export function BasicToaster({
           height: 16px;
         }
       `}</style>
-    </>
+    </ScopedVariables>
   );
+  // 指定 viewport 的 Toast 保留 Sheet 内既有的定位与路由。
+  return viewportName == null ? <ToastPortal>{content}</ToastPortal> : content;
 }
