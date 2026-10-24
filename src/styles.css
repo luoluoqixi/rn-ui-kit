@@ -56,9 +56,11 @@
 }
 
 @layer utilities {
-  /* TrueSheetProvider 的 portal anchor 不参与 Dialog 的 flex/gap 排版。 */
+  /* TrueSheetProvider 的 portal anchor 留在当前 modal 内，但不参与 Dialog 的 flex/gap 排版。 */
   .ui-modal-content-scope > div:last-child {
-    display: contents;
+    height: 0;
+    position: absolute;
+    width: 0;
   }
 
   .ui-menu-scrollbar {

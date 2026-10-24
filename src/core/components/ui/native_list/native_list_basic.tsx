@@ -1257,13 +1257,16 @@ const styles = StyleSheet.create({
   // plain lists do not need clipping because they have no rounded corners.
   sectionBodyPlain: { borderRadius: 0, overflow: "visible" },
   sectionShadow: {},
-  sectionShadowDefault: {
-    elevation: 3,
-    shadowColor: "#000000",
-    shadowOffset: { height: 2, width: 0 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-  },
+  sectionShadowDefault: Platform.select({
+    web: { boxShadow: "0 2px 4px rgb(0 0 0 / 12%)" },
+    default: {
+      elevation: 3,
+      shadowColor: "#000000",
+      shadowOffset: { height: 2, width: 0 },
+      shadowOpacity: 0.12,
+      shadowRadius: 4,
+    },
+  }),
   sectionFullWidth: { paddingHorizontal: 0 },
   sectionFooter: { paddingHorizontal: 12 },
   sectionHeader: {

@@ -164,7 +164,6 @@ function AccordionTrigger({
       value={cn(
         "text-left text-sm font-medium",
         Platform.select({ web: isPressed && "underline" }),
-        Platform.select({ web: "group-hover:underline" }),
       )}
     >
       <AccordionPrimitive.Header {...headerProps}>
@@ -184,7 +183,7 @@ function AccordionTrigger({
             className={cn(
               "active:bg-muted flex-row items-start justify-between gap-4 px-2 py-4 disabled:opacity-50",
               Platform.select({
-                web: "focus-visible:border-ring focus-visible:ring-ring/50 flex flex-1 outline-none transition-colors hover:bg-muted hover:underline focus-visible:ring-[3px] disabled:pointer-events-none [&[data-state=open]>svg]:rotate-180",
+                web: "focus-visible:border-ring focus-visible:ring-ring/50 flex flex-1 outline-none transition-colors hover:bg-muted focus-visible:ring-[3px] disabled:pointer-events-none [&[data-state=open]>svg]:rotate-180",
               }),
               className,
             )}
