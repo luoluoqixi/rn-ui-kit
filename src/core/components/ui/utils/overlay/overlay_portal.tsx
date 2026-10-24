@@ -44,6 +44,12 @@ export function OverlayPortalWindow({
   if (forceFullScreen && Platform.OS !== "web") {
     return (
       <Modal
+        // Android Modal windows are software-rendered unless this is enabled. A TrueSheet
+        // hosted inside the modal uses BottomSheetBehavior for swipe dismissal; removing
+        // its final native animation layer can otherwise expose the dialog window's blank
+        // backing buffer for one frame. App-root sheets do not hit this because the
+        // Activity window is already hardware accelerated.
+        hardwareAccelerated={Platform.OS === "android"}
         navigationBarTranslucent
         onRequestClose={onRequestClose}
         statusBarTranslucent
