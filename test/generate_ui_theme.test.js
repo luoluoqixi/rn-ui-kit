@@ -8,6 +8,18 @@ import {
 import { generateUiThemeFromPrimaryColor } from "../src/core/components/ui/utils/theme/generate_ui_theme";
 
 const semanticColorKeys = [
+  "accent01",
+  "accent02",
+  "accent03",
+  "accent04",
+  "accent05",
+  "accent06",
+  "accent07",
+  "accent08",
+  "accent09",
+  "accent10",
+  "accent11",
+  "accent12",
   "accent",
   "accentForeground",
   "background",
@@ -16,6 +28,7 @@ const semanticColorKeys = [
   "card",
   "cardForeground",
   "destructive",
+  "destructiveForeground",
   "foreground",
   "input",
   "muted",
@@ -77,6 +90,7 @@ describe("generateUiThemeFromPrimaryColor", () => {
     for (const scheme of [theme.light, theme.dark]) {
       expect(contrastRatio(scheme.foreground, scheme.background)).toBeGreaterThanOrEqual(4.5);
       expect(contrastRatio(scheme.primaryForeground, scheme.primary)).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(scheme.destructiveForeground, scheme.destructive)).toBeGreaterThanOrEqual(4.5);
       expect(contrastRatio(scheme.accentForeground, scheme.accent)).toBeGreaterThanOrEqual(4.5);
       expect(contrastRatio(scheme.secondaryForeground, scheme.secondary)).toBeGreaterThanOrEqual(4.5);
       expect(contrastRatio(scheme.mutedForeground, scheme.muted)).toBeGreaterThanOrEqual(4.5);
@@ -115,5 +129,29 @@ describe("default accent themes", () => {
   test("falls back for unknown and inherited property names", () => {
     expect(resolveGeneratedAccentTheme("unknown")).toBe(resolveGeneratedAccentTheme("ocean"));
     expect(resolveGeneratedAccentTheme("toString")).toBe(resolveGeneratedAccentTheme("ocean"));
+  });
+});
+
+// 色阶缺失、明暗顺序反转或 hover 比选中更强时应失败。
+describe("主色强调层级", () => {
+  test("所有预设和自定义颜色的层级按强调程度递增，hover 弱于选中", () => {
+    for (const seed of [...Object.values(accentThemeSeeds), "#00d5e8", "#ffffff", "#000000"]) {
+      const theme = generateUiThemeFromPrimaryColor(seed);
+      for (const mode of ["light", "dark"]) {
+        const colors = theme[mode];
+        const luminances = Array.from({ length: 12 }, (_, i) => {
+          const value = colors[`accent${String(i + 1).padStart(2, "0")}`];
+          expect(value).toMatch(/^#[0-9a-f]{6}$/i);
+          return relativeLuminance(value);
+        });
+        for (let i = 1; i < luminances.length; i++) {
+          if (mode === "light") expect(luminances[i]).toBeLessThan(luminances[i - 1]);
+          else expect(luminances[i]).toBeGreaterThan(luminances[i - 1]);
+        }
+        if (mode === "light") expect(luminances[2]).toBeGreaterThan(relativeLuminance(colors.accent));
+        else expect(luminances[2]).toBeLessThan(relativeLuminance(colors.accent));
+        expect(contrastRatio(colors.foreground, colors.accent03)).toBeGreaterThanOrEqual(4.5);
+      }
+    }
   });
 });

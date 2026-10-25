@@ -124,7 +124,11 @@ Toast 默认在 Android/iOS 使用 Burnt，Web 使用基础 Sonner Toast。可�
 <RootProvider toasterProps={{ defaultNative: false }}>{children}</RootProvider>
 ```
 
-主题使用 RNR New York 风格的语义变量，如 `background`、`primaryBackground`、`foreground`、`primary`、`accent`、`muted`、`card`、`popover`、`border` 与 `ring`。内置强调色只覆盖强调色相关字段，不提供旧式编号色阶；完整自定义主题可覆盖全部语义字段。
+主题使用 RNR New York 风格的语义变量，如 `background`、`primaryBackground`、`foreground`、`primary`、`accent`、`muted`、`card`、`popover`、`border` 与 `ring`。完整自定义主题可覆盖全部语义字段。主色色阶提供 `accent01`～`accent12`，编号越大强调程度越强：light 下逐渐加深，dark 下逐渐提亮；它们由当前主色的 HCT 调色板生成，支持所有预设和自定义主色。
+
+可通过 `useUiTheme().accent03` 或 Uniwind `bg-accent03` / `hover:bg-accent03` 使用。`accent01`～`accent02` 适合轻染背景，`accent03` 适合 hover，`accent04` 对应内置主题的 `accent`；更高等级可用于边框、实色强调或文字，需根据用途选择前景色。原有 `accent`、`primary` 保持原值与语义，色阶不保证 `primary` 固定对应某一级。
+
+完整自定义 `UiThemeConfig` 的 light/dark 需同时提供这些色阶；推荐先调用 `generateUiThemeFromPrimaryColor()`，再覆盖需要的语义字段。ColorPicker 调试页可预览当前主题的全部色阶。
 
 内置强调色：`mono`、`ocean`、`sakura`、`lavender`、`sunset`、`forest`、`ruby`、`golden`、`aqua`。
 
@@ -140,6 +144,10 @@ const theme: UiThemeConfig = {
 
 <RootProvider theme={theme}>{children}</RootProvider>;
 ```
+
+非原生 `Button` 的 `default` / `destructive` 基于各自背景计算不透明的交互背景：light/dark 下均在 hover 混入 6% 白色，按下混入 12% 白色，让按下比 hover 更浅；文字保留配对色。按下优先于 hover，禁用和 loading 时不产生交互变色；显式 `style` 可覆盖这些背景。计算支持不透明 hex、RGB/HSL 颜色，透明色或无法解析的动态颜色保留原背景。
+
+`destructiveForeground` 是 `destructive` 的配对文字色，由主题生成器的 Material `onError` 提供，并可通过 `text-destructive-foreground` 使用。完整自定义主题需在 light/dark 中提供该字段，或基于 `generateUiThemeFromPrimaryColor()` 的结果扩展。原生 Button 继续使用系统反馈。
 
 `RootProvider` 负责手势根节点、安全区、颜色模式、语义颜色、导航主题、Sheet、Portal、Toast、原生对话框和触觉反馈上下文。
 

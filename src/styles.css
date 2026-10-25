@@ -12,6 +12,18 @@
 @layer theme {
   :root {
     @variant light {
+      --color-accent01: #fefbff;
+      --color-accent02: #f6f5ff;
+      --color-accent03: #eef0ff;
+      --color-accent04: #dbe1ff;
+      --color-accent05: #c7d3ff;
+      --color-accent06: #b4c5ff;
+      --color-accent07: #8ca8ff;
+      --color-accent08: #618bff;
+      --color-accent09: #346ef6;
+      --color-accent10: #0053db;
+      --color-accent11: #003ea8;
+      --color-accent12: #002a78;
       --color-background: #ffffff;
       --color-foreground: #18181b;
       --color-card: #ffffff;
@@ -27,12 +39,25 @@
       --color-accent: #dbeafe;
       --color-accent-foreground: #1e40af;
       --color-destructive: #dc2626;
+      --color-destructive-foreground: #ffffff;
       --color-border: #e4e4e7;
       --color-input: #e4e4e7;
       --color-ring: #2563eb;
     }
 
     @variant dark {
+      --color-accent01: #001039;
+      --color-accent02: #00174b;
+      --color-accent03: #002a78;
+      --color-accent04: #003ea8;
+      --color-accent05: #0048c1;
+      --color-accent06: #0053db;
+      --color-accent07: #346ef6;
+      --color-accent08: #618bff;
+      --color-accent09: #8ca8ff;
+      --color-accent10: #b4c5ff;
+      --color-accent11: #dbe1ff;
+      --color-accent12: #eef0ff;
       --color-background: #09090b;
       --color-foreground: #fafafa;
       --color-card: #18181b;
@@ -48,6 +73,7 @@
       --color-accent: #1e3a8a;
       --color-accent-foreground: #fafafa;
       --color-destructive: #f87171;
+      --color-destructive-foreground: #450a0a;
       --color-border: rgb(255 255 255 / 10%);
       --color-input: rgb(255 255 255 / 15%);
       --color-ring: #60a5fa;

@@ -331,7 +331,7 @@ export function NativeListRow({
                 edit.onPress != null && !suppressPressBackground
               ? (pressBackgroundColor ?? theme.accent)
               : hovered && edit.onPress != null && !disabled
-                ? (hoverBackgroundColor ?? theme.muted)
+                ? (hoverBackgroundColor ?? theme.accent03)
                 : (backgroundColor ?? defaultRowBackgroundColor ?? theme.card),
           opacity:
             disabled && resolvedDisabledStyle
@@ -877,7 +877,7 @@ export function NativeListCustomItem({
             : pressed
               ? (pressBackgroundColor ?? theme.accent)
               : hovered && !disabled
-                ? (hoverBackgroundColor ?? theme.muted)
+                ? (hoverBackgroundColor ?? theme.accent03)
                 : (backgroundColor ?? defaultRowBackgroundColor ?? theme.card),
           opacity: disabled && resolvedDisabledStyle ? NATIVE_LIST_DISABLED_OPACITY : 1,
           width: "100%",

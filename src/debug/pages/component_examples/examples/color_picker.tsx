@@ -14,6 +14,9 @@ import {
   PreviewText,
   SaturationSlider,
   Swatches,
+  Text,
+  useUiTheme,
+  type AccentScale,
 } from "rn-ui-kit/core";
 import { ExampleBlock, ExampleStack } from "../shared";
 
@@ -29,9 +32,24 @@ const SWATCHES = [
 ];
 
 export function ColorPickerExample() {
+  const theme = useUiTheme();
   const [color, setColor] = useState("#3b82f6");
   return (
     <ExampleStack>
+      <ExampleBlock title="主色色阶" description="编号越大强调越强；accent03 为 hover，accent 为按下与选中。">
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+          {Array.from({ length: 12 }, (_, index) => {
+            const name = `accent${String(index + 1).padStart(2, "0")}` as keyof AccentScale;
+            return (
+              <View key={name} style={{ gap: 4, width: 100 }}>
+                <View style={{ backgroundColor: theme[name], height: 48, borderRadius: 6, borderWidth: 1, borderColor: theme.border }} />
+                <Text>{name}</Text>
+                <Text variant="muted">{theme[name]}</Text>
+              </View>
+            );
+          })}
+        </View>
+      </ExampleBlock>
       <ExampleBlock description={`当前颜色：${color}`} title="ColorPicker">
         <ColorPicker
           value={color}

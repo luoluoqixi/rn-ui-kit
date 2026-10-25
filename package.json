@@ -66,6 +66,7 @@
     "@radix-ui/react-context-menu": "2.3.7",
     "@radix-ui/react-dismissable-layer": "1.1.19",
     "@radix-ui/react-dropdown-menu": "2.1.24",
+    "@react-native/normalize-colors": "0.83.9",
     "@rn-primitives/accordion": "=1.5.2",
     "@rn-primitives/alert-dialog": "=1.5.2",
     "@rn-primitives/aspect-ratio": "=1.5.2",

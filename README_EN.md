@@ -101,7 +101,9 @@ globally with `toasterProps.defaultNative`; a per-call `native` option takes pre
 <RootProvider toasterProps={{ defaultNative: false }}>{children}</RootProvider>
 ```
 
-Themes follow the RNR New York semantic variable model: `background`, `primaryBackground`, `foreground`, `primary`, `accent`, `muted`, `card`, `popover`, `border`, and `ring`. Built-in accents only override accent-related fields and do not expose numbered color scales; complete custom themes can override every semantic field.
+Themes follow the RNR New York semantic variable model: `background`, `primaryBackground`, `foreground`, `primary`, `accent`, `muted`, `card`, `popover`, `border`, and `ring`. Complete custom themes can override every semantic field.
+
+主色色阶提供 `accent01`～`accent12`，编号越大强调越强（light 加深、dark 提亮）。通过 `useUiTheme().accent03` 或 `hover:bg-accent03` 使用；`accent03` 适合 hover，内置主题的 `accent04` 对应原有 `accent`。完整自定义主题需在 light/dark 中提供全部色阶，推荐基于 `generateUiThemeFromPrimaryColor()` 的结果覆盖语义字段。
 
 Built-in accents: `mono`, `ocean`, `sakura`, `lavender`, `sunset`, `forest`, `ruby`, `golden`, and `aqua`.
 
@@ -117,6 +119,8 @@ const theme: UiThemeConfig = {
 
 <RootProvider theme={theme}>{children}</RootProvider>;
 ```
+
+非原生 `Button` 的 `default` / `destructive` 使用自身色调生成 hover（6%）和按下（12%）背景，在 light/dark 下均向白色混合，按下比 hover 更浅。新增 `destructiveForeground` 来自 Material `onError`；完整自定义主题的 light/dark 需提供该字段，或基于 `generateUiThemeFromPrimaryColor()` 扩展。详见 [中文主题说明](./README.md)。
 
 `RootProvider` installs gesture, safe-area, color scheme, navigation theme, sheet, portal, toast, native dialog, and haptics contexts.
 

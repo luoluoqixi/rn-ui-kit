@@ -12,9 +12,9 @@ import type { ToggleProps, ToggleSize } from "./types";
 
 const toggleVariants = cva(
   cn(
-    "group aria-[checked=false]:active:bg-accent/50 aria-[pressed=false]:active:bg-accent/50 data-[state=off]:active:bg-accent/50 flex flex-row items-center justify-center gap-2 rounded-md",
+    "group aria-[checked=false]:active:bg-accent aria-[pressed=false]:active:bg-accent data-[state=off]:active:bg-accent flex flex-row items-center justify-center gap-2 rounded-md",
     Platform.select({
-      web: "aria-[checked=false]:hover:bg-accent/50 aria-[pressed=false]:hover:bg-accent/50 data-[state=off]:hover:bg-accent/50 focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive inline-flex cursor-default whitespace-nowrap outline-none transition-[color,box-shadow] focus-visible:ring-[3px] disabled:pointer-events-none [&_svg]:pointer-events-none",
+      web: "aria-[checked=false]:hover:bg-accent03 aria-[pressed=false]:hover:bg-accent03 data-[state=off]:hover:bg-accent03 focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive inline-flex cursor-default whitespace-nowrap outline-none transition-[color,box-shadow] focus-visible:ring-[3px] disabled:pointer-events-none [&_svg]:pointer-events-none",
     }),
   ),
   {
@@ -24,7 +24,7 @@ const toggleVariants = cva(
         outline: cn(
           "border-input border bg-transparent shadow-sm shadow-black/5",
           Platform.select({
-            web: "aria-[checked=false]:hover:bg-accent/50 aria-[pressed=false]:hover:bg-accent/50 data-[state=off]:hover:bg-accent/50",
+            web: "aria-[checked=false]:hover:bg-accent03 aria-[pressed=false]:hover:bg-accent03 data-[state=off]:hover:bg-accent03",
           }),
         ),
       },

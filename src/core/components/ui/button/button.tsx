@@ -18,6 +18,7 @@ import Animated, {
 import { Platform, Pressable, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
 import type { ButtonProps } from "./types";
 
+import { getSolidButtonInteractionColor } from "./solid_button_colors";
 import { ButtonNative } from "./button_native";
 
 const buttonVariants = cva(
@@ -30,20 +31,17 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: cn(
-          "bg-primary active:bg-primary/90 shadow-sm shadow-black/5",
-          Platform.select({ web: "hover:bg-primary/90" }),
-        ),
+        default: "bg-primary shadow-sm shadow-black/5",
         destructive: cn(
-          "bg-destructive active:bg-destructive/90 dark:bg-destructive/60 shadow-sm shadow-black/5",
+          "bg-destructive shadow-sm shadow-black/5",
           Platform.select({
-            web: "hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
+            web: "focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
           }),
         ),
         outline: cn(
-          "border-border bg-background active:bg-accent dark:bg-input/30 dark:border-input dark:active:bg-input/50 border shadow-sm shadow-black/5",
+          "border-border bg-background active:bg-accent dark:bg-input/30 dark:border-input border shadow-sm shadow-black/5",
           Platform.select({
-            web: "hover:bg-accent dark:hover:bg-input/50 disabled:hover:bg-background disabled:active:bg-background",
+            web: "hover:bg-accent03 disabled:hover:bg-background disabled:active:bg-background",
           }),
         ),
         secondary: cn(
@@ -51,13 +49,13 @@ const buttonVariants = cva(
           Platform.select({ web: "hover:bg-input/70" }),
         ),
         ghost: cn(
-          "active:bg-accent dark:active:bg-accent/50",
-          Platform.select({ web: "hover:bg-accent dark:hover:bg-accent/50" }),
+          "active:bg-accent",
+          Platform.select({ web: "hover:bg-accent03" }),
         ),
         link: Platform.select({ web: "hover:opacity-80" }),
         icon: cn(
-          "bg-transparent active:bg-accent dark:active:bg-accent/50",
-          Platform.select({ web: "hover:bg-accent dark:hover:bg-accent/50" }),
+          "bg-transparent active:bg-accent",
+          Platform.select({ web: "hover:bg-accent03" }),
         ),
       },
       size: {
@@ -116,7 +114,7 @@ const buttonTextVariants = cva(
     variants: {
       variant: {
         default: "text-primary-foreground",
-        destructive: "text-white",
+        destructive: "text-destructive-foreground",
         outline: cn(
           "group-active:text-accent-foreground",
           Platform.select({
@@ -209,6 +207,8 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
     loading = false,
     loadingIcon,
     onPress,
+    onHoverIn,
+    onHoverOut,
     pointerEvents,
     size = "default",
     style,
@@ -221,6 +221,7 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
   ref,
 ) {
   const theme = useUiTheme();
+  const [isHovered, setIsHovered] = React.useState(false);
   const resolvedButtonSize = buttonSize;
   const buttonSizeStyle =
     resolvedButtonSize == null
@@ -334,11 +335,26 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
           className,
         )}
         onPress={handlePress}
+        onHoverIn={(event) => {
+          setIsHovered(true);
+          onHoverIn?.(event);
+        }}
+        onHoverOut={(event) => {
+          setIsHovered(false);
+          onHoverOut?.(event);
+        }}
         pointerEvents={Platform.OS === "web" && isDisabled ? "none" : pointerEvents}
         ref={ref}
         role="button"
         style={({ pressed }) => [
           buttonSizeStyle,
+          {
+            backgroundColor: getSolidButtonInteractionColor(theme, variant, {
+              disabled: isDisabled,
+              hovered: isHovered,
+              pressed,
+            }),
+          },
           isDisabled && variant === "outline" ? { backgroundColor: theme.background } : null,
           // Keep the pre-Expo-types runtime contract: custom Button styles only receive `pressed`.
           typeof style === "function" ? style({ pressed } as never) : style,

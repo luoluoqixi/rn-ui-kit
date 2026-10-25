@@ -2,6 +2,7 @@ import { Icon } from "../icon";
 import { Text, TextClassContext } from "../text";
 import { resolveAriaLabel, triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
 import { cn } from "../utils/cn";
+import { useUiTheme } from "../utils/theme";
 import { resolveRenderProp } from "../utils/render";
 import * as AccordionPrimitive from "@rn-primitives/accordion";
 import { ChevronDown } from "lucide-react-native";
@@ -146,6 +147,7 @@ function AccordionTrigger({
   ...props
 }: AccordionTriggerProps) {
   const { isExpanded } = AccordionPrimitive.useItemContext();
+  const theme = useUiTheme();
   const [isPressed, setIsPressed] = useState(false);
 
   const progress = useDerivedValue(
@@ -179,10 +181,11 @@ function AccordionTrigger({
           }}
         >
           <Trigger
+            style={isPressed ? { backgroundColor: theme.accent } : undefined}
             className={cn(
-              "active:bg-muted flex-row items-start justify-between gap-4 px-2 py-4 disabled:opacity-50",
+              "active:bg-accent flex-row items-start justify-between gap-4 px-2 py-4 disabled:opacity-50",
               Platform.select({
-                web: "focus-visible:border-ring focus-visible:ring-ring/50 flex flex-1 outline-none transition-colors hover:bg-muted focus-visible:ring-[3px] disabled:pointer-events-none [&[data-state=open]>svg]:rotate-180",
+                web: "focus-visible:border-ring focus-visible:ring-ring/50 flex flex-1 outline-none transition-colors hover:bg-accent03 focus-visible:ring-[3px] disabled:pointer-events-none [&[data-state=open]>svg]:rotate-180",
               }),
               className,
             )}

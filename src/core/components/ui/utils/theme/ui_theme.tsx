@@ -7,7 +7,13 @@ import {
 } from "./accent_theme";
 import type { ResolvedColorScheme } from "./settings";
 
-export type SemanticColors = {
+/** 编号越大强调越强：light 逐渐加深，dark 逐渐提亮。 */
+export type AccentScale = Record<
+  `accent${"01" | "02" | "03" | "04" | "05" | "06" | "07" | "08" | "09" | "10" | "11" | "12"}`,
+  string
+>;
+
+export type SemanticColors = AccentScale & {
   accent: string;
   accentForeground: string;
   background: string;
@@ -16,6 +22,7 @@ export type SemanticColors = {
   card: string;
   cardForeground: string;
   destructive: string;
+  destructiveForeground: string;
   foreground: string;
   input: string;
   muted: string;
@@ -47,6 +54,18 @@ export function resolveUiColors(
 
 export function semanticColorsToVariables(colors: SemanticColors) {
   return {
+    "--color-accent01": colors.accent01,
+    "--color-accent02": colors.accent02,
+    "--color-accent03": colors.accent03,
+    "--color-accent04": colors.accent04,
+    "--color-accent05": colors.accent05,
+    "--color-accent06": colors.accent06,
+    "--color-accent07": colors.accent07,
+    "--color-accent08": colors.accent08,
+    "--color-accent09": colors.accent09,
+    "--color-accent10": colors.accent10,
+    "--color-accent11": colors.accent11,
+    "--color-accent12": colors.accent12,
     "--color-accent": colors.accent,
     "--color-accent-foreground": colors.accentForeground,
     "--color-background": colors.background,
@@ -54,6 +73,7 @@ export function semanticColorsToVariables(colors: SemanticColors) {
     "--color-card": colors.card,
     "--color-card-foreground": colors.cardForeground,
     "--color-destructive": colors.destructive,
+    "--color-destructive-foreground": colors.destructiveForeground,
     "--color-foreground": colors.foreground,
     "--color-input": colors.input,
     "--color-muted": colors.muted,
