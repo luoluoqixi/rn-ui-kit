@@ -45,6 +45,7 @@ const MOBILE_SASH_HANDLE_LENGTH = 56;
 const MOBILE_SASH_HANDLE_INSET = 4;
 const SASH_DOUBLE_TAP_DELAY = 280;
 const SASH_TAP_MOVE_TOLERANCE = 4;
+const DEFAULT_SASH_HOVER_DELAY = 300;
 const IS_WEB = isWeb();
 const IS_MOBILE = isMobile();
 const FALLBACK_SASH_ACTIVE_COLOR = "#2563eb";
@@ -155,6 +156,7 @@ const SplitLayoutInner = forwardRef<SplitLayoutHandle, SplitLayoutProps>(
       onStateChange,
       onVisibleChange,
       proportionalLayout = true,
+      sashHoverDelay = DEFAULT_SASH_HOVER_DELAY,
       separator = true,
       snap = false,
       storageKey,
@@ -183,6 +185,7 @@ const SplitLayoutInner = forwardRef<SplitLayoutHandle, SplitLayoutProps>(
     });
     const webDragCleanupRef = useRef<(() => void) | null>(null);
     const webDraggingRef = useRef(false);
+    const sashHoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [activeSashIndex, setActiveSashIndex] = useState<number | null>(null);
     const [dragging, setDragging] = useState(false);
     const [hoveredSashIndex, setHoveredSashIndex] = useState<number | null>(null);
@@ -219,6 +222,10 @@ const SplitLayoutInner = forwardRef<SplitLayoutHandle, SplitLayoutProps>(
       return () => {
         webDragCleanupRef.current?.();
         webDragCleanupRef.current = null;
+        if (sashHoverTimeoutRef.current !== null) {
+          clearTimeout(sashHoverTimeoutRef.current);
+          sashHoverTimeoutRef.current = null;
+        }
       };
     }, []);
 
@@ -753,8 +760,20 @@ const SplitLayoutInner = forwardRef<SplitLayoutHandle, SplitLayoutProps>(
                 {...(canDragSash && IS_WEB
                   ? ({
                       onPointerDown: startWebSashDrag(index),
-                      onPointerEnter: () => setHoveredSashIndex(index),
+                      onPointerEnter: () => {
+                        if (sashHoverTimeoutRef.current !== null) {
+                          clearTimeout(sashHoverTimeoutRef.current);
+                        }
+                        sashHoverTimeoutRef.current = setTimeout(() => {
+                          setHoveredSashIndex(index);
+                          sashHoverTimeoutRef.current = null;
+                        }, Math.max(0, sashHoverDelay));
+                      },
                       onPointerLeave: () => {
+                        if (sashHoverTimeoutRef.current !== null) {
+                          clearTimeout(sashHoverTimeoutRef.current);
+                          sashHoverTimeoutRef.current = null;
+                        }
                         setHoveredSashIndex((current) => (current === index ? null : current));
                       },
                     } as any)

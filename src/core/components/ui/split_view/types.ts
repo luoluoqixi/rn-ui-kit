@@ -58,6 +58,8 @@ export type SplitLayoutProps = SplitLayoutCommonProps & {
   mobileHandlePosition?: SplitLayoutMobileHandlePosition;
   mobileHandleOffsets?: SplitLayoutMobileHandleOffsets;
   mobileHandlePositions?: SplitLayoutMobileHandlePositions;
+  /** Delay before a web sash highlights after hover, in milliseconds. Default: 300. */
+  sashHoverDelay?: number;
   proportionalLayout?: boolean;
   separator?: boolean;
   storageKey?: string;
