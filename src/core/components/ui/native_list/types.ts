@@ -362,8 +362,7 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
     /** 原生 List 内容底部内边距。 */
     contentMarginBottom?: number;
     /**
-     * fallback 列表下拉刷新指示器颜色；未传时使用当前主题色。
-     * iOS 原生 SwiftUI List 会忽略此项。
+     * 列表下拉刷新指示器颜色；未传时使用当前主题色。
      */
     refreshColor?: ColorValue;
     /** 非受控编辑模式初次挂载时默认选中的行。 */

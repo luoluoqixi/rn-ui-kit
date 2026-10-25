@@ -110,6 +110,7 @@ const DEFAULT_NAVIGATION_SELECTION_AUTO_CLEAR_DELAY = 300;
 // It keeps rn-ui-kit source-compatible with older published expo-ui-55 builds.
 const NativeListWithNavigationSelection = List as ComponentType<
   ComponentProps<typeof List> & {
+    refreshTint?: string;
     clearsNavigationSelectionOnViewWillAppear?: boolean;
     navigationSelectionClearToken?: number;
     onNavigationSelectionConfirmed?: () => void;
@@ -1186,7 +1187,7 @@ function NativeListRoot({
   onSelectedIdsChange,
   nativeHaptics,
   iosPressFeedback = "immediate",
-  refreshColor: _refreshColor,
+  refreshColor,
   refreshEnabledInEditMode = false,
   scrollIndicatorInsets,
   style,
@@ -1195,11 +1196,11 @@ function NativeListRoot({
   tracksNavigationBarScrollEdge,
   webAutoRestoreScroll: _webAutoRestoreScroll,
 }: NativeListRootProps) {
-  void _refreshColor;
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const navigation = useContext(NavigationContext);
   const nativeEditTint = toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;
+  const refreshTint = toSwiftUIHexColor(refreshColor) ?? nativeEditTint;
   const [nativeRefreshing, setNativeRefreshing] = useState(false);
   const [navigationSelectionClearToken, setNavigationSelectionClearToken] = useState(0);
   const navigationSelectionIdRef = useRef<NativeListSelectionId | undefined>(undefined);
@@ -1424,6 +1425,7 @@ function NativeListRoot({
             // 不会像动态增删 SwiftUI modifier 一样重建 List。
             refreshable={refreshControlEnabled}
             refreshEnabled={refreshControlEnabled}
+            refreshTint={refreshTint}
             refreshing={refreshControlEnabled && nativeRefreshing}
             modifiers={[
               listStyle(iosListStyle),
