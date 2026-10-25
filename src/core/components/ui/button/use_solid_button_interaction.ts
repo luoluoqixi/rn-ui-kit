@@ -25,8 +25,10 @@ export function useSolidButtonInteraction({
       setHovered(false);
       onHoverOut?.(event);
     }) as NonNullable<PressableProps["onHoverOut"]>,
-    backgroundStyle: (pressed: boolean) => ({
-      backgroundColor: getSolidButtonInteractionColor(colors, variant, { disabled, hovered, pressed }),
-    }),
+    backgroundStyle: (pressed: boolean) => {
+      const backgroundColor = getSolidButtonInteractionColor(colors, variant, { disabled, hovered, pressed });
+      // Native 会用显式 undefined 清除前面的背景；无交互色时不参与样式覆盖。
+      return backgroundColor == null ? null : { backgroundColor };
+    },
   };
 }
