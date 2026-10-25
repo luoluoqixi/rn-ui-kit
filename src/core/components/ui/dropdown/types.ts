@@ -52,6 +52,8 @@ export interface NativeDropdownItemData {
   "destructive"?: boolean;
   "disabled"?: boolean;
   "icon"?: RenderProp<NativeDropdownItemData>;
+  /** Custom menus: set false to omit this item's empty icon slot. Defaults to true; supplied icons remain visible. */
+  reserveIconSpace?: boolean;
   "iconProps"?: NativeDropdownItemIconProps;
   "indicator"?: RenderProp<NativeDropdownItemData>;
   "itemProps"?: Record<string, unknown>;

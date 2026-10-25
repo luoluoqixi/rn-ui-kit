@@ -1,6 +1,11 @@
 import { ScopedSubContent } from "./scoped_sub_content";
 import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
 import { Icon } from "../icon";
+import {
+  hasMenuItemIcons,
+  MenuItemIcon,
+  shouldRenderMenuItemIcon,
+} from "../utils/menu_item_icon";
 import type {
   DropdownContentProps,
   DropdownItemData,
@@ -46,6 +51,7 @@ import { FadeIn, ReduceMotion } from "react-native-reanimated";
 import {
   menuIconSizeClasses,
   menuItemPaddingClasses,
+  menuItemInsetClasses,
   menuTextSizeClasses,
 } from "../utils/menu_size";
 
@@ -139,7 +145,7 @@ function DropdownSubTrigger({
           }),
           className,
           open && "bg-accent",
-          inset && "pl-8",
+          inset && menuItemInsetClasses[size],
         )}
         {...props}
         pointerEvents={disabled ? "none" : props.pointerEvents}
@@ -446,7 +452,7 @@ function DropdownItem({
             variant === "destructive" &&
             "active:bg-destructive/10 dark:active:bg-destructive/20",
           disabled && "opacity-50",
-          inset && "pl-8",
+          inset && menuItemInsetClasses[size],
           className,
         )}
         {...props}
@@ -471,12 +477,14 @@ function DropdownItem({
 function DropdownCheckboxItem({
   className,
   children,
+  leadingIcon,
   disabled,
   nativeHaptics,
   onCheckedChange,
   ...props
 }: React.ComponentProps<typeof DropdownPrimitive.CheckboxItem> & {
   children?: React.ReactNode;
+  leadingIcon?: React.ReactNode;
   nativeHaptics?: NativeHapticsSetting;
 }) {
   const contextHaptics = React.useContext(DropdownHapticsContext);
@@ -491,7 +499,7 @@ function DropdownCheckboxItem({
       <DropdownPrimitive.CheckboxItem
         className={cn(
           cn(
-            "group relative flex flex-row items-center gap-2 rounded-sm pl-8 pr-2",
+            "group relative flex flex-row items-center gap-2 rounded-sm px-2",
             menuItemPaddingClasses[size],
           ),
           !disabled && "active:bg-accent",
@@ -510,7 +518,8 @@ function DropdownCheckboxItem({
           triggerNativeHaptics(nativeHaptics ?? contextHaptics.item);
         }}
       >
-        <View className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+        {leadingIcon}
+        <MenuItemIcon size={size}>
           <DropdownPrimitive.ItemIndicator>
             <Icon
               as={Check}
@@ -520,7 +529,7 @@ function DropdownCheckboxItem({
               )}
             />
           </DropdownPrimitive.ItemIndicator>
-        </View>
+        </MenuItemIcon>
         <>{children}</>
       </DropdownPrimitive.CheckboxItem>
     </TextClassContext.Provider>
@@ -530,12 +539,14 @@ function DropdownCheckboxItem({
 function DropdownRadioItem({
   className,
   children,
+  leadingIcon,
   disabled,
   nativeHaptics,
   onPress,
   ...props
 }: React.ComponentProps<typeof DropdownPrimitive.RadioItem> & {
   children?: React.ReactNode;
+  leadingIcon?: React.ReactNode;
   nativeHaptics?: NativeHapticsSetting;
 }) {
   const contextHaptics = React.useContext(DropdownHapticsContext);
@@ -550,7 +561,7 @@ function DropdownRadioItem({
       <DropdownPrimitive.RadioItem
         className={cn(
           cn(
-            "group relative flex flex-row items-center gap-2 rounded-sm pl-8 pr-2",
+            "group relative flex flex-row items-center gap-2 rounded-sm px-2",
             menuItemPaddingClasses[size],
           ),
           !disabled && "active:bg-accent",
@@ -571,11 +582,12 @@ function DropdownRadioItem({
           }
         }}
       >
-        <View className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+        {leadingIcon}
+        <MenuItemIcon size={size}>
           <DropdownPrimitive.ItemIndicator>
             <View className="bg-foreground h-2 w-2 rounded-full" />
           </DropdownPrimitive.ItemIndicator>
-        </View>
+        </MenuItemIcon>
         <>{children}</>
       </DropdownPrimitive.RadioItem>
     </TextClassContext.Provider>
@@ -599,7 +611,7 @@ function DropdownLabel({
           menuTextSizeClasses[size],
           menuItemPaddingClasses[size],
         ),
-        inset && "pl-8",
+        inset && menuItemInsetClasses[size],
         className,
       )}
       {...props}
@@ -638,15 +650,25 @@ function DropdownShortcut({
   );
 }
 
+function DropdownDataItemIcon({ children }: { children?: React.ReactNode }) {
+  const size = React.useContext(DropdownContentSizeContext);
+  return <MenuItemIcon size={size}>{children}</MenuItemIcon>;
+}
+
 function renderDropdownItems(
   items: DropdownItemData[],
   itemProps?: Record<string, unknown>,
   defaultNativeHaptics?: NativeHapticsSetting,
   depth = 0,
 ): React.ReactNode {
+  const hasIcons = hasMenuItemIcons(items);
   return items.map((item, index) => {
     const key = `${depth}:${item.value}:${index}`;
     if (item.separator) return <DropdownSeparator key={key} />;
+    const resolvedIcon = resolveRenderProp(item.icon, item);
+    const icon = shouldRenderMenuItemIcon(hasIcons, resolvedIcon, item.reserveIconSpace) ? (
+      <DropdownDataItemIcon>{resolvedIcon}</DropdownDataItemIcon>
+    ) : null;
     const label =
       resolveRenderProp(item.label, item) ?? item.textValue ?? item.value;
     const resolvedItemProps = {
@@ -673,7 +695,7 @@ function renderDropdownItems(
             nativeHaptics={itemHaptics}
           >
             <View className="flex-row items-center gap-2">
-              {resolveRenderProp(item.icon, item)}
+              {icon}
               <Text>{label}</Text>
             </View>
           </DropdownSubTrigger>
@@ -700,7 +722,7 @@ function renderDropdownItems(
       | undefined;
     const itemContent = (
       <>
-        {resolveRenderProp(item.icon, item)}
+        {icon}
         <Text>{label}</Text>
         {resolveRenderProp(item.indicator, item)}
       </>
@@ -710,6 +732,7 @@ function renderDropdownItems(
       return (
         <DropdownCheckboxItem
           {...resolvedItemProps}
+          leadingIcon={icon}
           aria-label={
             item["aria-label"] ??
             (resolvedItemProps["aria-label"] as string | undefined)
@@ -726,7 +749,8 @@ function renderDropdownItems(
             (resolvedItemProps.textValue as string | undefined)
           }
         >
-          {itemContent}
+          <Text>{label}</Text>
+          {resolveRenderProp(item.indicator, item)}
         </DropdownCheckboxItem>
       );
     }

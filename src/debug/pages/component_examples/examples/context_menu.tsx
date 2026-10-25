@@ -48,6 +48,7 @@ export function ContextMenuExample() {
       },
       {
         checked: showDetails,
+        reserveIconSpace: false,
         label: "显示详细信息",
         onCheckedChange: setShowDetails,
         value: "details",

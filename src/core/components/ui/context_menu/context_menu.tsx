@@ -4,6 +4,11 @@ import {
 } from "./prevent_next_click_after_outside_pointer_down";
 import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
 import { Icon } from "../icon";
+import {
+  hasMenuItemIcons,
+  MenuItemIcon,
+  shouldRenderMenuItemIcon,
+} from "../utils/menu_item_icon";
 import type {
   ContextMenuArrowProps,
   ContextMenuAuxiliaryProps,
@@ -27,6 +32,7 @@ import type {
 import {
   menuIconSizeClasses,
   menuItemPaddingClasses,
+  menuItemInsetClasses,
   menuTextSizeClasses,
 } from "../utils/menu_size";
 import { ContextMenuNative } from "./context_menu_native";
@@ -125,7 +131,7 @@ function ContextMenuSubTrigger({
           }),
           className,
           open && cn("bg-accent", Platform.select({ native: "mb-1" })),
-          inset && "pl-8",
+          inset && menuItemInsetClasses[size],
         )}
         {...props}
         pointerEvents={disabled ? "none" : props.pointerEvents}
@@ -396,7 +402,7 @@ function ContextMenuItem({
             variant === "destructive" &&
             "active:bg-destructive/10 dark:active:bg-destructive/20",
           disabled && "opacity-50",
-          inset && "pl-8",
+          inset && menuItemInsetClasses[size],
           className,
         )}
         {...props}
@@ -421,12 +427,13 @@ function ContextMenuItem({
 function ContextMenuCheckboxItem({
   className,
   children,
+  leadingIcon,
   disabled,
   nativeHaptics,
   nativeHapticsDelay,
   onCheckedChange,
   ...props
-}: ContextMenuCheckboxItemProps) {
+}: ContextMenuCheckboxItemProps & { leadingIcon?: React.ReactNode }) {
   const contextHaptics = React.useContext(ContextMenuHapticsContext);
   const size = React.useContext(ContextMenuContentSizeContext);
   return (
@@ -439,7 +446,7 @@ function ContextMenuCheckboxItem({
       <ContextMenuPrimitive.CheckboxItem
         className={cn(
           cn(
-            "group relative flex flex-row items-center gap-2 rounded-sm pl-8 pr-2",
+            "group relative flex flex-row items-center gap-2 rounded-sm px-2",
             menuItemPaddingClasses[size],
           ),
           !disabled && "active:bg-accent",
@@ -460,7 +467,8 @@ function ContextMenuCheckboxItem({
           });
         }}
       >
-        <View className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+        {leadingIcon}
+        <MenuItemIcon size={size}>
           <ContextMenuPrimitive.ItemIndicator>
             <Icon
               as={Check}
@@ -470,7 +478,7 @@ function ContextMenuCheckboxItem({
               )}
             />
           </ContextMenuPrimitive.ItemIndicator>
-        </View>
+        </MenuItemIcon>
         <>{children}</>
       </ContextMenuPrimitive.CheckboxItem>
     </TextClassContext.Provider>
@@ -480,11 +488,12 @@ function ContextMenuCheckboxItem({
 function ContextMenuRadioItem({
   className,
   children,
+  leadingIcon,
   disabled,
   nativeHaptics,
   onPress,
   ...props
-}: ContextMenuRadioItemProps) {
+}: ContextMenuRadioItemProps & { leadingIcon?: React.ReactNode }) {
   const contextHaptics = React.useContext(ContextMenuHapticsContext);
   const size = React.useContext(ContextMenuContentSizeContext);
   return (
@@ -497,7 +506,7 @@ function ContextMenuRadioItem({
       <ContextMenuPrimitive.RadioItem
         className={cn(
           cn(
-            "group relative flex flex-row items-center gap-2 rounded-sm pl-8 pr-2",
+            "group relative flex flex-row items-center gap-2 rounded-sm px-2",
             menuItemPaddingClasses[size],
           ),
           !disabled && "active:bg-accent",
@@ -518,11 +527,12 @@ function ContextMenuRadioItem({
           }
         }}
       >
-        <View className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+        {leadingIcon}
+        <MenuItemIcon size={size}>
           <ContextMenuPrimitive.ItemIndicator>
             <View className="bg-foreground h-2 w-2 rounded-full" />
           </ContextMenuPrimitive.ItemIndicator>
-        </View>
+        </MenuItemIcon>
         <>{children}</>
       </ContextMenuPrimitive.RadioItem>
     </TextClassContext.Provider>
@@ -543,7 +553,7 @@ function ContextMenuLabel({
           menuTextSizeClasses[size],
           menuItemPaddingClasses[size],
         ),
-        inset && "pl-8",
+        inset && menuItemInsetClasses[size],
         className,
       )}
       {...props}
@@ -635,15 +645,25 @@ function ContextMenuAuxiliary({ children }: ContextMenuAuxiliaryProps) {
   return <>{children}</>;
 }
 
+function ContextMenuDataItemIcon({ children }: { children?: React.ReactNode }) {
+  const size = React.useContext(ContextMenuContentSizeContext);
+  return <MenuItemIcon size={size}>{children}</MenuItemIcon>;
+}
+
 function renderContextMenuItems(
   items: ContextMenuItemData[],
   itemProps?: Record<string, unknown>,
   defaultNativeHaptics?: NativeHapticsSetting,
   depth = 0,
 ): React.ReactNode {
+  const hasIcons = hasMenuItemIcons(items);
   return items.map((item, index) => {
     const key = `${depth}:${item.value}:${index}`;
     if (item.separator) return <ContextMenuSeparator key={key} />;
+    const resolvedIcon = resolveRenderProp(item.icon, item);
+    const icon = shouldRenderMenuItemIcon(hasIcons, resolvedIcon, item.reserveIconSpace) ? (
+      <ContextMenuDataItemIcon>{resolvedIcon}</ContextMenuDataItemIcon>
+    ) : null;
     const label =
       resolveRenderProp(item.label, item) ?? item.textValue ?? item.value;
     const resolvedItemProps = {
@@ -663,7 +683,7 @@ function renderContextMenuItems(
             nativeHaptics={itemHaptics}
           >
             <View className="flex-row items-center gap-2">
-              {resolveRenderProp(item.icon, item)}
+              {icon}
               <Text>{label}</Text>
             </View>
           </ContextMenuSubTrigger>
@@ -687,6 +707,7 @@ function renderContextMenuItems(
       return (
         <ContextMenuCheckboxItem
           {...(resolvedItemProps as object)}
+          leadingIcon={icon}
           checked={item.checked}
           disabled={
             item.disabled ?? (resolvedItemProps.disabled as boolean | undefined)
@@ -704,7 +725,6 @@ function renderContextMenuItems(
           }}
           textValue={item.textValue}
         >
-          {resolveRenderProp(item.icon, item)}
           <Text>{label}</Text>
           {resolveRenderProp(item.indicator, item)}
         </ContextMenuCheckboxItem>
@@ -724,7 +744,7 @@ function renderContextMenuItems(
         textValue={item.textValue}
         variant={item.destructive ? "destructive" : "default"}
       >
-        {resolveRenderProp(item.icon, item)}
+        {icon}
         <Text>{label}</Text>
         {resolveRenderProp(item.indicator, item)}
       </ContextMenuItem>

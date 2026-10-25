@@ -32,3 +32,15 @@ export const menuIconSizeClasses: Record<MenuSize, string> = {
   "xl": "size-7",
   "2xl": "size-8",
 };
+
+/** Match a leading icon/check slot: px-2 + the default icon width + gap-2. */
+export const menuItemInsetClasses: Record<MenuSize, string> = {
+  default: "pl-9",
+  "2xs": "pl-7",
+  xs: "pl-7.5",
+  sm: "pl-8",
+  md: "pl-9",
+  lg: "pl-10",
+  xl: "pl-11",
+  "2xl": "pl-12",
+};

@@ -18,6 +18,8 @@ export type ContextMenuItemData = {
   "destructive"?: boolean;
   "disabled"?: boolean;
   "icon"?: RenderProp<ContextMenuItemData>;
+  /** Custom menus: set false to omit this item's empty icon slot. Defaults to true; supplied icons remain visible. */
+  reserveIconSpace?: boolean;
   "iconProps"?: Record<string, unknown>;
   "indicator"?: RenderProp<ContextMenuItemData>;
   "itemProps"?: Record<string, unknown>;

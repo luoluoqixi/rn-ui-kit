@@ -1,4 +1,9 @@
 import { Icon } from "../icon";
+import {
+  hasMenuItemIcons,
+  MenuItemIcon,
+  shouldRenderMenuItemIcon,
+} from "../utils/menu_item_icon";
 import { NativeOnlyAnimatedView } from "../utils/native_only_animated_view";
 import { Text, TextClassContext } from "../text";
 import { cn } from "../utils/cn";
@@ -38,6 +43,7 @@ import type {
 import {
   menuIconSizeClasses,
   menuItemPaddingClasses,
+  menuItemInsetClasses,
   menuTextSizeClasses,
 } from "../utils/menu_size";
 
@@ -144,7 +150,7 @@ function MenubarRoot({
             </MenubarNamespace.Trigger>
             <MenubarNamespace.Content {...menu.contentProps}>
               {menu.items.map((item, index) =>
-                renderMenubarItem(item, `${menu.value}-${index}`, itemNativeHaptics),
+                renderMenubarItem(item, `${menu.value}-${index}`, itemNativeHaptics, hasMenuItemIcons(menu.items)),
               )}
             </MenubarNamespace.Content>
           </MenubarNamespace.Menu>
@@ -268,7 +274,7 @@ function MenubarSubTrigger({
           }),
           className,
           open && "bg-accent",
-          inset && "pl-8",
+          inset && menuItemInsetClasses[size],
         )}
         {...props}
         pointerEvents={disabled ? "none" : props.pointerEvents}
@@ -468,7 +474,7 @@ function MenubarItem({
             variant === "destructive" &&
             "active:bg-destructive/10 dark:active:bg-destructive/20",
           disabled && "opacity-50",
-          inset && "pl-8",
+          inset && menuItemInsetClasses[size],
           className,
         )}
         {...props}
@@ -489,12 +495,14 @@ function MenubarItem({
 function MenubarCheckboxItem({
   className,
   children,
+  leadingIcon,
   disabled,
   nativeHaptics,
   onCheckedChange,
   ...props
 }: React.ComponentProps<typeof MenubarPrimitive.CheckboxItem> & {
   children?: React.ReactNode;
+  leadingIcon?: React.ReactNode;
   nativeHaptics?: NativeHapticsSetting;
 }) {
   const contextHaptics = React.useContext(MenubarHapticsContext);
@@ -509,7 +517,7 @@ function MenubarCheckboxItem({
       <MenubarPrimitive.CheckboxItem
         className={cn(
           cn(
-            "group relative flex flex-row items-center gap-2 rounded-sm pl-8 pr-2",
+            "group relative flex flex-row items-center gap-2 rounded-sm px-2",
             menuItemPaddingClasses[size],
           ),
           !disabled && "active:bg-accent",
@@ -528,7 +536,8 @@ function MenubarCheckboxItem({
           triggerNativeHaptics(nativeHaptics ?? contextHaptics.item);
         }}
       >
-        <View className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+        {leadingIcon}
+        <MenuItemIcon size={size}>
           <MenubarPrimitive.ItemIndicator>
             <Icon
               as={Check}
@@ -538,7 +547,7 @@ function MenubarCheckboxItem({
               )}
             />
           </MenubarPrimitive.ItemIndicator>
-        </View>
+        </MenuItemIcon>
         {normalizeMenubarChildren(children)}
       </MenubarPrimitive.CheckboxItem>
     </TextClassContext.Provider>
@@ -548,12 +557,14 @@ function MenubarCheckboxItem({
 function MenubarRadioItem({
   className,
   children,
+  leadingIcon,
   disabled,
   nativeHaptics,
   onPress,
   ...props
 }: React.ComponentProps<typeof MenubarPrimitive.RadioItem> & {
   children?: React.ReactNode;
+  leadingIcon?: React.ReactNode;
   nativeHaptics?: NativeHapticsSetting;
 }) {
   const contextHaptics = React.useContext(MenubarHapticsContext);
@@ -568,7 +579,7 @@ function MenubarRadioItem({
       <MenubarPrimitive.RadioItem
         className={cn(
           cn(
-            "group relative flex flex-row items-center gap-2 rounded-sm pl-8 pr-2",
+            "group relative flex flex-row items-center gap-2 rounded-sm px-2",
             menuItemPaddingClasses[size],
           ),
           !disabled && "active:bg-accent",
@@ -589,11 +600,12 @@ function MenubarRadioItem({
           }
         }}
       >
-        <View className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+        {leadingIcon}
+        <MenuItemIcon size={size}>
           <MenubarPrimitive.ItemIndicator>
             <View className="bg-foreground h-2 w-2 rounded-full" />
           </MenubarPrimitive.ItemIndicator>
-        </View>
+        </MenuItemIcon>
         {normalizeMenubarChildren(children)}
       </MenubarPrimitive.RadioItem>
     </TextClassContext.Provider>
@@ -617,7 +629,7 @@ function MenubarLabel({
           menuTextSizeClasses[size],
           menuItemPaddingClasses[size],
         ),
-        inset && "pl-8",
+        inset && menuItemInsetClasses[size],
         className,
       )}
       {...props}
@@ -656,11 +668,14 @@ function MenubarDataItem({
   item,
   itemKey,
   defaultNativeHaptics,
+  hasIcons,
 }: {
   item: MenubarItemData;
   itemKey: string;
   defaultNativeHaptics?: NativeHapticsSetting;
+  hasIcons: boolean;
 }) {
+  const size = React.useContext(MenubarContentSizeContext);
   const [uncontrolledChecked, setUncontrolledChecked] = React.useState(
     item.defaultChecked ?? false,
   );
@@ -671,7 +686,10 @@ function MenubarDataItem({
     value: item.value,
   };
   const title = normalizeMenubarChildren(resolveRenderProp(item.title ?? item.children, context));
-  const icon = resolveRenderProp(item.icon, context);
+  const resolvedIcon = resolveRenderProp(item.icon, context);
+  const icon = shouldRenderMenuItemIcon(hasIcons, resolvedIcon, item.reserveIconSpace) ? (
+    <MenuItemIcon size={size}>{resolvedIcon}</MenuItemIcon>
+  ) : null;
   const shortcut = normalizeMenubarChildren(resolveRenderProp(item.shortcut, context));
   const itemHaptics = item.nativeHaptics ?? defaultNativeHaptics;
 
@@ -705,6 +723,7 @@ function MenubarDataItem({
             <MenubarDataItem
               defaultNativeHaptics={defaultNativeHaptics}
               item={child}
+              hasIcons={hasMenuItemIcons(item.items ?? [])}
               itemKey={`${itemKey}-${index}`}
               key={`${itemKey}-${index}`}
             />
@@ -718,6 +737,7 @@ function MenubarDataItem({
     return (
       <MenubarNamespace.CheckboxItem
         {...item.checkboxProps}
+        leadingIcon={icon}
         checked={checked}
         disabled={item.disabled ?? item.checkboxProps?.disabled}
         nativeHaptics={itemHaptics}
@@ -726,7 +746,6 @@ function MenubarDataItem({
           item.onCheckedChange?.(nextChecked);
         }}
       >
-        {icon}
         {title}
         {shortcut != null ? (
           <MenubarNamespace.Shortcut>{shortcut}</MenubarNamespace.Shortcut>
@@ -746,6 +765,7 @@ function MenubarDataItem({
           <MenubarDataItem
             defaultNativeHaptics={defaultNativeHaptics}
             item={child}
+            hasIcons={hasIcons}
             itemKey={`${itemKey}-${index}`}
             key={`${itemKey}-${index}`}
           />
@@ -758,11 +778,11 @@ function MenubarDataItem({
     return (
       <MenubarNamespace.RadioItem
         {...item.radioItemProps}
+        leadingIcon={icon}
         disabled={item.disabled ?? item.radioItemProps?.disabled}
         nativeHaptics={itemHaptics}
         value={item.value ?? itemKey}
       >
-        {icon}
         {title}
         {shortcut != null ? (
           <MenubarNamespace.Shortcut>{shortcut}</MenubarNamespace.Shortcut>
@@ -789,11 +809,13 @@ function renderMenubarItem(
   item: MenubarItemData,
   itemKey: string,
   defaultNativeHaptics?: NativeHapticsSetting,
+  hasIcons = false,
 ) {
   return (
     <MenubarDataItem
       defaultNativeHaptics={defaultNativeHaptics}
       item={item}
+      hasIcons={hasIcons}
       itemKey={itemKey}
       key={itemKey}
     />

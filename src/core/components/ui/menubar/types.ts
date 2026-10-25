@@ -33,6 +33,8 @@ export type MenubarItemData = {
   children?: RenderProp<MenubarItemRenderContext>;
   /** Leading icon for items and submenu triggers. */
   icon?: RenderProp<MenubarItemRenderContext>;
+  /** Set false to omit this item's empty icon slot. Defaults to true; supplied icons remain visible. */
+  reserveIconSpace?: boolean;
   shortcut?: RenderProp<MenubarItemRenderContext>;
   disabled?: boolean;
   inset?: boolean;
