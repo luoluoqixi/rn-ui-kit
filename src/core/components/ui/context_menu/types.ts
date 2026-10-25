@@ -117,6 +117,8 @@ export type ContextMenuRootExtensions = {
   native?: boolean;
   /** Size of the generated non-native menu content. */
   contentSize?: ContextMenuSize;
+  /** 数据式菜单的内容配置，与 ContextMenu.Content 保持一致。 */
+  contentProps?: ContextMenuContentProps;
   nativeHaptics?: NativeHapticsSetting;
   nativeHapticsDelay?: NativeHapticsDelay;
   /** iOS native only. Defaults to false so item callbacks run before menu-dismiss animation. */

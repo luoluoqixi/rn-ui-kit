@@ -1,3 +1,4 @@
+import { useMenuConfig } from "../context_menu/menu_provider";
 import { ScopedSubContent } from "./scoped_sub_content";
 import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
 import { Icon } from "../icon";
@@ -180,6 +181,7 @@ function DropdownSubContent({
   style,
   ...props
 }: DropdownSubContentProps) {
+  const { webContentMaxHeight } = useMenuConfig();
   const theme = useUiTheme();
   const size = sizeProp ?? React.useContext(DropdownContentSizeContext);
 
@@ -198,6 +200,12 @@ function DropdownSubContent({
           [
             Platform.OS === "web"
               ? (semanticColorsToVariables(theme) as any)
+              : null,
+            Platform.OS === "web" && webContentMaxHeight
+              ? ({
+                  maxHeight: `min(${webContentMaxHeight}, var(--radix-dropdown-menu-content-available-height, ${webContentMaxHeight}))`,
+                  overflowY: "auto",
+                } as any)
               : null,
             style,
           ] as any
@@ -237,6 +245,7 @@ function DropdownContent({
   overlayClassName?: string;
   portalHost?: string;
 }) {
+  const { webContentMaxHeight } = useMenuConfig();
   const { height: windowHeight } = useWindowDimensions();
   const {
     triggerPosition,
@@ -347,8 +356,9 @@ function DropdownContent({
                       [
                         Platform.OS === "web"
                           ? {
-                              maxHeight:
-                                windowHeight * DROPDOWN_MENU_MAX_HEIGHT_RATIO,
+                              maxHeight: webContentMaxHeight
+                                ? `min(${webContentMaxHeight}, var(--radix-dropdown-menu-content-available-height, ${webContentMaxHeight}))`
+                                : windowHeight * DROPDOWN_MENU_MAX_HEIGHT_RATIO,
                               zIndex: 50,
                             }
                           : {
@@ -363,7 +373,7 @@ function DropdownContent({
                       Platform.select({
                         web: cn(
                           cn(
-                            "animate-in fade-in-0 zoom-in-95 max-h-[45vh] overflow-y-auto origin-(--radix-context-menu-content-transform-origin) z-50 cursor-default",
+                            "animate-in fade-in-0 zoom-in-95 overflow-y-auto origin-(--radix-context-menu-content-transform-origin) z-50 cursor-default",
                             "ui-menu-scrollbar",
                           ),
                           resolvedSide === "bottom" && "slide-in-from-top-2",
@@ -375,7 +385,8 @@ function DropdownContent({
                     {...props}
                     asChild
                     align={align}
-                    side={resolvedSide}
+                    // Web renderer 直接将 side 传给 Radix，支持四个方向。
+                    side={resolvedSide as "top" | "bottom" | undefined}
                   >
                     <View collapsable={false}>
                       {Platform.OS === "web" ? (
@@ -666,7 +677,11 @@ function renderDropdownItems(
     const key = `${depth}:${item.value}:${index}`;
     if (item.separator) return <DropdownSeparator key={key} />;
     const resolvedIcon = resolveRenderProp(item.icon, item);
-    const icon = shouldRenderMenuItemIcon(hasIcons, resolvedIcon, item.reserveIconSpace) ? (
+    const icon = shouldRenderMenuItemIcon(
+      hasIcons,
+      resolvedIcon,
+      item.reserveIconSpace,
+    ) ? (
       <DropdownDataItemIcon>{resolvedIcon}</DropdownDataItemIcon>
     ) : null;
     const label =

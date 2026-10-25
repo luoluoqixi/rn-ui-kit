@@ -116,8 +116,10 @@ export type NativeDropdownRootExtensions = {
 /** Props applied to the generated non-native menu content. */
 export type DropdownContentProps = Omit<
   ComponentProps<typeof DropdownPrimitive.Content>,
-  "children"
+  "children" | "side"
 > & {
+  /** Web 支持沿窗口纵轴移动左右展开的菜单；原生端仍使用上下定位。 */
+  side?: "top" | "bottom" | "left" | "right";
   children?: ReactNode | ((state: unknown) => ReactNode);
   size?: DropdownSize;
   overlayClassName?: string;

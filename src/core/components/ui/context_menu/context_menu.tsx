@@ -1,7 +1,7 @@
+import { useMenuConfig } from "./menu_provider";
+import { ContextMenuHost } from "./context_menu_host";
 import { ScopedSubContent } from "./scoped_sub_content";
-import {
-  preventNextClickAfterOutsidePointerDown,
-} from "./prevent_next_click_after_outside_pointer_down";
+import { preventNextClickAfterOutsidePointerDown } from "./prevent_next_click_after_outside_pointer_down";
 import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
 import { Icon } from "../icon";
 import {
@@ -166,6 +166,7 @@ function ContextMenuSubContent({
   children,
   ...props
 }: ContextMenuSubContentProps) {
+  const { webContentMaxHeight } = useMenuConfig();
   const theme = useUiTheme();
   const size = sizeProp ?? React.useContext(ContextMenuContentSizeContext);
 
@@ -184,6 +185,12 @@ function ContextMenuSubContent({
           [
             Platform.OS === "web"
               ? (semanticColorsToVariables(theme) as any)
+              : null,
+            Platform.OS === "web" && webContentMaxHeight
+              ? ({
+                  maxHeight: `min(${webContentMaxHeight}, var(--radix-context-menu-content-available-height, ${webContentMaxHeight}))`,
+                  overflowY: "auto",
+                } as any)
               : null,
             style,
           ] as any
@@ -216,6 +223,7 @@ function ContextMenuContent({
   onPointerDownOutside,
   ...props
 }: ContextMenuContentProps) {
+  const { webContentMaxHeight } = useMenuConfig();
   const { height: windowHeight } = useWindowDimensions();
   const {
     pressPosition: triggerPosition,
@@ -306,7 +314,9 @@ function ContextMenuContent({
                       {
                         maxHeight:
                           Platform.OS === "web"
-                            ? Math.max(0, windowHeight - 24)
+                            ? webContentMaxHeight
+                              ? `min(${webContentMaxHeight}, var(--radix-context-menu-content-available-height, ${webContentMaxHeight}))`
+                              : "calc(100vh - 24px)"
                             : windowHeight * CONTEXT_MENU_MAX_HEIGHT_RATIO,
                         ...resolvedContentStyle,
                       } as any
@@ -661,7 +671,11 @@ function renderContextMenuItems(
     const key = `${depth}:${item.value}:${index}`;
     if (item.separator) return <ContextMenuSeparator key={key} />;
     const resolvedIcon = resolveRenderProp(item.icon, item);
-    const icon = shouldRenderMenuItemIcon(hasIcons, resolvedIcon, item.reserveIconSpace) ? (
+    const icon = shouldRenderMenuItemIcon(
+      hasIcons,
+      resolvedIcon,
+      item.reserveIconSpace,
+    ) ? (
       <ContextMenuDataItemIcon>{resolvedIcon}</ContextMenuDataItemIcon>
     ) : null;
     const label =
@@ -759,7 +773,8 @@ function ContextMenu({
   itemNativeHaptics,
   itemNativeHapticsDelay,
   contentSize,
-  native = Platform.OS !== "web",
+  contentProps,
+  native: nativeProp,
   nativeHaptics,
   nativeHapticsDelay,
   nativeShouldWaitForMenuToHideBeforeFiringOnPressMenuItem,
@@ -771,9 +786,32 @@ function ContextMenu({
   triggerProps,
   ...props
 }: ContextMenuProps) {
+  const menuConfig = useMenuConfig();
+  const native = nativeProp ?? menuConfig.native ?? Platform.OS !== "web";
   const resolvedHaptics = useResolvedNativeHaptics(nativeHaptics);
   const resolvedItemHaptics = useResolvedNativeHaptics(itemNativeHaptics);
   const resolvedItemHapticsDelay = itemNativeHapticsDelay ?? nativeHapticsDelay;
+  if (
+    native &&
+    Platform.OS === "web" &&
+    menuConfig.showNativeMenu &&
+    items != null &&
+    trigger != null
+  ) {
+    return (
+      <ContextMenuHost
+        {...props}
+        items={items}
+        itemProps={itemProps}
+        trigger={trigger}
+        triggerProps={triggerProps}
+        onOpenChange={onOpenChange}
+        onOpenWillChange={onOpenWillChange}
+      >
+        {children}
+      </ContextMenuHost>
+    );
+  }
   if (native && Platform.OS !== "web") {
     return React.createElement(ContextMenuNative as React.ComponentType<any>, {
       ...props,
@@ -820,7 +858,10 @@ function ContextMenu({
                 </ContextMenuTrigger>
               ) : null}
               {items != null ? (
-                <ContextMenuContent itemNativeHaptics={resolvedItemHaptics}>
+                <ContextMenuContent
+                  {...contentProps}
+                  itemNativeHaptics={resolvedItemHaptics}
+                >
                   {renderContextMenuItems(
                     items,
                     itemProps,

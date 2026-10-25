@@ -304,6 +304,7 @@ export function NativeListRow({
     Platform.OS === "android" &&
     !edit.editMode &&
     resolvedContextMenuProps != null &&
+    resolvedContextMenuProps.native !== false &&
     !resolvedContextMenuProps.triggerProps?.disabled;
   const resolvedTitleAlign = titleAlign ?? "left";
   const handlePress = () => {
@@ -856,6 +857,7 @@ export function NativeListCustomItem({
     Platform.OS === "android" &&
     !edit.editMode &&
     resolvedContextMenuProps != null &&
+    resolvedContextMenuProps.native !== false &&
     !resolvedContextMenuProps.triggerProps?.disabled;
   const row = (
     <Pressable
