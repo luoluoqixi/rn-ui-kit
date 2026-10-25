@@ -42,6 +42,8 @@ const buttonVariants = cva(
           "border-border bg-background active:bg-accent dark:bg-input/30 dark:border-input border shadow-sm shadow-black/5",
           Platform.select({
             web: "hover:bg-accent03 disabled:hover:bg-background disabled:active:bg-background",
+            // Native 中 dark 背景会覆盖单独的 active，组合状态需明确提高优先级。
+            native: "dark:active:bg-accent",
           }),
         ),
         secondary: cn(
