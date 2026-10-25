@@ -65,7 +65,8 @@
 
   .ui-menu-scrollbar {
     scrollbar-color: color-mix(in srgb, var(--color-muted-foreground) 45%, transparent) transparent;
-    scrollbar-gutter: stable;
+    /* Reserve space only when a classic scrollbar is actually visible. */
+    scrollbar-gutter: auto;
     scrollbar-width: thin;
   }
 

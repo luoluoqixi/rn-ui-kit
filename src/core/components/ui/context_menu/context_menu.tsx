@@ -662,7 +662,10 @@ function renderContextMenuItems(
             }
             nativeHaptics={itemHaptics}
           >
-            <Text>{label}</Text>
+            <View className="flex-row items-center gap-2">
+              {resolveRenderProp(item.icon, item)}
+              <Text>{label}</Text>
+            </View>
           </ContextMenuSubTrigger>
           <ContextMenuSubContent {...(item.contentProps as object)}>
             {item.subMenuTitle === false ? null : (
@@ -701,7 +704,9 @@ function renderContextMenuItems(
           }}
           textValue={item.textValue}
         >
+          {resolveRenderProp(item.icon, item)}
           <Text>{label}</Text>
+          {resolveRenderProp(item.indicator, item)}
         </ContextMenuCheckboxItem>
       );
     }
@@ -719,8 +724,8 @@ function renderContextMenuItems(
         textValue={item.textValue}
         variant={item.destructive ? "destructive" : "default"}
       >
-        <Text>{label}</Text>
         {resolveRenderProp(item.icon, item)}
+        <Text>{label}</Text>
         {resolveRenderProp(item.indicator, item)}
       </ContextMenuItem>
     );

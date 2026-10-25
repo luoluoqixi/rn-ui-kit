@@ -672,7 +672,10 @@ function renderDropdownItems(
             }
             nativeHaptics={itemHaptics}
           >
-            <Text>{label}</Text>
+            <View className="flex-row items-center gap-2">
+              {resolveRenderProp(item.icon, item)}
+              <Text>{label}</Text>
+            </View>
           </DropdownSubTrigger>
           <DropdownSubContent {...(item.contentProps as object)}>
             {item.subMenuTitle === false ? null : (
@@ -697,8 +700,8 @@ function renderDropdownItems(
       | undefined;
     const itemContent = (
       <>
-        <Text>{label}</Text>
         {resolveRenderProp(item.icon, item)}
+        <Text>{label}</Text>
         {resolveRenderProp(item.indicator, item)}
       </>
     );

@@ -31,6 +31,8 @@ export type MenubarItemData = {
   type?: "item" | "separator" | "submenu" | "checkbox" | "radio-group" | "radio" | "label";
   title?: RenderProp<MenubarItemRenderContext>;
   children?: RenderProp<MenubarItemRenderContext>;
+  /** Leading icon for items and submenu triggers. */
+  icon?: RenderProp<MenubarItemRenderContext>;
   shortcut?: RenderProp<MenubarItemRenderContext>;
   disabled?: boolean;
   inset?: boolean;

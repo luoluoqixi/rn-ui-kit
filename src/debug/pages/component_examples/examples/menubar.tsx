@@ -1,4 +1,5 @@
-import { Menubar, type MenubarMenuData } from "rn-ui-kit/core";
+import { Icon, Menubar, type MenubarMenuData } from "rn-ui-kit/core";
+import { FilePlus, Share2 } from "lucide-react-native";
 import * as React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -55,13 +56,18 @@ export function MenubarExample() {
       triggerProps: { onPress: closeSubs },
       contentProps: { insets: contentInsets },
       items: [
-        { title: "新建标签页", shortcut: "⌘T" },
+        {
+          title: "新建标签页",
+          icon: <Icon as={FilePlus} className="size-4" />,
+          shortcut: "⌘T",
+        },
         { title: "新建窗口", shortcut: "⌘N" },
         { title: "新建无痕窗口", disabled: true },
         { type: "separator" },
         {
           type: "submenu",
           title: "分享",
+          icon: <Icon as={Share2} className="size-4" />,
           submenuProps: { open: isShareOpen, onOpenChange: setIsShareOpen },
           items: [{ title: "邮件链接" }, { title: "信息" }, { title: "备忘录" }],
         },

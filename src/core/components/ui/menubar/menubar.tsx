@@ -671,6 +671,7 @@ function MenubarDataItem({
     value: item.value,
   };
   const title = normalizeMenubarChildren(resolveRenderProp(item.title ?? item.children, context));
+  const icon = resolveRenderProp(item.icon, context);
   const shortcut = normalizeMenubarChildren(resolveRenderProp(item.shortcut, context));
   const itemHaptics = item.nativeHaptics ?? defaultNativeHaptics;
 
@@ -694,7 +695,10 @@ function MenubarDataItem({
           inset={item.inset}
           nativeHaptics={itemHaptics}
         >
-          {title}
+          <View className="flex-row items-center gap-2">
+            {icon}
+            {title}
+          </View>
         </MenubarNamespace.SubTrigger>
         <MenubarNamespace.SubContent {...item.contentProps}>
           {item.items?.map((child, index) => (
@@ -722,6 +726,7 @@ function MenubarDataItem({
           item.onCheckedChange?.(nextChecked);
         }}
       >
+        {icon}
         {title}
         {shortcut != null ? (
           <MenubarNamespace.Shortcut>{shortcut}</MenubarNamespace.Shortcut>
@@ -757,6 +762,7 @@ function MenubarDataItem({
         nativeHaptics={itemHaptics}
         value={item.value ?? itemKey}
       >
+        {icon}
         {title}
         {shortcut != null ? (
           <MenubarNamespace.Shortcut>{shortcut}</MenubarNamespace.Shortcut>
@@ -772,6 +778,7 @@ function MenubarDataItem({
       inset={item.inset}
       nativeHaptics={itemHaptics}
     >
+      {icon}
       {title}
       {shortcut != null ? <MenubarNamespace.Shortcut>{shortcut}</MenubarNamespace.Shortcut> : null}
     </MenubarNamespace.Item>

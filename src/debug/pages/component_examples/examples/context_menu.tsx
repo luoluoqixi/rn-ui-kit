@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
+import { FolderOpen, Pencil, Settings } from "lucide-react-native";
 
-import { Button, ContextMenu, isWeb, Text, type ContextMenuItemData } from "rn-ui-kit/core";
+import { Button, ContextMenu, Icon, isWeb, Text, type ContextMenuItemData } from "rn-ui-kit/core";
 import { ExampleBlock, ExampleStack } from "../shared";
 
 export function ContextMenuExample() {
@@ -10,17 +11,20 @@ export function ContextMenuExample() {
     () => [
       {
         label: "打开",
+        icon: <Icon as={FolderOpen} className="size-4" />,
         onSelect: () => setAction("打开"),
         value: "open",
       },
       {
         label: "重命名",
+        icon: <Icon as={Pencil} className="size-4" />,
         onSelect: () => setAction("重命名"),
         value: "rename",
       },
       { separator: true, value: "separator-actions" },
       {
         label: "更多操作",
+        icon: <Icon as={Settings} className="size-4" />,
         subMenu: [
           {
             label: "复制链接",
