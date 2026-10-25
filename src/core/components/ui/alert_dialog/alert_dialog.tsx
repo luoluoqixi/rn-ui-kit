@@ -1,6 +1,8 @@
 import { ModalContentScope } from "../utils/overlay/modal_content_scope";
 import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
 import { buttonTextVariants, buttonVariants } from "../button";
+import { useUiTheme } from "../utils/theme";
+import { AlertDialogSolidAction } from "./alert_dialog_solid_action";
 import { NativeOnlyAnimatedView } from "../utils/native_only_animated_view";
 import { TextClassContext } from "../text";
 import { Text } from "../text";
@@ -343,11 +345,17 @@ function AlertDialogDescription({ className, ...props }: AlertDialogDescriptionP
 }
 
 function AlertDialogAction({ className, ...props }: AlertDialogActionProps) {
+  const theme = useUiTheme();
   return (
     <TextClassContext.Provider value={buttonTextVariants({ className })}>
-      <AlertDialogPrimitive.Action className={cn(buttonVariants(), className)} {...props}>
+      <AlertDialogSolidAction
+        colors={theme}
+        variant="default"
+        className={cn(buttonVariants(), className)}
+        {...props}
+      >
         {normalizeAlertDialogChildren(props.children)}
-      </AlertDialogPrimitive.Action>
+      </AlertDialogSolidAction>
     </TextClassContext.Provider>
   );
 }
@@ -366,14 +374,17 @@ function AlertDialogCancel({ className, ...props }: AlertDialogCancelProps) {
 }
 
 function AlertDialogDestructive({ className, ...props }: AlertDialogDestructiveProps) {
+  const theme = useUiTheme();
   return (
     <TextClassContext.Provider value={buttonTextVariants({ className, variant: "destructive" })}>
-      <AlertDialogPrimitive.Action
+      <AlertDialogSolidAction
+        colors={theme}
+        variant="destructive"
         className={cn(buttonVariants({ variant: "destructive" }), className)}
         {...props}
       >
         {normalizeAlertDialogChildren(props.children)}
-      </AlertDialogPrimitive.Action>
+      </AlertDialogSolidAction>
     </TextClassContext.Provider>
   );
 }

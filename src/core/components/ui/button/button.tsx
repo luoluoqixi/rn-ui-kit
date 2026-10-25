@@ -18,7 +18,7 @@ import Animated, {
 import { Platform, Pressable, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
 import type { ButtonProps } from "./types";
 
-import { getSolidButtonInteractionColor } from "./solid_button_colors";
+import { useSolidButtonInteraction } from "./use_solid_button_interaction";
 import { ButtonNative } from "./button_native";
 
 const buttonVariants = cva(
@@ -221,7 +221,6 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
   ref,
 ) {
   const theme = useUiTheme();
-  const [isHovered, setIsHovered] = React.useState(false);
   const resolvedButtonSize = buttonSize;
   const buttonSizeStyle =
     resolvedButtonSize == null
@@ -236,6 +235,13 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
     "";
   const resolvedChildren = title ?? children;
   const isDisabled = props.disabled || loading;
+  const interaction = useSolidButtonInteraction({
+    colors: theme,
+    variant,
+    disabled: isDisabled,
+    onHoverIn,
+    onHoverOut,
+  });
   const nativePressableState = { hovered: false, pressed: false };
   const handlePress: NonNullable<ButtonProps["onPress"]> = (event) => {
     onPress?.(event);
@@ -335,26 +341,14 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
           className,
         )}
         onPress={handlePress}
-        onHoverIn={(event) => {
-          setIsHovered(true);
-          onHoverIn?.(event);
-        }}
-        onHoverOut={(event) => {
-          setIsHovered(false);
-          onHoverOut?.(event);
-        }}
+        onHoverIn={interaction.onHoverIn}
+        onHoverOut={interaction.onHoverOut}
         pointerEvents={Platform.OS === "web" && isDisabled ? "none" : pointerEvents}
         ref={ref}
         role="button"
         style={({ pressed }) => [
           buttonSizeStyle,
-          {
-            backgroundColor: getSolidButtonInteractionColor(theme, variant, {
-              disabled: isDisabled,
-              hovered: isHovered,
-              pressed,
-            }),
-          },
+          interaction.backgroundStyle(pressed),
           isDisabled && variant === "outline" ? { backgroundColor: theme.background } : null,
           // Keep the pre-Expo-types runtime contract: custom Button styles only receive `pressed`.
           typeof style === "function" ? style({ pressed } as never) : style,
