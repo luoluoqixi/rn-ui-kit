@@ -8,6 +8,8 @@ import {
   type GlassEffectSearchBarCancelButtonProps,
   type GlassEffectSearchBarTrailingContext,
   Dropdown,
+  type DropdownProps,
+  type DropdownSelectionIndicatorPosition,
   type NativeListContextMenuProps,
   type NativeListInputItemProps,
   NativeListDropdownItem,
@@ -50,6 +52,25 @@ void Button;
 void GlassEffect;
 void GlassEffectSearchBar;
 void Dropdown;
+const dropdownIndicatorPosition: DropdownSelectionIndicatorPosition = "right";
+const dropdownIndicatorProps = {
+  selectionIndicatorPosition: dropdownIndicatorPosition,
+  nativeTrigger: true,
+  items: [
+    {
+      value: "selected",
+      label: "继承右侧位置",
+      selected: true,
+    },
+    {
+      value: "override",
+      label: "覆盖为左侧位置",
+      selected: false,
+      selectionIndicatorPosition: "left",
+    },
+  ],
+} satisfies DropdownProps;
+void dropdownIndicatorProps;
 void NativeListDropdownItem;
 void NativeSheetStack;
 void useTrueSheetStackHost;

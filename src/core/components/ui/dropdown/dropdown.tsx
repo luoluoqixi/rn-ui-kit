@@ -11,6 +11,7 @@ import type {
   DropdownContentProps,
   DropdownItemData,
   DropdownProps,
+  DropdownSelectionIndicatorPosition,
   DropdownSize,
   DropdownSubContentProps,
 } from "./types";
@@ -98,6 +99,8 @@ const DropdownSub = DropdownPrimitive.Sub;
 
 const DropdownRadioGroup = DropdownPrimitive.RadioGroup;
 const DropdownContentSizeContext = React.createContext<DropdownSize>("default");
+const DropdownSelectionIndicatorPositionContext =
+  React.createContext<DropdownSelectionIndicatorPosition>("left");
 
 const DropdownHapticsContext = React.createContext<{
   item?: NativeHapticsSetting;
@@ -492,14 +495,33 @@ function DropdownCheckboxItem({
   disabled,
   nativeHaptics,
   onCheckedChange,
+  selectionIndicatorPosition,
   ...props
 }: React.ComponentProps<typeof DropdownPrimitive.CheckboxItem> & {
   children?: React.ReactNode;
   leadingIcon?: React.ReactNode;
   nativeHaptics?: NativeHapticsSetting;
+  selectionIndicatorPosition?: DropdownSelectionIndicatorPosition;
 }) {
   const contextHaptics = React.useContext(DropdownHapticsContext);
   const size = React.useContext(DropdownContentSizeContext);
+  const inheritedPosition = React.useContext(
+    DropdownSelectionIndicatorPositionContext,
+  );
+  const position = selectionIndicatorPosition ?? inheritedPosition;
+  const indicator = (
+    <MenuItemIcon size={size}>
+      <DropdownPrimitive.ItemIndicator>
+        <Icon
+          as={Check}
+          className={cn(
+            cn("text-foreground shrink-0", menuIconSizeClasses[size]),
+            Platform.select({ web: "pointer-events-none" }),
+          )}
+        />
+      </DropdownPrimitive.ItemIndicator>
+    </MenuItemIcon>
+  );
   return (
     <TextClassContext.Provider
       value={cn(
@@ -530,18 +552,11 @@ function DropdownCheckboxItem({
         }}
       >
         {leadingIcon}
-        <MenuItemIcon size={size}>
-          <DropdownPrimitive.ItemIndicator>
-            <Icon
-              as={Check}
-              className={cn(
-                cn("text-foreground shrink-0", menuIconSizeClasses[size]),
-                Platform.select({ web: "pointer-events-none" }),
-              )}
-            />
-          </DropdownPrimitive.ItemIndicator>
-        </MenuItemIcon>
+        {position === "left" ? indicator : null}
         <>{children}</>
+        {position === "right" ? (
+          <View className="ml-auto shrink-0">{indicator}</View>
+        ) : null}
       </DropdownPrimitive.CheckboxItem>
     </TextClassContext.Provider>
   );
@@ -747,6 +762,12 @@ function renderDropdownItems(
       return (
         <DropdownCheckboxItem
           {...resolvedItemProps}
+          selectionIndicatorPosition={
+            item.selectionIndicatorPosition ??
+            (resolvedItemProps.selectionIndicatorPosition as
+              | DropdownSelectionIndicatorPosition
+              | undefined)
+          }
           leadingIcon={icon}
           aria-label={
             item["aria-label"] ??
@@ -806,6 +827,7 @@ function Dropdown({
   children,
   contentProps,
   contentSize,
+  selectionIndicatorPosition = "left",
   __nativeDetachedAnchor,
   __menuRef,
   defaultOpen,
@@ -900,87 +922,95 @@ function Dropdown({
     <DropdownHapticsContext.Provider
       value={{ item: resolvedItemHaptics, itemDelay: resolvedItemHapticsDelay }}
     >
-      <DropdownContentSizeContext.Provider value={contentSize ?? "default"}>
-        <DropdownPrimitiveRoot
-          {...props}
-          {...(defaultOpen === undefined ? {} : { defaultOpen })}
-          {...(open === undefined ? {} : { open })}
-          onOpenChange={(open) => {
-            if (resolvedDisabled && open) return;
-            onOpenWillChange?.(open);
-            if (open) triggerNativeHaptics(resolvedHaptics);
-            onOpenChange?.(open);
-          }}
-        >
-          {generated ? (
-            <>
-              {nativeTrigger ? (
-                <DropdownTrigger
-                  ref={triggerRef}
-                  {...(triggerProps as object)}
-                  asChild
-                  disabled={resolvedDisabled}
-                >
-                  <DropdownNativeTriggerWithContext
-                    className={triggerClassName}
-                    containerStyle={nativeTriggerContainerStyle}
-                    content={nativeTriggerContent}
+      <DropdownSelectionIndicatorPositionContext.Provider
+        value={selectionIndicatorPosition}
+      >
+        <DropdownContentSizeContext.Provider value={contentSize ?? "default"}>
+          <DropdownPrimitiveRoot
+            {...props}
+            {...(defaultOpen === undefined ? {} : { defaultOpen })}
+            {...(open === undefined ? {} : { open })}
+            onOpenChange={(open) => {
+              if (resolvedDisabled && open) return;
+              onOpenWillChange?.(open);
+              if (open) triggerNativeHaptics(resolvedHaptics);
+              onOpenChange?.(open);
+            }}
+          >
+            {generated ? (
+              <>
+                {nativeTrigger ? (
+                  <DropdownTrigger
+                    ref={triggerRef}
+                    {...(triggerProps as object)}
+                    asChild
                     disabled={resolvedDisabled}
-                    icon={nativeTriggerIcon}
-                    label={triggerLabel}
-                    labelProps={nativeTriggerLabelProps}
-                    nativeTriggerProps={nativeTriggerProps}
-                    nativeTriggerFeedbackOpacity={nativeTriggerFeedbackOpacity}
-                    nativeTriggerHoverBackground={nativeTriggerHoverBackground}
-                    trigger={trigger}
-                  />
-                </DropdownTrigger>
-              ) : trigger != null ? (
-                <DropdownTrigger
-                  ref={triggerRef}
-                  {...(triggerProps as object)}
-                  asChild
-                  disabled={resolvedDisabled}
-                >
-                  {resolveDropdownTrigger(
-                    trigger,
-                    { native: false, open: false },
-                    resolvedDisabled,
-                  )}
-                </DropdownTrigger>
-              ) : items != null ? (
-                <DropdownTrigger
-                  ref={triggerRef}
-                  {...(triggerProps as object)}
-                  asChild
-                  disabled={resolvedDisabled}
-                >
-                  <DropdownDefaultTrigger
-                    className={triggerClassName}
+                  >
+                    <DropdownNativeTriggerWithContext
+                      className={triggerClassName}
+                      containerStyle={nativeTriggerContainerStyle}
+                      content={nativeTriggerContent}
+                      disabled={resolvedDisabled}
+                      icon={nativeTriggerIcon}
+                      label={triggerLabel}
+                      labelProps={nativeTriggerLabelProps}
+                      nativeTriggerProps={nativeTriggerProps}
+                      nativeTriggerFeedbackOpacity={
+                        nativeTriggerFeedbackOpacity
+                      }
+                      nativeTriggerHoverBackground={
+                        nativeTriggerHoverBackground
+                      }
+                      trigger={trigger}
+                    />
+                  </DropdownTrigger>
+                ) : trigger != null ? (
+                  <DropdownTrigger
+                    ref={triggerRef}
+                    {...(triggerProps as object)}
+                    asChild
                     disabled={resolvedDisabled}
-                    label={resolveRenderProp(triggerLabel, {
-                      native: false,
-                      open: false,
-                    })}
-                    props={triggerProps}
-                  />
-                </DropdownTrigger>
-              ) : null}
-              {items != null ? (
-                <DropdownContent
-                  {...(contentProps as object)}
-                  itemNativeHaptics={resolvedItemHaptics}
-                >
-                  {renderDropdownItems(items, itemProps, resolvedItemHaptics)}
-                </DropdownContent>
-              ) : null}
-              {children}
-            </>
-          ) : (
-            children
-          )}
-        </DropdownPrimitiveRoot>
-      </DropdownContentSizeContext.Provider>
+                  >
+                    {resolveDropdownTrigger(
+                      trigger,
+                      { native: false, open: false },
+                      resolvedDisabled,
+                    )}
+                  </DropdownTrigger>
+                ) : items != null ? (
+                  <DropdownTrigger
+                    ref={triggerRef}
+                    {...(triggerProps as object)}
+                    asChild
+                    disabled={resolvedDisabled}
+                  >
+                    <DropdownDefaultTrigger
+                      className={triggerClassName}
+                      disabled={resolvedDisabled}
+                      label={resolveRenderProp(triggerLabel, {
+                        native: false,
+                        open: false,
+                      })}
+                      props={triggerProps}
+                    />
+                  </DropdownTrigger>
+                ) : null}
+                {items != null ? (
+                  <DropdownContent
+                    {...(contentProps as object)}
+                    itemNativeHaptics={resolvedItemHaptics}
+                  >
+                    {renderDropdownItems(items, itemProps, resolvedItemHaptics)}
+                  </DropdownContent>
+                ) : null}
+                {children}
+              </>
+            ) : (
+              children
+            )}
+          </DropdownPrimitiveRoot>
+        </DropdownContentSizeContext.Provider>
+      </DropdownSelectionIndicatorPositionContext.Provider>
     </DropdownHapticsContext.Provider>
   );
 }

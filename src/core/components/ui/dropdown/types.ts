@@ -13,6 +13,7 @@ import type * as Zeego from "zeego/dropdown-menu";
 import type * as DropdownPrimitive from "@rn-primitives/dropdown-menu";
 
 export type DropdownSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+export type DropdownSelectionIndicatorPosition = "left" | "right";
 
 export type NativeDropdownControlHandle = {
   presentMenu: () => void;
@@ -63,6 +64,8 @@ export interface NativeDropdownItemData {
   "onPress"?: () => void;
   "onSelect"?: () => void;
   "selected"?: boolean;
+  /** 自定义菜单的勾选标记位置，覆盖 Dropdown 配置；系统原生菜单忽略此项。 */
+  selectionIndicatorPosition?: DropdownSelectionIndicatorPosition;
   "separator"?: boolean;
   "subMenu"?: NativeDropdownItemData[];
   "triggerProps"?: Record<string, unknown>;
@@ -143,6 +146,8 @@ export type DropdownItemData = NativeDropdownItemData;
 export type DropdownItemProps = NativeDropdownItemProps;
 export type DropdownRootExtensions = NativeDropdownRootExtensions & {
   native?: boolean;
+  /** 自定义菜单的勾选标记位置，默认 left；系统原生菜单保持系统布局。 */
+  selectionIndicatorPosition?: DropdownSelectionIndicatorPosition;
   /** Props applied to the generated non-native menu content. */
   contentProps?: DropdownContentProps;
   /** Size of the generated non-native menu content. */

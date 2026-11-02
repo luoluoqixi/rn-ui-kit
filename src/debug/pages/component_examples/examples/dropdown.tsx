@@ -33,6 +33,35 @@ function DropdownPair({ children, ...props }: ComponentProps<typeof Dropdown>) {
 
 export function DropdownExample() {
   const [action, setAction] = useState("尚未选择");
+  const [sourceMode, setSourceMode] = useState(true);
+  const selectionItems: DropdownItemData[] = [
+    {
+      value: "source-mode",
+      label: "源码模式",
+      icon: <FilePlus color="#64748b" size={16} />,
+      selected: sourceMode,
+      onSelect: () => setSourceMode((value) => !value),
+    },
+    {
+      value: "preview-mode",
+      label: "预览模式",
+      selected: !sourceMode,
+      onSelect: () => setSourceMode((value) => !value),
+    },
+    {
+      value: "nested-selection",
+      label: "子菜单",
+      subMenu: [
+        { value: "inherited", label: "继承位置", selected: true },
+        {
+          value: "override",
+          label: "单项固定左侧",
+          selected: true,
+          selectionIndicatorPosition: "left",
+        },
+      ],
+    },
+  ];
   const items: DropdownItemData[] = [
     {
       icon: <FilePlus color="#64748b" size={16} />,
@@ -116,6 +145,23 @@ export function DropdownExample() {
       <ExampleBlock title="项目菜单">
         <DropdownPair native={false} items={items} triggerLabel="打开 Dropdown" />
         <Text variant="muted">最近动作：{action}</Text>
+      </ExampleBlock>
+      <ExampleBlock title="勾选标记位置">
+        <Dropdown
+          native={false}
+          nativeTrigger
+          contentSize="sm"
+          items={selectionItems}
+          triggerLabel="默认左侧"
+        />
+        <Dropdown
+          native={false}
+          nativeTrigger
+          contentSize="sm"
+          selectionIndicatorPosition="right"
+          items={selectionItems}
+          triggerLabel="右侧勾选"
+        />
       </ExampleBlock>
       {!isWeb() && (
         <ExampleBlock title="原生项目菜单">
