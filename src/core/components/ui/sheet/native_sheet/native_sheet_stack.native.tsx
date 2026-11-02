@@ -1,0 +1,134 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useWindowDimensions } from "react-native";
+
+import { iosMajorVersion, os } from "../../utils/platform";
+
+import { clampDetentIndex, resolveNativeDetents } from "./native_sheet.native";
+import { dismissTrueSheet } from "./true_sheet";
+import { createTrueSheetOverlayPortalHostName } from "./true_sheet/overlay_host_name";
+import { TrueSheetStackHost } from "./true_sheet/stack_host";
+import {
+  TrueSheetInnerStack,
+  createTrueSheetStackNavigationRef,
+} from "./true_sheet/stack_navigation";
+import type { NativeSheetStackProps } from "./types";
+
+function TrueSheetNativeSheetStackRoot({
+  children,
+  initialRouteName = "index",
+  name,
+  onOpenChange,
+  open = false,
+  overlayPortalHostName,
+  headerLeft,
+  headerLeftButtonProps,
+  headerLeftItems,
+  headerRight,
+  headerRightButtonProps,
+  headerRightButtonVisible,
+  headerRightItems,
+  screenOptions,
+  sheetProps,
+}: NativeSheetStackProps) {
+  const [sheetName] = useState(() => name ?? "native-sheet-stack");
+  const [generatedOverlayPortalHostName] = useState(() =>
+    createTrueSheetOverlayPortalHostName(`${sheetName}-overlay`),
+  );
+  const resolvedOverlayPortalHostName = createTrueSheetOverlayPortalHostName(
+    overlayPortalHostName ?? generatedOverlayPortalHostName,
+  );
+  const [navigationRef] = useState(() => createTrueSheetStackNavigationRef());
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const [mounted, setMounted] = useState(open);
+  const presentedRef = useRef(false);
+  const dismissingRef = useRef(false);
+  const compactHeight = os() === "ios" && iosMajorVersion() === 15 && windowWidth > windowHeight;
+  const resolvedSheetProps = useMemo(() => {
+    const { snapPoints, ...trueSheetProps } = sheetProps ?? {};
+
+    if (snapPoints == null && trueSheetProps.detents == null) {
+      return compactHeight
+        ? { ...trueSheetProps, detents: [1], initialDetentIndex: 0 }
+        : { initialDetentIndex: 0, ...trueSheetProps };
+    }
+
+    const normalization = resolveNativeDetents(trueSheetProps.detents, snapPoints, compactHeight);
+    const sourceIndex = clampDetentIndex(
+      trueSheetProps.initialDetentIndex,
+      normalization.sourceDetentCount,
+    );
+    const nativeIndex = clampDetentIndex(
+      normalization.toNativeIndex(sourceIndex),
+      normalization.detents.length,
+    );
+
+    return {
+      ...trueSheetProps,
+      detents: normalization.detents,
+      initialDetentIndex: nativeIndex,
+    };
+  }, [compactHeight, sheetProps]);
+
+  useEffect(() => {
+    if (open) {
+      if (mounted || dismissingRef.current) {
+        return;
+      }
+
+      dismissingRef.current = false;
+      setMounted(true);
+      return;
+    }
+
+    if (!presentedRef.current || dismissingRef.current) {
+      if (mounted && !presentedRef.current) {
+        setMounted(false);
+      }
+      return;
+    }
+
+    dismissingRef.current = true;
+    dismissTrueSheet(sheetName).catch(() => undefined);
+  }, [mounted, open, sheetName]);
+
+  if (!mounted) {
+    return null;
+  }
+
+  return (
+    <TrueSheetStackHost
+      initialRouteName={initialRouteName}
+      name={sheetName}
+      navigationRef={navigationRef}
+      onDidDismiss={() => {
+        presentedRef.current = false;
+        dismissingRef.current = false;
+        setMounted(false);
+        onOpenChange?.(false);
+      }}
+      onDidPresent={() => {
+        presentedRef.current = true;
+        dismissingRef.current = false;
+      }}
+      onRequestClose={() => {
+        onOpenChange?.(false);
+      }}
+      overlayPortalHostName={resolvedOverlayPortalHostName}
+      headerLeft={headerLeft}
+      headerLeftButtonProps={headerLeftButtonProps}
+      headerLeftItems={headerLeftItems}
+      headerRight={headerRight}
+      headerRightButtonProps={headerRightButtonProps}
+      headerRightButtonVisible={headerRightButtonVisible}
+      headerRightItems={headerRightItems}
+      screenOptions={screenOptions}
+      sheetProps={resolvedSheetProps as any}
+    >
+      {children}
+    </TrueSheetStackHost>
+  );
+}
+
+export const NativeSheetStack = Object.assign(TrueSheetNativeSheetStackRoot, {
+  Screen: TrueSheetInnerStack.Screen,
+});
