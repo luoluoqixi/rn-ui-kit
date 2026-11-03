@@ -12,6 +12,9 @@ export function TooltipExample() {
           <Tooltip content="删除后将无法恢复" delayDuration={200}>
             <Button variant="destructive">危险操作</Button>
           </Tooltip>
+          <Tooltip content="点击后需离开并重新悬浮才显示" delayDuration={700} openOnFocus={false}>
+            <Button variant="outline">仅悬浮显示</Button>
+          </Tooltip>
           <Tooltip content="触屏设备可按下显示" delayDuration={200} openOnPress>
             <Button variant="outline">按下显示</Button>
           </Tooltip>

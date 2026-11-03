@@ -17,6 +17,8 @@ export type TooltipContentProps = ComponentProps<typeof TooltipPrimitive.Content
 export type TooltipRootProps = ComponentProps<typeof TooltipPrimitive.Root> & {
   /** Allow pressing the trigger to open the tooltip. Disabled by default. */
   openOnPress?: boolean;
+  /** 是否在聚焦时打开，默认 true；纯 hover 提示可设为 false。 */
+  openOnFocus?: boolean;
 };
 
 export type TooltipProps = TooltipRootProps & {

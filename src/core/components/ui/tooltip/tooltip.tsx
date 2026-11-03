@@ -10,11 +10,10 @@ import * as TooltipPrimitive from "@rn-primitives/tooltip";
 import * as React from "react";
 import { Platform, StyleSheet } from "react-native";
 import { FadeInDown, FadeInUp, FadeOut, ReduceMotion } from "react-native-reanimated";
-import type { TooltipProps, TooltipRootProps, TooltipSize } from "./types";
-import { closeTooltipAfterPress, shouldSuppressTooltipHover } from "./tooltip_press_behavior";
+import type { TooltipProps, TooltipSize } from "./types";
+import { TooltipRoot, TooltipTrigger } from "./tooltip_trigger";
 
 const TooltipSizeContext = React.createContext<TooltipSize>("default");
-const TooltipOpenOnPressContext = React.createContext(false);
 
 const tooltipSizes: Record<TooltipSize, { content: string; text: string }> = {
   default: { content: "px-3 py-1.5", text: "text-sm" },
@@ -32,88 +31,6 @@ function normalizeTooltipChildren(children: React.ReactNode) {
     typeof child === "string" || typeof child === "number" ? <Text>{child}</Text> : child,
   );
 }
-
-function TooltipRoot({ children, openOnPress = false, ...props }: TooltipRootProps) {
-  return (
-    <TooltipOpenOnPressContext.Provider value={openOnPress}>
-      <TooltipPrimitive.Root {...props}>{children}</TooltipPrimitive.Root>
-    </TooltipOpenOnPressContext.Provider>
-  );
-}
-
-const TooltipTrigger = React.forwardRef<
-  React.ComponentRef<typeof TooltipPrimitive.Trigger>,
-  React.ComponentProps<typeof TooltipPrimitive.Trigger>
->(function TooltipTrigger(
-  { onPointerDown, onPointerLeave, onPointerMove, onPress, ...props },
-  forwardedRef,
-) {
-  const openOnPress = React.useContext(TooltipOpenOnPressContext);
-  const suppressHoverRef = React.useRef(false);
-  const triggerRef = React.useRef<React.ComponentRef<typeof TooltipPrimitive.Trigger>>(null);
-
-  React.useEffect(() => {
-    if (openOnPress) {
-      suppressHoverRef.current = false;
-    }
-  }, [openOnPress]);
-
-  const setTriggerRef = React.useCallback(
-    (node: React.ComponentRef<typeof TooltipPrimitive.Trigger> | null) => {
-      triggerRef.current = node;
-      if (typeof forwardedRef === "function") {
-        forwardedRef(node);
-      } else if (forwardedRef != null) {
-        forwardedRef.current = node;
-      }
-    },
-    [forwardedRef],
-  );
-
-  const handlePointerDown: NonNullable<
-    React.ComponentProps<typeof TooltipPrimitive.Trigger>["onPointerDown"]
-  > = (event) => {
-    onPointerDown?.(event);
-    suppressHoverRef.current = shouldSuppressTooltipHover(openOnPress);
-    if (suppressHoverRef.current) {
-      triggerRef.current?.close();
-    }
-  };
-
-  const handlePointerMove: NonNullable<
-    React.ComponentProps<typeof TooltipPrimitive.Trigger>["onPointerMove"]
-  > = (event) => {
-    onPointerMove?.(event);
-    if (suppressHoverRef.current) {
-      event.preventDefault();
-    }
-  };
-
-  const handlePointerLeave: NonNullable<
-    React.ComponentProps<typeof TooltipPrimitive.Trigger>["onPointerLeave"]
-  > = (event) => {
-    suppressHoverRef.current = false;
-    onPointerLeave?.(event);
-  };
-
-  const handlePress: NonNullable<
-    React.ComponentProps<typeof TooltipPrimitive.Trigger>["onPress"]
-  > = (event) => {
-    closeTooltipAfterPress(openOnPress, () => triggerRef.current?.close());
-    onPress?.(event);
-  };
-
-  return (
-    <TooltipPrimitive.Trigger
-      {...props}
-      onPointerDown={handlePointerDown}
-      onPointerLeave={handlePointerLeave}
-      onPointerMove={handlePointerMove}
-      onPress={handlePress}
-      ref={setTriggerRef}
-    />
-  );
-});
 
 function TooltipRootComponent({
   children,
