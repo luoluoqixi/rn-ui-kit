@@ -1,0 +1,121 @@
+@import "tw-animate-css";
+
+@theme {
+  --radius: 10px;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --spacing-hairline: hairlineWidth();
+}
+
+@layer theme {
+  :root {
+    @variant light {
+      --color-accent01: #fefbff;
+      --color-accent02: #f6f5ff;
+      --color-accent03: #eef0ff;
+      --color-accent04: #dbe1ff;
+      --color-accent05: #c7d3ff;
+      --color-accent06: #b4c5ff;
+      --color-accent07: #8ca8ff;
+      --color-accent08: #618bff;
+      --color-accent09: #346ef6;
+      --color-accent10: #0053db;
+      --color-accent11: #003ea8;
+      --color-accent12: #002a78;
+      --color-background: #ffffff;
+      --color-foreground: #18181b;
+      --color-card: #ffffff;
+      --color-card-foreground: #18181b;
+      --color-popover: #ffffff;
+      --color-popover-foreground: #18181b;
+      --color-primary: #2563eb;
+      --color-primary-foreground: #ffffff;
+      --color-secondary: #f4f4f5;
+      --color-secondary-foreground: #27272a;
+      --color-muted: #f4f4f5;
+      --color-muted-foreground: #71717a;
+      --color-accent: #dbeafe;
+      --color-accent-foreground: #1e40af;
+      --color-destructive: #dc2626;
+      --color-destructive-foreground: #ffffff;
+      --color-border: #e4e4e7;
+      --color-input: #e4e4e7;
+      --color-ring: #2563eb;
+    }
+
+    @variant dark {
+      --color-accent01: #001039;
+      --color-accent02: #00174b;
+      --color-accent03: #002a78;
+      --color-accent04: #003ea8;
+      --color-accent05: #0048c1;
+      --color-accent06: #0053db;
+      --color-accent07: #346ef6;
+      --color-accent08: #618bff;
+      --color-accent09: #8ca8ff;
+      --color-accent10: #b4c5ff;
+      --color-accent11: #dbe1ff;
+      --color-accent12: #eef0ff;
+      --color-background: #09090b;
+      --color-foreground: #fafafa;
+      --color-card: #18181b;
+      --color-card-foreground: #fafafa;
+      --color-popover: #18181b;
+      --color-popover-foreground: #fafafa;
+      --color-primary: #60a5fa;
+      --color-primary-foreground: #09090b;
+      --color-secondary: #27272a;
+      --color-secondary-foreground: #fafafa;
+      --color-muted: #27272a;
+      --color-muted-foreground: #a1a1aa;
+      --color-accent: #1e3a8a;
+      --color-accent-foreground: #fafafa;
+      --color-destructive: #f87171;
+      --color-destructive-foreground: #450a0a;
+      --color-border: rgb(255 255 255 / 10%);
+      --color-input: rgb(255 255 255 / 15%);
+      --color-ring: #60a5fa;
+    }
+  }
+}
+
+@layer utilities {
+  /* TrueSheetProvider 的 portal anchor 留在当前 modal 内，但不参与 Dialog 的 flex/gap 排版。 */
+  .ui-modal-content-scope > div:last-child {
+    height: 0;
+    position: absolute;
+    width: 0;
+  }
+
+  .ui-menu-scrollbar {
+    scrollbar-color: color-mix(in srgb, var(--color-muted-foreground) 45%, transparent) transparent;
+    /* Reserve space only when a classic scrollbar is actually visible. */
+    scrollbar-gutter: auto;
+    scrollbar-width: thin;
+  }
+
+  .ui-menu-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .ui-menu-scrollbar::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--color-muted-foreground) 45%, transparent);
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background-clip: content-box;
+  }
+
+  /* Radix Select hides its viewport scrollbar by default. */
+  .ui-menu-scrollbar[data-radix-select-viewport] {
+    -ms-overflow-style: auto !important;
+    scrollbar-width: thin !important;
+  }
+
+  .ui-menu-scrollbar[data-radix-select-viewport]::-webkit-scrollbar {
+    display: block !important;
+    width: 8px;
+  }
+
+}
