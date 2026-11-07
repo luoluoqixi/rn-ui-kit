@@ -1,3 +1,4 @@
+import { useDefaultTextStyle } from "../provider/font_provider";
 import { useMenuConfig } from "./menu_provider";
 import { ContextMenuHost } from "./context_menu_host";
 import { ScopedSubContent } from "./scoped_sub_content";
@@ -567,6 +568,7 @@ function ContextMenuLabel({
         className,
       )}
       {...props}
+      style={useDefaultTextStyle(props.style, className)}
     />
   );
 }

@@ -1,5 +1,6 @@
+import { FontTextInput as TextInput } from "../../provider/font_provider";
 import * as React from "react";
-import { StyleSheet, TextInput, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import { useComponentThemeTokens as useTheme } from "../../utils/theme";
 import { NativeListCustomItem, NativeListRow } from "../native_list_basic";
@@ -35,7 +36,9 @@ export function NativeListInputItem({
       placeholderTextColor={
         inputProps.placeholderTextColor ?? theme.gray9?.val ?? theme.color10.val
       }
-      textAlign={inputProps.textAlign ?? (hasLeadingLabel ? "right" : undefined)}
+      textAlign={
+        inputProps.textAlign ?? (hasLeadingLabel ? "right" : undefined)
+      }
       style={[
         styles.input,
         !hasLeadingLabel ? styles.fullWidthInput : null,

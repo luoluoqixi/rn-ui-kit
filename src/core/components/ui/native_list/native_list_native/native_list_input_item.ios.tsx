@@ -1,5 +1,6 @@
+import { FontTextInput as TextInput } from "../../provider/font_provider";
 import * as React from "react";
-import { StyleSheet, TextInput, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useState } from "react";
 
 import { useComponentThemeTokens as useTheme } from "../../utils/theme";
@@ -40,7 +41,9 @@ export function NativeListInputItem({
     inputProps.defaultValue,
     inputProps.placeholder,
   );
-  const flattenedInputStyle = StyleSheet.flatten(inputStyle) as { color?: unknown } | undefined;
+  const flattenedInputStyle = StyleSheet.flatten(inputStyle) as
+    | { color?: unknown }
+    | undefined;
   const editingTextColor = editingDisplay.placeholder
     ? typeof inputProps.placeholderTextColor === "string"
       ? inputProps.placeholderTextColor
@@ -52,7 +55,9 @@ export function NativeListInputItem({
     <TextInput
       {...(nativeInputProps as any)}
       autoFocus={autoFocusNative ?? inputProps.autoFocus ?? false}
-      textAlign={inputProps.textAlign ?? (hasLeadingLabel ? "right" : undefined)}
+      textAlign={
+        inputProps.textAlign ?? (hasLeadingLabel ? "right" : undefined)
+      }
       clearButtonMode={inputProps.clearButtonMode ?? "while-editing"}
       editable={!disabled}
       multiline={inputProps.multiline ?? false}
@@ -93,7 +98,10 @@ export function NativeListInputItem({
           <NativeHostedTrailingControl>
             <View
               collapsable={false}
-              style={[styles.inputTrailing, inputWidth != null ? { width: inputWidth } : null]}
+              style={[
+                styles.inputTrailing,
+                inputWidth != null ? { width: inputWidth } : null,
+              ]}
             >
               {resolvedInput}
             </View>

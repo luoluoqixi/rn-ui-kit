@@ -1,3 +1,4 @@
+import { useDefaultTextStyle } from "../provider/font_provider";
 import { Icon } from "../icon";
 import {
   hasMenuItemIcons,
@@ -7,7 +8,10 @@ import {
 import { NativeOnlyAnimatedView } from "../utils/native_only_animated_view";
 import { Text, TextClassContext } from "../text";
 import { cn } from "../utils/cn";
-import { OverlayPortalWindow, useOverlayPortalContentStyle } from "../utils/overlay/overlay_portal";
+import {
+  OverlayPortalWindow,
+  useOverlayPortalContentStyle,
+} from "../utils/overlay/overlay_portal";
 import { useScopedOverlayPortalHostName } from "../utils/overlay";
 import { semanticColorsToVariables, useUiTheme } from "../utils/theme";
 import {
@@ -18,7 +22,12 @@ import {
 } from "../utils";
 import * as MenubarPrimitive from "@rn-primitives/menubar";
 import { Portal } from "@rn-primitives/portal";
-import { Check, ChevronDown, ChevronRight, ChevronUp } from "lucide-react-native";
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+} from "lucide-react-native";
 import * as React from "react";
 import {
   Platform,
@@ -58,7 +67,12 @@ function MenubarPortal({
   ...props
 }: React.ComponentProps<typeof MenubarPrimitive.Portal>) {
   const scopedPortalHost = useScopedOverlayPortalHostName();
-  return <MenubarPrimitive.Portal {...props} hostName={hostName ?? scopedPortalHost} />;
+  return (
+    <MenubarPrimitive.Portal
+      {...props}
+      hostName={hostName ?? scopedPortalHost}
+    />
+  );
 }
 
 const MenubarSub = MenubarPrimitive.Sub;
@@ -73,13 +87,13 @@ const MenubarSizeContext = React.createContext<MenubarSize>("default");
 const MenubarContentSizeContext = React.createContext<MenubarSize>("default");
 
 const menubarRootSizeClasses: Record<MenubarSize, string> = {
-  "default": "h-11 p-1.5",
+  default: "h-11 p-1.5",
   "2xs": "h-8 p-0.5",
-  "xs": "h-9 p-0.5",
-  "sm": "h-10 p-1",
-  "md": "h-11 p-1.5",
-  "lg": "h-12 p-1.5",
-  "xl": "h-14 p-2",
+  xs: "h-9 p-0.5",
+  sm: "h-10 p-1",
+  md: "h-11 p-1.5",
+  lg: "h-12 p-1.5",
+  xl: "h-14 p-2",
   "2xl": "h-16 p-2",
 };
 
@@ -98,19 +112,23 @@ const menubarTriggerTextSizeClasses: Record<MenubarSize, string> = {
 };
 
 const menubarTriggerSizeClasses: Record<MenubarSize, string> = {
-  "default": "px-2.5 py-1.5",
+  default: "px-2.5 py-1.5",
   "2xs": "px-1.5 py-0.5",
-  "xs": "px-2 py-1",
-  "sm": "px-2 py-1",
-  "md": "px-2.5 py-1.5",
-  "lg": "px-3 py-2",
-  "xl": "px-4 py-2.5",
+  xs: "px-2 py-1",
+  sm: "px-2 py-1",
+  md: "px-2.5 py-1.5",
+  lg: "px-3 py-2",
+  xl: "px-4 py-2.5",
   "2xl": "px-5 py-3",
 };
 
 function normalizeMenubarChildren(children: React.ReactNode) {
   return React.Children.map(children, (child) =>
-    typeof child === "string" || typeof child === "number" ? <Text>{child}</Text> : child,
+    typeof child === "string" || typeof child === "number" ? (
+      <Text>{child}</Text>
+    ) : (
+      child
+    ),
   );
 }
 
@@ -145,12 +163,22 @@ function MenubarRoot({
     (items != null
       ? items.map((menu) => (
           <MenubarNamespace.Menu key={menu.value} value={menu.value}>
-            <MenubarNamespace.Trigger {...menu.triggerProps} nativeHaptics={menu.nativeHaptics}>
-              {normalizeMenubarChildren(resolveRenderProp(menu.title, { value: menu.value }))}
+            <MenubarNamespace.Trigger
+              {...menu.triggerProps}
+              nativeHaptics={menu.nativeHaptics}
+            >
+              {normalizeMenubarChildren(
+                resolveRenderProp(menu.title, { value: menu.value }),
+              )}
             </MenubarNamespace.Trigger>
             <MenubarNamespace.Content {...menu.contentProps}>
               {menu.items.map((item, index) =>
-                renderMenubarItem(item, `${menu.value}-${index}`, itemNativeHaptics, hasMenuItemIcons(menu.items)),
+                renderMenubarItem(
+                  item,
+                  `${menu.value}-${index}`,
+                  itemNativeHaptics,
+                  hasMenuItemIcons(menu.items),
+                ),
               )}
             </MenubarNamespace.Content>
           </MenubarNamespace.Menu>
@@ -199,7 +227,9 @@ function MenubarTrigger({
   const { value: itemValue } = MenubarPrimitive.useMenuContext();
   const contextHaptics = React.useContext(MenubarHapticsContext);
   const size = sizeProp ?? React.useContext(MenubarSizeContext);
-  const hasCursorOverride = className?.split(/\s+/).some((token) => token.startsWith("cursor-"));
+  const hasCursorOverride = className
+    ?.split(/\s+/)
+    .some((token) => token.startsWith("cursor-"));
 
   return (
     <TextClassContext.Provider
@@ -213,7 +243,10 @@ function MenubarTrigger({
     >
       <MenubarPrimitive.Trigger
         className={cn(
-          cn("group flex items-center rounded-md", menubarTriggerSizeClasses[size]),
+          cn(
+            "group flex items-center rounded-md",
+            menubarTriggerSizeClasses[size],
+          ),
           Platform.select({
             web: cn(
               "hover:bg-accent hover:text-accent-foreground outline-none",
@@ -253,7 +286,8 @@ function MenubarSubTrigger({
   const contextHaptics = React.useContext(MenubarHapticsContext);
   const size = React.useContext(MenubarContentSizeContext);
   const disabled = props.disabled === true;
-  const icon = Platform.OS === "web" ? ChevronRight : open ? ChevronUp : ChevronDown;
+  const icon =
+    Platform.OS === "web" ? ChevronRight : open ? ChevronUp : ChevronDown;
   return (
     <TextClassContext.Provider
       value={cn(
@@ -289,7 +323,11 @@ function MenubarSubTrigger({
         {normalizeMenubarChildren(children)}
         <Icon
           as={icon}
-          className={cn("text-foreground shrink-0", menuIconSizeClasses[size], iconClassName)}
+          className={cn(
+            "text-foreground shrink-0",
+            menuIconSizeClasses[size],
+            iconClassName,
+          )}
         />
       </MenubarPrimitive.SubTrigger>
     </TextClassContext.Provider>
@@ -319,7 +357,12 @@ function MenubarSubContent({
         // The web primitive renders SubContent through its own Radix portal,
         // outside the provider-scoped variables applied by OverlayPortalWindow.
         style={
-          [Platform.OS === "web" ? (semanticColorsToVariables(theme) as any) : null, style] as any
+          [
+            Platform.OS === "web"
+              ? (semanticColorsToVariables(theme) as any)
+              : null,
+            style,
+          ] as any
         }
         {...props}
       >
@@ -358,7 +401,8 @@ function MenubarContent({
   const availableBelow = triggerPosition
     ? windowHeight - triggerPosition.pageY - triggerPosition.height
     : windowHeight;
-  const estimatedHeight = contentLayout?.height ?? windowHeight * MENUBAR_MENU_MAX_HEIGHT_RATIO;
+  const estimatedHeight =
+    contentLayout?.height ?? windowHeight * MENUBAR_MENU_MAX_HEIGHT_RATIO;
   const resolvedSide =
     Platform.OS === "web" || props.side != null
       ? props.side
@@ -385,7 +429,10 @@ function MenubarContent({
           >
             <MenubarPrimitive.Content
               style={
-                [{ maxHeight: windowHeight * MENUBAR_MENU_MAX_HEIGHT_RATIO }, contentStyle] as any
+                [
+                  { maxHeight: windowHeight * MENUBAR_MENU_MAX_HEIGHT_RATIO },
+                  contentStyle,
+                ] as any
               }
               className={cn(
                 "bg-popover border-border max-h-[45vh] min-w-[12rem] overflow-hidden rounded-md border p-1 shadow-lg shadow-black/5",
@@ -416,7 +463,9 @@ function MenubarContent({
                     nestedScrollEnabled
                     showsVerticalScrollIndicator
                     onMoveShouldSetResponderCapture={() => true}
-                    style={{ maxHeight: windowHeight * MENUBAR_MENU_MAX_HEIGHT_RATIO }}
+                    style={{
+                      maxHeight: windowHeight * MENUBAR_MENU_MAX_HEIGHT_RATIO,
+                    }}
                   >
                     <MenubarContentSizeContext.Provider value={size}>
                       {children}
@@ -454,7 +503,9 @@ function MenubarItem({
         cn(menuTextSizeClasses[size], "select-none text-popover-foreground"),
         !disabled && "group-active:text-popover-foreground",
         variant === "destructive" && "text-destructive",
-        variant === "destructive" && !disabled && "group-active:text-destructive",
+        variant === "destructive" &&
+          !disabled &&
+          "group-active:text-destructive",
       )}
     >
       <MenubarPrimitive.Item
@@ -467,7 +518,8 @@ function MenubarItem({
           Platform.select({
             web: cn(
               "focus:bg-accent focus:text-accent-foreground cursor-default outline-none data-[disabled]:pointer-events-none",
-              variant === "destructive" && "focus:bg-destructive/10 dark:focus:bg-destructive/20",
+              variant === "destructive" &&
+                "focus:bg-destructive/10 dark:focus:bg-destructive/20",
             ),
           }),
           !disabled &&
@@ -633,6 +685,7 @@ function MenubarLabel({
         className,
       )}
       {...props}
+      style={useDefaultTextStyle(props.style, className)}
     />
   );
 }
@@ -650,7 +703,10 @@ function MenubarSeparator({
   );
 }
 
-function MenubarShortcut({ className, ...props }: React.ComponentProps<typeof Text>) {
+function MenubarShortcut({
+  className,
+  ...props
+}: React.ComponentProps<typeof Text>) {
   const size = React.useContext(MenubarContentSizeContext);
   return (
     <Text
@@ -685,12 +741,20 @@ function MenubarDataItem({
     disabled: item.disabled,
     value: item.value,
   };
-  const title = normalizeMenubarChildren(resolveRenderProp(item.title ?? item.children, context));
+  const title = normalizeMenubarChildren(
+    resolveRenderProp(item.title ?? item.children, context),
+  );
   const resolvedIcon = resolveRenderProp(item.icon, context);
-  const icon = shouldRenderMenuItemIcon(hasIcons, resolvedIcon, item.reserveIconSpace) ? (
+  const icon = shouldRenderMenuItemIcon(
+    hasIcons,
+    resolvedIcon,
+    item.reserveIconSpace,
+  ) ? (
     <MenuItemIcon size={size}>{resolvedIcon}</MenuItemIcon>
   ) : null;
-  const shortcut = normalizeMenubarChildren(resolveRenderProp(item.shortcut, context));
+  const shortcut = normalizeMenubarChildren(
+    resolveRenderProp(item.shortcut, context),
+  );
   const itemHaptics = item.nativeHaptics ?? defaultNativeHaptics;
 
   if (item.type === "separator") {
@@ -800,7 +864,9 @@ function MenubarDataItem({
     >
       {icon}
       {title}
-      {shortcut != null ? <MenubarNamespace.Shortcut>{shortcut}</MenubarNamespace.Shortcut> : null}
+      {shortcut != null ? (
+        <MenubarNamespace.Shortcut>{shortcut}</MenubarNamespace.Shortcut>
+      ) : null}
     </MenubarNamespace.Item>
   );
 }

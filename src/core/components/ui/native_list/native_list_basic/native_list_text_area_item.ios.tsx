@@ -1,5 +1,6 @@
+import { FontTextInput as TextInput } from "../../provider/font_provider";
 import * as React from "react";
-import { StyleSheet, TextInput, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import { useComponentThemeTokens as useTheme } from "../../utils/theme";
 import { NativeListCustomItem } from "../native_list_basic";
@@ -33,7 +34,9 @@ export function NativeListTextAreaItem({
           editable={!disabled && !editMode}
           multiline
           placeholderTextColor={
-            textAreaProps.placeholderTextColor ?? theme.gray9?.val ?? theme.color10.val
+            textAreaProps.placeholderTextColor ??
+            theme.gray9?.val ??
+            theme.color10.val
           }
           scrollEnabled={scrollEnabled ?? true}
           style={[
@@ -64,13 +67,17 @@ const styles = StyleSheet.create({
   },
 });
 
-function resolveTextAreaHeight(textAreaProps: NativeListTextAreaItemProps["textAreaProps"]) {
+function resolveTextAreaHeight(
+  textAreaProps: NativeListTextAreaItemProps["textAreaProps"],
+) {
   const style = StyleSheet.flatten(textAreaProps.style) as {
     height?: unknown;
     minHeight?: unknown;
   };
   const numberOfLines =
-    typeof textAreaProps.numberOfLines === "number" ? textAreaProps.numberOfLines : 4;
+    typeof textAreaProps.numberOfLines === "number"
+      ? textAreaProps.numberOfLines
+      : 4;
   const configuredHeight =
     typeof style?.height === "number"
       ? style.height

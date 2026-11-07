@@ -13,6 +13,8 @@ import type {
 import type { ToastNativeToasterProps } from "../toast/types";
 
 export interface UIProviderProps {
+  /** 应用自绘文字的默认字体；显式字体优先。 */
+  textFontFamily?: string;
   accentThemeName?: AccentThemeName;
   accentThemeNames?: AccentThemeNames;
   children: ReactNode;

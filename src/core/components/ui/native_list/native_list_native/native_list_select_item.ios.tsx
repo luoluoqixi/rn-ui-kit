@@ -1,3 +1,4 @@
+import { useTextFontFamily } from "../../provider/font_provider";
 import { useRef, useState } from "react";
 
 import {
@@ -49,8 +50,11 @@ import { useResolvedNativeListTriggerFontWeight } from "../native_trigger";
 import { useUiTheme } from "../../utils/theme";
 import type { NativeListSelectItemProps } from "../types";
 
-function selectValueModifiers(fontSize?: number) {
-  return [font({ size: fontSize ?? 17, weight: "regular" }), lineLimit(1)];
+function selectValueModifiers(fontSize?: number, family?: string) {
+  return [
+    font({ family, size: fontSize ?? 17, weight: "regular" }),
+    lineLimit(1),
+  ];
 }
 
 function NativeIos15MenuSelectRow({
@@ -62,16 +66,21 @@ function NativeIos15MenuSelectRow({
   selectItems: ReturnType<typeof resolveSelectItemGroups>[number]["items"];
   selectProps: NativeListSelectItemProps["selectProps"];
 }) {
+  const fontFamily = useTextFontFamily();
   const editMode = useNativeListEditMode();
   const editRow = useNativeListEditRow({
-    disabled: Boolean(itemProps.disabled || selectProps.disabled || selectProps.isDisabled),
+    disabled: Boolean(
+      itemProps.disabled || selectProps.disabled || selectProps.isDisabled,
+    ),
     nativeScrollId: itemProps.nativeScrollId,
     nativeSelection: true,
     selectionId: itemProps.selectionId,
     selectionDisabled: itemProps.selectionDisabled,
   });
   const theme = useUiTheme();
-  const disabled = Boolean(itemProps.disabled || selectProps.disabled || selectProps.isDisabled);
+  const disabled = Boolean(
+    itemProps.disabled || selectProps.disabled || selectProps.isDisabled,
+  );
   const selectedValue = selectProps.value ?? selectProps.defaultValue;
   const selectedItem = selectItems.find((item) => item.value === selectedValue);
   const selectedLabel =
@@ -83,7 +92,9 @@ function NativeIos15MenuSelectRow({
   return (
     <NativeRowContainer
       contextMenuProps={
-        itemProps.contextMenuProps === false ? undefined : itemProps.contextMenuProps
+        itemProps.contextMenuProps === false
+          ? undefined
+          : itemProps.contextMenuProps
       }
       disabled={disabled}
       nativeScrollId={itemProps.nativeScrollId}
@@ -102,7 +113,11 @@ function NativeIos15MenuSelectRow({
             modifiers={[
               frame({ maxWidth: 99999, alignment: "leading" }),
               contentShape(shapes.rectangle()),
-              opacity(editMode || disabled ? NATIVE_LIST_TRAILING_TRIGGER_DISABLED_OPACITY : 1),
+              opacity(
+                editMode || disabled
+                  ? NATIVE_LIST_TRAILING_TRIGGER_DISABLED_OPACITY
+                  : 1,
+              ),
             ]}
             spacing={12}
           >
@@ -134,17 +149,25 @@ function NativeIos15MenuSelectRow({
             />
             <Spacer minLength={12} />
             {selectedItem?.swatchColor != null ? (
-              <Image color={selectedItem.swatchColor} size={14} systemName="circle.fill" />
+              <Image
+                color={selectedItem.swatchColor}
+                size={14}
+                systemName="circle.fill"
+              />
             ) : null}
             <SwiftText
               modifiers={[
-                ...selectValueModifiers(itemProps.valueFontSize),
+                ...selectValueModifiers(itemProps.valueFontSize, fontFamily),
                 foregroundStyle(triggerColor),
               ]}
             >
               {selectedLabel}
             </SwiftText>
-            <Image color={triggerColor} size={13} systemName="chevron.up.chevron.down" />
+            <Image
+              color={triggerColor}
+              size={13}
+              systemName="chevron.up.chevron.down"
+            />
           </HStack>
         }
         modifiers={[
@@ -173,7 +196,10 @@ function NativeIos15MenuSelectRow({
   );
 }
 
-export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSelectItemProps) {
+export function NativeListSelectItem({
+  selectProps,
+  ...itemProps
+}: NativeListSelectItemProps) {
   const theme = useUiTheme();
   const inheritedHaptics = useResolvedNativeListHaptics(
     selectProps.nativeHaptics ?? itemProps.nativeHaptics,
@@ -198,7 +224,8 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
       selectProps.nativeTriggerLabelProps?.color ??
       theme[NATIVE_LIST_TRAILING_TRIGGER_COLOR_TOKEN],
     opacity:
-      (selectProps.nativeTriggerLabelProps as any)?.opacity ?? NATIVE_LIST_TRAILING_TRIGGER_OPACITY,
+      (selectProps.nativeTriggerLabelProps as any)?.opacity ??
+      NATIVE_LIST_TRAILING_TRIGGER_OPACITY,
     fontWeight: triggerFontWeight,
   } as any;
   const selectedLabel =
@@ -212,8 +239,12 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
   );
   const wheelRef = useRef<SelectHandle | null>(null);
   const menuRef = useRef<{ presentMenu: () => void } | null>(null);
-  const [menuOpen, setMenuOpen] = useState(Boolean((selectProps as any).defaultOpen));
-  const disabled = Boolean(itemProps.disabled || selectProps.disabled || selectProps.isDisabled);
+  const [menuOpen, setMenuOpen] = useState(
+    Boolean((selectProps as any).defaultOpen),
+  );
+  const disabled = Boolean(
+    itemProps.disabled || selectProps.disabled || selectProps.isDisabled,
+  );
   const fadeTitleOnOpen = itemProps.fadeTitleOnOpen !== false;
   // 部分 iOS 版本会缓存 RN hosted trigger 的 intrinsic width。显式开启且满足简单 dropdown
   // 条件时，直接使用 SwiftUI Menu，让整行由 SwiftUI 负责测量和打开菜单。
@@ -250,9 +281,14 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
               nativeHaptics={inheritedHaptics}
               native="wheel"
               nativeTrigger
-              nativeTriggerContainerStyle={[styles.selectInlineTrigger, { paddingHorizontal: 0 }]}
+              nativeTriggerContainerStyle={[
+                styles.selectInlineTrigger,
+                { paddingHorizontal: 0 },
+              ]}
               nativeTriggerIcon="chevrons-up-down"
-              nativeTriggerLabel={selectProps.nativeTriggerLabel ?? selectedTriggerLabel}
+              nativeTriggerLabel={
+                selectProps.nativeTriggerLabel ?? selectedTriggerLabel
+              }
               nativeTriggerLabelProps={nativeTriggerLabelProps}
               triggerFontWeight={triggerFontWeight}
               nativeTriggerProps={{
@@ -288,7 +324,10 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
         : {
             androidIconColor: item.swatchColor,
             androidIconName: "presence_online",
-            ios: { hierarchicalColor: item.swatchColor, name: "circle.fill" as any },
+            ios: {
+              hierarchicalColor: item.swatchColor,
+              name: "circle.fill" as any,
+            },
           },
     label: (context: any) => getSelectLabel(item, context.value),
     onSelect: () => selectProps.onValueChange?.(item.value),
@@ -298,7 +337,9 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
     <NativePressRow
       {...itemProps}
       disabled={disabled}
-      labelOpacity={fadeTitleOnOpen && menuOpen ? NATIVE_LIST_ITEM_OPEN_OPACITY : 1}
+      labelOpacity={
+        fadeTitleOnOpen && menuOpen ? NATIVE_LIST_ITEM_OPEN_OPACITY : 1
+      }
       nativeHaptics={false}
       onPress={() => menuRef.current?.presentMenu()}
       trailingControl={
@@ -310,7 +351,10 @@ export function NativeListSelectItem({ selectProps, ...itemProps }: NativeListSe
             native
             nativeHaptics={inheritedHaptics}
             nativeTrigger
-            nativeTriggerContainerStyle={[styles.selectInlineTrigger, { paddingHorizontal: 0 }]}
+            nativeTriggerContainerStyle={[
+              styles.selectInlineTrigger,
+              { paddingHorizontal: 0 },
+            ]}
             nativeTriggerIcon="chevrons-up-down"
             nativeTriggerLabelProps={{
               ...(nativeTriggerLabelProps as any),

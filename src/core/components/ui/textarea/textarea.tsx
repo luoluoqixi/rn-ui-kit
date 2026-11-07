@@ -1,5 +1,6 @@
+import { FontTextInput as TextInput } from "../provider/font_provider";
 import { cn } from "../utils/cn";
-import { Platform, TextInput, type TextStyle } from "react-native";
+import { Platform, type TextStyle } from "react-native";
 import type { TextareaProps, TextareaSize } from "./types";
 
 const WEB_PLACEHOLDER_TEXT_COLOR_CLASS_NAME = "accent-muted-foreground/50";
@@ -7,11 +8,11 @@ const WEB_PLACEHOLDER_TEXT_COLOR_CLASS_NAME = "accent-muted-foreground/50";
 const textareaTextStyles: Record<TextareaSize, TextStyle> = {
   default: { fontSize: 16 },
   "2xs": { fontSize: 12 },
-  "xs": { fontSize: 12 },
-  "sm": { fontSize: 14 },
-  "md": { fontSize: 16 },
-  "lg": { fontSize: 16 },
-  "xl": { fontSize: 18 },
+  xs: { fontSize: 12 },
+  sm: { fontSize: 14 },
+  md: { fontSize: 16 },
+  lg: { fontSize: 16 },
+  xl: { fontSize: 18 },
   "2xl": { fontSize: 20 },
 };
 
@@ -35,7 +36,9 @@ function Textarea({
       {...props}
       placeholderTextColorClassName={
         props.placeholderTextColorClassName ??
-        (Platform.OS === "web" ? WEB_PLACEHOLDER_TEXT_COLOR_CLASS_NAME : undefined)
+        (Platform.OS === "web"
+          ? WEB_PLACEHOLDER_TEXT_COLOR_CLASS_NAME
+          : undefined)
       }
       className={cn(
         baseClassName,

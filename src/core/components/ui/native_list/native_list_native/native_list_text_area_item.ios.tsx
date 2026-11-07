@@ -1,5 +1,6 @@
+import { FontTextInput as TextInput } from "../../provider/font_provider";
 import * as React from "react";
-import { StyleSheet, TextInput, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useState } from "react";
 
 import { useComponentThemeTokens as useTheme } from "../../utils/theme";
@@ -21,7 +22,9 @@ export function NativeListTextAreaItem({
   const editMode = useNativeListEditMode();
   const theme = useTheme();
   const [uncontrolledEditingValue, setUncontrolledEditingValue] = useState(
-    typeof textAreaProps.defaultValue === "string" ? textAreaProps.defaultValue : "",
+    typeof textAreaProps.defaultValue === "string"
+      ? textAreaProps.defaultValue
+      : "",
   );
   const disabled = itemProps.disabled || textAreaProps.disabled;
   const textAreaHeight = resolveTextAreaHeight(textAreaProps);
@@ -40,7 +43,9 @@ export function NativeListTextAreaItem({
     textAreaProps.defaultValue,
     textAreaProps.placeholder,
   );
-  const flattenedInputStyle = StyleSheet.flatten(inputStyle) as { color?: unknown } | undefined;
+  const flattenedInputStyle = StyleSheet.flatten(inputStyle) as
+    | { color?: unknown }
+    | undefined;
   const editingLineLimit =
     typeof textAreaProps.numberOfLines === "number"
       ? textAreaProps.numberOfLines
@@ -57,7 +62,9 @@ export function NativeListTextAreaItem({
       <NativePressRow
         {...itemProps}
         disabled={disabled}
-        paddingBottom={itemProps.paddingBottom ?? itemProps.paddingVertical ?? 10}
+        paddingBottom={
+          itemProps.paddingBottom ?? itemProps.paddingVertical ?? 10
+        }
         paddingTop={itemProps.paddingTop ?? itemProps.paddingVertical ?? 10}
         rowAlignment="top"
         rowMinHeight={textAreaHeight}
@@ -69,7 +76,10 @@ export function NativeListTextAreaItem({
   }
   return (
     <NativeListCustomItem {...itemProps} disabled={disabled}>
-      <View collapsable={false} style={[styles.textAreaRow, { height: textAreaHeight }]}>
+      <View
+        collapsable={false}
+        style={[styles.textAreaRow, { height: textAreaHeight }]}
+      >
         <TextInput
           {...(nativeTextAreaProps as any)}
           editable={!disabled}
@@ -79,7 +89,9 @@ export function NativeListTextAreaItem({
             onChangeText?.(nextValue);
           }}
           placeholderTextColor={
-            textAreaProps.placeholderTextColor ?? theme.gray9?.val ?? theme.color10.val
+            textAreaProps.placeholderTextColor ??
+            theme.gray9?.val ??
+            theme.color10.val
           }
           scrollEnabled={scrollEnabled ?? true}
           style={[

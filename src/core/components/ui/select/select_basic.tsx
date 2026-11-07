@@ -1,13 +1,22 @@
+import { useDefaultTextStyle } from "../provider/font_provider";
 import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
 import { Icon } from "../icon";
 import { NativeOnlyAnimatedView } from "../utils/native_only_animated_view";
 import { Text, TextClassContext } from "../text";
 import { cn } from "../utils/cn";
 import { resolveRenderProp, type RenderProp } from "../utils/render";
-import { OverlayPortalWindow, useOverlayPortalContentStyle } from "../utils/overlay/overlay_portal";
+import {
+  OverlayPortalWindow,
+  useOverlayPortalContentStyle,
+} from "../utils/overlay/overlay_portal";
 import { useScopedOverlayPortalHostName } from "../utils/overlay";
 import * as SelectPrimitive from "@rn-primitives/select";
-import { Check, ChevronDown, ChevronDownIcon, ChevronUpIcon } from "lucide-react-native";
+import {
+  Check,
+  ChevronDown,
+  ChevronDownIcon,
+  ChevronUpIcon,
+} from "lucide-react-native";
 import type { ComponentProps } from "react";
 import * as React from "react";
 import {
@@ -45,7 +54,8 @@ import type {
   SelectValueProps,
 } from "./types";
 
-const SelectContentSizeContext = React.createContext<SelectContentSize>("default");
+const SelectContentSizeContext =
+  React.createContext<SelectContentSize>("default");
 
 function normalizeText(children: React.ReactNode, className?: string) {
   return React.Children.map(children, (child) =>
@@ -58,7 +68,12 @@ function normalizeText(children: React.ReactNode, className?: string) {
 }
 
 function SelectItemSwatch({ color }: { color: string }) {
-  return <View className="size-3.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />;
+  return (
+    <View
+      className="size-3.5 shrink-0 rounded-full"
+      style={{ backgroundColor: color }}
+    />
+  );
 }
 
 function renderSelectDisplay(
@@ -93,6 +108,7 @@ function SelectValue({ className, ...props }: SelectValueProps) {
         className,
       )}
       placeholder=""
+      style={useDefaultTextStyle(props.style, className)}
     />
   );
 }
@@ -141,7 +157,11 @@ function SelectTrigger({
       {typeof children === "function"
         ? normalizeText(children({ hovered, pressed }))
         : normalizeText(children)}
-      <Icon as={ChevronDown} aria-hidden className="text-muted-foreground size-4 shrink-0" />
+      <Icon
+        as={ChevronDown}
+        aria-hidden
+        className="text-muted-foreground size-4 shrink-0"
+      />
     </SelectPrimitive.Trigger>
   );
 }
@@ -160,14 +180,16 @@ function SelectContent({
   ...props
 }: SelectContentProps) {
   const { height: windowHeight } = useWindowDimensions();
-  const { open, triggerPosition, contentLayout } = SelectPrimitive.useRootContext();
+  const { open, triggerPosition, contentLayout } =
+    SelectPrimitive.useRootContext();
   const scrollRef = React.useRef<ScrollView | null>(null);
   const didAutoScrollRef = React.useRef(false);
   const availableAbove = triggerPosition?.pageY ?? 0;
   const availableBelow = triggerPosition
     ? windowHeight - triggerPosition.pageY - triggerPosition.height
     : windowHeight;
-  const estimatedHeight = contentLayout?.height ?? windowHeight * SELECT_MENU_MAX_HEIGHT_RATIO;
+  const estimatedHeight =
+    contentLayout?.height ?? windowHeight * SELECT_MENU_MAX_HEIGHT_RATIO;
   const resolvedSide =
     Platform.OS === "web" || sideProp != null
       ? sideProp
@@ -194,10 +216,12 @@ function SelectContent({
   const scopedHost = useScopedOverlayPortalHostName();
   const resolvedHost = portalHost ?? scopedHost;
   const contentStyle = useOverlayPortalContentStyle(props.style);
-  const resolvedContentStyle = StyleSheet.flatten(contentStyle as any) as Record<string, unknown>;
-  const resolvedViewportStyle = StyleSheet.flatten(viewportProps?.style as any) as
-    | Record<string, unknown>
-    | undefined;
+  const resolvedContentStyle = StyleSheet.flatten(
+    contentStyle as any,
+  ) as Record<string, unknown>;
+  const resolvedViewportStyle = StyleSheet.flatten(
+    viewportProps?.style as any,
+  ) as Record<string, unknown> | undefined;
   const size = sizeProp ?? React.useContext(SelectContentSizeContext);
   return (
     <SelectPrimitive.Portal hostName={resolvedHost} container={portalContainer}>
@@ -239,13 +263,16 @@ function SelectContent({
                     Platform.select({
                       web: cn(
                         "animate-in fade-in-0 zoom-in-95 max-h-[45vh] overflow-x-hidden",
-                        showScrollButtons ? "overflow-y-auto" : "overflow-y-hidden",
+                        showScrollButtons
+                          ? "overflow-y-auto"
+                          : "overflow-y-hidden",
                         resolvedSide === "bottom" && "slide-in-from-top-2",
                         resolvedSide === "top" && "slide-in-from-bottom-2",
                       ),
                       native: "p-1",
                     }),
-                    position === "popper" && Platform.select({ web: "translate-y-1" }),
+                    position === "popper" &&
+                      Platform.select({ web: "translate-y-1" }),
                     className,
                   )}
                   style={
@@ -273,14 +300,18 @@ function SelectContent({
                             web: "min-w-[var(--radix-select-trigger-width)]",
                           }),
                         !showScrollButtons &&
-                          cn("max-h-[45vh] overflow-y-auto", "ui-menu-scrollbar"),
+                          cn(
+                            "max-h-[45vh] overflow-y-auto",
+                            "ui-menu-scrollbar",
+                          ),
                         viewportProps?.className,
                       )}
                       style={
                         {
                           ...(!showScrollButtons
                             ? {
-                                maxHeight: windowHeight * SELECT_MENU_MAX_HEIGHT_RATIO,
+                                maxHeight:
+                                  windowHeight * SELECT_MENU_MAX_HEIGHT_RATIO,
                                 overflowY: "auto",
                               }
                             : {}),
@@ -330,9 +361,24 @@ function SelectLabel({ className, ...props }: SelectLabelProps) {
         className,
       )}
       {...props}
+      style={useDefaultTextStyle(props.style, className)}
     />
   );
 }
+
+const SelectItemText = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.ItemText>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.ItemText>
+>(function SelectItemText({ className, ...props }, ref) {
+  return (
+    <SelectPrimitive.ItemText
+      {...props}
+      ref={ref}
+      className={className}
+      style={useDefaultTextStyle(props.style, className)}
+    />
+  );
+});
 
 function SelectItem({
   className,
@@ -347,9 +393,12 @@ function SelectItem({
   const size = React.useContext(SelectContentSizeContext);
   const label =
     props.label ??
-    (typeof children === "string" || typeof children === "number" ? String(children) : props.value);
+    (typeof children === "string" || typeof children === "number"
+      ? String(children)
+      : props.value);
   const customLabel =
-    children != null && !(typeof children === "string" || typeof children === "number");
+    children != null &&
+    !(typeof children === "string" || typeof children === "number");
   return (
     <SelectPrimitive.Item
       {...props}
@@ -370,14 +419,17 @@ function SelectItem({
         <SelectPrimitive.ItemIndicator {...itemIndicatorProps}>
           <Icon
             as={Check}
-            className={cn("text-muted-foreground shrink-0", menuIconSizeClasses[size])}
+            className={cn(
+              "text-muted-foreground shrink-0",
+              menuIconSizeClasses[size],
+            )}
           />
         </SelectPrimitive.ItemIndicator>
       </View>
       {startContent}
       <View className="min-w-0 flex-1">
         {customLabel ? normalizeText(children) : null}
-        <SelectPrimitive.ItemText
+        <SelectItemText
           {...itemTextProps}
           className={cn(
             cn(
@@ -389,7 +441,10 @@ function SelectItem({
           )}
         />
         {description != null
-          ? normalizeText(description, cn("text-muted-foreground", menuTextSizeClasses[size]))
+          ? normalizeText(
+              description,
+              cn("text-muted-foreground", menuTextSizeClasses[size]),
+            )
           : null}
       </View>
       {endContent}
@@ -418,7 +473,10 @@ function SelectScrollUpButton({
   const size = React.useContext(SelectContentSizeContext);
   return (
     <SelectPrimitive.ScrollUpButton
-      className={cn("flex cursor-default items-center justify-center py-1", className)}
+      className={cn(
+        "flex cursor-default items-center justify-center py-1",
+        className,
+      )}
       {...props}
     >
       <Icon as={ChevronUpIcon} className={menuIconSizeClasses[size]} />
@@ -433,7 +491,10 @@ function SelectScrollDownButton({
   const size = React.useContext(SelectContentSizeContext);
   return (
     <SelectPrimitive.ScrollDownButton
-      className={cn("flex cursor-default items-center justify-center py-1", className)}
+      className={cn(
+        "flex cursor-default items-center justify-center py-1",
+        className,
+      )}
       {...props}
     >
       <Icon as={ChevronDownIcon} className={menuIconSizeClasses[size]} />
@@ -458,7 +519,9 @@ function renderGeneratedItems(props: SelectProps, selectedValue?: string) {
   });
   return groups.map((group, groupIndex) => {
     const groupLabel =
-      group.label == null ? null : resolveRenderProp(group.label, { value: selectedValue ?? "" });
+      group.label == null
+        ? null
+        : resolveRenderProp(group.label, { value: selectedValue ?? "" });
     const body = group.items.map((item) => {
       const selected = item.value === selectedValue;
       const ctx = {
@@ -477,7 +540,9 @@ function renderGeneratedItems(props: SelectProps, selectedValue?: string) {
           description={resolveRenderProp(item.description, ctx)}
           startContent={
             <>
-              {item.swatchColor != null ? <SelectItemSwatch color={item.swatchColor} /> : null}
+              {item.swatchColor != null ? (
+                <SelectItemSwatch color={item.swatchColor} />
+              ) : null}
               {normalizeText(resolveRenderProp(item.startContent, ctx))}
             </>
           }
@@ -496,7 +561,9 @@ function renderGeneratedItems(props: SelectProps, selectedValue?: string) {
       <SelectPrimitive.Group key={group.key}>
         <>
           {groupLabel ? (
-            <SelectLabel {...group.labelProps}>{normalizeText(groupLabel)}</SelectLabel>
+            <SelectLabel {...group.labelProps}>
+              {normalizeText(groupLabel)}
+            </SelectLabel>
           ) : null}
           {body}
         </>
@@ -584,193 +651,211 @@ const GeneratedSelectTrigger = React.forwardRef<
   );
 });
 
-export const SelectBasic = React.forwardRef<SelectHandle, SelectProps>(function SelectBasic(
-  {
-    children,
-    items,
-    itemGroups,
-    options,
-    native,
-    nativeDropdownAlign,
-    nativeDropdownAnchorWidth,
-    nativeDropdownEdgeOffset,
-    nativeHaptics,
-    nativePickerProps,
-    nativeSelectProps,
-    nativeTrigger,
-    nativeTriggerContainerStyle,
-    nativeTriggerContent,
-    nativeTriggerIcon,
-    nativeTriggerLabel,
-    nativeTriggerLabelProps,
-    nativeTriggerProps,
-    nativeTriggerFeedbackOpacity,
-    nativeTriggerHoverBackground,
-    nativeTriggerHoverOpacity,
-    contentProps,
-    itemProps,
-    itemIndicatorProps,
-    itemTextProps,
-    placeholder,
-    renderValue,
-    sheetProps,
-    showScrollButtons,
-    triggerProps,
-    triggerSize,
-    contentSize,
-    triggerFontWeight,
-    viewportProps,
-    isDisabled,
-    onValueChange,
-    ...props
-  }: SelectProps,
-  ref,
-) {
-  const selectedValue = props.value ?? props.defaultValue ?? undefined;
-  const sourceOptions = itemGroups?.flatMap((group) => group.items) ?? items ?? options ?? [];
-  const selectedIndex = Math.max(
-    0,
-    sourceOptions.findIndex((item) => item.value === selectedValue),
-  );
-  const initialScrollOffset = Math.max(0, selectedIndex * 52 - 104);
-  const itemOptions = sourceOptions.map((item) => ({
-    value: item.value,
-    label: String(
-      resolveRenderProp(item.label, {
-        checked: item.value === selectedValue,
-        disabled: false,
-        selected: item.value === selectedValue,
-        value: item.value,
-      }) ?? item.value,
-    ),
-  }));
-  const resolvedHaptics = useResolvedNativeHaptics(nativeHaptics);
-  const triggerRef = React.useRef<any>(null);
-  React.useImperativeHandle(
+export const SelectBasic = React.forwardRef<SelectHandle, SelectProps>(
+  function SelectBasic(
+    {
+      children,
+      items,
+      itemGroups,
+      options,
+      native,
+      nativeDropdownAlign,
+      nativeDropdownAnchorWidth,
+      nativeDropdownEdgeOffset,
+      nativeHaptics,
+      nativePickerProps,
+      nativeSelectProps,
+      nativeTrigger,
+      nativeTriggerContainerStyle,
+      nativeTriggerContent,
+      nativeTriggerIcon,
+      nativeTriggerLabel,
+      nativeTriggerLabelProps,
+      nativeTriggerProps,
+      nativeTriggerFeedbackOpacity,
+      nativeTriggerHoverBackground,
+      nativeTriggerHoverOpacity,
+      contentProps,
+      itemProps,
+      itemIndicatorProps,
+      itemTextProps,
+      placeholder,
+      renderValue,
+      sheetProps,
+      showScrollButtons,
+      triggerProps,
+      triggerSize,
+      contentSize,
+      triggerFontWeight,
+      viewportProps,
+      isDisabled,
+      onValueChange,
+      ...props
+    }: SelectProps,
     ref,
-    () => ({
-      open: () => triggerRef.current?.open?.(),
-      close: () => triggerRef.current?.close?.(),
-    }),
-    [],
-  );
-  const rootHasFullWidthClass = props.className?.split(/\s+/).includes("w-full") === true;
-  const generated =
-    children ??
-    (items != null || itemGroups != null || options != null ? (
-      <>
-        <GeneratedSelectTrigger
-          className={props.className}
-          disabled={props.disabled ?? isDisabled}
-          label={
-            resolveRenderProp(renderValue, {
-              value: selectedValue,
-              item: sourceOptions.find((item) => item.value === selectedValue),
-            }) ??
-            resolveRenderProp(sourceOptions.find((item) => item.value === selectedValue)?.label, {
-              checked: true,
-              disabled: false,
-              selected: true,
-              value: selectedValue ?? "",
-            }) ??
-            placeholder ??
-            "选择"
-          }
-          nativeTrigger={nativeTrigger}
-          nativeTriggerContainerStyle={nativeTriggerContainerStyle}
-          nativeTriggerContent={nativeTriggerContent}
-          nativeTriggerIcon={nativeTriggerIcon}
-          nativeTriggerLabel={nativeTriggerLabel}
-          nativeTriggerLabelProps={nativeTriggerLabelProps}
-          selectProps={{
-            ...props,
-            itemGroups,
-            items,
-            options,
-            placeholder,
-            renderValue,
-            nativeTriggerContainerStyle,
-            nativeTriggerContent,
-            nativeTriggerIcon,
-            nativeTriggerLabel,
-            nativeTriggerLabelProps,
-            nativeTriggerFeedbackOpacity,
-            nativeTriggerHoverBackground,
-            nativeTriggerHoverOpacity,
-            nativeTriggerProps,
-            triggerSize,
-            triggerFontWeight,
-            triggerProps,
-          }}
-          swatchColor={sourceOptions.find((item) => item.value === selectedValue)?.swatchColor}
-          ref={triggerRef}
-        />
-        <SelectContent
-          {...contentProps}
-          showScrollButtons={showScrollButtons ?? contentProps?.showScrollButtons}
-          initialScrollOffset={initialScrollOffset}
-          viewportProps={viewportProps}
-        >
-          {renderGeneratedItems(
-            {
+  ) {
+    const selectedValue = props.value ?? props.defaultValue ?? undefined;
+    const sourceOptions =
+      itemGroups?.flatMap((group) => group.items) ?? items ?? options ?? [];
+    const selectedIndex = Math.max(
+      0,
+      sourceOptions.findIndex((item) => item.value === selectedValue),
+    );
+    const initialScrollOffset = Math.max(0, selectedIndex * 52 - 104);
+    const itemOptions = sourceOptions.map((item) => ({
+      value: item.value,
+      label: String(
+        resolveRenderProp(item.label, {
+          checked: item.value === selectedValue,
+          disabled: false,
+          selected: item.value === selectedValue,
+          value: item.value,
+        }) ?? item.value,
+      ),
+    }));
+    const resolvedHaptics = useResolvedNativeHaptics(nativeHaptics);
+    const triggerRef = React.useRef<any>(null);
+    React.useImperativeHandle(
+      ref,
+      () => ({
+        open: () => triggerRef.current?.open?.(),
+        close: () => triggerRef.current?.close?.(),
+      }),
+      [],
+    );
+    const rootHasFullWidthClass =
+      props.className?.split(/\s+/).includes("w-full") === true;
+    const generated =
+      children ??
+      (items != null || itemGroups != null || options != null ? (
+        <>
+          <GeneratedSelectTrigger
+            className={props.className}
+            disabled={props.disabled ?? isDisabled}
+            label={
+              resolveRenderProp(renderValue, {
+                value: selectedValue,
+                item: sourceOptions.find(
+                  (item) => item.value === selectedValue,
+                ),
+              }) ??
+              resolveRenderProp(
+                sourceOptions.find((item) => item.value === selectedValue)
+                  ?.label,
+                {
+                  checked: true,
+                  disabled: false,
+                  selected: true,
+                  value: selectedValue ?? "",
+                },
+              ) ??
+              placeholder ??
+              "选择"
+            }
+            nativeTrigger={nativeTrigger}
+            nativeTriggerContainerStyle={nativeTriggerContainerStyle}
+            nativeTriggerContent={nativeTriggerContent}
+            nativeTriggerIcon={nativeTriggerIcon}
+            nativeTriggerLabel={nativeTriggerLabel}
+            nativeTriggerLabelProps={nativeTriggerLabelProps}
+            selectProps={{
               ...props,
-              itemProps,
-              itemIndicatorProps,
-              itemTextProps,
-              items,
               itemGroups,
+              items,
               options,
-            },
-            selectedValue,
-          )}
-        </SelectContent>
-      </>
-    ) : null);
-  return (
-    <SelectPrimitive.Root
-      {...(props as any)}
-      // Generated triggers are content-sized unless their own className asks
-      // for `w-full`. The primitive Root is a View whose default cross-axis
-      // stretch would otherwise expand both trigger variants.
-      style={[
-        {
-          alignItems: "flex-start",
-          alignSelf: rootHasFullWidthClass ? "stretch" : "flex-start",
-          width: rootHasFullWidthClass ? "100%" : "auto",
-        },
-        props.style,
-      ]}
-      disabled={props.disabled ?? isDisabled}
-      onOpenChange={(nextOpen) => {
-        if (nextOpen) triggerNativeHaptics(resolvedHaptics);
-        props.onOpenChange?.(nextOpen);
-      }}
-      value={
-        selectedValue == null
-          ? undefined
-          : itemOptions.find((option) => option.value === selectedValue)
-      }
-      defaultValue={
-        props.defaultValue == null
-          ? undefined
-          : itemOptions.find((option) => option.value === props.defaultValue)
-      }
-      onValueChange={(option: { value: string; label: string } | undefined) => {
-        triggerNativeHaptics(resolvedHaptics);
-        onValueChange?.(option?.value ?? null);
-      }}
-    >
-      <SelectContentSizeContext.Provider value={contentSize ?? "default"}>
-        {generated}
-      </SelectContentSizeContext.Provider>
-    </SelectPrimitive.Root>
-  );
-});
+              placeholder,
+              renderValue,
+              nativeTriggerContainerStyle,
+              nativeTriggerContent,
+              nativeTriggerIcon,
+              nativeTriggerLabel,
+              nativeTriggerLabelProps,
+              nativeTriggerFeedbackOpacity,
+              nativeTriggerHoverBackground,
+              nativeTriggerHoverOpacity,
+              nativeTriggerProps,
+              triggerSize,
+              triggerFontWeight,
+              triggerProps,
+            }}
+            swatchColor={
+              sourceOptions.find((item) => item.value === selectedValue)
+                ?.swatchColor
+            }
+            ref={triggerRef}
+          />
+          <SelectContent
+            {...contentProps}
+            showScrollButtons={
+              showScrollButtons ?? contentProps?.showScrollButtons
+            }
+            initialScrollOffset={initialScrollOffset}
+            viewportProps={viewportProps}
+          >
+            {renderGeneratedItems(
+              {
+                ...props,
+                itemProps,
+                itemIndicatorProps,
+                itemTextProps,
+                items,
+                itemGroups,
+                options,
+              },
+              selectedValue,
+            )}
+          </SelectContent>
+        </>
+      ) : null);
+    return (
+      <SelectPrimitive.Root
+        {...(props as any)}
+        // Generated triggers are content-sized unless their own className asks
+        // for `w-full`. The primitive Root is a View whose default cross-axis
+        // stretch would otherwise expand both trigger variants.
+        style={[
+          {
+            alignItems: "flex-start",
+            alignSelf: rootHasFullWidthClass ? "stretch" : "flex-start",
+            width: rootHasFullWidthClass ? "100%" : "auto",
+          },
+          props.style,
+        ]}
+        disabled={props.disabled ?? isDisabled}
+        onOpenChange={(nextOpen) => {
+          if (nextOpen) triggerNativeHaptics(resolvedHaptics);
+          props.onOpenChange?.(nextOpen);
+        }}
+        value={
+          selectedValue == null
+            ? undefined
+            : itemOptions.find((option) => option.value === selectedValue)
+        }
+        defaultValue={
+          props.defaultValue == null
+            ? undefined
+            : itemOptions.find((option) => option.value === props.defaultValue)
+        }
+        onValueChange={(
+          option: { value: string; label: string } | undefined,
+        ) => {
+          triggerNativeHaptics(resolvedHaptics);
+          onValueChange?.(option?.value ?? null);
+        }}
+      >
+        <SelectContentSizeContext.Provider value={contentSize ?? "default"}>
+          {generated}
+        </SelectContentSizeContext.Provider>
+      </SelectPrimitive.Root>
+    );
+  },
+);
 
 export const SelectBasicComponent = Object.assign(SelectBasic, {
   Content: SelectContent,
   Group: (props: SelectGroupProps) => <SelectPrimitive.Group {...props} />,
   Item: SelectItem,
+  ItemText: SelectItemText,
   Label: SelectLabel,
   Root: SelectBasic,
   ScrollDownButton: SelectScrollDownButton,

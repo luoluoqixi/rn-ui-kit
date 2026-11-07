@@ -1,3 +1,4 @@
+import { useDefaultTextStyle } from "../provider/font_provider";
 import { ModalContentScope } from "../utils/overlay/modal_content_scope";
 import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
 import { Icon } from "../icon";
@@ -32,7 +33,10 @@ import type {
 
 const DialogTrigger = DialogPrimitive.Trigger;
 
-function DialogPortal({ hostName, ...props }: React.ComponentProps<typeof DialogPrimitive.Portal>) {
+function DialogPortal({
+  hostName,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Portal>) {
   const portalContainer = useOverlayPortalContainer();
   const scopedPortalHost = useScopedOverlayPortalHostName();
   return (
@@ -48,9 +52,15 @@ const DialogClose = DialogPrimitive.Close;
 
 function normalizeDialogChildren(children: React.ReactNode) {
   const normalized = React.Children.map(children, (child) =>
-    typeof child === "string" || typeof child === "number" ? <Text>{child}</Text> : child,
+    typeof child === "string" || typeof child === "number" ? (
+      <Text>{child}</Text>
+    ) : (
+      child
+    ),
   );
-  return normalized != null && normalized.length === 1 ? normalized[0] : normalized;
+  return normalized != null && normalized.length === 1
+    ? normalized[0]
+    : normalized;
 }
 
 function DialogRoot({
@@ -81,12 +91,20 @@ function DialogRoot({
   triggerProps,
   ...rootProps
 }: DialogProps) {
-  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen ?? false);
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(
+    defaultOpen ?? false,
+  );
   const hasDataStructure =
     children == null &&
-    [actionLabel, actions, cancelLabel, content, description, title, trigger].some(
-      (value) => value !== undefined,
-    );
+    [
+      actionLabel,
+      actions,
+      cancelLabel,
+      content,
+      description,
+      title,
+      trigger,
+    ].some((value) => value !== undefined);
 
   if (!hasDataStructure) {
     return (
@@ -124,7 +142,11 @@ function DialogRoot({
     );
 
   return (
-    <DialogPrimitive.Root {...rootProps} onOpenChange={handleOpenChange} open={resolvedOpen}>
+    <DialogPrimitive.Root
+      {...rootProps}
+      onOpenChange={handleOpenChange}
+      open={resolvedOpen}
+    >
       {triggerElement != null ? (
         <DialogTrigger
           {...triggerProps}
@@ -134,26 +156,39 @@ function DialogRoot({
           {triggerElement}
         </DialogTrigger>
       ) : null}
-      <DialogContent {...contentProps} className={cn(contentClassName, contentProps?.className)}>
+      <DialogContent
+        {...contentProps}
+        className={cn(contentClassName, contentProps?.className)}
+      >
         {renderedTitle != null || renderedDescription != null ? (
           <DialogHeader className={headerClassName}>
             {renderedTitle != null ? (
-              <DialogTitle {...titleProps} className={cn(titleClassName, titleProps?.className)}>
+              <DialogTitle
+                {...titleProps}
+                className={cn(titleClassName, titleProps?.className)}
+              >
                 {renderedTitle}
               </DialogTitle>
             ) : null}
             {renderedDescription != null ? (
               <DialogDescription
                 {...descriptionProps}
-                className={cn(descriptionClassName, descriptionProps?.className)}
+                className={cn(
+                  descriptionClassName,
+                  descriptionProps?.className,
+                )}
               >
                 {renderedDescription}
               </DialogDescription>
             ) : null}
           </DialogHeader>
         ) : null}
-        {renderedContent != null ? normalizeDialogChildren(renderedContent) : null}
-        {renderedActions != null || renderedCancelLabel != null || renderedActionLabel != null ? (
+        {renderedContent != null
+          ? normalizeDialogChildren(renderedContent)
+          : null}
+        {renderedActions != null ||
+        renderedCancelLabel != null ||
+        renderedActionLabel != null ? (
           <DialogFooter className={footerClassName}>
             {normalizeDialogChildren(renderedActions)}
             {renderedCancelLabel != null ? (
@@ -168,7 +203,10 @@ function DialogRoot({
               </DialogClose>
             ) : null}
             {renderedActionLabel != null ? (
-              <Button {...actionProps} className={cn(actionClassName, actionProps?.className)}>
+              <Button
+                {...actionProps}
+                className={cn(actionClassName, actionProps?.className)}
+              >
                 {normalizeDialogChildren(renderedActionLabel)}
               </Button>
             ) : null}
@@ -246,7 +284,8 @@ function DialogContent({
   ...props
 }: DialogContentProps) {
   const scopedPortalHost = useScopedOverlayPortalHostName();
-  const resolvedPortalHost = portalHost ?? portalProps?.hostName ?? scopedPortalHost;
+  const resolvedPortalHost =
+    portalHost ?? portalProps?.hostName ?? scopedPortalHost;
 
   return (
     <DialogPortal {...portalProps} hostName={resolvedPortalHost}>
@@ -284,7 +323,9 @@ function DialogContent({
             >
               <Icon
                 as={X}
-                className={cn("text-accent-foreground web:pointer-events-none size-4 shrink-0")}
+                className={cn(
+                  "text-accent-foreground web:pointer-events-none size-4 shrink-0",
+                )}
               />
               <Text className="sr-only">Close</Text>
             </DialogPrimitive.Close>
@@ -297,24 +338,37 @@ function DialogContent({
 
 function DialogHeader({ className, ...props }: ViewProps) {
   return (
-    <View className={cn("flex flex-col gap-2 text-center sm:text-left", className)} {...props} />
+    <View
+      className={cn("flex flex-col gap-2 text-center sm:text-left", className)}
+      {...props}
+    />
   );
 }
 
 function DialogFooter({ className, ...props }: ViewProps) {
   return (
     <View
-      className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end", className)}
+      className={cn(
+        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
+        className,
+      )}
       {...props}
     />
   );
 }
 
-function DialogTitle({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Title>) {
+function DialogTitle({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Title>) {
   return (
     <DialogPrimitive.Title
-      className={cn("text-foreground text-lg font-semibold leading-none", className)}
+      className={cn(
+        "text-foreground text-lg font-semibold leading-none",
+        className,
+      )}
       {...props}
+      style={useDefaultTextStyle(props.style, className)}
     />
   );
 }
@@ -327,6 +381,7 @@ function DialogDescription({
     <DialogPrimitive.Description
       className={cn("text-muted-foreground text-sm", className)}
       {...props}
+      style={useDefaultTextStyle(props.style, className)}
     />
   );
 }

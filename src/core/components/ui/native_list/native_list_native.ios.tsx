@@ -1,3 +1,4 @@
+import { useTextFontFamily } from "../provider/font_provider";
 import {
   ContextMenu as SwiftContextMenu,
   Divider as SwiftDivider,
@@ -71,14 +72,24 @@ import { getTrueSheetScrollBottomPadding } from "../sheet/native_sheet/true_shee
 import { useTrueSheetScrollLayout } from "../sheet/native_sheet/true_sheet/true_sheet_scroll_context";
 import { isIos15, isIos26Plus } from "../utils/platform";
 import { resolveRenderProp } from "../utils/render";
-import { toSwiftUIHexColor, triggerNativeHaptics, useResolvedNativeHaptics } from "../utils";
+import {
+  toSwiftUIHexColor,
+  triggerNativeHaptics,
+  useResolvedNativeHaptics,
+} from "../utils";
 import {
   NativeListContextMenuProvider,
   useResolvedNativeListDisabledStyle,
   useResolvedNativeListContextMenu,
 } from "./context_menu";
-import { NativeListHapticsProvider, useResolvedNativeListHaptics } from "./haptics";
-import { NATIVE_LIST_DISABLED_OPACITY, NATIVE_LIST_TRAILING_TRIGGER_OPACITY } from "./constants";
+import {
+  NativeListHapticsProvider,
+  useResolvedNativeListHaptics,
+} from "./haptics";
+import {
+  NATIVE_LIST_DISABLED_OPACITY,
+  NATIVE_LIST_TRAILING_TRIGGER_OPACITY,
+} from "./constants";
 import {
   NativeListEditModeProvider,
   useNativeListEditContext,
@@ -150,7 +161,10 @@ function getNativeContextMenuLabel(item: ContextMenuItemData) {
   return item.textValue ?? item.value;
 }
 
-export function getSelectLabel(item: ResolvedSelectItemData, selectedValue?: string): string {
+export function getSelectLabel(
+  item: ResolvedSelectItemData,
+  selectedValue?: string,
+): string {
   const rendered = resolveRenderProp(item.label, {
     checked: item.value === selectedValue,
     disabled: Boolean(item.disabled ?? item.isDisabled),
@@ -201,7 +215,11 @@ export function renderNativeListSelectTriggerLabel(
     );
 
   return (
-    <View style={{ opacity: configuredOpacity ?? NATIVE_LIST_TRAILING_TRIGGER_OPACITY }}>
+    <View
+      style={{
+        opacity: configuredOpacity ?? NATIVE_LIST_TRAILING_TRIGGER_OPACITY,
+      }}
+    >
       {content}
     </View>
   );
@@ -279,7 +297,10 @@ function NativeSwiftUIContextMenuItems({
           modifiers={[disabledModifier(disabled)]}
           systemImage={item.selected ? "checkmark" : undefined}
         >
-          <NativeSwiftUIContextMenuItems itemProps={itemProps} items={item.subMenu} />
+          <NativeSwiftUIContextMenuItems
+            itemProps={itemProps}
+            items={item.subMenu}
+          />
         </SwiftMenu>
       );
     }
@@ -405,7 +426,9 @@ export function resolveRowPadding({
   };
 }
 
-export function resolveTextAreaHeight(textAreaProps: NativeListTextAreaItemProps["textAreaProps"]) {
+export function resolveTextAreaHeight(
+  textAreaProps: NativeListTextAreaItemProps["textAreaProps"],
+) {
   const style = StyleSheet.flatten(textAreaProps.style) as {
     height?: unknown;
     minHeight?: unknown;
@@ -423,7 +446,10 @@ export function resolveTextAreaHeight(textAreaProps: NativeListTextAreaItemProps
 
   return (
     configuredHeight ??
-    Math.max(100, numberOfLines * TEXT_AREA_LINE_HEIGHT + TEXT_AREA_VERTICAL_PADDING)
+    Math.max(
+      100,
+      numberOfLines * TEXT_AREA_LINE_HEIGHT + TEXT_AREA_VERTICAL_PADDING,
+    )
   );
 }
 
@@ -434,7 +460,9 @@ export function resolveEditingInputDisplay(
 ) {
   const inputValue = value ?? defaultValue;
   const text =
-    typeof inputValue === "string" || typeof inputValue === "number" ? String(inputValue) : "";
+    typeof inputValue === "string" || typeof inputValue === "number"
+      ? String(inputValue)
+      : "";
 
   if (text.length > 0) {
     return { placeholder: false, text };
@@ -446,16 +474,36 @@ export function resolveEditingInputDisplay(
   };
 }
 
-function titleModifiers(fontSize?: number) {
-  return [font({ size: fontSize ?? DEFAULT_TITLE_FONT_SIZE, weight: "regular" })];
+function titleModifiers(fontSize?: number, family?: string) {
+  return [
+    font({
+      family,
+      size: fontSize ?? DEFAULT_TITLE_FONT_SIZE,
+      weight: "regular",
+    }),
+  ];
 }
 
-function subtitleModifiers(fontSize?: number) {
-  return [font({ size: fontSize ?? DEFAULT_SUBTITLE_FONT_SIZE, weight: "regular" }), lineLimit(4)];
+function subtitleModifiers(fontSize?: number, family?: string) {
+  return [
+    font({
+      family,
+      size: fontSize ?? DEFAULT_SUBTITLE_FONT_SIZE,
+      weight: "regular",
+    }),
+    lineLimit(4),
+  ];
 }
 
-function valueModifiers(fontSize?: number) {
-  return [font({ size: fontSize ?? DEFAULT_VALUE_FONT_SIZE, weight: "regular" }), lineLimit(1)];
+function valueModifiers(fontSize?: number, family?: string) {
+  return [
+    font({
+      family,
+      size: fontSize ?? DEFAULT_VALUE_FONT_SIZE,
+      weight: "regular",
+    }),
+    lineLimit(1),
+  ];
 }
 
 export function toPlainText(value: ReactNode): string | null {
@@ -532,17 +580,29 @@ export function NativeRowLabel({
   opacityValue?: number;
   preserveLeadingAnchor?: boolean;
 }) {
+  const fontFamily = useTextFontFamily();
   const theme = useTheme();
   const titleText = toPlainText(title);
   const subtitleText = toPlainText(subtitle);
   const assistColor = resolveNativeListAssistColor(theme);
   const resolvedTextAlignment =
-    titleAlign === "center" ? "center" : titleAlign === "right" ? "trailing" : "leading";
-  const resolvedTitleColor = resolveNativeListTitleColor(titleColor ?? undefined, theme);
+    titleAlign === "center"
+      ? "center"
+      : titleAlign === "right"
+        ? "trailing"
+        : "leading";
+  const resolvedTitleColor = resolveNativeListTitleColor(
+    titleColor ?? undefined,
+    theme,
+  );
   const resolvedSubtitleColor =
-    (subtitleColor != null ? toSwiftUIHexColor(subtitleColor) : undefined) ?? assistColor;
+    (subtitleColor != null ? toSwiftUIHexColor(subtitleColor) : undefined) ??
+    assistColor;
 
-  if ((title != null && titleText == null) || (subtitle != null && subtitleText == null)) {
+  if (
+    (title != null && titleText == null) ||
+    (subtitle != null && subtitleText == null)
+  ) {
     return null;
   }
 
@@ -551,15 +611,19 @@ export function NativeRowLabel({
       alignment={resolvedTextAlignment}
       modifiers={[
         ...(opacityValue !== 1 ? [opacity(opacityValue)] : []),
-        ...(expand ? [frame({ maxWidth: 99999, alignment: resolvedTextAlignment })] : []),
+        ...(expand
+          ? [frame({ maxWidth: 99999, alignment: resolvedTextAlignment })]
+          : []),
       ]}
       spacing={subtitleText != null ? 4 : 0}
     >
       {titleText != null ? (
         <SwiftText
           modifiers={[
-            ...titleModifiers(titleFontSize),
-            ...(resolvedTitleColor != null ? [foregroundStyle(resolvedTitleColor)] : []),
+            ...titleModifiers(titleFontSize, fontFamily),
+            ...(resolvedTitleColor != null
+              ? [foregroundStyle(resolvedTitleColor)]
+              : []),
             lineLimit(titleLineLimit ?? (subtitleText != null ? 2 : 1)),
             multilineTextAlignment(resolvedTextAlignment),
           ]}
@@ -570,7 +634,7 @@ export function NativeRowLabel({
       {subtitleText != null ? (
         <SwiftText
           modifiers={[
-            ...subtitleModifiers(subtitleFontSize),
+            ...subtitleModifiers(subtitleFontSize, fontFamily),
             foregroundStyle(resolvedSubtitleColor),
           ]}
         >
@@ -593,14 +657,16 @@ export function NativeRowLabel({
           alignment="leading"
           modifiers={[
             opacity(0),
-            ...(expand ? [frame({ maxWidth: 99999, alignment: "leading" })] : []),
+            ...(expand
+              ? [frame({ maxWidth: 99999, alignment: "leading" })]
+              : []),
           ]}
           spacing={subtitleText != null ? 4 : 0}
         >
           {titleText != null ? (
             <SwiftText
               modifiers={[
-                ...titleModifiers(titleFontSize),
+                ...titleModifiers(titleFontSize, fontFamily),
                 lineLimit(titleLineLimit ?? (subtitleText != null ? 2 : 1)),
               ]}
             >
@@ -608,7 +674,11 @@ export function NativeRowLabel({
             </SwiftText>
           ) : null}
           {subtitleText != null ? (
-            <SwiftText modifiers={subtitleModifiers(subtitleFontSize)}>{subtitleText}</SwiftText>
+            <SwiftText
+              modifiers={subtitleModifiers(subtitleFontSize, fontFamily)}
+            >
+              {subtitleText}
+            </SwiftText>
           ) : null}
         </VStack>
         {labelContent}
@@ -616,7 +686,11 @@ export function NativeRowLabel({
     );
   }
 
-  return <VStack modifiers={[layoutPriority(layoutPriorityValue)]}>{labelContent}</VStack>;
+  return (
+    <VStack modifiers={[layoutPriority(layoutPriorityValue)]}>
+      {labelContent}
+    </VStack>
+  );
 }
 
 export function NativeRowContainer({
@@ -664,17 +738,22 @@ export function NativeRowContainer({
 } & NativeListItemPaddingProps) {
   const theme = useTheme();
   const restoresIos15TopCorners = useContext(Ios15FirstVisibleRowContext);
-  const usesNativeSelectionStyle = nativeSelectionActive ?? nativeSelectionId != null;
+  const usesNativeSelectionStyle =
+    nativeSelectionActive ?? nativeSelectionId != null;
   const primaryColor = toSwiftUIHexColor(theme.color.val) ?? theme.color.val;
   const resolvedTint = resolveNativeListBtnTintColor(btnTint, primaryColor);
-  const resolvedDisabledStyle = useResolvedNativeListDisabledStyle(disabledStyle);
+  const resolvedDisabledStyle =
+    useResolvedNativeListDisabledStyle(disabledStyle);
   const swiftUIContextMenuProps =
-    (!disabled || contextMenuDisabled) && hasSwiftUIContextMenu(contextMenuProps)
+    (!disabled || contextMenuDisabled) &&
+    hasSwiftUIContextMenu(contextMenuProps)
       ? contextMenuProps
       : undefined;
   const baseModifiers = [
     ROW_INSETS,
-    ...(disabled && resolvedDisabledStyle ? [opacity(NATIVE_LIST_DISABLED_OPACITY)] : []),
+    ...(disabled && resolvedDisabledStyle
+      ? [opacity(NATIVE_LIST_DISABLED_OPACITY)]
+      : []),
     padding(
       resolveRowPadding({
         paddingBottom,
@@ -699,7 +778,9 @@ export function NativeRowContainer({
       alignment={rowAlignment}
       modifiers={[
         ...baseModifiers,
-        ...(btnStyle === "plain" || restoresIos15TopCorners || contextMenuProps != null
+        ...(btnStyle === "plain" ||
+        restoresIos15TopCorners ||
+        contextMenuProps != null
           ? [frame({ maxWidth: 99999, alignment: "leading" })]
           : []),
         ...(btnStyle === "plain" || contextMenuProps != null
@@ -735,7 +816,11 @@ export function NativeRowContainer({
           // Keep the Button node stable on iOS 15, but let the native List own
           // edit-mode row touches so selection begins with the system control.
           ...(isIos15()
-            ? [nativeAllowsHitTesting(!nativeSelectionActive || disabled === true)]
+            ? [
+                nativeAllowsHitTesting(
+                  !nativeSelectionActive || disabled === true,
+                ),
+              ]
             : []),
           buttonStyle(btnStyle ?? "automatic"),
           ...(nativeScrollId != null ? [viewID(nativeScrollId)] : []),
@@ -766,7 +851,10 @@ export function NativeRowContainer({
     ...(nativeScrollId != null ? [viewID(nativeScrollId)] : []),
     ...(nativeSelectionId != null ? [tag(nativeSelectionId)] : []),
     ...(restoresIos15TopCorners || contextMenuProps != null
-      ? [frame({ maxWidth: 99999, alignment: "leading" }), contentShape(shapes.rectangle())]
+      ? [
+          frame({ maxWidth: 99999, alignment: "leading" }),
+          contentShape(shapes.rectangle()),
+        ]
       : []),
     ...(restoresIos15TopCorners
       ? [
@@ -844,7 +932,10 @@ export function NativeHostedTrailingControl({
       <View
         collapsable={false}
         pointerEvents={interactionsDisabled ? "none" : "auto"}
-        style={[styles.trailingHostedContent, interactionsDisabled ? styles.disabledContent : null]}
+        style={[
+          styles.trailingHostedContent,
+          interactionsDisabled ? styles.disabledContent : null,
+        ]}
       >
         {children}
       </View>
@@ -853,10 +944,15 @@ export function NativeHostedTrailingControl({
 }
 
 function NativeTrailingContent({ children }: { children: ReactNode }) {
+  const fontFamily = useTextFontFamily();
   const text = toPlainText(children);
 
   if (text != null) {
-    return <SwiftText modifiers={valueModifiers()}>{text}</SwiftText>;
+    return (
+      <SwiftText modifiers={valueModifiers(undefined, fontFamily)}>
+        {text}
+      </SwiftText>
+    );
   }
 
   return <NativeHostedTrailingControl>{children}</NativeHostedTrailingControl>;
@@ -876,7 +972,10 @@ export function NativeHostedCustomRow({
       <View
         collapsable={false}
         pointerEvents={disableInteractions || disabled ? "none" : "auto"}
-        style={[styles.customRowShell, disabled ? styles.disabledContent : null]}
+        style={[
+          styles.customRowShell,
+          disabled ? styles.disabledContent : null,
+        ]}
       >
         {children}
       </View>
@@ -952,9 +1051,11 @@ export function NativePressRow({
   /** Fallback duration for an unconfirmed optimistic navigation selection. */
   iosNavigationSelectionAutoClearDelay?: number;
 }) {
+  const fontFamily = useTextFontFamily();
   const theme = useTheme();
   const inheritedNativeHaptics = useResolvedNativeListHaptics(nativeHaptics);
-  const resolvedContextMenuProps = useResolvedNativeListContextMenu(contextMenuProps);
+  const resolvedContextMenuProps =
+    useResolvedNativeListContextMenu(contextMenuProps);
   const editRow = useNativeListEditRow({
     disabled,
     nativeScrollId,
@@ -968,13 +1069,16 @@ export function NativePressRow({
   const accentColor = toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;
   const assistColor = resolveNativeListAssistColor(theme);
   const resolvedChevronColor =
-    (chevronColor != null ? toSwiftUIHexColor(chevronColor) : undefined) ?? assistColor;
+    (chevronColor != null ? toSwiftUIHexColor(chevronColor) : undefined) ??
+    assistColor;
   const resolvedIconColor =
-    (iconColor != null ? toSwiftUIHexColor(iconColor) : undefined) ?? accentColor;
+    (iconColor != null ? toSwiftUIHexColor(iconColor) : undefined) ??
+    accentColor;
   const resolvedIconSize = iconSize ?? 20;
   const resolvedIconSlotWidth = iconSlotWidth ?? Math.max(24, resolvedIconSize);
   const resolvedValueColor =
-    (valueColor != null ? toSwiftUIHexColor(valueColor) : undefined) ?? assistColor;
+    (valueColor != null ? toSwiftUIHexColor(valueColor) : undefined) ??
+    assistColor;
   const titleText = toPlainText(title);
   const subtitleText = toPlainText(subtitle);
   const valueText = toPlainText(value);
@@ -986,7 +1090,8 @@ export function NativePressRow({
     trailing != null ||
     trailingControl != null ||
     (!editRow.editMode && chevron);
-  const showTrailingSpacer = hasTrailingContent && (titleText != null || subtitleText != null);
+  const showTrailingSpacer =
+    hasTrailingContent && (titleText != null || subtitleText != null);
   const isBarePlainTextRow =
     subtitleText == null &&
     !chevron &&
@@ -1011,18 +1116,17 @@ export function NativePressRow({
         if (iosNavigationSelection && !editRow.editMode) {
           const controls = isIos15()
             ? undefined
-            : navigationSelection.selectNavigationItem(
-                editRow.selectionId,
-                {
-                  autoClear: iosNavigationSelectionAutoClear,
-                  autoClearDelay: iosNavigationSelectionAutoClearDelay,
-                },
-              );
+            : navigationSelection.selectNavigationItem(editRow.selectionId, {
+                autoClear: iosNavigationSelectionAutoClear,
+                autoClearDelay: iosNavigationSelectionAutoClearDelay,
+              });
           // Navigation rows receive the optimistic-selection controls. All existing
           // zero-argument callbacks are still invoked normally.
-          (onPress as ((selection?: NativeListNavigationSelectionControls) => void) | undefined)?.(
-            controls,
-          );
+          (
+            onPress as
+              | ((selection?: NativeListNavigationSelectionControls) => void)
+              | undefined
+          )?.(controls);
         } else {
           editRow.onPress?.();
         }
@@ -1046,20 +1150,26 @@ export function NativePressRow({
           ? editRow.selectionId
           : undefined;
   const contextMenuUnavailable = Boolean(
-    disabled || editRow.editMode || resolvedContextMenuProps?.triggerProps?.disabled,
+    disabled ||
+    editRow.editMode ||
+    resolvedContextMenuProps?.triggerProps?.disabled,
   );
   // Keep the ContextMenu / Trigger wrapper in place on iOS 15 while editing or
   // disabled. Only its native interaction changes, preserving the List row tree.
-  const preservesIos15ContextMenu = isIos15() && resolvedContextMenuProps != null;
+  const preservesIos15ContextMenu =
+    isIos15() && resolvedContextMenuProps != null;
   // iOS 15 keeps an otherwise passive row inside a Button so entering edit mode
   // does not replace HStack with Button. This style keeps the Button behavior and
   // tree without applying pressed-state visuals to its label.
-  const resolvedBtnStyle = isIos15() && onPress == null ? (btnStyle ?? "noPressEffect") : btnStyle;
+  const resolvedBtnStyle =
+    isIos15() && onPress == null ? (btnStyle ?? "noPressEffect") : btnStyle;
 
   return (
     <NativeRowContainer
       contextMenuProps={
-        preservesIos15ContextMenu || !contextMenuUnavailable ? resolvedContextMenuProps : undefined
+        preservesIos15ContextMenu || !contextMenuUnavailable
+          ? resolvedContextMenuProps
+          : undefined
       }
       contextMenuDisabled={preservesIos15ContextMenu && contextMenuUnavailable}
       disabled={disabled}
@@ -1093,9 +1203,15 @@ export function NativePressRow({
         <ZStack
           key="leading-icon"
           alignment="center"
-          modifiers={[frame({ width: resolvedIconSlotWidth, alignment: "center" })]}
+          modifiers={[
+            frame({ width: resolvedIconSlotWidth, alignment: "center" }),
+          ]}
         >
-          <Image color={resolvedIconColor} size={resolvedIconSize} systemName={sfSymbol} />
+          <Image
+            color={resolvedIconColor}
+            size={resolvedIconSize}
+            systemName={sfSymbol}
+          />
         </ZStack>
       ) : icon != null ? (
         <NativeHostedIcon key="leading-icon">{icon}</NativeHostedIcon>
@@ -1115,12 +1231,14 @@ export function NativePressRow({
         opacityValue={labelOpacity}
         preserveLeadingAnchor={preserveLeadingAnchor}
       />
-      {showTrailingSpacer ? <Spacer key="trailing-spacer" minLength={12} /> : null}
+      {showTrailingSpacer ? (
+        <Spacer key="trailing-spacer" minLength={12} />
+      ) : null}
       {valueText != null ? (
         <SwiftText
           key="row-value"
           modifiers={[
-            ...valueModifiers(valueFontSize),
+            ...valueModifiers(valueFontSize, fontFamily),
             foregroundStyle(resolvedValueColor),
             ...(preserveValueWidth ? [layoutPriority(2)] : []),
           ]}
@@ -1134,9 +1252,15 @@ export function NativePressRow({
           alignment="center"
           modifiers={preserveValueWidth ? [layoutPriority(2)] : undefined}
         >
-          <Image color={resolvedValueColor} size={13} systemName={valueSfSymbol} />
+          <Image
+            color={resolvedValueColor}
+            size={13}
+            systemName={valueSfSymbol}
+          />
           {overlayTrailingControlOnValueSymbol && trailingControl != null ? (
-            <Fragment key="trailing-control-overlay">{trailingControl}</Fragment>
+            <Fragment key="trailing-control-overlay">
+              {trailingControl}
+            </Fragment>
           ) : null}
         </ZStack>
       ) : null}
@@ -1144,19 +1268,28 @@ export function NativePressRow({
         <Image
           key="selected-checkmark"
           color={accentColor}
-          modifiers={isIos15() ? [opacity(editRow.editMode ? 0 : 1)] : undefined}
+          modifiers={
+            isIos15() ? [opacity(editRow.editMode ? 0 : 1)] : undefined
+          }
           size={18}
           systemName="checkmark"
         />
       ) : null}
       {trailing != null ? (
-        <NativeTrailingContent key="custom-trailing">{trailing}</NativeTrailingContent>
+        <NativeTrailingContent key="custom-trailing">
+          {trailing}
+        </NativeTrailingContent>
       ) : null}
       {trailingControl != null && !overlayTrailingControlOnValueSymbol ? (
         <Fragment key="trailing-control">{trailingControl}</Fragment>
       ) : null}
       {!editRow.editMode && chevron ? (
-        <Image key="chevron" color={resolvedChevronColor} size={13} systemName="chevron.right" />
+        <Image
+          key="chevron"
+          color={resolvedChevronColor}
+          size={13}
+          systemName="chevron.right"
+        />
       ) : null}
     </NativeRowContainer>
   );
@@ -1199,19 +1332,25 @@ function NativeListRoot({
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const navigation = useContext(NavigationContext);
-  const nativeEditTint = toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;
+  const nativeEditTint =
+    toSwiftUIHexColor(theme.color10.val) ?? theme.color10.val;
   const refreshTint = toSwiftUIHexColor(refreshColor) ?? nativeEditTint;
   const [nativeRefreshing, setNativeRefreshing] = useState(false);
-  const [navigationSelectionClearToken, setNavigationSelectionClearToken] = useState(0);
-  const navigationSelectionIdRef = useRef<NativeListSelectionId | undefined>(undefined);
-  const navigationSelectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+  const [navigationSelectionClearToken, setNavigationSelectionClearToken] =
+    useState(0);
+  const navigationSelectionIdRef = useRef<NativeListSelectionId | undefined>(
     undefined,
   );
-  const [uncontrolledSelectedIds, setUncontrolledSelectedIds] = useState<NativeListSelectionId[]>(
-    () => [...(defaultSelectedIds ?? [])],
-  );
+  const navigationSelectionTimeoutRef = useRef<
+    ReturnType<typeof setTimeout> | undefined
+  >(undefined);
+  const [uncontrolledSelectedIds, setUncontrolledSelectedIds] = useState<
+    NativeListSelectionId[]
+  >(() => [...(defaultSelectedIds ?? [])]);
   const resolvedSelectedIds = selectedIds ?? uncontrolledSelectedIds;
-  const handleSelectedIdsChange = (nextSelectedIds: NativeListSelectionId[]) => {
+  const handleSelectedIdsChange = (
+    nextSelectedIds: NativeListSelectionId[],
+  ) => {
     if (selectedIds == null) {
       setUncontrolledSelectedIds(nextSelectedIds);
     }
@@ -1225,14 +1364,20 @@ function NativeListRoot({
     presentationActive: trueSheetPresentationActive,
   } = useTrueSheetScrollLayout();
   const resolvedBackgroundColor =
-    backgroundColor != null ? (toSwiftUIHexColor(backgroundColor) ?? undefined) : undefined;
+    backgroundColor != null
+      ? (toSwiftUIHexColor(backgroundColor) ?? undefined)
+      : undefined;
   const isNestedNativeList = nestedScrollEnabled === true;
   const usesNativeEditMode = editMode === true;
   const usesImmediatePressFeedback = iosPressFeedback === "immediate";
 
   const clearNavigationSelection = useCallback(
     (selectionId?: NativeListSelectionId, synchronizesNative = true) => {
-      if (selectionId != null && navigationSelectionIdRef.current !== selectionId) return;
+      if (
+        selectionId != null &&
+        navigationSelectionIdRef.current !== selectionId
+      )
+        return;
       const hadNavigationSelection = navigationSelectionIdRef.current != null;
       if (navigationSelectionTimeoutRef.current != null) {
         clearTimeout(navigationSelectionTimeoutRef.current);
@@ -1290,11 +1435,14 @@ function NativeListRoot({
       if (autoClear) {
         // The short grace period keeps immediate press feedback continuous while
         // React Navigation schedules a normal push. Slow async flows can call confirm().
-        navigationSelectionTimeoutRef.current = setTimeout(() => {
-          if (navigationSelectionIdRef.current === selectionId) {
-            clearNavigationSelection(selectionId);
-          }
-        }, Math.max(0, autoClearDelay));
+        navigationSelectionTimeoutRef.current = setTimeout(
+          () => {
+            if (navigationSelectionIdRef.current === selectionId) {
+              clearNavigationSelection(selectionId);
+            }
+          },
+          Math.max(0, autoClearDelay),
+        );
       }
 
       return { cancel, confirm };
@@ -1314,7 +1462,10 @@ function NativeListRoot({
     const removeTransitionListener = navigation.addListener(
       "transitionStart" as never,
       (event: { data?: { closing?: boolean } }) => {
-        if (event.data?.closing !== true && navigationSelectionTimeoutRef.current != null) {
+        if (
+          event.data?.closing !== true &&
+          navigationSelectionTimeoutRef.current != null
+        ) {
           clearTimeout(navigationSelectionTimeoutRef.current);
           navigationSelectionTimeoutRef.current = undefined;
         }
@@ -1351,7 +1502,8 @@ function NativeListRoot({
   // 默认只关闭普通 native-stack 页面的重复自动调整，不注入窗口底部安全区。
   // 定高内嵌列表的安全区由外层滚动视图处理，不能再按页面级根列表自动调整。
   const manuallyAdjustNormalPageIndicator =
-    (!insideTrueSheet || isNestedNativeList) && automaticallyAdjustsScrollIndicatorInsets == null;
+    (!insideTrueSheet || isNestedNativeList) &&
+    automaticallyAdjustsScrollIndicatorInsets == null;
   const compensatesForTrueSheetViewportClipping =
     insideTrueSheet &&
     scrollable &&
@@ -1377,7 +1529,9 @@ function NativeListRoot({
     }
   };
   return (
-    <NativeListNavigationSelectionContext.Provider value={navigationSelectionContext}>
+    <NativeListNavigationSelectionContext.Provider
+      value={navigationSelectionContext}
+    >
       <NativeListEditModeProvider
         defaultSelectedIds={defaultSelectedIds}
         editMode={editMode}
@@ -1390,17 +1544,24 @@ function NativeListRoot({
             // Native-stack 已将普通页面放在 header 下方，UIKit 再自动避让会让 indicator 重复下移。
             // TrueSheet 仍需要系统根据 Sheet viewport 处理 indicator，因此保持开启。
             automaticallyAdjustsScrollIndicatorInsets={
-              manuallyAdjustNormalPageIndicator ? false : automaticallyAdjustsScrollIndicatorInsets
+              manuallyAdjustNormalPageIndicator
+                ? false
+                : automaticallyAdjustsScrollIndicatorInsets
             }
-            contentInsetAdjustmentBehavior={resolvedContentInsetAdjustmentBehavior}
+            contentInsetAdjustmentBehavior={
+              resolvedContentInsetAdjustmentBehavior
+            }
             tracksNavigationBarScrollEdge={
               (!insideTrueSheet || trueSheetPresentationActive) &&
               (tracksNavigationBarScrollEdge ??
-                (!insideTrueSheet && resolvedContentInsetAdjustmentBehavior === "automatic"))
+                (!insideTrueSheet &&
+                  resolvedContentInsetAdjustmentBehavior === "automatic"))
             }
             // 只有页面级根列表才需要按 TrueSheet 的可见 viewport 裁剪；
             // 内嵌列表保留自身完整高度，由外层 ScrollView 决定何时进入可见区域。
-            compensatesForViewportClipping={compensatesForTrueSheetViewportClipping}
+            compensatesForViewportClipping={
+              compensatesForTrueSheetViewportClipping
+            }
             correctsNestedScrollIndicatorFrame={
               isIos26Plus() && fixesIOS26NestedScrollIndicatorSafeArea === true
             }
@@ -1410,16 +1571,18 @@ function NativeListRoot({
             initialScrollTarget={initialScrollTarget}
             nativeEditMode={usesNativeEditMode ? "active" : "inactive"}
             nativeEditTint={nativeEditTint}
-            clearsNavigationSelectionOnViewWillAppear={!usesNativeEditMode && !isIos15()}
+            clearsNavigationSelectionOnViewWillAppear={
+              !usesNativeEditMode && !isIos15()
+            }
             navigationSelectionClearToken={navigationSelectionClearToken}
             onNavigationSelectionConfirmed={confirmNavigationSelection}
-            onNavigationSelectionCleared={() => clearNavigationSelection(undefined, false)}
-            onSelectionChange={usesNativeEditMode ? handleSelectedIdsChange : undefined}
-            selection={
-              usesNativeEditMode
-                ? [...resolvedSelectedIds]
-                : []
+            onNavigationSelectionCleared={() =>
+              clearNavigationSelection(undefined, false)
             }
+            onSelectionChange={
+              usesNativeEditMode ? handleSelectedIdsChange : undefined
+            }
+            selection={usesNativeEditMode ? [...resolvedSelectedIds] : []}
             onRefresh={handleNativeRefresh}
             // 禁用时从 UIScrollView 解绑原生刷新控件；控件实例本身保持稳定，
             // 不会像动态增删 SwiftUI modifier 一样重建 List。
@@ -1435,7 +1598,9 @@ function NativeListRoot({
                * 因此即使这里传入自定义 `backgroundColor`，系统列表内容背景仍可能覆盖它。
                */
               scrollContentBackground("hidden"),
-              ...(resolvedBackgroundColor != null ? [background(resolvedBackgroundColor)] : []),
+              ...(resolvedBackgroundColor != null
+                ? [background(resolvedBackgroundColor)]
+                : []),
               ...(contentMarginTop != null
                 ? [
                     contentMargins({
@@ -1501,9 +1666,12 @@ function NativeListSection({
   titleColor,
   titleFontSize,
 }: NativeListSectionProps) {
-  const resolvedContextMenuProps = useResolvedNativeListContextMenu(contextMenuProps);
+  const fontFamily = useTextFontFamily();
+  const resolvedContextMenuProps =
+    useResolvedNativeListContextMenu(contextMenuProps);
   const resolvedDisabled = useResolvedNativeListDisabled();
-  const resolvedDisabledStyle = useResolvedNativeListDisabledStyle(disabledStyle);
+  const resolvedDisabledStyle =
+    useResolvedNativeListDisabledStyle(disabledStyle);
   const editMode = useNativeListEditMode();
   const editContext = useNativeListEditContext();
   const resolvedNativeHaptics = useResolvedNativeListHaptics(nativeHaptics);
@@ -1528,13 +1696,17 @@ function NativeListSection({
         contextMenuProps={resolvedContextMenuProps}
         disabledStyle={resolvedDisabledStyle}
       >
-        <NativeListHapticsProvider nativeHaptics={nativeHaptics}>{child}</NativeListHapticsProvider>
+        <NativeListHapticsProvider nativeHaptics={nativeHaptics}>
+          {child}
+        </NativeListHapticsProvider>
       </NativeListContextMenuProvider>
     ) : null,
   );
   const stringFooter = toPlainText(resolvedFooter);
   const resolvedSectionTitleColor =
-    titleColor != null ? (toSwiftUIHexColor(titleColor) ?? titleColor) : undefined;
+    titleColor != null
+      ? (toSwiftUIHexColor(titleColor) ?? titleColor)
+      : undefined;
   const usesIos15HeaderRow =
     isIos15() &&
     ((resolvedTitle != null && stringTitle == null) ||
@@ -1562,6 +1734,7 @@ function NativeListSection({
           <SwiftText
             modifiers={[
               font({
+                family: fontFamily,
                 size: titleFontSize ?? DEFAULT_SECTION_TITLE_FONT_SIZE,
                 weight: "regular",
               }),
@@ -1580,10 +1753,14 @@ function NativeListSection({
           <NativeTrailingContent>{resolvedTrailing}</NativeTrailingContent>
         ) : null}
       </HStack>
-    ) : stringTitle != null && (resolvedSectionTitleColor != null || titleFontSize != null) ? (
+    ) : stringTitle != null &&
+      (resolvedSectionTitleColor != null ||
+        titleFontSize != null ||
+        fontFamily != null) ? (
       <SwiftText
         modifiers={[
           font({
+            family: fontFamily,
             size: titleFontSize ?? DEFAULT_SECTION_TITLE_FONT_SIZE,
             weight: "regular",
           }),
@@ -1599,13 +1776,16 @@ function NativeListSection({
     ) : undefined;
   const footerView =
     stringFooter != null ? (
-      <SwiftText modifiers={subtitleModifiers()}>{stringFooter}</SwiftText>
+      <SwiftText modifiers={subtitleModifiers(undefined, fontFamily)}>
+        {stringFooter}
+      </SwiftText>
     ) : resolvedFooter != null ? (
       <NativeHostedContent>{resolvedFooter}</NativeHostedContent>
     ) : undefined;
 
   if (usesIos15HeaderRow && header != null) {
-    const [firstChild, ...remainingChildren] = Children.toArray(sectionChildren);
+    const [firstChild, ...remainingChildren] =
+      Children.toArray(sectionChildren);
 
     return (
       <SwiftUISection footer={footerView}>

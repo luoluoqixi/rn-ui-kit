@@ -1,3 +1,4 @@
+import { useDefaultTextStyle } from "../provider/font_provider";
 import { ModalContentScope } from "../utils/overlay/modal_content_scope";
 import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
 import { buttonTextVariants, buttonVariants } from "../button";
@@ -13,7 +14,12 @@ import { resolveAriaLabel } from "../utils/accessibility";
 import { useScopedOverlayPortalHostName } from "../utils/overlay";
 import * as AlertDialogPrimitive from "@rn-primitives/alert-dialog";
 import * as React from "react";
-import { Platform, View, type PressableStateCallbackType, type ViewProps } from "react-native";
+import {
+  Platform,
+  View,
+  type PressableStateCallbackType,
+  type ViewProps,
+} from "react-native";
 import { FadeIn, FadeOut, ReduceMotion } from "react-native-reanimated";
 
 import type {
@@ -49,18 +55,30 @@ type AlertDialogChildren =
   | React.ReactNode
   | ((state: PressableStateCallbackType) => React.ReactNode);
 
-function normalizeAlertDialogChildren(children: AlertDialogChildren): AlertDialogChildren {
+function normalizeAlertDialogChildren(
+  children: AlertDialogChildren,
+): AlertDialogChildren {
   if (typeof children === "function") return children;
   return React.Children.map(children, (child) =>
-    typeof child === "string" || typeof child === "number" ? <Text>{child}</Text> : child,
+    typeof child === "string" || typeof child === "number" ? (
+      <Text>{child}</Text>
+    ) : (
+      child
+    ),
   ) as React.ReactNode;
 }
 
 function normalizeAlertDialogRenderValue(value: React.ReactNode | undefined) {
   const normalized = React.Children.map(value, (child) =>
-    typeof child === "string" || typeof child === "number" ? <Text>{child}</Text> : child,
+    typeof child === "string" || typeof child === "number" ? (
+      <Text>{child}</Text>
+    ) : (
+      child
+    ),
   );
-  return normalized != null && normalized.length === 1 ? normalized[0] : normalized;
+  return normalized != null && normalized.length === 1
+    ? normalized[0]
+    : normalized;
 }
 
 function AlertDialogRoot({
@@ -116,7 +134,9 @@ function AlertDialogRoot({
   const renderedDestructiveLabel = normalizeAlertDialogRenderValue(
     resolveRenderProp(destructiveLabel, renderContext),
   );
-  const renderedTitle = normalizeAlertDialogRenderValue(resolveRenderProp(title, renderContext));
+  const renderedTitle = normalizeAlertDialogRenderValue(
+    resolveRenderProp(title, renderContext),
+  );
   const renderedTrigger = normalizeAlertDialogRenderValue(
     resolveRenderProp(trigger, renderContext),
   );
@@ -130,7 +150,11 @@ function AlertDialogRoot({
     renderedDestructiveLabel != null;
 
   if (!hasDefaultStructure) {
-    return <AlertDialogPrimitive.Root {...rootProps}>{children}</AlertDialogPrimitive.Root>;
+    return (
+      <AlertDialogPrimitive.Root {...rootProps}>
+        {children}
+      </AlertDialogPrimitive.Root>
+    );
   }
 
   return (
@@ -167,7 +191,10 @@ function AlertDialogRoot({
             {renderedDescription != null ? (
               <AlertDialogDescription
                 {...descriptionProps}
-                className={cn(descriptionClassName, descriptionProps?.className)}
+                className={cn(
+                  descriptionClassName,
+                  descriptionProps?.className,
+                )}
               >
                 {renderedDescription}
               </AlertDialogDescription>
@@ -208,7 +235,10 @@ function AlertDialogRoot({
             {renderedDestructiveLabel != null ? (
               <AlertDialogDestructive
                 {...destructiveProps}
-                className={cn(destructiveClassName, destructiveProps?.className)}
+                className={cn(
+                  destructiveClassName,
+                  destructiveProps?.className,
+                )}
                 aria-label={resolveAriaLabel(
                   destructiveAriaLabel ?? destructiveProps?.["aria-label"],
                   renderedDestructiveLabel,
@@ -267,7 +297,9 @@ function AlertDialogOverlay({
         asChild={Platform.OS !== "web"}
       >
         <NativeOnlyAnimatedView
-          entering={FadeIn.duration(200).delay(50).reduceMotion(ReduceMotion.System)}
+          entering={FadeIn.duration(200)
+            .delay(50)
+            .reduceMotion(ReduceMotion.System)}
           exiting={FadeOut.duration(150).reduceMotion(ReduceMotion.System)}
           as="Pressable"
         >
@@ -287,7 +319,8 @@ function AlertDialogContent({
   ...props
 }: AlertDialogContentProps) {
   const scopedPortalHost = useScopedOverlayPortalHostName();
-  const resolvedPortalHost = portalHost ?? portalProps?.hostName ?? scopedPortalHost;
+  const resolvedPortalHost =
+    portalHost ?? portalProps?.hostName ?? scopedPortalHost;
 
   return (
     <AlertDialogPortal {...portalProps} hostName={resolvedPortalHost}>
@@ -320,7 +353,10 @@ function AlertDialogHeader({ className, ...props }: ViewProps) {
 function AlertDialogFooter({ className, ...props }: ViewProps) {
   return (
     <View
-      className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end", className)}
+      className={cn(
+        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
+        className,
+      )}
       {...props}
     />
   );
@@ -331,15 +367,20 @@ function AlertDialogTitle({ className, ...props }: AlertDialogTitleProps) {
     <AlertDialogPrimitive.Title
       className={cn("text-foreground text-lg font-semibold", className)}
       {...props}
+      style={useDefaultTextStyle(props.style, className)}
     />
   );
 }
 
-function AlertDialogDescription({ className, ...props }: AlertDialogDescriptionProps) {
+function AlertDialogDescription({
+  className,
+  ...props
+}: AlertDialogDescriptionProps) {
   return (
     <AlertDialogPrimitive.Description
       className={cn("text-muted-foreground text-sm", className)}
       {...props}
+      style={useDefaultTextStyle(props.style, className)}
     />
   );
 }
@@ -362,7 +403,9 @@ function AlertDialogAction({ className, ...props }: AlertDialogActionProps) {
 
 function AlertDialogCancel({ className, ...props }: AlertDialogCancelProps) {
   return (
-    <TextClassContext.Provider value={buttonTextVariants({ className, variant: "outline" })}>
+    <TextClassContext.Provider
+      value={buttonTextVariants({ className, variant: "outline" })}
+    >
       <AlertDialogPrimitive.Cancel
         className={cn(buttonVariants({ variant: "outline" }), className)}
         {...props}
@@ -373,10 +416,15 @@ function AlertDialogCancel({ className, ...props }: AlertDialogCancelProps) {
   );
 }
 
-function AlertDialogDestructive({ className, ...props }: AlertDialogDestructiveProps) {
+function AlertDialogDestructive({
+  className,
+  ...props
+}: AlertDialogDestructiveProps) {
   const theme = useUiTheme();
   return (
-    <TextClassContext.Provider value={buttonTextVariants({ className, variant: "destructive" })}>
+    <TextClassContext.Provider
+      value={buttonTextVariants({ className, variant: "destructive" })}
+    >
       <AlertDialogSolidAction
         colors={theme}
         variant="destructive"

@@ -1,3 +1,4 @@
+import { useDefaultTextStyle } from "../provider/font_provider";
 import { useMenuConfig } from "../context_menu/menu_provider";
 import { ScopedSubContent } from "./scoped_sub_content";
 import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
@@ -641,6 +642,7 @@ function DropdownLabel({
         className,
       )}
       {...props}
+      style={useDefaultTextStyle(props.style, className)}
     />
   );
 }

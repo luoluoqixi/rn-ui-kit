@@ -1,3 +1,4 @@
+import { useDefaultTextStyle } from "../provider/font_provider";
 import { cn } from "../utils/cn";
 import * as LabelPrimitive from "@rn-primitives/label";
 import { Platform } from "react-native";
@@ -34,6 +35,7 @@ function Label({
           className,
         )}
         {...props}
+        style={useDefaultTextStyle(props.style, className)}
       />
     </LabelPrimitive.Root>
   );

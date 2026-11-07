@@ -1,7 +1,8 @@
+import { FontText as RNText } from "../provider/font_provider";
 import { cn } from "../utils/cn";
 import { Slot } from "@rn-primitives/slot";
 import * as React from "react";
-import { Platform, Text as RNText, type Role } from "react-native";
+import { Platform, type Role } from "react-native";
 
 import { TextProps, TextVariant } from "./types";
 import { textVariants } from "./variants";
