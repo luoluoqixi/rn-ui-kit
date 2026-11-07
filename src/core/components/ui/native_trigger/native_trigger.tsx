@@ -212,6 +212,8 @@ export const NativeTrigger = React.forwardRef<View, NativeTriggerProps>(
     const resolvedPressableProps = {
       ...(pressableProps as any),
       onContextMenu: (event: any) => {
+        // trigger 会阻止冒泡，必须同时取消默认菜单，否则会绕过宿主的全局拦截。
+        if (Platform.OS === "web") event.preventDefault?.();
         event.stopPropagation?.();
         (pressableProps as any).onContextMenu?.(event);
       },

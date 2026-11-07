@@ -100,3 +100,130 @@ test("默认保留键盘聚焦打开，openOnPress 仍能点击打开", async ()
   await act(() => pressNode.click());
   expect(pressNode.dataset.state).toBe("open");
 });
+
+test("标题栏停止冒泡且原生拖拽未发送 leave 时，也取消延迟 hover", async () => {
+  const opened = [];
+  const node = await mount({ openOnFocus: false, onOpenChange: open => opened.push(open) });
+  const titlebar = document.createElement("div");
+  titlebar.addEventListener("pointerdown", event => event.stopPropagation());
+  document.body.append(titlebar);
+  await pointer(node, "pointermove");
+  // 模拟原生窗口拖拽：不向之前的触发器发送 pointerout/leave，也没有后续 click。
+  await pointer(titlebar, "pointerdown", { buttons: 1 });
+  await delay();
+  expect(node.dataset.state).toBe("closed");
+  expect(opened).not.toContain(true);
+});
+
+test("标题栏开始原生拖拽时，已打开的 hover 提示立即关闭", async () => {
+  const node = await mount({ openOnFocus: false });
+  const titlebar = document.createElement("div");
+  titlebar.addEventListener("pointerdown", event => event.stopPropagation());
+  document.body.append(titlebar);
+  await pointer(node, "pointermove");
+  await delay();
+  expect(node.dataset.state).toBe("open");
+  await pointer(titlebar, "pointerdown", { buttons: 1 });
+  expect(node.dataset.state).toBe("closed");
+});
+
+test("按住鼠标拖动经过触发器不应启动 hover", async () => {
+  const node = await mount({ openOnFocus: false });
+  await pointer(node, "pointermove", { buttons: 1 });
+  await delay();
+  expect(node.dataset.state).toBe("closed");
+});
+
+test("窗口失焦时取消待显示的 hover", async () => {
+  const node = await mount({ openOnFocus: false });
+  await pointer(node, "pointermove");
+  await act(() => win.dispatchEvent(new win.Event("blur")));
+  await delay();
+  expect(node.dataset.state).toBe("closed");
+});
+
+test("标题栏取消后重新 hover 可恢复，并保留标题栏 mousedown 冒泡", async () => {
+  const node = await mount({ openOnFocus: false });
+  const titlebar = document.createElement("div");
+  titlebar.addEventListener("pointerdown", event => event.stopPropagation());
+  document.body.append(titlebar);
+  let mouseDownCount = 0;
+  const onMouseDown = () => mouseDownCount++;
+  document.addEventListener("mousedown", onMouseDown);
+  try {
+    await pointer(node, "pointermove");
+    await pointer(titlebar, "pointerdown", { buttons: 1 });
+    const mouseDown = new win.MouseEvent("mousedown", { bubbles: true, cancelable: true });
+    await act(() => titlebar.dispatchEvent(mouseDown));
+    expect(mouseDown.defaultPrevented).toBe(false);
+    expect(mouseDownCount).toBe(1);
+    await pointer(node, "pointermove");
+    await delay();
+    expect(node.dataset.state).toBe("closed");
+    await pointer(node, "pointerout", { relatedTarget: document.body });
+    await pointer(node, "pointermove");
+    await delay();
+    expect(node.dataset.state).toBe("open");
+  } finally {
+    document.removeEventListener("mousedown", onMouseDown);
+  }
+});
+
+test("hover 离开和卸载后移除全局 dismiss 监听", async () => {
+  let changes = 0;
+  const node = await mount({ onOpenChange: () => changes++ });
+  await pointer(node, "pointermove");
+  await pointer(node, "pointerout", { relatedTarget: document.body });
+  const afterLeave = changes;
+  await pointer(document.body, "pointerdown");
+  expect(changes).toBe(afterLeave);
+  await pointer(node, "pointermove");
+  await act(() => root.unmount());
+  root = undefined;
+  const afterUnmount = changes;
+  await pointer(document.body, "pointerdown");
+  await act(() => win.dispatchEvent(new win.Event("blur")));
+  await delay();
+  expect(changes).toBe(afterUnmount);
+});
+
+test("已打开且允许 hover 内容时，离开触发器后仍可由标题栏按下关闭", async () => {
+  const node = await mount({ openOnFocus: false });
+  await pointer(node, "pointermove");
+  await delay();
+  await pointer(node, "pointerout", { relatedTarget: document.body });
+  // 默认允许移到提示内容，离开触发器不一定立即关闭；此时仍需捕获外部按下。
+  await pointer(document.body, "pointerdown", { buttons: 1 });
+  expect(node.dataset.state).toBe("closed");
+});
+
+test("asChild Pressable 在 hover 正常结束后恢复非 cancelable 焦点，不重新打开", async () => {
+  const opened = [];
+  const container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(() => root.render(
+    <TooltipRoot openOnFocus={false} delayDuration={30} disableHoverableContent onOpenChange={open => opened.push(open)}>
+      <TooltipTrigger asChild><RNW.Pressable><RNW.Text>侧边按钮</RNW.Text></RNW.Pressable></TooltipTrigger>
+    </TooltipRoot>,
+  ));
+  const node = container.querySelector('[role="button"]');
+  await pointer(node, "pointermove");
+  await pointer(node, "pointerdown");
+  await pointer(node, "pointerup");
+  await act(() => node.click());
+  await act(() => node.focus());
+  await pointer(node, "pointerout", { relatedTarget: document.body });
+  await delay();
+  expect(node.dataset.state).toBe("closed");
+  opened.length = 0;
+  await act(() => {
+    win.dispatchEvent(new win.Event("blur"));
+    win.dispatchEvent(new win.Event("resize"));
+    win.dispatchEvent(new win.Event("focus"));
+    node.dispatchEvent(new win.FocusEvent("focusin", { bubbles: true, cancelable: false }));
+  });
+  await delay();
+  expect(node.dataset.state).toBe("closed");
+  expect(opened).not.toContain(true);
+});

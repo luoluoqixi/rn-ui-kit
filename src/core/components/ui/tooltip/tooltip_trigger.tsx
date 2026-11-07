@@ -1,12 +1,16 @@
 import * as TooltipPrimitive from "@rn-primitives/tooltip";
 import * as React from "react";
+import { Platform } from "react-native";
 import type { TooltipRootProps } from "./types";
+import { listenForTooltipHoverDismiss } from "./tooltip_hover_dismiss.web";
 import { closeTooltipAfterPress, shouldSuppressTooltipHover } from "./tooltip_press_behavior";
 
 type TooltipTriggerRef = React.ComponentRef<typeof TooltipPrimitive.Trigger>;
 const TooltipInteractionContext = React.createContext<{
   openOnPress: boolean;
   openOnFocus: boolean;
+  openRef: React.RefObject<boolean>;
+  hoverDismissCleanupRef: React.RefObject<(() => void) | null>;
   suppressHoverRef: React.RefObject<boolean>;
   triggerRef: React.RefObject<TooltipTriggerRef | null>;
 } | null>(null);
@@ -18,10 +22,12 @@ function TooltipRoot({
   onOpenChange,
   ...props
 }: TooltipRootProps) {
+  const openRef = React.useRef(false);
+  const hoverDismissCleanupRef = React.useRef<(() => void) | null>(null);
   const suppressHoverRef = React.useRef(false);
   const triggerRef = React.useRef<TooltipTriggerRef>(null);
   const interaction = React.useMemo(
-    () => ({ openOnPress, openOnFocus, suppressHoverRef, triggerRef }),
+    () => ({ openOnPress, openOnFocus, openRef, hoverDismissCleanupRef, suppressHoverRef, triggerRef }),
     [openOnPress, openOnFocus],
   );
   return (
@@ -34,6 +40,11 @@ function TooltipRoot({
             // 同步关闭让两次状态更新合并，避免显示一帧以及通知业务层已经打开。
             triggerRef.current?.close();
             return;
+          }
+          openRef.current = open;
+          if (!open) {
+            hoverDismissCleanupRef.current?.();
+            hoverDismissCleanupRef.current = null;
           }
           onOpenChange?.(open);
         }}
@@ -53,13 +64,24 @@ const TooltipTrigger = React.forwardRef<
 ) {
   const interaction = React.useContext(TooltipInteractionContext);
   if (!interaction) throw new Error("Tooltip.Trigger must be rendered inside Tooltip.Root");
-  const { openOnPress, openOnFocus, suppressHoverRef, triggerRef } = interaction;
+  const { openOnPress, openOnFocus, openRef, hoverDismissCleanupRef, suppressHoverRef, triggerRef } = interaction;
+  const stopHoverDismiss = React.useCallback(() => {
+    hoverDismissCleanupRef.current?.();
+    hoverDismissCleanupRef.current = null;
+  }, [hoverDismissCleanupRef]);
+  const dismissHover = () => {
+    suppressHoverRef.current = true;
+    triggerRef.current?.close();
+    stopHoverDismiss();
+  };
 
+  React.useEffect(() => stopHoverDismiss, [stopHoverDismiss]);
   React.useEffect(() => {
     if (openOnPress) {
+      stopHoverDismiss();
       suppressHoverRef.current = false;
     }
-  }, [openOnPress, suppressHoverRef]);
+  }, [openOnPress, suppressHoverRef, stopHoverDismiss]);
 
   const setTriggerRef = React.useCallback(
     (node: React.ComponentRef<typeof TooltipPrimitive.Trigger> | null) => {
@@ -87,14 +109,36 @@ const TooltipTrigger = React.forwardRef<
     React.ComponentProps<typeof TooltipPrimitive.Trigger>["onPointerMove"]
   > = (event) => {
     onPointerMove?.(event);
+    if (!openOnPress && event.nativeEvent.buttons > 0) {
+      dismissHover();
+      event.preventDefault();
+      return;
+    }
     if (suppressHoverRef.current) {
       event.preventDefault();
+      return;
+    }
+    if (
+      !event.defaultPrevented &&
+      !openOnPress &&
+      event.nativeEvent.pointerType !== "touch" &&
+      Platform.OS === "web" &&
+      !hoverDismissCleanupRef.current &&
+      triggerRef.current
+    ) {
+      // 原生窗口拖拽可能缺少 leave/up/click；在进入系统拖拽前捕获按下以终止 hover。
+      hoverDismissCleanupRef.current = listenForTooltipHoverDismiss(
+        triggerRef.current as unknown as HTMLElement,
+        dismissHover,
+      );
     }
   };
 
   const handlePointerLeave: NonNullable<
     React.ComponentProps<typeof TooltipPrimitive.Trigger>["onPointerLeave"]
   > = (event) => {
+    // hoverable content 可能在离开触发器后继续显示，保留监听直至真正关闭。
+    if (!openRef.current) stopHoverDismiss();
     suppressHoverRef.current = false;
     onPointerLeave?.(event);
   };
