@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Text as RNText, TextInput as RNTextInput } from "react-native";
+import { StyleSheet, Text as RNText, TextInput as RNTextInput } from "react-native";
 import type {
   TextProps,
   TextInputProps,
@@ -29,7 +29,8 @@ export function useDefaultTextStyle(
   style?: StyleProp<TextStyle>,
   className?: string,
 ): StyleProp<TextStyle> {
-  return [defaultFontStyle(useTextFontFamily(), className), style];
+  // Web 文字 primitive 可能直接渲染 DOM，必须展开 RN 样式数组。
+  return StyleSheet.flatten([defaultFontStyle(useTextFontFamily(), className), style]);
 }
 
 /** 与 RN 原语保持 props/ref 兼容，只追加可被显式 style 覆盖的默认字体。 */

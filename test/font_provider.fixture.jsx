@@ -8,7 +8,22 @@ mock.module("react-native", () => RNW);
 const React = await import("react");
 const { act } = React;
 const { createRoot } = await import("react-dom/client");
-const { FontText, FontTextInput, TextFontProvider } = await import("../src/core/components/ui/provider/font_provider");
+const { FontText, FontTextInput, TextFontProvider, useDefaultTextStyle } = await import("../src/core/components/ui/provider/font_provider");
+
+test("间接文字原语可直接向 DOM 传递字体样式，并保留嵌套样式覆盖", async () => {
+  const host = document.createElement("div"); document.body.append(host);
+  const root = createRoot(host);
+  function DomText() {
+    const style = useDefaultTextStyle([undefined, [{ fontWeight: "700" }, { fontFamily: "Explicit" }]]);
+    expect(Array.isArray(style)).toBe(false);
+    expect(style).toEqual({ fontFamily: "Explicit", fontWeight: "700" });
+    return <span style={style}>字体值</span>;
+  }
+  try {
+    await act(() => root.render(<TextFontProvider family="Default"><DomText /></TextFontProvider>));
+    expect(host.querySelector("span").style.fontFamily).toBe("Explicit");
+  } finally { await act(() => root.unmount()); host.remove(); }
+});
 
 test("默认字体动态传递到文字和输入框，显式字体与代码保持原样", async () => {
   const host = document.createElement("div"); document.body.append(host);
