@@ -345,7 +345,7 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
     /** 列表宿主背景色：iOS 原生 List 直接作用于 List，自定义 fallback 作用于根容器。 */
     backgroundColor?: ViewStyle["backgroundColor"];
     children?: ReactNode;
-    /** 原生列表是否在触点按下时立即显示行反馈；iOS 26 默认开启，其他版本默认沿用系统行为。 */
+    /** 原生列表是否在触点按下时立即显示行反馈； */
     iosPressFeedback?: NativeListIosPressFeedback;
     /** 所有行默认使用的菜单；Section 或 item 可逐级覆盖。 */
     contextMenuProps?: NativeListContextMenuProps;
