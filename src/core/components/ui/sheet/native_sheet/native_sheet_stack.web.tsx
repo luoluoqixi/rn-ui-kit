@@ -1,10 +1,10 @@
-import { useTrueSheet } from "@lodev09/react-native-true-sheet";
 import type { TrueSheetProps } from "@lodev09/react-native-true-sheet";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
 import { TrueSheetStackHost } from "./true_sheet/stack_host";
 import { TrueSheetInnerStack } from "./true_sheet/stack_navigation";
 import type { NativeSheetStackProps } from "./types";
+import { useWebSheetCommands } from "./web_sheet_commands";
 import { useHasOpenWebSheetAbove } from "./web_sheet_stack";
 
 let nativeSheetStackCounter = 0;
@@ -52,24 +52,13 @@ function NativeSheetStackRoot({
   screenOptions,
   sheetProps,
 }: NativeSheetStackProps) {
-  const { present, dismiss } = useTrueSheet();
   const [generatedName] = useState(() => `ui-sheet-stack-web-${++nativeSheetStackCounter}`);
   const sheetName = name ?? generatedName;
   const hasOpenSheetAbove = useHasOpenWebSheetAbove(sheetName, open);
-  const firstRenderRef = useRef(true);
-
-  useEffect(() => {
-    if (firstRenderRef.current) {
-      firstRenderRef.current = false;
-      return;
-    }
-
-    if (open) {
-      void present(sheetName, sheetProps?.initialDetentIndex ?? 0).catch(() => undefined);
-    } else {
-      void dismiss(sheetName).catch(() => undefined);
-    }
-  }, [dismiss, open, present, sheetName, sheetProps?.initialDetentIndex]);
+  const commands = useWebSheetCommands(sheetName, open, Math.max(0, sheetProps?.initialDetentIndex ?? 0), true, sheetProps?.initialDetentIndex);
+  const handleDidDismiss = () => {
+    if (commands.queue.didDismiss()) onOpenChange?.(false);
+  };
 
   if (sheetProps == null) {
     return (
@@ -77,7 +66,7 @@ function NativeSheetStackRoot({
         initialRouteName={initialRouteName}
         name={sheetName}
         onRequestClose={() => onOpenChange?.(false)}
-        onDidDismiss={() => onOpenChange?.(false)}
+        onDidDismiss={handleDidDismiss}
         overlayPortalHostName={overlayPortalHostName}
         headerLeft={headerLeft}
         headerLeftButtonProps={headerLeftButtonProps}
@@ -89,7 +78,8 @@ function NativeSheetStackRoot({
         screenOptions={screenOptions}
         sheetProps={{
           dismissible: hasOpenSheetAbove ? false : undefined,
-          initialDetentIndex: open ? 0 : -1,
+          initialDetentIndex: commands.initialIndex,
+          onDidPresent: (event) => commands.queue.didPresent(event.nativeEvent.index),
         }}
       >
         {children}
@@ -107,7 +97,7 @@ function NativeSheetStackRoot({
       initialRouteName={initialRouteName}
       name={sheetName}
       onRequestClose={() => onOpenChange?.(false)}
-      onDidDismiss={() => onOpenChange?.(false)}
+      onDidDismiss={handleDidDismiss}
       overlayPortalHostName={overlayPortalHostName}
       headerLeft={headerLeft}
       headerLeftButtonProps={headerLeftButtonProps}
@@ -121,7 +111,11 @@ function NativeSheetStackRoot({
         ...(trueSheetProps as Omit<TrueSheetProps, "children" | "header" | "name">),
         detents,
         dismissible: resolvedDismissible,
-        initialDetentIndex: open ? (trueSheetProps.initialDetentIndex ?? 0) : -1,
+        initialDetentIndex: commands.initialIndex,
+        onDidPresent: (event) => {
+          commands.queue.didPresent(event.nativeEvent.index);
+          trueSheetProps.onDidPresent?.(event);
+        },
       }}
     >
       {children}

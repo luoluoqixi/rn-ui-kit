@@ -1,3 +1,4 @@
+import type { TrueSheetProps } from "@lodev09/react-native-true-sheet";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useWindowDimensions } from "react-native";
 
@@ -43,7 +44,7 @@ function TrueSheetNativeSheetStackRoot({
   const presentedRef = useRef(false);
   const dismissingRef = useRef(false);
   const compactHeight = os() === "ios" && iosMajorVersion() === 15 && windowWidth > windowHeight;
-  const resolvedSheetProps = useMemo(() => {
+  const resolvedSheetProps = useMemo<Omit<TrueSheetProps, "children" | "header" | "name">>(() => {
     const { snapPoints, ...trueSheetProps } = sheetProps ?? {};
 
     if (snapPoints == null && trueSheetProps.detents == null) {
@@ -122,7 +123,7 @@ function TrueSheetNativeSheetStackRoot({
       headerRightButtonVisible={headerRightButtonVisible}
       headerRightItems={headerRightItems}
       screenOptions={screenOptions}
-      sheetProps={resolvedSheetProps as any}
+      sheetProps={resolvedSheetProps}
     >
       {children}
     </TrueSheetStackHost>

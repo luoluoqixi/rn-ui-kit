@@ -100,6 +100,14 @@ function TrueSheetStackNavigationInner({
             initialRouteName={initialRouteName}
             screenOptions={({ route }) => {
               const configuredScreenOptions = screenOptions as StackNavigationOptions;
+              // A full-height Web card otherwise switches to document scrolling.
+              // The sheet locks the document, so keep scrolling inside the card.
+              const resolvedScreenOptions: StackNavigationOptions = {
+                ...configuredScreenOptions,
+                ...(Platform.OS === "web"
+                  ? { cardStyle: [styles.webCard, configuredScreenOptions?.cardStyle] }
+                  : {}),
+              };
 
               // Sheet 根页没有可返回的宿主页面。JS Stack 在场景切换期间可能保留
               // previous scene，从而错误地绘制默认返回按钮；显式占用根页左侧位置。
@@ -108,10 +116,10 @@ function TrueSheetStackNavigationInner({
                 route.name === initialRouteName &&
                 configuredScreenOptions?.headerLeft === undefined
               ) {
-                return { ...configuredScreenOptions, headerLeft: () => null };
+                return { ...resolvedScreenOptions, headerLeft: () => null };
               }
 
-              return configuredScreenOptions;
+              return resolvedScreenOptions;
             }}
           >
             {children}
@@ -133,6 +141,11 @@ export function TrueSheetStackNavigation(props: TrueSheetStackNavigationProps) {
 export const TrueSheetInnerStack = trueSheetUsesNativeStackNavigator ? NativeStack : JsStack;
 
 const styles = StyleSheet.create({
+  webCard: {
+    flex: 1,
+    minHeight: 0,
+    overflow: "hidden",
+  },
   nativeStackRoot: {
     flex: Platform.OS === "ios" ? 1 : undefined,
     minHeight: Platform.OS === "ios" ? 0 : undefined,

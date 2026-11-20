@@ -3,6 +3,7 @@ import { type ReactNode, createContext, useContext, useMemo } from "react";
 
 export type TrueSheetScrollLayoutConfig = {
   active: boolean;
+  autoDetent: boolean;
   /**
    * 当前 TrueSheet 是否已经完成原生展示。
    * iOS 15 会在 Sheet 重复展示时丢失 UINavigationController 对根滚动视图的观察关系，
@@ -16,8 +17,8 @@ export type TrueSheetScrollLayoutConfig = {
    */
   automaticContentInsetAdjustment: boolean;
   /**
-   * 库是否已对子树 ScrollView 注入底部 contentInset（须 `scrollable` 且视图层级 ≤2）。
-   * Portal / Stack 等深层结构下设为 false，由 `TrueSheetScrollContent` 自行 padding。
+   * RN ScrollView native insets are enabled. Explicit v4 refs work through deep stacks.
+   * SwiftUI List retains its own UIKit safe-area handling.
    */
   nativeScrollInsetsApplied: boolean;
 };
@@ -25,12 +26,14 @@ export type TrueSheetScrollLayoutConfig = {
 const TrueSheetScrollLayoutContext = createContext<TrueSheetScrollLayoutConfig | null>(null);
 
 export function TrueSheetScrollLayoutProvider({
+  autoDetent = false,
   automaticContentInsetAdjustment = false,
   children,
   insetAdjustment = "automatic",
   nativeScrollInsetsApplied = false,
   presentationActive = false,
 }: {
+  autoDetent?: boolean;
   automaticContentInsetAdjustment?: boolean;
   children: ReactNode;
   insetAdjustment?: InsetAdjustment;
@@ -40,12 +43,14 @@ export function TrueSheetScrollLayoutProvider({
   const value = useMemo(
     () => ({
       active: true,
+      autoDetent,
       automaticContentInsetAdjustment,
       insetAdjustment,
       nativeScrollInsetsApplied,
       presentationActive,
     }),
     [
+      autoDetent,
       automaticContentInsetAdjustment,
       insetAdjustment,
       nativeScrollInsetsApplied,
@@ -64,6 +69,7 @@ export function useTrueSheetScrollLayout(): TrueSheetScrollLayoutConfig {
   return (
     useContext(TrueSheetScrollLayoutContext) ?? {
       active: false,
+      autoDetent: false,
       automaticContentInsetAdjustment: false,
       insetAdjustment: "automatic",
       nativeScrollInsetsApplied: false,

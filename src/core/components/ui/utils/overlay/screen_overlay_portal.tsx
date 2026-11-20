@@ -21,9 +21,11 @@ import {
 
 import {
   TRUE_SHEET_TOAST_DETENT_LIFT,
+  isTrueSheetOverlayPortalHost,
   getTrueSheetOverlayLayoutBottomInset,
   shouldApplyIosTrueSheetToastLayerInset,
 } from "../../sheet/native_sheet/true_sheet/overlay_toast_layout";
+import { useTrueSheetScrollLayout } from "../../sheet/native_sheet/true_sheet/true_sheet_scroll_context";
 import { Toaster } from "../../toast/toaster";
 import { registerAndroidToastPortalHost } from "../../toast/android_toast_portal_host";
 import { ScreenOverlayFloatingProvider } from "./screen_overlay_floating";
@@ -62,6 +64,7 @@ export function ScreenOverlayPortalProvider({
   toastPortalActive?: boolean;
 }) {
   const parentHostName = useContext(ScreenOverlayPortalContext);
+  const { autoDetent } = useTrueSheetScrollLayout();
   useEffect(() => {
     if (os() !== "android" || !toastPortalActive) return;
     return registerAndroidToastPortalHost(hostName, parentHostName);
@@ -101,7 +104,7 @@ export function ScreenOverlayPortalProvider({
         {portalHost}
       </>
     ) : (
-      <View style={styles.root}>
+      <View style={autoDetent ? { minHeight: 1, position: "relative", flexGrow: 0, flexShrink: 1, flexBasis: "auto" } : styles.root}>
         {children}
         {portalHost}
       </View>
@@ -148,6 +151,7 @@ function OverlayToastLayer({
   const screenHeight = Dimensions.get("window").height;
   const detentVisibleOffset =
     hostName != null &&
+    !isTrueSheetOverlayPortalHost(hostName) &&
     canPartialDetent &&
     detent < 1 &&
     sheetTopPosition != null &&

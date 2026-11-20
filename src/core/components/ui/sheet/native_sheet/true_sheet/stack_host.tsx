@@ -1,3 +1,4 @@
+import { TrueSheetAutoStackLayoutProvider } from "./auto_stack_layout_context";
 import { SheetContentScope } from "./sheet_content_scope";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import type { TrueSheetProps } from "@lodev09/react-native-true-sheet";
@@ -5,7 +6,7 @@ import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationOptions } from "@react-navigation/native-stack";
 import { ArrowLeft } from "lucide-react-native";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
-import { BackHandler, Platform, StyleSheet } from "react-native";
+import { BackHandler, Platform, View, useWindowDimensions } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { isIos26Plus, os } from "../../../utils/platform";
@@ -21,6 +22,9 @@ import type {
 import { TrueSheetOverlayLayoutProvider } from "./overlay_layout_context";
 import {
   getTrueSheetGestureRootStyle,
+  isTrueSheetAutoDetent,
+  mergeTrueSheetContentStyle,
+  shouldUseTrueSheetNativeScrollInsets,
   getTrueSheetStackHostScrollableProps,
 } from "./platform_sheet_defaults";
 import { TrueSheetStackHostProvider } from "./stack_context";
@@ -78,6 +82,7 @@ const defaultSheetProps: Pick<
   | "dismissible"
   | "disableStackingTranslation"
   | "grabber"
+  | "placement"
   | "insetAdjustment"
 > &
   Pick<TrueSheetProps, "scrollable" | "scrollableOptions"> = {
@@ -87,6 +92,7 @@ const defaultSheetProps: Pick<
   dismissible: true,
   disableStackingTranslation: platform === "android",
   grabber: false,
+  placement: "center",
   insetAdjustment: "automatic" as const,
   ...getTrueSheetStackHostScrollableProps(),
 };
@@ -117,9 +123,13 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
   const appBackgroundColors = useAppBackgroundColors();
   const theme = useUiTheme();
   const navigationRef = navigationRefProp ?? createTrueSheetStackNavigationRef<ParamList>();
-  const overlayLayoutSync = useTrueSheetOverlayLayoutSync(sheetProps);
+  const overlayLayoutSync = useTrueSheetOverlayLayoutSync();
   const customSheetBackHandler = sheetProps?.onBackPress;
   const [presented, setPresented] = useState(false);
+  const [activeDetentIndex, setActiveDetentIndex] = useState(Math.max(0, sheetProps?.initialDetentIndex ?? 0));
+  const [naturalStackHeight, setNaturalStackHeight] = useState<number>();
+  const { height: windowHeight } = useWindowDimensions();
+  const autoDetent = isTrueSheetAutoDetent(sheetProps?.detents ?? [1], activeDetentIndex);
   const scrollableBinding = useTrueSheetScrollableBindingController();
 
   const handleRequestClose = useCallback(() => {
@@ -184,6 +194,7 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
       scrollableBinding.setPresented(true);
       setPresented(true);
       onDidPresent?.();
+      setActiveDetentIndex(event.nativeEvent.index);
       overlayLayoutSync.onDidPresent(event);
       sheetProps?.onDidPresent?.(event);
     },
@@ -192,6 +203,7 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
 
   const handleDetentChange = useCallback<NonNullable<TrueSheetProps["onDetentChange"]>>(
     (event) => {
+      setActiveDetentIndex(event.nativeEvent.index);
       overlayLayoutSync.onDetentChange(event);
       sheetProps?.onDetentChange?.(event);
     },
@@ -220,6 +232,7 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
   );
   const handleWillPresent = useCallback<NonNullable<TrueSheetProps["onWillPresent"]>>(
     (event) => {
+      setActiveDetentIndex(event.nativeEvent.index);
       overlayLayoutSync.onWillPresent(event);
       sheetProps?.onWillPresent?.(event);
     },
@@ -338,14 +351,8 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
   const resolvedSheetProps = {
     ...sheetProps,
     backgroundColor: resolvedBackgroundColor,
-    style: [
-      sheetProps?.style,
-      backgroundStyle,
-      // React Navigation's web stack has no intrinsic height. TrueSheet Web
-      // renders its scrollable content inside a flex container, so the stack
-      // content must fill that container explicitly or the sheet appears blank.
-      Platform.OS === "web" && styles.webStackContent,
-    ],
+    backgroundStyle: [sheetProps?.backgroundBlur ? backgroundStyle : null, sheetProps?.backgroundStyle],
+    style: mergeTrueSheetContentStyle(sheetProps?.scrollable ?? true, sheetProps?.style, autoDetent),
   };
 
   const stackNavigation = (
@@ -363,17 +370,22 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
   const sheetBody = (
     <TrueSheetScrollableBindingProvider value={scrollableBinding.providerValue}>
       <TrueSheetScrollLayoutProvider
+        autoDetent={autoDetent}
         automaticContentInsetAdjustment={Platform.OS === "ios"}
         insetAdjustment={insetAdjustment}
-        nativeScrollInsetsApplied={false}
+        nativeScrollInsetsApplied={shouldUseTrueSheetNativeScrollInsets(sheetProps?.scrollable ?? true)}
         presentationActive={presented}
       >
-        <GestureHandlerRootView style={[styles.gestureRoot, backgroundStyle]}>
+        <GestureHandlerRootView style={getTrueSheetGestureRootStyle(autoDetent)}>
           <ScreenOverlayPortalProvider
             hostName={resolvedOverlayPortalHostName}
             toastPortalActive={presented}
           >
-            {stackNavigation}
+            <TrueSheetAutoStackLayoutProvider onHeightChange={setNaturalStackHeight}>
+              <View style={autoDetent ? { height: naturalStackHeight ?? windowHeight, flexShrink: 1, minHeight: 0 } : { flex: 1, minHeight: 0 }}>
+                {stackNavigation}
+              </View>
+            </TrueSheetAutoStackLayoutProvider>
           </ScreenOverlayPortalProvider>
         </GestureHandlerRootView>
       </TrueSheetScrollLayoutProvider>
@@ -382,11 +394,13 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
 
   return (
     <TrueSheet
-      ref={scrollableBinding.setSheetRef}
       name={name}
       {...defaultSheetProps}
       {...resolvedSheetProps}
       onBackPress={customSheetBackHandler}
+      scrollableRef={sheetProps?.scrollableRef ?? (sheetProps?.scrollable === false ? undefined : scrollableBinding.scrollableRef)}
+      placement={sheetProps?.placement ?? (sheetProps?.anchor === "left" ? "leading" : sheetProps?.anchor === "right" ? "trailing" : sheetProps?.anchor ?? "center")}
+      footerOptions={{ position: "absolute", ...sheetProps?.footerOptions }}
       onDetentChange={handleDetentChange}
       onDidDismiss={handleDidDismiss}
       onDidPresent={handleDidPresent}
@@ -414,13 +428,3 @@ export function TrueSheetStackHost<ParamList extends ParamListBase = ParamListBa
     </TrueSheetOverlayLayoutProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  gestureRoot: getTrueSheetGestureRootStyle(),
-  webStackContent: {
-    flex: 1,
-    width: "100%",
-    height: "100%",
-    minHeight: 0,
-  },
-});

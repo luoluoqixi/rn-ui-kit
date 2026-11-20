@@ -12,6 +12,7 @@ import { ScreenOverlayPortalProvider } from "../../../utils/overlay";
 import { TrueSheetOverlayLayoutProvider } from "./overlay_layout_context";
 import {
   getTrueSheetGestureRootStyle,
+  isTrueSheetAutoDetent,
   getTrueSheetPanelOverlayLayout,
   getTrueSheetPanelScrollableProps,
   mergeTrueSheetContentStyle,
@@ -62,6 +63,7 @@ const defaultSheetProps: Pick<
   | "detents"
   | "dismissible"
   | "disableStackingTranslation"
+  | "placement"
   | "insetAdjustment"
 > &
   Pick<TrueSheetProps, "scrollable" | "scrollableOptions"> = {
@@ -70,6 +72,7 @@ const defaultSheetProps: Pick<
   detents: [1],
   dismissible: true,
   disableStackingTranslation: os() === "android",
+  placement: "center",
   insetAdjustment: "automatic",
   ...getTrueSheetPanelScrollableProps(),
 };
@@ -92,9 +95,11 @@ function TrueSheetPanelInner({
   onDidDismiss,
   sheetProps,
 }: TrueSheetPanelProps) {
-  const overlayLayoutSync = useTrueSheetOverlayLayoutSync(sheetProps);
+  const overlayLayoutSync = useTrueSheetOverlayLayoutSync();
   const scrollableBinding = useTrueSheetScrollableBindingController();
   const [presented, setPresented] = useState(false);
+  const [activeDetentIndex, setActiveDetentIndex] = useState(Math.max(0, sheetProps?.initialDetentIndex ?? 0));
+  const autoDetent = isTrueSheetAutoDetent(sheetProps?.detents ?? [1], activeDetentIndex);
   const showToolbar = chrome === "toolbar" && title != null;
   const grabber = resolveTrueSheetGrabber(chrome, grabberProp ?? sheetProps?.grabber);
 
@@ -113,6 +118,7 @@ function TrueSheetPanelInner({
     (event) => {
       scrollableBinding.setPresented(true);
       setPresented(true);
+      setActiveDetentIndex(event.nativeEvent.index);
       overlayLayoutSync.onDidPresent(event);
       sheetProps?.onDidPresent?.(event);
     },
@@ -132,6 +138,7 @@ function TrueSheetPanelInner({
 
   const handleDetentChange = useCallback<NonNullable<TrueSheetProps["onDetentChange"]>>(
     (event) => {
+      setActiveDetentIndex(event.nativeEvent.index);
       overlayLayoutSync.onDetentChange(event);
       sheetProps?.onDetentChange?.(event);
     },
@@ -160,6 +167,7 @@ function TrueSheetPanelInner({
   );
   const handleWillPresent = useCallback<NonNullable<TrueSheetProps["onWillPresent"]>>(
     (event) => {
+      setActiveDetentIndex(event.nativeEvent.index);
       overlayLayoutSync.onWillPresent(event);
       sheetProps?.onWillPresent?.(event);
     },
@@ -192,7 +200,7 @@ function TrueSheetPanelInner({
 
   const insetAdjustment = sheetProps?.insetAdjustment ?? defaultSheetProps.insetAdjustment;
   const sheetScrollable = sheetProps?.scrollable ?? defaultSheetProps.scrollable;
-  const backgroundStyle = backgroundColor != null ? { backgroundColor } : null;
+  const backgroundStyle = sheetProps?.backgroundBlur && backgroundColor != null ? { backgroundColor } : null;
   const resolvedOverlayPortalHostName = createTrueSheetOverlayPortalHostName(
     overlayPortalHostName ?? `${name}-overlay`,
   );
@@ -210,14 +218,14 @@ function TrueSheetPanelInner({
   const sheetBody = (
     <TrueSheetScrollableBindingProvider value={scrollableBinding.providerValue}>
       <TrueSheetScrollLayoutProvider
+        autoDetent={autoDetent}
         insetAdjustment={insetAdjustment}
         nativeScrollInsetsApplied={shouldUseTrueSheetNativeScrollInsets(sheetScrollable)}
         presentationActive={presented}
       >
         <GestureHandlerRootView
           style={[
-            styles.gestureRoot,
-            backgroundStyle,
+            getTrueSheetGestureRootStyle(autoDetent),
             shouldReserveGrabberContentInset && {
               paddingTop: resolvedGrabberContentInsetTop,
             },
@@ -234,13 +242,15 @@ function TrueSheetPanelInner({
 
   return (
     <TrueSheet
-      ref={scrollableBinding.setSheetRef}
       backgroundColor={backgroundColor}
       header={resolvedHeader}
       name={name}
       {...defaultSheetProps}
       {...sheetProps}
       grabber={grabber}
+      scrollableRef={sheetProps?.scrollableRef ?? (sheetProps?.scrollable === false ? undefined : scrollableBinding.scrollableRef)}
+      placement={sheetProps?.placement ?? (sheetProps?.anchor === "left" ? "leading" : sheetProps?.anchor === "right" ? "trailing" : sheetProps?.anchor ?? "center")}
+      footerOptions={{ position: "absolute", ...sheetProps?.footerOptions }}
       grabberOptions={resolvedGrabberOptions}
       onDetentChange={handleDetentChange}
       onDidDismiss={handleDidDismiss}
@@ -249,7 +259,8 @@ function TrueSheetPanelInner({
       onDragEnd={handleDragEnd}
       onPositionChange={handlePositionChange}
       onWillPresent={handleWillPresent}
-      style={mergeTrueSheetContentStyle(mergedScrollable, [sheetProps?.style, backgroundStyle])}
+      backgroundStyle={[backgroundStyle, sheetProps?.backgroundStyle]}
+      style={mergeTrueSheetContentStyle(mergedScrollable, sheetProps?.style, autoDetent)}
     >
       <SheetContentScope
         dismissOnOverlayPress={sheetProps?.dismissible !== false}
@@ -276,7 +287,6 @@ export function TrueSheetPanel(props: TrueSheetPanelProps) {
 }
 
 const styles = StyleSheet.create({
-  gestureRoot: getTrueSheetGestureRootStyle(),
   gestureRootScrollSibling: {
     position: "relative",
   },

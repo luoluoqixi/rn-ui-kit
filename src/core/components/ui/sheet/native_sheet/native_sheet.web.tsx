@@ -1,12 +1,12 @@
-import { useTrueSheet } from "@lodev09/react-native-true-sheet";
 import type { TrueSheetProps } from "@lodev09/react-native-true-sheet";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { useAppBackgroundColors } from "../../utils/theme";
 
 import { createTrueSheetOverlayPortalHostName } from "./true_sheet/overlay_host_name";
 import { TrueSheetPanel } from "./true_sheet/panel";
 import type { NativeSheetProps, NativeSheetSnapPoint } from "./types";
+import { useWebSheetCommands } from "./web_sheet_commands";
 import { useHasOpenWebSheetAbove } from "./web_sheet_stack";
 
 type WebSheetDetent = NonNullable<TrueSheetProps["detents"]>[number];
@@ -175,7 +175,6 @@ export function NativeSheet({ ...props }: NativeSheetProps) {
     ...trueSheetProps
   } = props;
   const appBackgroundColors = useAppBackgroundColors();
-  const { present, dismiss, resize } = useTrueSheet();
   const [generatedSheetName] = useState(() => `ui-sheet-web-${++nativeSheetCounter}`);
   const sheetName = name ?? generatedSheetName;
   const [generatedOverlayPortalHostName] = useState(() => `${sheetName}-overlay`);
@@ -184,7 +183,7 @@ export function NativeSheet({ ...props }: NativeSheetProps) {
   );
   const sheetState = useControllableNativeSheetState({
     defaultOpen,
-    defaultPosition,
+    defaultPosition: defaultPosition ?? (initialDetentIndex != null && initialDetentIndex >= 0 ? initialDetentIndex : 0),
     onOpenChange,
     onSnapPointChange,
     open: openProp,
@@ -202,50 +201,32 @@ export function NativeSheet({ ...props }: NativeSheetProps) {
   const hasOpenSheetAbove = useHasOpenWebSheetAbove(sheetName, sheetState.open);
   const resolvedDismissible =
     (dismissible ?? dismissOnOverlayPress !== false) && !hasOpenSheetAbove;
-  const firstRenderRef = useRef(true);
-
-  useEffect(() => {
-    if (modal === false) return;
-
-    if (firstRenderRef.current) {
-      firstRenderRef.current = false;
-      return;
-    }
-
-    if (sheetState.open) {
-      void present(sheetName, resolvedDetentIndex).catch(() => undefined);
-    } else {
-      void dismiss(sheetName).catch(() => undefined);
-    }
-  }, [dismiss, modal, present, resolvedDetentIndex, sheetName, sheetState.open]);
-
-  useEffect(() => {
-    if (!sheetState.open) return;
-    void resize(sheetName, resolvedDetentIndex).catch(() => undefined);
-  }, [resize, resolvedDetentIndex, sheetName, sheetState.open]);
+  const commands = useWebSheetCommands(sheetName, sheetState.open, resolvedDetentIndex, modal !== false, initialDetentIndex);
 
   const handleDidPresent = useCallback(
     (event: WebDidPresentEvent) => {
+      const syncPosition = commands.queue.didPresent(event.nativeEvent.index);
       onDidPresent?.(event);
-      sheetState.setPosition(detentNormalization.fromNativeIndex(event.nativeEvent.index));
+      if (syncPosition) sheetState.setPosition(detentNormalization.fromNativeIndex(event.nativeEvent.index));
       onAnimationComplete?.({ open: true });
     },
-    [detentNormalization, onAnimationComplete, onDidPresent, sheetState],
+    [commands.queue, detentNormalization, onAnimationComplete, onDidPresent, sheetState],
   );
   const handleDidDismiss = useCallback(
     (event: WebDidDismissEvent) => {
+      const syncClosed = commands.queue.didDismiss();
       onDidDismiss?.(event);
-      sheetState.setOpen(false);
+      if (syncClosed) sheetState.setOpen(false);
       onAnimationComplete?.({ open: false });
     },
-    [onAnimationComplete, onDidDismiss, sheetState],
+    [commands.queue, onAnimationComplete, onDidDismiss, sheetState],
   );
   const handleDetentChange = useCallback(
     (event: WebDetentChangeEvent) => {
       onDetentChange?.(event);
-      sheetState.setPosition(detentNormalization.fromNativeIndex(event.nativeEvent.index));
+      if (commands.queue.didDetentChange(event.nativeEvent.index)) sheetState.setPosition(detentNormalization.fromNativeIndex(event.nativeEvent.index));
     },
-    [detentNormalization, onDetentChange, sheetState],
+    [commands.queue, detentNormalization, onDetentChange, sheetState],
   );
 
   if (modal === false) return null;
@@ -267,7 +248,7 @@ export function NativeSheet({ ...props }: NativeSheetProps) {
         dismissible: resolvedDismissible,
         draggable: draggable ?? disableDrag !== true,
         grabber: grabber ?? handle ?? false,
-        initialDetentIndex: initialDetentIndex ?? (sheetState.open ? resolvedDetentIndex : -1),
+        initialDetentIndex: commands.initialIndex,
         onDetentChange: handleDetentChange,
         onPositionChange,
         onDidDismiss: handleDidDismiss,

@@ -249,7 +249,7 @@ export function NativeSheet({ ...props }: NativeSheetProps) {
   );
   const sheetState = useControllableNativeSheetState({
     defaultOpen,
-    defaultPosition,
+    defaultPosition: defaultPosition ?? (initialDetentIndex != null && initialDetentIndex >= 0 ? initialDetentIndex : 0),
     onOpenChange,
     onSnapPointChange,
     open: openProp,
@@ -405,7 +405,13 @@ export function NativeSheet({ ...props }: NativeSheetProps) {
       presentedRef.current = true;
       dismissingRef.current = false;
       lastRequestedPositionRef.current = event.nativeEvent.index;
-      sheetState.setPosition(detentNormalization.fromNativeIndex(event.nativeEvent.index));
+      if (resolvedDetentIndex === event.nativeEvent.index) {
+        sheetState.setPosition(detentNormalization.fromNativeIndex(event.nativeEvent.index));
+      } else {
+        // position may have changed while the initial presentation was pending.
+        lastRequestedPositionRef.current = resolvedDetentIndex;
+        resizeTrueSheet(sheetName, resolvedDetentIndex).catch(() => undefined);
+      }
       onAnimationComplete?.({ open: true });
     },
   };

@@ -1,6 +1,6 @@
 import { type NavigationProp, useNavigation } from "@react-navigation/native";
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, TextInput, View } from "react-native";
 
 import {
   Button,
@@ -10,6 +10,7 @@ import {
   NativeListSection,
   NativeSheet,
   NativeSheetStack,
+  NativeSheetScrollContent,
   Text,
   getNativeStackScrollEdgeHeaderOptions,
   useAppBackgroundColors,
@@ -20,6 +21,8 @@ import { ExampleBlock, ExampleRow, ExampleStack } from "../shared";
 type SheetStackParamList = {
   index: undefined;
   details: undefined;
+  scroll: undefined;
+  short: undefined;
 };
 
 function SheetStackIndexScreen() {
@@ -33,6 +36,7 @@ function SheetStackIndexScreen() {
           subtitle="演示 Stack 的前进与返回"
           title="打开详情页"
         />
+        <NativeListNavigationItem onPress={() => navigation.navigate("scroll")} title="RN 长列表绑定" subtitle="切页后验证右侧滚动与到顶下拉" />
       </NativeListSection>
     </NativeList>
   );
@@ -48,6 +52,16 @@ function SheetStackDetailsScreen({ onClose }: { onClose: () => void }) {
   );
 }
 
+function SheetStackScrollScreen({ short = false }: { short?: boolean }) {
+  const navigation = useNavigation<NavigationProp<SheetStackParamList>>();
+  return <NativeSheetScrollContent contentContainerStyle={{ padding: 20, gap: 12 }}>
+    <Text>当前绑定页面：{short ? "短列表" : "长列表"}</Text>
+    <Button onPress={() => navigation.navigate(short ? "scroll" : "short")}>切换长短列表页面</Button>
+    <TextInput accessibilityLabel="Stack 键盘回归输入框" placeholder="输入后收起键盘，再返回上一页" style={{ borderWidth: 1, padding: 12 }} />
+    {Array.from({ length: short ? 2 : 45 }, (_, i) => <Text key={i}>滚动测试行 {i + 1} — 从屏幕右侧滑动</Text>)}
+  </NativeSheetScrollContent>;
+}
+
 export function SheetExample() {
   const appBackgroundColors = useAppBackgroundColors();
   const [detentsOpen, setDetentsOpen] = useState(false);
@@ -56,6 +70,11 @@ export function SheetExample() {
   const [nestedOpen, setNestedOpen] = useState(false);
   const [nestedInnerOpen, setNestedInnerOpen] = useState(false);
   const [nestedPosition, setNestedPosition] = useState(0);
+  const [autoOpen, setAutoOpen] = useState(false);
+  const [autoRows, setAutoRows] = useState(3);
+  const [footerRelative, setFooterRelative] = useState(false);
+  const [autoPosition, setAutoPosition] = useState(0);
+  const [autoStack, setAutoStack] = useState(false);
   const [stackOpen, setStackOpen] = useState(false);
 
   return (
@@ -91,8 +110,30 @@ export function SheetExample() {
         description="iOS 使用原生 Header item，Android/Web 使用 React Button"
         title="Stack TrueSheet"
       >
-        <Button onPress={() => setStackOpen(true)}>打开Stack Sheet</Button>
+        <Button onPress={() => { setAutoStack(false); setStackOpen(true); }}>打开Stack Sheet</Button>
+        <Button onPress={() => { setAutoStack(true); setStackOpen(true); }}>打开 auto Stack Sheet</Button>
       </ExampleBlock>
+
+      <ExampleBlock description="auto / 固定档位、动态高度、键盘和 Footer" title="v4 布局回归">
+        <Button onPress={() => setAutoOpen(true)}>打开 auto 回归 Sheet</Button>
+      </ExampleBlock>
+      <NativeSheet name="true-sheet-v4-auto-regression" open={autoOpen} onOpenChange={setAutoOpen}
+        detents={["auto", 0.85]} position={autoPosition} onSnapPointChange={setAutoPosition} handle
+        footerOptions={{ position: footerRelative ? "relative" : "absolute" }}
+        footer={<View style={{ padding: 12 }}><Text>Footer：{footerRelative ? "relative" : "absolute"}</Text></View>}>
+        <NativeSheetScrollContent contentContainerStyle={{ padding: 20, gap: 12 }}>
+          <Text>动态行数：{autoRows}，档位：{autoPosition}</Text>
+          <ExampleRow>
+            <Button onPress={() => setAutoRows(v => v === 3 ? 30 : 3)}>长 / 短内容</Button>
+            <Button onPress={() => setAutoPosition(v => v === 0 ? 1 : 0)}>切换档位</Button>
+          </ExampleRow>
+          <Button onPress={() => setFooterRelative(v => !v)}>切换 Footer 定位</Button>
+          <TextInput accessibilityLabel="auto 键盘回归输入框一" placeholder="键盘输入框一" style={{ borderWidth: 1, padding: 12 }} />
+          <TextInput accessibilityLabel="auto 键盘回归输入框二" placeholder="切换到输入框二" style={{ borderWidth: 1, padding: 12 }} />
+          {Array.from({ length: autoRows }, (_, i) => <Text key={i}>动态内容第 {i + 1} 行</Text>)}
+          <Button onPress={() => setAutoOpen(false)}>关闭回归 Sheet</Button>
+        </NativeSheetScrollContent>
+      </NativeSheet>
 
       <NativeSheet detents={[0.4, 0.6, 1]} handle onOpenChange={setDetentsOpen} open={detentsOpen}>
         <View className="gap-3 p-5">
@@ -179,11 +220,17 @@ export function SheetExample() {
           screenBackgroundColor: appBackgroundColors.sheet,
         })}
         sheetProps={{
-          snapPoints: ["70%"],
+          ...(autoStack ? { detents: ["auto" as const], maxContentHeight: 650 } : { snapPoints: ["70%" as const] }),
         }}
       >
         <NativeSheetStack.Screen name="index" options={{ title: "Stack Sheet" }}>
           {() => <SheetStackIndexScreen />}
+        </NativeSheetStack.Screen>
+        <NativeSheetStack.Screen name="scroll" options={{ title: "RN 长列表" }}>
+          {() => <SheetStackScrollScreen />}
+        </NativeSheetStack.Screen>
+        <NativeSheetStack.Screen name="short" options={{ title: "RN 短列表" }}>
+          {() => <SheetStackScrollScreen short />}
         </NativeSheetStack.Screen>
         <NativeSheetStack.Screen name="details" options={{ title: "详情" }}>
           {() => <SheetStackDetailsScreen onClose={() => setStackOpen(false)} />}

@@ -5,7 +5,7 @@ import { getRnUiKitDebugRouteDefinition } from "../routes";
 import type { RnUiKitDebugRouteDefinition, RnUiKitDebugRouteKey } from "../types";
 
 export function RnUiKitDebugSectionPage({
-  bindToNativeSheet = false,
+  bindToNativeSheet = true,
   contentTitle,
   headerTransparent = false,
   instanceId,

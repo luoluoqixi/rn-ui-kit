@@ -1,3 +1,4 @@
+import { useTrueSheetStackContentSize } from "../sheet/native_sheet/true_sheet/auto_stack_layout_context";
 import { forwardRef, useImperativeHandle, useRef } from "react";
 import {
   ScrollView as ReactNativeScrollView,
@@ -6,6 +7,7 @@ import {
   View,
 } from "react-native";
 
+import { useTrueSheetScrollableRegistration } from "../sheet/native_sheet/true_sheet/scrollable_binding_context";
 import { useTrueSheetScrollLayout } from "../sheet/native_sheet/true_sheet/true_sheet_scroll_context";
 import { useNavigationBarScrollEdge } from "../utils/navigation";
 import { isWeb, os } from "../utils/platform";
@@ -64,11 +66,14 @@ const WebTrackedScrollView = forwardRef<any, ScrollViewProps>((props, ref) => {
 });
 WebTrackedScrollView.displayName = "WebTrackedScrollView";
 
-const BaseScrollView = forwardRef<any, ScrollViewProps>((props, ref) => {
-  const { active: insideTrueSheet } = useTrueSheetScrollLayout();
+const BaseScrollView = forwardRef<any, ScrollViewProps>((inputProps, ref) => {
+  const onContentSizeChange = useTrueSheetStackContentSize(inputProps.onContentSizeChange);
+  const props = { ...inputProps, onContentSizeChange };
+  const { active: insideTrueSheet, nativeScrollInsetsApplied } = useTrueSheetScrollLayout();
+  const sheetRef = useTrueSheetScrollableRegistration(ref, insideTrueSheet && (isWeb() || nativeScrollInsetsApplied) && !props.horizontal);
 
   if (isWeb()) {
-    return <WebTrackedScrollView ref={ref} {...props} />;
+    return <WebTrackedScrollView ref={sheetRef} {...props} />;
   }
 
   const {
@@ -87,7 +92,7 @@ const BaseScrollView = forwardRef<any, ScrollViewProps>((props, ref) => {
   if (os() === "android" && tracksNavigationBarScrollEdge) {
     return (
       <AndroidTrackedScrollView
-        ref={ref}
+        ref={sheetRef}
         automaticallyAdjustsScrollIndicatorInsets={automaticallyAdjustsScrollIndicatorInsets}
         navigationBarScrollEdgeOptions={navigationBarScrollEdgeOptions}
         nestedScrollEnabled={nestedScrollEnabled ?? true}
@@ -106,7 +111,7 @@ const BaseScrollView = forwardRef<any, ScrollViewProps>((props, ref) => {
 
   return (
     <ReactNativeScrollView
-      ref={ref}
+      ref={sheetRef}
       automaticallyAdjustsScrollIndicatorInsets={
         manuallyAdjustNormalPageIndicator ? false : automaticallyAdjustsScrollIndicatorInsets
       }

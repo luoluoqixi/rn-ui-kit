@@ -170,9 +170,8 @@ function useDebugSheetStackScreenOptions(overrides?: RnUiKitDebugPanelNativeShee
 }
 
 function NativeSheetStackDebugSectionPage(props: ComponentProps<typeof RnUiKitDebugSectionPage>) {
-  // 组件总览的静态页复用详情页的 viewport 约束，不再把外层 ScrollView
-  // 注册给 TrueSheet。关闭或切换 Stack screen 时原生 tag 已失效，继续绑定会报 tag 0。
-  return <RnUiKitDebugSectionPage {...props} bindToNativeSheet={false} />;
+  // v4 uses a ref prop and retries after mounting; focused pages can bind directly.
+  return <RnUiKitDebugSectionPage {...props} bindToNativeSheet />;
 }
 
 export function RnUiKitDebugPanel({

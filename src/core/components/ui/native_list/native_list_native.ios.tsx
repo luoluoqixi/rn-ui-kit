@@ -1365,7 +1365,7 @@ function NativeListRoot({
     insideTrueSheet && scrollable && !isNestedNativeList
       ? getTrueSheetScrollBottomPadding({
           insetAdjustment,
-          nativeScrollInsetsApplied,
+          nativeScrollInsetsApplied: false,
           safeAreaBottom: insets.bottom,
         })
       : 0;
