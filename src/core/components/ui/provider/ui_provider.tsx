@@ -1,4 +1,5 @@
 import { TextFontProvider } from "./font_provider";
+import { HeroUIProvider } from "./heroui_provider";
 import { PortalHost } from "@rn-primitives/portal";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { PortalProvider as TeleportPortalProvider } from "react-native-teleport";
@@ -46,33 +47,35 @@ export function UIProvider({
             followsSystem={preferences?.appearance?.themeMode === "system"}
             theme={theme}
           >
-            <AppBackgroundColorsProvider colors={appBackgroundColors}>
-              <TeleportPortalProvider>
-                <NativeDialogProvider>
-                  <NativeHapticsProvider
-                    enabledByDefault={defaultNativeHapticsEnabled}
-                  >
-                    <ToastDefaultsProvider
-                      defaultNative={toasterProps?.defaultNative}
+            <HeroUIProvider>
+              <AppBackgroundColorsProvider colors={appBackgroundColors}>
+                <TeleportPortalProvider>
+                  <NativeDialogProvider>
+                    <NativeHapticsProvider
+                      enabledByDefault={defaultNativeHapticsEnabled}
                     >
-                      {children}
-                      <PortalHost />
-                      {CustomToaster ? (
-                        <CustomToaster
-                          {...toasterProps}
-                          accentThemeName={resolvedAccentThemeName}
-                        />
-                      ) : (
-                        <Toaster
-                          {...toasterProps}
-                          accentThemeName={resolvedAccentThemeName}
-                        />
-                      )}
-                    </ToastDefaultsProvider>
-                  </NativeHapticsProvider>
-                </NativeDialogProvider>
-              </TeleportPortalProvider>
-            </AppBackgroundColorsProvider>
+                      <ToastDefaultsProvider
+                        defaultNative={toasterProps?.defaultNative}
+                      >
+                        {children}
+                        <PortalHost />
+                        {CustomToaster ? (
+                          <CustomToaster
+                            {...toasterProps}
+                            accentThemeName={resolvedAccentThemeName}
+                          />
+                        ) : (
+                          <Toaster
+                            {...toasterProps}
+                            accentThemeName={resolvedAccentThemeName}
+                          />
+                        )}
+                      </ToastDefaultsProvider>
+                    </NativeHapticsProvider>
+                  </NativeDialogProvider>
+                </TeleportPortalProvider>
+              </AppBackgroundColorsProvider>
+            </HeroUIProvider>
           </UiThemeProvider>
         </UiPreferencesProvider>
       </KeyboardProvider>

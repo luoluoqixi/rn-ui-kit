@@ -1,6 +1,13 @@
 @import "tailwindcss";
-@import "uniwind";
 @import "../../src/styles.css";
+@import "@heroui/styles";
+
+/* Match Uniwind's root class without importing its Native-generated CSS. */
+@custom-variant light (&:where(.light, .light *));
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --spacing-hairline: 1px;
+}
 
 @source "../../src";
-@source "../../dist";

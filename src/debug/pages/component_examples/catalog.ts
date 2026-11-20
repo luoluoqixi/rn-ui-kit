@@ -1,4 +1,5 @@
 import { ButtonExample } from "./examples/button";
+import { HeroUIExample } from "./examples/heroui";
 import { CheckboxExample } from "./examples/checkbox";
 import { SwitchExample } from "./examples/switch";
 import { ToggleGroupExample } from "./examples/toggle_group";
@@ -43,6 +44,7 @@ import { ColorPickerExample } from "./examples/color_picker";
 import type { ComponentExampleDefinition } from "./types";
 
 export const componentExampleDefinitions: ComponentExampleDefinition[] = [
+  { Component: HeroUIExample, key: "heroui", label: "HeroUI 接入验证" },
   { Component: AccordionExample, key: "accordion", label: "Accordion" },
   { Component: AlertExample, key: "alert", label: "Alert" },
   { Component: AlertDialogExample, key: "alert-dialog", label: "AlertDialog" },

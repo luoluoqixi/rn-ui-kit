@@ -4,6 +4,8 @@
 
 [在线示例 (web)](https://rn-ui-kit.luoluoqixi.com/) · [截图 / Screenshots](./docs/SCREENSHOTS.md)
 
+> `dev-heroui` 分支正在迁移 HeroUI。该分支的双平台样式/Metro 接入、验证入口及迁移边界见 [HeroUI 迁移说明](./docs/heroui-migration.md)；下方原有 Uniwind 接入片段尚未覆盖新的双入口配置。
+
 面向个人 Expo 项目的跨平台 UI 组件库。基础组件采用 React Native Reusables 的源码与 API，样式由 Uniwind 驱动；需要系统能力的组件继续由 rn-ui-kit 提供 iOS、Android 与 Web 平台实现。
 
 > [!WARNING]

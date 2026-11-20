@@ -42,10 +42,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         },
       },
     ],
-    [
-      "./plugins/with-ios-pods-deployment-target.cjs",
-      { deploymentTarget: IOS_DEPLOYMENT_TARGET },
-    ],
+    ["./plugins/with-ios-pods-deployment-target.cjs", { deploymentTarget: IOS_DEPLOYMENT_TARGET }],
     "./plugins/with-ios-scene-lifecycle.cjs",
     "./plugins/with-force-android-js-bundle.cjs",
   ],

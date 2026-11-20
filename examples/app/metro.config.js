@@ -1,5 +1,5 @@
 const { getDefaultConfig } = require("expo/metro-config");
-const { withUniwindConfig } = require("uniwind/metro");
+const { withHeroUIConfig } = require("../../scripts/metro/heroui.cjs");
 const fs = require("node:fs");
 const path = require("node:path");
 
@@ -38,7 +38,8 @@ if (isProd) {
   config.cacheStores = [];
 }
 
-module.exports = withUniwindConfig(config, {
+module.exports = withHeroUIConfig(config, {
   cssEntryFile: "./global.css",
+  nativeCssEntryFile: "./global.native.css",
   dtsFile: "./uniwind-types.d.ts",
 });
