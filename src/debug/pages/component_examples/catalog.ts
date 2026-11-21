@@ -1,3 +1,9 @@
+import { CloseButtonExample } from "./examples/close_button";
+import { TagGroupExample } from "./examples/tag_group";
+import { SurfaceExample } from "./examples/surface";
+import { PressableFeedbackExample } from "./examples/pressable_feedback";
+import { ScrollShadowExample } from "./examples/scroll_shadow";
+import { SearchFieldExample } from "./examples/search_field";
 import { ButtonExample } from "./examples/button";
 import { CheckboxExample } from "./examples/checkbox";
 import { SwitchExample } from "./examples/switch";
@@ -54,6 +60,7 @@ export const componentExampleDefinitions: ComponentExampleDefinition[] = [
   { Component: CardExample, key: "card", label: "Card" },
   { Component: CheckboxExample, key: "checkbox", label: "Checkbox" },
   { Component: ChipExample, key: "chip", label: "Chip" },
+  { Component: CloseButtonExample, key: "close-button", label: "CloseButton" },
   { Component: ColorPickerExample, key: "color-picker", label: "ColorPicker" },
   { Component: ContextMenuExample, key: "context-menu", label: "ContextMenu" },
   { Component: DialogExample, key: "dialog", label: "Dialog" },
@@ -92,9 +99,12 @@ export const componentExampleDefinitions: ComponentExampleDefinition[] = [
     layout: "fill",
   },
   { Component: PopoverExample, key: "popover", label: "Popover" },
+  { Component: PressableFeedbackExample, key: "pressable-feedback", label: "PressableFeedback" },
   { Component: ProgressExample, key: "progress", label: "Progress" },
   { Component: RadioGroupExample, key: "radio-group", label: "RadioGroup" },
+  { Component: ScrollShadowExample, key: "scroll-shadow", label: "ScrollShadow" },
   { Component: ScrollViewExample, key: "scroll-view", label: "ScrollView" },
+  { Component: SearchFieldExample, key: "search-field", label: "SearchField" },
   { Component: SelectExample, key: "select", label: "Select" },
   { Component: SeparatorExample, key: "separator", label: "Separator" },
   { Component: SheetExample, key: "sheet", label: "Sheet" },
@@ -107,7 +117,9 @@ export const componentExampleDefinitions: ComponentExampleDefinition[] = [
     label: "SplitView / SplitLayout",
     layout: "fill",
   },
+  { Component: SurfaceExample, key: "surface", label: "Surface" },
   { Component: SwitchExample, key: "switch", label: "Switch" },
+  { Component: TagGroupExample, key: "tag-group", label: "TagGroup" },
   { Component: TabsExample, key: "tabs", label: "Tabs" },
   { Component: TextExample, key: "text", label: "Text" },
   { Component: TextAreaExample, key: "text-area", label: "Textarea" },

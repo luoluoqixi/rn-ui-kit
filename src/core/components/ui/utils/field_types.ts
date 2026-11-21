@@ -7,9 +7,10 @@ import type { FieldError as WebFieldError } from "@heroui/react/field-error";
 import type { LabelProps } from "../label";
 
 /** Platform events, styles and refs remain in their own typed namespace. */
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 export type FieldSlotProps<N, W, K extends PropertyKey = never> = {
   className?: string;
-  herouiNativeProps?: Omit<N, "children" | "className" | "asChild" | K>;
+  herouiNativeProps?: DistributiveOmit<N, "children" | "className" | "asChild" | K>;
   herouiWebProps?: Omit<W, "children" | "className" | K>;
 };
 export type FieldDescriptionProps = FieldSlotProps<

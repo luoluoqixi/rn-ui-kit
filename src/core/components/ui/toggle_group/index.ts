@@ -1,2 +1,2 @@
-export * from "./toggle_group";
+export { ToggleGroup } from "./toggle_group";
 export type * from "./types";

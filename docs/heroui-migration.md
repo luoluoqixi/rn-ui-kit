@@ -733,6 +733,144 @@ Web 根节点是真实 HeroUI / React Aria 的单个 button，没有再包一个
 - 最新生产 Web 产物验证了 Switch 标签点击、空格切换与三档受控状态同步，Slider 方向键与完成值同步、区间端点限制；本批此前还实际拖动了 Slider，确认拖动值与结束值同步。319px 窄屏两页均未产生横向溢出，区间、数值格式、竖向与禁用示例显示正常；相关浏览器检查未记录运行错误或警告。本批未单独完成深色模式或 TrueSheet 内的浏览器回归。
 - 本轮未操作 iOS / Android 真机，也未执行新的原生 Release 编译。请在两端确认 native=false 时 Switch 按压 / 滑块动画、标签切换、Slider 拖动 / 轨道点击 / 区间 / 竖向手势和触感；native=true 时确认系统开关、连续 / 步进滑块、禁用、外部更新与最终值回调，另在 TrueSheet 中观察手势冲突、层级与关闭后的交互恢复。
 
+## CloseButton、Toggle、TagGroup、表面与搜索（2026-11-22）
+
+本批迁移 Toggle / ToggleGroup，新增 CloseButton、TagGroup、ScrollShadow、PressableFeedback、Surface、SearchField。八个组件均采用单一 index.ts、集中 types.ts 与平台 HeroUI 适配器；示例使用公共 props 入口、Card 分组和项目触感设置。参考本机官方 Native App 的演示内容，不将它的组合式调用作为本库公共 API。
+
+### 关闭、切换与标签
+
+| 公共组件 | Web | iOS / Android |
+| --- | --- | --- |
+| CloseButton | HeroUI CloseButton | HeroUI Native CloseButton；无系统 Button 分支 |
+| Toggle | HeroUI ToggleButton | 公开免费的 HeroUI Native Button 加选择状态 |
+| ToggleGroup | HeroUI ToggleButtonGroup / ToggleButton | Native View 分组与上述 Toggle |
+| TagGroup | HeroUI TagGroup / Tag / RemoveButton | HeroUI Native TagGroup / Item / ItemRemoveButton |
+
+- **CloseButton**：onPress、isDisabled、accessibilityLabel、children 和 nativeHaptics。默认可访问名称为“关闭”，children 可替换图标；平台扩展保留实际 ref、style 与事件。两端没有一致的内置 size，因此不添加自造尺寸枚举，也不提供 native / nativeSwiftProps / nativeComposeProps。
+- **Toggle**：isSelected / defaultSelected / onSelectedChange，size=sm|md|lg，variant=default|ghost，isIconOnly；title 可为文字、节点或根据 isSelected / isDisabled 渲染的回调。保留 labelClassName 与两端平台 props。独立 Toggle 默认保留按压缩放，isScaleDisabled 仅关闭缩放，不关闭高亮 / ripple 或选择回调；Web 尊重 reduced-motion。Native 沿用 Button 的反馈、禁用和真实辅助技术语义，选中使用 accent-soft；不读取、复制或依赖 Native Pro 的实现。
+- **Toggle 选中态按压配色**：Native 的 default / ghost 选中项使用当前主题 accent-soft-hover 作为默认 highlight / ripple 颜色，避免底层 Button 的灰色反馈盖住 accent-soft 选中背景；独立 Toggle 与 ToggleGroup 共用此适配。只有 onPress 才申请切换选择，按住或滑出取消不改变状态；受控模式继续等待调用方更新 isSelected。保留调用方显式反馈颜色、透明度、时序、缩放及动画禁用配置。未选中项按 HeroUI Button 的 secondary / ghost 规则取当前 default-hover，并保留 glass 主题的透明度处理。
+- **Toggle 松手衔接**：React Native Pressability 的短按可能先执行 onPress，再延迟执行 onPressOut，不能将后者当作选择更新的前置条件。两种选择状态都由官方 PressableFeedback.Highlight / Ripple 渲染颜色层；颜色层始终保留动画样式绑定，onPress 激活时仅以 display=none 隐藏绘制，下一次 onPressIn 才恢复，迟到的 onPressOut 不会重新显示颜色。不能移除动画样式后仅设置静态 opacity=0：Reanimated 不会因此清除已写入 Native 的 opacity，长按后可能残留按压色。Ripple 只隐藏内部两层绘制，保留接收触摸的容器，避免下一次点击丢失触点。选择实际变化时仍重建颜色层以清除旧动画残余；按钮根、ref、焦点及缩放实例保持不变。取消手势继续正常淡出；单选防空或受控值未更新时，激活会结束反馈，但不会擅自改变选择。
+- **ToggleGroup**：items 使用字符串 id，selectionMode=single|multiple，selectedKeys / defaultSelectedKeys 接受 Iterable<string>，onSelectionChange 回传 Set<string>；支持 disabledKeys、逐项 isDisabled、disallowEmptySelection、orientation、isDetached、fullWidth 及组内尺寸 / 外观。accessibilityLabel 必填，Web 保留官方焦点、方向键与按键选择行为。单选允许从已选但被禁用的旧项改选可用项，多选保留已选的禁用项；忽略不存在的 key，不将 Web 的 all sentinel 泄漏给调用方。
+- **ToggleGroup 的连接与反馈**：gap 使用逻辑像素，两端默认 0；大于 0 自动采用分离布局。保留 isDetached 作为省略 gap 时的 gap=8 简写，显式 gap 始终优先（包括 gap=0）；负数、NaN 与 Infinity 归零。需要调整间距时使用公共 gap，确保外观、分割线与缩放默认值一致。零间距默认关闭缩放，有间距默认开启；显式覆盖优先级为 item.isScaleDisabled → group.isScaleDisabled → gap===0。Native 的 animation=false / disabled / disable-all、animation.state 禁用、feedbackVariant=none，以及 HeroUI 的全局动画 / 系统 reduced-motion 控制仍保留，不由公共缩放开关重新开启。其余 Native scale 数值 / timing 配置保留；公共 isScaleDisabled={false} 可重新开启被单独 scale=false 关闭的缩放。
+- **ToggleGroup 圆角与短分割线**：Native 直接保留 HeroUI Button 随 size / 主题变化的外侧圆角，只将相邻边圆角清零；不再硬编码 rounded-xl。Web 沿用官方 ToggleButtonGroup 的主题圆角。横向连接组从第二项开始显示 1px 宽、条目高度 50% 的短线，纵向改为 1px 高、条目宽度 50%；不占额外间距，不接收点击或辅助技术焦点。两端都由不缩放的条目容器定位分割线，与按钮互为兄弟节点，显式开启按压缩放时线条的位置、长度和粗细保持固定。Web 使用官方 Separator，并将其放在按钮之前以保留官方 last-child 外侧圆角规则；Native 使用语义前景色、15% 不透明度的装饰线。分离布局和单项组不显示分割线；横纵方向、fullWidth、逐项平台 ref / style 继续保留。
+- **TagGroup**：用于可选择或可移除的标签集合，与静态 Chip 和附着内容的 Badge 职责不同。items 配置 id / title / textValue / startContent / isDisabled / className / labelClassName 及平台 props；富文本或动态标题应提供 textValue。selectionMode 默认 none，可改 single / multiple，选择状态与 ToggleGroup 共用 key 模型。支持 size=sm|md|lg、variant=default|surface、label / description / errorMessage、禁用与错误状态、listClassName 和 emptyContent。onRemove(keys) 只通知调用方，由调用方更新 items；不会在内部擅自删除业务数据，禁用项不可移除，移除按钮不额外切换选择。Web 使用真实 ErrorMessage 展示集合级错误，避免套用输入字段的 FieldError 上下文。
+- 删除 Toggle / ToggleGroup 的旧 RNR compound 导出、pressed / onPressedChange、outline 和旧尺寸枚举；工程中没有剩余旧调用方。移除 @rn-primitives/toggle、@rn-primitives/toggle-group 及其独占的 Radix 锁文件节点；没有更新其他依赖。
+
+~~~tsx
+<CloseButton onPress={close} accessibilityLabel="关闭面板" />
+<Toggle title="收藏" isSelected={saved} onSelectedChange={setSaved} />
+<ToggleGroup
+  accessibilityLabel="文本格式"
+  selectionMode="multiple"
+  items={[{ id: "bold", title: "粗体" }, { id: "italic", title: "斜体" }]}
+  selectedKeys={formats}
+  onSelectionChange={setFormats}
+/>
+<TagGroup
+  label="分类"
+  items={tags}
+  selectionMode="multiple"
+  onRemove={keys => setTags(current => current.filter(item => !keys.has(item.id)))}
+/>
+~~~
+
+~~~tsx
+// 默认连接布局：gap=0，不缩放，显示短分割线。
+<ToggleGroup accessibilityLabel="文本格式" items={formatItems} selectionMode="multiple" />
+// 有间距时，每项恢复完整圆角，默认按压缩放。
+<ToggleGroup accessibilityLabel="对齐方式" items={alignmentItems} gap={8} />
+// 连接布局显式开启缩放；item 也可单独提供 isScaleDisabled 覆盖整组。
+<ToggleGroup accessibilityLabel="文本格式" items={formatItems} isScaleDisabled={false} />
+// 分离布局显式关闭缩放。
+<ToggleGroup accessibilityLabel="对齐方式" items={alignmentItems} gap={8} isScaleDisabled />
+~~~
+
+### 滚动、反馈与表面
+
+- **现有 ScrollView 保留**：它承担 TrueSheet 滚动注册、内容测量、系统滚动边缘与自定义滚动条等项目能力，不能为了阴影替换为一个普通 HeroUI 容器。本批未修改其源码。
+- **ScrollShadow**：单独新增，children 直接传内容，由封装拥有唯一内层滚动容器。Web 使用真实 HeroUI ScrollShadow 自身的滚动区域；Native 使用官方 ScrollShadow 包裹 Animated 化的项目 ScrollView，沿用原有 TrueSheet 注册。公共 size（阴影宽度，默认 40）、orientation、visibility、isEnabled、hideScrollBar；不要在 children 中再套同方向 ScrollView。Native 的 nativeScrollProps 提供内层 ref / contentContainerStyle / onLayout / onContentSizeChange 等，不开放会改变容器结构或包装 onScroll 的 customScrollbar / 导航滚动边缘参数。HeroUI Native 1.1.1 只合并 Reanimated 事件处理器，普通 JS onScroll 会被忽略，因此额外提供 onNativeScroll(NativeScrollEvent)，通过 useAnimatedScrollHandler + scheduleOnRN 桥接；不伪造 SyntheticEvent。Web 使用 herouiWebProps.onScroll。isEnabled=false 同时关闭固定 visibility 阴影。
+- **PressableFeedback**：Native 组合官方 PressableFeedback 与 Highlight / Ripple；feedback=none|highlight|ripple，none 或省略时仅保留默认缩放。Web 使用 React Aria Button 保留键盘、焦点、禁用和 onPress，以 CSS 实现缩放 / 高亮，ripple 只是简化的中心径向高亮，不承诺与 Native 触点扩散动画完全相同。支持 isAnimationDisabled、accessibilityLabel、nativeHaptics 与平台 props，Web 尊重 reduced-motion。它是交互根，不应再嵌套 Button 等交互控件。
+- **Surface**：两端直接使用官方组件，variant=default|secondary|tertiary|transparent，className 及平台 ref / style；负责表面背景层级，不复制 Card 的标题、说明和页脚 API。Surface、ScrollShadow 与 PressableFeedback 支持裸文字 children，并保留项目字体。
+
+~~~tsx
+<ScrollShadow className="h-56" hideScrollBar>
+  <LongContent />
+</ScrollShadow>
+<PressableFeedback feedback="highlight" onPress={openDetails}>
+  <Surface variant="secondary" className="rounded-xl p-4">查看详情</Surface>
+</PressableFeedback>
+~~~
+
+### SearchField 与表单封装的边界
+
+- **SearchField**：两端组合真实 SearchField / Group / SearchIcon / Input / ClearButton，提供 value / defaultValue / onChangeText、onSubmit(value)、onClear、label / description / errorMessage、primary / secondary、禁用 / 只读 / 必填 / 错误、showSearchIcon / searchIcon / isClearable，以及 inputProps / groupProps / 对应 className。isClearable 控制清除按钮是否存在；Web React Aria 自带的 Escape 清除行为仍保留。只读时隐藏清除按钮，禁用时不编辑、不提交。
+- Web 根维护 React Aria 输入状态，内层不重复注册公共回调；Native 提交读取事件中的最后输入值，清除后恢复焦点。公共 controlRef 仅暴露 focus / blur，实际输入 ref 放在 inputProps 的平台 props，根 ref / style 与输入 ref / style 各自独立。Web 默认 validationBehavior=aria，校验结果仍由调用方决定；组件不自行发起搜索请求或保存业务状态。
+- **Input 值得单独存在**：它是编辑器叶子节点，适用于行内输入、紧凑布局或调用方自己组织字段。
+- **TextField 值得保留**：它负责标签、说明、错误、必填及可访问关联，可组合单行、多行或 InputGroup；它与 Input 是不同层级，不是重复组件。
+- **SearchField 值得公开**：除字段元数据外，还统一搜索语义、提交动作、搜索图标、清除和焦点，调用方无需自行重复组合。
+- **Description / FieldError / ErrorMessage 暂不新增公共组件**：继续作为内部实现和各字段 props / slots 使用，处理各端不同上下文，不暴露多套容易误用的错误显示 API。
+- **ControlField 暂不单独封装**：现有 Checkbox / Switch 内部已使用它处理普通标签点击与状态关联。它不是 NativeList 的全部替代；整行布局、分区外观与系统原生行继续由 NativeList 承担。无需另造一个面向调用方的重复行组件。
+- **Form / Fieldset 暂缓**：Web Form 的提交、校验、服务端错误关联，以及 Fieldset 的 legend / 分组禁用有真实语义，不能声称 View / Card 组合完全等价。但它们与 Native 没有一一对应 API，本库目前也没有统一表单状态 / 校验 / 提交协议，因此本批不强行包装。以后需要统一表单方案时独立设计；Web 业务仍可在外围使用真实 Form / Fieldset，Native 不伪造 HTML 表单行为。
+
+~~~tsx
+<SearchField
+  label="搜索项目"
+  description="按名称查找。"
+  value={query}
+  onChangeText={setQuery}
+  onSubmit={search}
+  onClear={resetResults}
+/>
+~~~
+
+### 本批验证与设备验收
+
+- 全量主测试 157 项通过、0 失败，2023 次主进程断言，39 个测试文件。新增三端隔离子进程，各使用真实安装的 HeroUI 组件验证 9 个场景，包含选择 / 禁用 / 防空、已选禁用项、标签移除、搜索初值 / 单次回调 / 提交 / 清除 / 只读、字体 / ref、滚动测量及 worklet→JS 桥接。设备视图、动画执行和项目 ScrollView 边界使用测试替身，不能据此声称 TrueSheet 真机集成已验收。公共类型正反用例检查两端 ref / 事件 / 样式、Native 动画判别联合、共享状态归属与旧 API 拒绝。
+- 库及示例应用 typecheck、库 build、git diff --check、Expo Web / iOS / Android 生产导出通过。最终 source map 分别包含 90 / 361 / 361 个目标 HeroUI 模块，另一端模块均为 0；八个适配器均只进入对应平台，三端产物没有旧 RNR / Radix Toggle 模块。没有修改 TrueSheet patch、弹层 host 或任何组件的系统原生实现。
+- 最终生产 Web 浏览器完成八个示例页回归：CloseButton / Toggle 键盘触发，ToggleGroup 单选防空 / 多选 / 方向键焦点与 Space 选择，TagGroup 选择 / 校验恢复 / 按钮及 Delete 移除 / 空态 / 重置，SearchField 输入 / 提交 / 清除计数 / 焦点恢复 / 标签关联，PressableFeedback 激活与禁用，以及 ScrollShadow 横向 / 纵向真实滚动和边缘渐隐更新。检查浅 / 深色、390px 窄屏无意外横向溢出；修复横向示例卡片被 Flex 压缩的问题。浏览器日志未记录运行错误或警告，测试后恢复跟随系统主题并清除临时视口覆盖。Web 简化反馈不据此等同于 Native 动画验收。
+- 本轮未操作 iOS / Android 真机，也未运行原生 Release 编译。请回归 Native 的 CloseButton / Toggle 按压和触感、分组选择与移除、SearchField 软键盘搜索 / 清除 / 焦点，以及 ScrollShadow 渐隐与滚动。尤其确认 ScrollShadow 放进 TrueSheet 后，原滚动注册、嵌套滚动、手势移交和内容高度没有回退。
+
+### ToggleGroup 样式与反馈修正验证（2026-11-22）
+
+- 全量主测试 157 项通过、0 失败；集合控件的 Web / iOS / Android 隔离子进程各 13 个场景通过，新增连接 / 分离布局、横纵短线、单项组、gap 边界、组与 item 缩放覆盖、独立 Toggle 默认反馈及 Native 高亮 / 动画配置保留检查。Native 动画 hook 使用测试替身，本次未操作真机。
+- 库与示例 typecheck、库 build、三端生产导出及 git diff --check 通过。Web / iOS / Android 的 HeroUI 模块数为 90 / 361 / 361，另一端模块均为 0。依赖及补丁未改动。
+- 生产 Web 浏览器核对零间距、主题圆角、半高 / 半宽短线与分离布局；实际按住空格时，默认连接组与显式禁用缩放组保持原尺寸，默认分离组与显式开启缩放组产生缩放，颜色反馈仍在。方向键正常移动组内焦点，浏览器未记录错误 / 警告。示例已增加 gap 与显式缩放覆盖演示，截图保存在 `.temp/toggle-group-web.jpg`；Native 的实际按压动画和圆角效果仍由 iOS / Android 真机回归确认。
+
+### Toggle 选中态按压配色修正验证（2026-11-22）
+
+- 先通过回归用例复现已选中项仍使用 default-hover，再修正 Native 适配器；集合控件 Web 13 个场景、iOS / Android 各 17 个场景通过。新增覆盖 default / ghost、主题反馈色更新、按下 / 取消不切换与实际触发切换、受控状态、连接 / 分离组、highlight / ripple 的自定义颜色与动画禁用。动画执行边界使用测试替身，本轮未操作真机。
+- 全量主测试 157 项通过、0 失败；库及示例应用 typecheck、库 build、Expo 三端生产导出与 git diff --check 通过。source map 中 Web / iOS / Android 的 HeroUI 模块为 90 / 361 / 361，另一端模块均为 0。请在真机复核已选中项长按时只出现同色系反馈、滑出取消后仍保持选中，以及松手实际激活后才取消选择。
+
+### Toggle 松手反馈衔接验证（2026-11-22）
+
+本节记录上一轮的自动检查。后续用户真机反馈确认该方案仍会闪色：测试当时没有覆盖 onPress 先于延迟 onPressOut 的短按顺序，不能据此认定真机问题已解决。现行实现与补充验证见下一节。
+
+- 新增三组回归先复现旧反馈层在选中状态变化后仍保留动画残余，再验证独立 Toggle 的正反切换、highlight / ripple、受控值更新，以及连接 / 分离 ToggleGroup 的两项互斥切换。检查旧反馈被清除、取消手势仍保留淡出、按钮 DOM / ref / 焦点不重建；动画残余使用测试替身模拟，不等于真机逐帧验收。Web 保持 13 个场景，iOS / Android 各 20 个场景通过。
+- 全量主测试 157 项通过、0 失败；库及示例应用 typecheck、库 build、Expo 三端生产导出及 git diff --check 通过。HeroUI 模块数为 Web 90、iOS / Android 各 361，另一端模块均为 0。本轮未操作真机，请重点确认未选中→选中与反向切换的松手瞬间不再闪过按压色，并复核取消手势和连续快速点击。
+
+### Toggle 短按事件顺序与固定分割线（2026-11-22）
+
+本节方案随后暴露了长按已选项的 Native 动画值残留问题；原先移除动画样式并设置静态 opacity 的处理已替换，现行方案见下方「Toggle 长按已选项的反馈复位」。
+
+- 新增回归先在旧实现上复现：短按触发选择后，反馈仍读取 pressed=true；另一个回归确认原分割线仍位于按钮缩放子树内。修正后，Web 14 个场景、iOS / Android 各 22 个场景通过。Native 测试保留跨 render 的按压共享状态，覆盖 press→延迟 out、out→press、正反连续切换、取消、受控延后更新、ripple 触点重新启用，以及根节点 / ref / 焦点稳定。动画执行仍使用替身，不能代替真机逐帧验收。
+- 两端分割线均移出缩放按钮；结构回归覆盖横纵方向和 fullWidth。开发 Web 实际按住空格时，按钮发生缩放，分割线仍为 1px × 18px，并保持条目内原有位置；同时检查外侧主题圆角、方向键焦点及空格选择。截图：`.temp/toggle-divider-pressed-web.jpg`。浏览器未记录运行错误；开发环境记录了一条 RN Web 的 pointerEvents 弃用警告。
+- 全量主测试 157 项通过、0 失败；库与示例 typecheck、库 build、Expo 三端生产导出及 git diff HEAD --check 通过。最终 source map 中 Web / iOS / Android 的目标 HeroUI 模块为 90 / 361 / 361，另一端模块均为 0。未升级依赖或修改 TrueSheet 补丁、弹层 host 和系统原生组件分支。
+- 本轮未操作 iOS / Android 真机。需要设备复核短按松手后是否直接显示普通选中背景，以及连接组开启缩放时分割线是否固定；取消手势和下一次 ripple 的触摸反馈也应一起复核。
+
+### ToggleGroup Android 连接圆角方向修正（2026-11-22）
+
+- 用户真机截图显示横向连接组首项保留上方圆角、末项保留下方圆角。实际编译确认 `rounded-e-none` 生成 `borderStartEndRadius` / `borderEndEndRadius`，而锁定 RN 0.83.9 的 Android `BorderRadiusStyle.resolve` 对双逻辑方向的 startEnd / endStart 映射与 iOS / CSS 不同，因此本应清零右侧的工具类清掉了底部两角；不是 HeroUI 主题圆角值不正确。
+- 仅 Android 横向零间距、多项连接组改用 `borderTopStartRadius` / `borderBottomStartRadius` 与对应 End 属性清零相邻边，保留默认 LTR / RTL 方向适配。外侧圆角继续来自 HeroUI Button 的 size / 主题；逐项 `herouiNativeProps.style` 的显式设置仍优先，ref 与其他平台参数继续透传。iOS / Web、纵向布局、分离布局与单项组沿用原实现，未修改选择、按压反馈或分割线。
+- 新增回归先在旧实现上失败，再验证修复。Android 场景使用安装包的真实 Tailwind / Uniwind 编译器，并读取当前 RN Android 的圆角属性优先级表达式，覆盖 sm / md / lg、横纵方向、零间距 / 分离布局与默认 LTR / RTL。另检查单项组、逐项 style 优先级与 ref。此检查验证编译与属性映射，不执行 Android 原生绘制，也不等于真机验收。
+- 全量主测试 157 项通过、0 失败；集合控件隔离子进程 Web / iOS / Android 分别通过 14 / 22 / 23 个场景，Android 子进程共 458 次断言。库与示例 typecheck、库 build、git diff HEAD --check、Expo 三端生产导出及平台隔离审计通过；目标 HeroUI 模块分别为 90 / 361 / 361，另一端模块均为 0。本轮未操作 Android 真机，需在 ToggleGroup 示例页复核首项仅左侧圆角、末项仅右侧圆角，以及显式开启缩放后的显示。
+
+### Toggle 长按已选项的反馈复位（2026-11-22）
+
+- 用户反馈单选防空组中长按已选项，松手后仍保持按压色。旧实现激活时移除颜色层的动画样式并设置静态 opacity=0，但 Reanimated 移除动画样式不会清除 Native 上已有的动画值，动画 opacity 也优先于静态 opacity；选择未变化时颜色层不会重建，因而可能停留在长按时的颜色。
+- 现保持 Highlight / Ripple 的动画样式绑定，激活时仅以不参与该动画的 display=none 隐藏绘制，下一次 onPressIn 恢复。Ripple 的普通触摸容器保持存在且可接收下一次触点；仅隐藏内部两层绘制。保留原有选择语义、外部事件、缩放、取消淡出及按钮根 / ref / 焦点。
+- 新增回归在旧代码上失败，修正后 Web / iOS / Android 隔离回归全部通过；覆盖 highlight / ripple、gap=0 / 8、已选项连续两次长按的 out→press 顺序，检查不触发选择变化、反馈结束、实例稳定及下一次 ripple 触点。模型显式模拟动画残留 opacity，避免普通 DOM 静态样式优先级掩盖 Native 边界；它不执行原生动画或触摸命中测试，本轮未操作真机。
+- 全量主测试 157 项通过、0 失败；库及示例 typecheck、库 build、三端 Expo 生产导出、平台隔离审计与 git diff HEAD --check 通过。Web / iOS / Android 的目标 HeroUI 模块为 90 / 361 / 361，另一端均为 0。需要真机复核长按已选项松手、连续长短按，以及滑出取消和下一次 ripple 反馈。
+
 ## 后续批次
 
 1. **主题重构（已实现）**：见上文第二阶段。真机重新观察配色后进入简单组件迁移。
