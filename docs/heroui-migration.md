@@ -219,6 +219,15 @@ Metro 的平台解析与 TypeScript 的解析不是同一个机制。编辑器�
 - 今后如果确需应用级 compact / comfortable 密度，应作为单独的跨组件主题设计统一评估。修改基础 --spacing、--text-* 或根字号会影响整体布局，两端 rem 与原生单位也不必相同，不能把它宣称为无副作用的全局 size。
 - 当前不更改基础间距、全局字号或字体体系。Native skill 的 HSL 示例与锁定包和现行官方文档存在差异，继续以实际包的源 token / oklch 实现为准，不回退第二阶段主题。
 
+### 示例设计约定（后续迁移统一采用）
+
+- 默认参考 HeroUI Native 官方 app 的演示内容、分组与简洁程度。本机参考仓库为 `/Users/luoqixi/luoqixi/project/AI/heroui-native`，对应页面在 `example/src/app/(home)/components/`。参考项目只读，不把它的依赖、国际化框架或路由一并搬入本项目。
+- 参考内容与视觉演示，不复制组合式调用。示例默认使用 rn-ui-kit 的单入口组件与 props，不直接引用平台 HeroUI 组件和内部 hook；需要自定义图标或图片时可以传普通节点。
+- 本项目在同一页连续展示多组示例，具体文案按每组功能分别编写，说明当前效果与操作方法；不重复照搬官方独立示例页中相同的 FAQ 或业务场景文本。
+- 简单组件的分组使用 ExampleSection（标签与演示），不为每个演示额外套一张 Card。示例聚焦实际使用场景，复杂参数组合、非法输入、ref、字体和边界值主要通过自动化测试与 API 文档覆盖。
+- Select、Dropdown、Sheet 等项目深度定制示例，以及各组件系统原生 UI 的专属示例，保留其项目特有内容。遇到特殊示例而无法确定是否应替换时，先向用户确认，不自动用官方基础示例覆盖。
+- 此约定也写入 `.agents/AGENTS.md`，供后续组件任务读取。
+
 ### 首个组件：Accordion
 
 仅迁移 Accordion，调用方仍只使用一个组件，不需要组合 HeroUI 子组件：
@@ -248,19 +257,63 @@ Metro 的平台解析与 TypeScript 的解析不是同一个机制。编辑器�
 - 保留每项 title / content 节点或回调，以及根级和条目级 itemProps、headerProps、triggerProps、contentProps、titleClassName、contentClassName。条目级普通属性覆盖根默认值，className 使用 tailwind-merge 合并；整组禁用始终有效。titleClassName 只作用于标题文字。
 - 公共 triggerProps.onPress 接收实际平台事件联合；需要使用事件专有字段时先收窄。平台专有的 DOM / RN 扩展通过对应 props 对象获得正确提示，不向另一端透传。
 - Web 使用真实 HeroUI Item / Heading / Trigger / Indicator / Panel / Body；Native 使用真实 Item / Trigger / Indicator / Content，动画交给 HeroUI。headerProps 在 Web 配置 Heading，在 Native 配置包裹 Trigger 的可选 View，因为 Native Trigger 自带内部 Heading。
+- 官方 Native 的默认样式示例在 Trigger 外观中额外组合了 PressableFeedback，Trigger 本身没有缩放或按压底色。封装的 Native default variant 现通过 Trigger.asChild 接入真实 PressableFeedback：仅标题区域使用 Scale，指示器保持原位，Highlight 使用官方示例的 0 → 0.05 透明度；只有一个可点击触发区，保留禁用状态、ref 与按压事件。surface variant 沿用官方普通 Trigger，Web 保持 HeroUI React 的交互实现。调用方无需新增参数或组合子组件。
 - contentProps.className / contentClassName 配置带内边距的内容容器；Web 是 Body 的内部容器，Native 是 Content。Web 的 herouiWebProps 则指向动画 Panel（包含 ref），Native 的 herouiNativeProps 指向 Content。
 - 标题和基础文字保留项目字体上下文；自定义节点保持组件自身语义。Web 基础文字沿用 HeroUI 的 text-sm，Native 使用文档示例的 text-base；间距、指示器尺寸和动画沿用各自库默认值，不强求两个平台逐像素相同。
 - nativeHaptics 仅在 Native 有效；挂载、重复值、禁用和阻止收起时不触发。Accordion 原本没有系统原生实现，因此没有新增虚假的 native 分支。
 - 已移除无其他消费者的 @rn-primitives/accordion 直接依赖。其他组件与 TrueSheet 补丁保持本批之前的实现。
+- 示例按官方 app 保留默认、surface、多选、无分隔线、自定义指示器、自定义入场动画、景深效果七组；每组使用独立的功能说明文案，避免连续页面重复同一组 FAQ。景深示例通过公开受控状态和 itemProps 实现，Native 使用平台 transform 过渡，Web 使用 CSS 过渡，不引用 Native 内部 hook；不承诺与官方逐帧一致。
+- 为自定义指示器补充根级与条目级 `indicator`。可传节点或 `({ item, isExpanded, isDisabled }) => ReactNode`；undefined 继承默认，null / false 隐藏，条目覆盖整组配置。两端按共享受控状态解析回调，默认指示器仍使用真实 HeroUI，定制指示器不会被 Web 默认展开旋转叠加影响。
 
 ### Accordion 验证（2026-11-21）
 
-- 133 项主测试通过，0 失败；其中 Accordion 通过隔离子进程分别运行真实 HeroUI Web / Native 组件，各覆盖 7 个交互场景，避免 mock 污染其他组件测试。Native 测试替换设备、动画和 SVG 环境，不能视为真机动画或手势验收。
+- 迁移初次验收时 133 项主测试通过，0 失败；其中 Accordion 通过隔离子进程分别运行真实 HeroUI Web / Native 组件，各覆盖 7 个交互场景，避免 mock 污染其他组件测试。补充自定义 indicator 与 Native 按压反馈后，Web 覆盖 8 个、Native 覆盖 9 个场景。Native 使用真实 Accordion、PressableFeedback 与 Slot，验证单一触发区、ref、按下 / 松开事件、禁用状态与展开回调；设备、动画 hook 和 SVG 环境被替换，不能视为真机动画帧或手势验收。
 - 库与示例应用 typecheck、库 build 通过。新增编译检查同时使用两端 ref、事件及扩展 props，检查 selectionMode 的值类型，拒绝错误平台 ref 和越过共享状态的底层参数。
 - Expo Web / iOS / Android 同次带 source map 导出通过。Web 包含 15 个 HeroUI React 模块，iOS / Android 各包含 361 个 HeroUI Native 模块；另一端 HeroUI 模块均为 0。三端旧 RNR / Radix Accordion 模块均为 0，且只包含目标平台的 accordion_heroui 实现。
 - 产出的 types.js 仅为 export {}，两套 import type 均未进入 JS。公共 .d.ts 则保留类型引用供编辑器检查。
 - 生产 Web 浏览器实测单项切换、多项独立展开、外部受控切换与清空、不可收起、Enter 键展开和条目样式覆盖正常；默认触发区内边距为 16px，紧凑示例的纵向内边距为 8px。浏览器未发现运行错误。
-- 真机待在“组件示例 → Accordion”回归展开/收起动画、连续点击、触感、禁用和 TrueSheet 内滚动/输入；本批三端导出与 DOM 测试不能替代 iOS / Android 设备验收。
+- 用户在进入 Card 批次前已反馈 Accordion 测试没问题。本轮不宣称重新执行过 iOS / Android 真机测试；三端导出与 DOM 测试仍不能替代设备验收。
+
+### 第二个组件：Card
+
+Card 原先是项目内的 View / Text 自绘封装，并没有单独的 RNR Card primitive。本批换成实际 HeroUI Card，不增加或升级依赖，也没有可移除的专属 RNR Card 依赖。
+
+```tsx
+<Card
+  variant="secondary"
+  title="工作区"
+  description="工作区说明"
+  content={<WorkspaceForm />}
+  contentProps={{ className: "gap-3" }}
+  footer={<SaveButton />}
+  titleClassName="text-accent"
+  herouiNativeProps={{ accessibilityLabel: "工作区" }}
+  herouiWebProps={{ "aria-label": "工作区" }}
+/>
+```
+
+- 唯一入口为 `index.ts → card.tsx`；薄包装引用 `card_heroui`，由 Metro 选择 Web 的 `card_heroui.tsx` 或 iOS / Android 的 `card_heroui.native.tsx`。公共类型集中在 `types.ts`，两端库均仅用 `import type` 引入。内部 `card_content.tsx` 共享内容解析，不依赖任一 HeroUI 运行时。
+- 保留 title、description、header、content、footer 及每个区域的 `*Props / *ClassName`。每个区域可接收节点或回调；回调上下文沿用空对象 `CardRenderContext`。有效的自定义 header 替换整个标题区，此时不调用 title / description 回调；null、undefined、boolean 不创建对应区域，数字 0 正常显示。
+- children 保持位于 content 之后、footer 之前。header / content / footer / children 内的裸字符串与数字会自动包为项目 Text，包含 Fragment 内的基础文字；自定义组件保持原样。Web title / description 使用真实 h3 / p，传自定义节点时应使用行内内容；复杂块布局放在 header 中。
+- `headerProps / contentProps / footerProps / titleProps / descriptionProps` 提供共享 className，及各自的 `herouiNativeProps / herouiWebProps`。DOM / RN ref、style 和事件分别配置，只向当前平台透传；平台扩展不能覆盖封装管理的 children、variant 或 Native asChild。对应 `*Props.className` 后合并并优先于 `*ClassName`，根 className 则覆盖封装默认工具类。
+- 两端共用 HeroUI 提供的 `default / secondary / tertiary / transparent` 四种 variant，不新增 size。布局与文字采用各自 HeroUI 默认值：Web 默认 p-4、gap-3 及 Card 样式；Native 沿用 Surface 的内边距、圆角、阴影及 Card 文字样式，只补根 gap-3、footer 的 flex-row / items-center。Native Card.Body 在锁定包中没有文档所述的 flex-1，因此不假设它会自动撑满或添加额外固定高度。需要局部密度时使用 slot className。
+- Native 正文映射到 Card.Body，Web 映射到 Card.Content；保留真实 Card / Surface 上下文，供内部 HeroUI 子组件获得正确层级。Native 标题、说明继续经过 HeroText，保留 HeroUINativeProvider 的字体缩放设置；两端标题和说明注入项目默认字体，显式 slot style 与 font-mono 优先，自定义项目 Text 继续获得文字样式上下文。
+- 不保留 Card.Root / Header / Title / Description / Content / Footer 等旧组合入口；仓库内仅有的一处 Card.Title 调用已改为 title。Card 原先没有系统原生实现，本批不新增 native 参数或虚假的 `_native` 文件，也不改动其他组件的 native 分支和 TrueSheet 补丁。
+- 用户已反馈 Card 测试没问题；按随后确认的示例约定，“组件示例 → Card”保留官方 app 的基础卡片、两张并排图片卡片、横向图片卡片、背景图片卡片、四种 variant 五组，文案分别说明插槽组织、图片布局、长文字换行、遮罩与操作。只使用本项目单入口 Card 的 props，图片沿用官方演示素材 URL，背景使用现有 ImageBackground 与遮罩，不额外引入渐变库。回调、0 值、字体与插槽边界继续由自动化测试覆盖。其他组件示例共用的 ExampleBlock 也使用新 Card，需要一起观察容器布局。
+
+### Card 验证（2026-11-21）
+
+- 示例改版后的主测试 135 项通过、0 失败，1814 次断言。Card 用隔离子进程分别运行真实 HeroUI Web Card 和 Native Card / Surface / HeroText，各覆盖 7 个场景：结构与 ref、header 替换、回调与零值、className 合并、字体与缩放设置、四种 Surface 上下文、平台参数隔离及 footer 操作。Native 替换设备主题和动画环境，不能视为真机验收。
+- 库与示例应用 typecheck、库 build、示例 build:web 通过；编译检查覆盖两端 ref / style / 事件，拒绝错误平台 ref、虚构的 size / native、旧组合入口和覆盖封装结构的底层参数。types.js 仍仅为 `export {}`，两套类型导入不产生运行时依赖。
+- 最终 Expo Web / iOS / Android 同次带 source map 导出通过。Web 包含 17 个 HeroUI React 模块，iOS / Android 各包含 361 个 HeroUI Native 模块；各端另一套 HeroUI 模块均为 0。Card 和 Accordion 均只包含目标平台的实现，三端旧 RNR / Radix Accordion 模块为 0。
+- 首轮官方形式改版后，生产 Web 在 319px 视口验证：Card 五组内容和五张远程演示图片正常显示，所有卡片均无横向内容溢出；当时的购买、购物车、活动选择、通知按钮本地演示状态切换正常。Accordion 七组内容正常，自定义指示器展开后保持 14px 且不叠加默认旋转，自定义入场动画正常展开，景深开关关闭后四项缩放均复位。已将指示器缓动改为 Reanimated 两端支持的 bezier；该轮页面与交互未产生运行错误或警告。后续文案调整的检查见下文。
+- 用户已验收改版前的 Card；本轮未重新执行 iOS / Android 真机测试。新示例请重点检查图片、长文字与系统大字体、footer 操作，以及 Accordion 的自定义指示器、入场动画和景深效果；其他组件示例的公共容器也一起回归。
+
+### 按压反馈与文案调整验证（2026-11-21）
+
+- 根据真机反馈，对照本地官方 DefaultVariantContent 补上 Native default variant 的 PressableFeedback 组合；不是关闭或开启全局动画，也没有为 Web 引入 Native 内容。Native 独立测试 9 个场景通过，新增场景覆盖真实反馈组件的按压事件链、ref、单一触发区、禁用与展开行为；动画 hook 被替换，实际缩放和底色过渡仍需真机复核。
+- 调整文案后的全量主测试 135 项通过、0 失败，1814 次断言；库与示例 typecheck、库 build、示例 build:web 通过。三端再次带 source map 导出及平台审计通过，Web / iOS / Android 的另一套 HeroUI 模块均为 0，HeroUI 模块数仍为 17 / 361 / 361。
+- 新生产 Web 页面确认 Accordion 七组功能文案各不相同；Card 在 1280px 视口下文案与五张图片正常显示，各卡片内容无横向溢出，浏览器未记录运行错误或警告。本次浏览器检查不能验证 Native 的按压动画。
 
 ## 后续批次
 
@@ -279,6 +332,8 @@ Metro 的平台解析与 TypeScript 的解析不是同一个机制。编辑器�
 - HeroUI Native Accordion: https://heroui.com/en/docs/native/components/accordion
 - HeroUI Native theming: https://heroui.com/en/docs/native/getting-started/theming
 - HeroUI React Accordion: https://heroui.com/en/docs/react/components/accordion
+- HeroUI Native Card: https://heroui.com/en/docs/native/components/card
+- HeroUI React Card: https://heroui.com/en/docs/react/components/card
 - HeroUI React theming: https://heroui.com/en/docs/react/getting-started/theming
 - Expo Tailwind / PostCSS: https://docs.expo.dev/guides/tailwind/
 

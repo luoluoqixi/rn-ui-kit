@@ -1,4 +1,5 @@
 import { Accordion as HeroUIAccordion } from "heroui-native/accordion";
+import { PressableFeedback } from "heroui-native/pressable-feedback";
 import { View } from "react-native";
 import { resolveAriaLabel } from "../utils/accessibility";
 import { cn } from "../utils/cn";
@@ -18,6 +19,7 @@ export function AccordionHeroUI(props: AccordionProps) {
     headerProps,
     triggerProps,
     contentProps,
+    indicator,
     nativeHaptics,
     selectionMode,
     value,
@@ -31,6 +33,8 @@ export function AccordionHeroUI(props: AccordionProps) {
     ...rootProps
   } = props;
   const haptics = useResolvedNativeHaptics(nativeHaptics);
+  // The official default demo composes feedback explicitly; Trigger alone has none.
+  const withPressFeedback = (props.variant ?? "default") === "default";
   validateAccordionItems(items);
 
   function handleChange(next: string | string[] | undefined) {
@@ -61,10 +65,42 @@ export function AccordionHeroUI(props: AccordionProps) {
           isDisabled ||
           (item.isDisabled ?? item.itemProps?.isDisabled ?? itemProps?.isDisabled) ||
           (item.triggerProps?.isDisabled ?? triggerProps?.isDisabled);
+        const indicatorProp = item.indicator !== undefined ? item.indicator : indicator;
+        const customIndicator = resolveRenderProp(indicatorProp, {
+          item,
+          isExpanded: state.values.includes(item.value),
+          isDisabled: Boolean(itemDisabled),
+        });
+        const titleContent = (
+          <AccordionText
+            className={cn(
+              "text-base text-foreground font-medium",
+              titleClassName,
+              item.titleClassName,
+            )}
+          >
+            {title}
+          </AccordionText>
+        );
+        const indicatorContent =
+          indicatorProp === undefined ? (
+            <HeroUIAccordion.Indicator />
+          ) : customIndicator != null && typeof customIndicator !== "boolean" ? (
+            <HeroUIAccordion.Indicator>
+              <View
+                className="size-5 items-center justify-center"
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              >
+                <AccordionText className="text-muted">{customIndicator}</AccordionText>
+              </View>
+            </HeroUIAccordion.Indicator>
+          ) : null;
         const trigger = (
           <HeroUIAccordion.Trigger
             {...triggerProps?.herouiNativeProps}
             {...item.triggerProps?.herouiNativeProps}
+            asChild={withPressFeedback}
             onPress={item.triggerProps?.onPress ?? triggerProps?.onPress}
             isDisabled={itemDisabled}
             className={cn(
@@ -79,18 +115,20 @@ export function AccordionHeroUI(props: AccordionProps) {
               title,
             )}
           >
-            <View className="min-w-0 flex-1">
-              <AccordionText
-                className={cn(
-                  "text-base text-foreground font-medium",
-                  titleClassName,
-                  item.titleClassName,
-                )}
-              >
-                {title}
-              </AccordionText>
-            </View>
-            <HeroUIAccordion.Indicator />
+            {withPressFeedback ? (
+              <PressableFeedback isDisabled={Boolean(itemDisabled)} animation={{ scale: false }}>
+                <PressableFeedback.Scale className="min-w-0 flex-1">
+                  {titleContent}
+                </PressableFeedback.Scale>
+                {indicatorContent}
+                <PressableFeedback.Highlight animation={{ opacity: { value: [0, 0.05] } }} />
+              </PressableFeedback>
+            ) : (
+              <>
+                <View className="min-w-0 flex-1">{titleContent}</View>
+                {indicatorContent}
+              </>
+            )}
           </HeroUIAccordion.Trigger>
         );
         return (

@@ -28,7 +28,7 @@ export function ComponentExamplePlaceholder({
       <Card
         content={children ?? <Text>此示例保留独立文件和路由，具体交互将在后续迁移阶段补齐。</Text>}
         contentProps={{ className: "gap-3" }}
-        header={<Card.Title>{name}</Card.Title>}
+        title={name}
       />
     </View>
   );
@@ -58,6 +58,16 @@ export function NativeListExampleContent() {
 
 export function ExampleStack({ children }: { children: ReactNode }) {
   return <View style={styles.stack}>{children}</View>;
+}
+
+/** A quiet section label without adding a Card around the showcased component. */
+export function ExampleSection({ children, title }: { children: ReactNode; title: string }) {
+  return (
+    <View className="gap-3">
+      <Text className="text-sm text-muted">{title}</Text>
+      {children}
+    </View>
+  );
 }
 
 export function ExampleBlock({

@@ -98,6 +98,14 @@ export interface AccordionItemData {
   "headerProps"?: AccordionHeaderProps;
   "triggerProps"?: AccordionTriggerProps;
   "contentProps"?: AccordionContentProps;
+  /** undefined inherits the default indicator; null/false hides it. */
+  "indicator"?: RenderProp<AccordionIndicatorContext>;
+}
+
+export interface AccordionIndicatorContext {
+  item: AccordionItemData;
+  isExpanded: boolean;
+  isDisabled: boolean;
 }
 
 export type AccordionProps = AccordionSelectionProps & {
@@ -117,6 +125,8 @@ export type AccordionProps = AccordionSelectionProps & {
   "headerProps"?: AccordionHeaderProps;
   "triggerProps"?: AccordionTriggerProps;
   "contentProps"?: AccordionContentProps;
+  /** Custom indicator content; callbacks share the wrapper's actual state. */
+  "indicator"?: RenderProp<AccordionIndicatorContext>;
   /** Applied only on iOS/Android; native refs, styles and animation stay correctly typed. */
   "herouiNativeProps"?: Omit<
     NativeRoot,

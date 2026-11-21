@@ -39,3 +39,11 @@ const invalidMultiple: AccordionProps = { items, selectionMode: "multiple", valu
 // @ts-expect-error Managed expansion state is exposed through the shared model only.
 <Accordion items={items} herouiWebProps={{ expandedKeys: new Set(["first"]) }} />;
 void [invalidSingle, invalidMultiple];
+
+<Accordion items={items} indicator={({ item, isExpanded, isDisabled }) => {
+  const value: string = item.value;
+  const expanded: boolean = isExpanded;
+  const disabled: boolean = isDisabled;
+  return value + expanded + disabled;
+}} />;
+<Accordion indicator={false} items={[{ ...items[0], indicator: null }]} />;

@@ -40,6 +40,7 @@ plugin({
 });
 const native = process.env.ACCORDION_TEST_PLATFORM === "native";
 const feedback = [];
+const pressFeedbackEvents = [];
 
 if (native) {
   // Run actual HeroUI Native Accordion components AND primitives. Only the
@@ -74,8 +75,24 @@ if (native) {
     useAccordionRootAnimation: () => ({}), useAccordionIndicatorAnimation: () => ({}),
     useAccordionContentAnimation: () => ({}),
   }));
+  // Keep the real feedback components, Slot and press handlers. This records
+  // their animation entry points, not device animation frames.
+  const [PressFeedbackProvider] = createContext();
+  mock.module("../node_modules/heroui-native/src/components/pressable-feedback/pressable-feedback.animation", () => ({
+    PressableFeedbackRootAnimationProvider: PressFeedbackProvider,
+    usePressableFeedbackRootAnimation: () => ({
+      isPressed: {}, containerWidth: { set() {} }, containerHeight: { set() {} },
+      animationOnPressIn: () => pressFeedbackEvents.push("in"),
+      animationOnPressOut: () => pressFeedbackEvents.push("out"),
+    }),
+    usePressableFeedbackScaleAnimation: () => ({}),
+    usePressableFeedbackHighlightAnimation: () => ({}),
+    usePressableFeedbackRippleAnimation: () => ({}),
+  }));
   const { default: RealNativeAccordion } = await import("../node_modules/heroui-native/src/components/accordion/accordion");
   mock.module("heroui-native/accordion", () => ({ Accordion: RealNativeAccordion }));
+  const { default: RealNativePressFeedback } = await import("../node_modules/heroui-native/src/components/pressable-feedback/pressable-feedback");
+  mock.module("heroui-native/pressable-feedback", () => ({ PressableFeedback: RealNativePressFeedback }));
   mock.module("../src/core/components/ui/utils/haptics", () => ({
     useResolvedNativeHaptics: value => value, triggerNativeHaptics: value => feedback.push(value),
   }));
@@ -114,6 +131,7 @@ afterEach(async () => {
   await act(() => root?.unmount());
   root = undefined;
   feedback.length = 0;
+  pressFeedbackEvents.length = 0;
   document.body.replaceChildren();
 });
 
@@ -236,4 +254,59 @@ test("HeroUI defaults remain intact and numeric content is normalized", async ()
     : document.querySelector('[data-slot="accordion-indicator"]');
   if (native) expect(indicator.getAttribute("data-native-indicator-size")).toBe("16");
   else expect(indicator.tagName.toLowerCase()).toBe("svg");
+});
+
+test("custom indicators follow real expansion/disabled state and per-item overrides", async () => {
+  await render({
+    defaultValue: "a",
+    indicator: ({ item, isExpanded, isDisabled }) => <Text nativeID={"indicator-" + item.value}>{item.value}:{isExpanded ? "open" : "closed"}:{isDisabled ? "disabled" : "enabled"}</Text>,
+    items: [items[0], { ...items[1], isDisabled: true }, { ...items[2], indicator: null }],
+  });
+  expect(document.getElementById("indicator-a").textContent).toBe("a:open:enabled");
+  expect(document.getElementById("indicator-b").textContent).toBe("b:closed:disabled");
+  expect(document.getElementById("indicator-c")).toBeNull();
+  await click(0);
+  expect(document.getElementById("indicator-a").textContent).toBe("a:closed:enabled");
+  await click(1);
+  expect(document.getElementById("indicator-b").textContent).toBe("b:closed:disabled");
+  await render({ value: "b", indicator: false, items: [{ ...items[0], indicator: () => <Text nativeID="local-indicator">Local</Text> }, items[1]] });
+  expect(document.getElementById("local-indicator").textContent).toBe("Local");
+  if (!native) expect(document.querySelectorAll('[data-slot="accordion-indicator"]')).toHaveLength(1);
+});
+
+test.skipIf(!native)("native default feedback preserves a single trigger, press lifecycle, ref and disabled state", async () => {
+  const triggerRef = React.createRef();
+  const pressEvents = [], changes = [];
+  await render({
+    onValueChange: value => changes.push(value),
+    items: [items[0]],
+    triggerProps: { herouiNativeProps: {
+      ref: triggerRef,
+      onPressIn: () => pressEvents.push("in"),
+      onPressOut: () => pressEvents.push("out"),
+    } },
+  });
+  const trigger = buttons()[0];
+  expect(buttons()).toHaveLength(1);
+  expect(triggerRef.current).toBe(trigger);
+  expect(trigger.querySelector(".pressable-feedback__highlight")).not.toBeNull();
+  await act(async () => {
+    trigger.dispatchEvent(new win.MouseEvent("mousedown", { bubbles: true, button: 0, buttons: 1 }));
+    // RNW's responder waits 50ms before activating a mouse press.
+    await new Promise(resolve => setTimeout(resolve, 60));
+  });
+  expect(pressFeedbackEvents).toEqual(["in"]);
+  expect(pressEvents).toEqual(["in"]);
+  await act(() => trigger.dispatchEvent(new win.MouseEvent("mouseup", { bubbles: true, button: 0 })));
+  await click(0);
+  expect(pressFeedbackEvents).toEqual(["in", "out"]);
+  expect(pressEvents).toEqual(["in", "out"]);
+  expect(changes).toEqual(["a"]);
+  await render({ items: [items[0]], isDisabled: true });
+  pressFeedbackEvents.length = 0;
+  await act(() => buttons()[0].dispatchEvent(new win.MouseEvent("mousedown", { bubbles: true, button: 0, buttons: 1 })));
+  expect(pressFeedbackEvents).toEqual([]);
+  await render({ items: [items[0]], variant: "surface" });
+  expect(buttons()).toHaveLength(1);
+  expect(document.querySelector(".pressable-feedback__highlight")).toBeNull();
 });

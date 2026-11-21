@@ -16,6 +16,7 @@ export function AccordionHeroUI(props: AccordionProps) {
     headerProps,
     triggerProps,
     contentProps,
+    indicator,
     nativeHaptics,
     selectionMode,
     value,
@@ -45,6 +46,12 @@ export function AccordionHeroUI(props: AccordionProps) {
           isDisabled ||
           (item.isDisabled ?? item.itemProps?.isDisabled ?? itemProps?.isDisabled) ||
           (item.triggerProps?.isDisabled ?? triggerProps?.isDisabled);
+        const indicatorProp = item.indicator !== undefined ? item.indicator : indicator;
+        const customIndicator = resolveRenderProp(indicatorProp, {
+          item,
+          isExpanded: state.values.includes(item.value),
+          isDisabled: Boolean(itemDisabled),
+        });
         return (
           <HeroUIAccordion.Item
             {...itemProps?.herouiWebProps}
@@ -83,7 +90,15 @@ export function AccordionHeroUI(props: AccordionProps) {
                     {title}
                   </AccordionText>
                 </span>
-                <HeroUIAccordion.Indicator />
+                {indicatorProp === undefined ? (
+                  <HeroUIAccordion.Indicator />
+                ) : customIndicator != null && typeof customIndicator !== "boolean" ? (
+                  <HeroUIAccordion.Indicator className="flex size-5 items-center justify-center data-[expanded=true]:rotate-0">
+                    <span aria-hidden="true">
+                      <AccordionText className="text-muted">{customIndicator}</AccordionText>
+                    </span>
+                  </HeroUIAccordion.Indicator>
+                ) : null}
               </HeroUIAccordion.Trigger>
             </HeroUIAccordion.Heading>
             <HeroUIAccordion.Panel
