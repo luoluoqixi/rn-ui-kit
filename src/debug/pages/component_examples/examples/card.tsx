@@ -66,7 +66,7 @@ export function CardExample() {
                 <View className="min-w-0 flex-1 gap-2">
                   <Text className="text-sm font-medium">{event.title}</Text>
                   <Text className="text-sm text-muted">{event.description}</Text>
-                  <Button native={false} variant="link" className="h-auto min-w-0 justify-start p-0" onPress={() => setSelectedEvent(event.title)}>
+                  <Button native={false} variant="ghost" textClassName="text-accent underline underline-offset-4" className="h-auto min-w-0 justify-start p-0" onPress={() => setSelectedEvent(event.title)}>
                     <Text className="text-sm text-accent">{selectedEvent === event.title ? "已选择" : "点按操作"}</Text><Icon as={ArrowUpRight} size={14} className="text-accent" />
                   </Button>
                 </View>

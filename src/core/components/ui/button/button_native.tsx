@@ -30,7 +30,8 @@ export type ButtonNativeProps = {
   onPress: () => void;
   style: StyleProp<ViewStyle>;
   title: string;
-  variant: ButtonProps["variant"];
+  /** Internal pre-migration system-renderer styles; public variants are mapped at the entry. */
+  variant: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "icon";
 };
 
 /** Web fallback; native platforms resolve this module to Expo UI implementations. */

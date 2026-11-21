@@ -98,7 +98,7 @@ export function ToastExample() {
             onPress={() =>
               toast.error("同步失败", { native: isNative, description: "请检查网络连接。" })
             }
-            variant="destructive"
+            variant="danger"
           >
             失败
           </Button>

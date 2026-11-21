@@ -624,6 +624,54 @@ heroui-native **确实导出 Typography**：锁定的 1.1.1 主入口重新导�
 - 生产 Web 浏览器实测九个页面：输入编辑、标签聚焦、只读 / 禁用 / 错误恢复、密码显示切换、OTP 完成与粘贴过滤、Checkbox 空格切换、Radio 方向键、Tabs 键盘与滚动切换 / 禁用 / 文字状态色、Textarea 多行、Link 键盘激活及 anchor 属性。TextField 的非受控初值和三种输入形态的单次回调均已回归。319px 窄屏下 InputGroup、OTP 和 Tabs 分组未产生内部横向溢出，相关浏览器检查未记录运行错误或警告。本批未单独完成九页深色模式验收。
 - 本轮未操作 iOS / Android 真机，也未执行新的原生 Release 编译。请在两端逐页验收软键盘类型、中文输入与光标、密码切换、OTP 粘贴 / 自动填充 / 焦点和光标动画、Label 聚焦、Checkbox / RadioGroup 触摸与触感、Tabs 指示器 / 滚动 / 面板切换，以及系统大字体与深浅主题。再在 TrueSheet 中回归输入聚焦、键盘避让及关闭后恢复交互；现有 TrueSheet 与旧弹层宿主没有在本批重构。
 
+## Button：HeroUI 自绘与系统原生分支（2026-11-21）
+
+本批只迁移 Button 的自绘实现。Android 的 Jetpack Compose 与 iOS 的 SwiftUI 渲染器逐字保留，继续由 `native={true}` 选择；Web 在该参数下回退为 HeroUI Button。没有升级依赖、修改 TrueSheet 补丁或重构弹层 host。
+
+### 公共 API 与文件结构
+
+- 默认 `size="md"`、`variant="primary"`。size 仅保留 HeroUI 的 sm / md / lg；variant 为 primary / secondary / tertiary / outline / ghost / danger / danger-soft，废除旧 RNR 的 default / destructive / link / icon 等枚举，不维护别名。纯图标改用 `isIconOnly`，链接使用 Link；轻量操作使用 ghost。
+- 保留 title、children、buttonSize、buttonColor、circular、textClassName、textStyle、loading、loadingIcon、disabled、nativeHaptics、公共 Pressable ref / 事件 / style，以及全部既有系统原生参数。新增 `isDisabled` 与 disabled / loading 合并禁用；三个状态任何一个成立，自绘按钮均不可激活。
+- `ButtonSize` 继续表示 buttonSize 使用的 `{ width?: number; height?: number }`，避免破坏项目自定义精确尺寸类型；语义尺寸字符串类型另名为 `ButtonSizeVariant`。两端采用各自 HeroUI 默认高度、间距和圆角，不要求逐像素相同。
+- 唯一 index.ts、集中 types.ts、薄入口 button.tsx，以及 `button_heroui.tsx / button_heroui.native.tsx`。两端真实组件通过公开子路径导入，平台扩展分别为 herouiWebProps / herouiNativeProps；类型均以 import type 引入，Native 的 feedbackVariant / animation 判别联合保留。平台 props 不能覆盖封装管理的尺寸、变种、内容与禁用 / 加载状态。
+- title 优先于 children；基础文字自动生成标签，混合图标和文字、children 状态回调继续可用。Native 使用真实 Button.Label，Web 使用项目 Text；两端注入项目字体，并向自定义 Text / Icon 提供当前尺寸与前景色上下文。buttonColor 与文字样式保持可用，按钮底色和交互颜色由 HeroUI 负责。
+- loading 默认使用已迁移的 Spinner，自定义 loadingIcon 仍保留旋转行为。Native 使用 HeroUI 自带的缩放 / 高亮反馈，可在 herouiNativeProps 定制反馈和动画；没有继续使用旧 SolidButton 交互 hook 给 HeroUI 叠加背景。
+
+~~~tsx
+<Button title="保存" size="md" variant="primary" loading={saving} onPress={save} />
+<Button variant="secondary"><Icon as={Plus} size="sm" />添加成员</Button>
+<Button isIconOnly variant="ghost" accessibilityLabel="收藏"><Icon as={Heart} /></Button>
+<Button native nativeButtonStyle="glass" buttonSize={{ width: 150, height: 80 }} title="系统按钮" />
+~~~
+
+### 系统原生能力保留
+
+- `button_native.ios.tsx / button_native.android.tsx` 没有修改。nativeButtonStyle 的 automatic / glass / glassProminent、nativeSwiftProps 的 label / children / systemImage / modifiers、nativeSystemImage / nativeSystemImageSize、nativeMatchContents、Compose colors / enabled / modifiers、显式宽高和文本颜色继续交给原渲染器处理。
+- 系统尺寸仍使用 OS 默认值、buttonSize 与平台 modifiers；语义 size 用于 HeroUI 自绘分支，不将 Tailwind 高度强行套到系统按钮。系统分支原先没有 Pressable 测量 ref，迁移没有虚构这项能力。
+- 新 variant 在入口映射到原有系统样式：primary → default，secondary / tertiary / danger-soft → secondary，outline → outline，ghost → ghost，danger → destructive。Android danger-soft 使用现有 tonal 容器与 danger 文字；iOS 的实际按钮外观仍由 nativeButtonStyle 和 SwiftUI modifiers 控制。既有平台 override 的优先级继续保留。
+- 原生 Expo UI 的按钮回调不提供 RN gesture payload，沿用原来的回调边界；本批没有伪造坐标或宣称两端事件完全相同。nativeHaptics 在原有系统 / 自绘点击完成后触发，Web 不震动，公共 onPress.preventDefault() 可阻止后续触感。
+
+### Web Pressable 兼容边界
+
+Web 根节点是真实 HeroUI / React Aria 的单个 button，没有再包一个可点击 Pressable。为保留已有调用方的 RN style / children 状态回调、onPressIn / onPressOut / onLongPress、无障碍属性、onLayout 和测量 ref，`button_web_interop.ts` 局部复用锁定的 RN Web 0.21.2 内部模块。
+
+- React Aria 会拦截冒泡事件，因此在实际按钮监听 DOM 输入，用 RNW 的 createResponderEvent / TouchHistoryStore 标准化，再交给原 RNW PressResponder。临时 document 监听处理移出按钮后松开、滚动 / 失焦取消及卸载清理。键盘使用实际 DOM 事件的同一标准化边界，不把 React Aria 的 KeyboardEvent 包装冒充为含 persist() 的 React SyntheticEvent。
+- 真正激活仍经浏览器 / React Aria click 和 RNW 点击处理；长按后取消点击、preventDefault、公共回调次数分别测试。平台扩展内的 DOM / React Aria 事件保持上游真实类型。
+- 公共 ref 仍是 RNW 原本提供的、附加 measure / measureLayout / measureInWindow 的 DOM；完整 DOM ref 可通过 herouiWebProps.ref 使用。这个适配器依赖 RNW 私有模块，**升级 react-native-web 时必须重新核对源码并运行 Button 事件、ref 和弹层触发回归**。
+
+### 调用方、旧样式与示例
+
+- TrueSheet 自定义 header 的旧 link 按钮更新为 ghost + text-accent，保留标题、tintColor、禁用和回调处理；Card、Toast、Tooltip、NativeDialog 示例中的旧变种同步替换。
+- AlertDialog 尚未迁移且仍依赖旧按钮样式。将原来的 buttonVariants / buttonTextVariants 逐字移到 AlertDialog 私有 button_styles.ts，仅改变其 import；不再从公共 Button 导出，也没有顺手改变 AlertDialog 外观或弹层行为。其仍在使用的 SolidButton 辅助文件暂时保留，待 AlertDialog 批次处理。
+- Button 示例参考官方 app 的七变种、三尺寸、禁用 / 加载、图标文字、纯图标、自定义宽度 / 文字，统一使用单入口 props 和 Card 分组；保留系统原生按钮及 glass / 指定尺寸示例，并补充 glassProminent / SF Symbol 演示。
+
+### 本批验证与设备验收
+
+- 主测试 149 项通过、0 失败，1864 次断言，37 个测试文件。Button 隔离 fixture 分别运行 Web / iOS / Android：Web 7 个场景，iOS / Android 各 5 个，使用真实 HeroUI Button / Label / PressableFeedback / Spinner，以及真实系统原生 renderer；仅设备、Expo native-view、SVG 与动画边界使用替身。覆盖三尺寸 / 七变种、title 与字体 / 颜色、ref 和测量方法、style / children 按压状态、禁用 / 加载、长按取消、触感与 preventDefault、Enter / Space 单次激活、滚动取消 / 禁用中断 / 卸载清理，以及两端原生样式、尺寸、图标和 override。
+- 库与示例 typecheck、库 build、git diff --check 通过。Expo Web / iOS / Android 同次生产 JS/CSS 导出通过；source map 中目标 HeroUI 模块数为 70 / 361 / 361，另一端模块均为 0。依赖、锁文件、patch、两份系统原生 Button renderer 均与本批开始前一致；AlertDialog 的旧样式函数确认逐字保留。
+- 最终生产 Web 浏览器确认单一 button 根、无嵌套 button，七变种与三尺寸正常；点击 / Space / Enter 各触发一次，加载中禁用且完成后恢复。Dialog 键盘打开、取消和焦点返回，嵌套 Dropdown / Popover 的打开、Escape 与焦点返回，Dialog → TrueSheet → 内层 Dialog → 返回 Sheet → 关闭 Sheet，以及子 AlertDialog 取消后保留父层均已回归；浏览器日志没有运行错误或警告。
+- 本轮没有操作 iOS / Android 真机，也没有执行新的原生 Release 编译。请重点验收系统原生按钮的 glass / glassProminent、SF Symbol、指定尺寸、Compose override 和触感；HeroUI 自绘按钮的按压缩放 / 高亮、加载、长按、图标和文字，以及它们作为 Dialog / 菜单 / TrueSheet 触发器时的表现。自动化测试与三端导出不能替代真机手势、动画或原生层级验收。
+
 ## 后续批次
 
 1. **主题重构（已实现）**：见上文第二阶段。真机重新观察配色后进入简单组件迁移。

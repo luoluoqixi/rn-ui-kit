@@ -247,7 +247,7 @@ const nativeSheetStackProps = {
   headerLeft: () => null,
   headerLeftButtonProps: {
     accessibilityLabel: "添加",
-    customButtonProps: { size: "sm", variant: "link" },
+    customButtonProps: { size: "sm", variant: "ghost" },
     iosButtonProps: {
       icon: { name: "plus", type: "sfSymbol" },
       variant: "plain",

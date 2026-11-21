@@ -42,9 +42,9 @@ export function TrueSheetStackCustomHeaderButton({
         }
       }}
       title={resolvedLabel}
-      variant={customButtonProps?.variant ?? "link"}
+      variant={customButtonProps?.variant ?? "ghost"}
       size={customButtonProps?.size ?? "lg"}
-      textClassName={cn("no-underline text-lg", customButtonProps?.textClassName)}
+      textClassName={cn("text-accent no-underline text-lg", customButtonProps?.textClassName)}
     />
   );
 }

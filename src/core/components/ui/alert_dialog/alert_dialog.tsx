@@ -1,7 +1,7 @@
 import { useDefaultTextStyle } from "../provider/font_provider";
 import { ModalContentScope } from "../utils/overlay/modal_content_scope";
 import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
-import { buttonTextVariants, buttonVariants } from "../button";
+import { buttonTextVariants, buttonVariants } from "./button_styles";
 import { useUiTheme } from "../utils/theme";
 import { AlertDialogSolidAction } from "./alert_dialog_solid_action";
 import { NativeOnlyAnimatedView } from "../utils/native_only_animated_view";

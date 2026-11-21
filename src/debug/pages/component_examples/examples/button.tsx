@@ -1,105 +1,132 @@
 import { useState } from "react";
-import { Button, Icon, Text } from "rn-ui-kit/core";
-import { LoaderCircle, Mail } from "lucide-react-native";
+import { Button, Icon, Text, type ButtonVariant } from "rn-ui-kit/core";
+import { ArrowDownToLine, Heart, LoaderCircle, Mail, Plus, Trash2 } from "lucide-react-native";
 import { ExampleBlock, ExampleRow, ExampleStack } from "../shared";
+
+const variants: { variant: ButtonVariant; title: string }[] = [
+  { variant: "primary", title: "主要操作" },
+  { variant: "secondary", title: "次要操作" },
+  { variant: "tertiary", title: "辅助操作" },
+  { variant: "outline", title: "描边操作" },
+  { variant: "ghost", title: "轻量操作" },
+  { variant: "danger", title: "删除内容" },
+  { variant: "danger-soft", title: "移除关联" },
+];
 
 export function ButtonExample() {
   const [count, setCount] = useState(0);
   const [saving, setSaving] = useState(false);
-  const [nativeHaptics, setNativeHaptics] = useState(true);
   const save = () => {
     setSaving(true);
     setTimeout(() => {
-      setCount((current) => current + 1);
+      setCount((value) => value + 1);
       setSaving(false);
     }, 700);
   };
   return (
     <ExampleStack>
-      <ExampleBlock title="保存工作区">
-        <ExampleRow>
-          <Button nativeHaptics={nativeHaptics} onPress={save} loading={saving}>
-            {saving ? "正在保存..." : "保存更改"}
-          </Button>
-          <Button
-            nativeHaptics={nativeHaptics}
-            disabled={saving}
-            onPress={() => setCount(0)}
-            variant="outline"
-          >
-            重置
-          </Button>
-          <Button
-            nativeHaptics={nativeHaptics}
-            onPress={() => setCount((current) => current + 1)}
-            variant="ghost"
-          >
-            仅更新
-          </Button>
-        </ExampleRow>
-        <Text className="text-muted">已完成 {count} 次保存</Text>
-      </ExampleBlock>
       <ExampleBlock title="操作层级">
         <ExampleRow>
-          <Button nativeHaptics>确认</Button>
-          <Button nativeHaptics={nativeHaptics} variant="destructive">
-            删除
-          </Button>
-          <Button nativeHaptics={nativeHaptics} variant="outline">
-            次要操作
-          </Button>
-          <Button nativeHaptics={nativeHaptics} variant="secondary">
-            辅助操作
-          </Button>
-          <Button disabled>不可用</Button>
-          <Button variant="destructive" disabled>
-            不可用
-          </Button>
+          {variants.map(({ variant, title }) => (
+            <Button
+              key={variant}
+              nativeHaptics
+              variant={variant}
+              title={title}
+              onPress={() => setCount((value) => value + 1)}
+            />
+          ))}
+        </ExampleRow>
+        <Text className="text-muted">已完成 {count} 次操作</Text>
+      </ExampleBlock>
+      <ExampleBlock title="三档尺寸">
+        <ExampleRow>
+          <Button nativeHaptics size="sm" title="小按钮" />
+          <Button nativeHaptics size="md" title="中按钮" />
+          <Button nativeHaptics size="lg" title="大按钮" />
         </ExampleRow>
       </ExampleBlock>
-      <ExampleBlock title="尺寸等级">
+      <ExampleBlock title="禁用与加载">
         <ExampleRow>
-          <Button size="2xs">最小</Button>
-          <Button size="xs">超小</Button>
-          <Button size="sm">小</Button>
-          <Button>中（默认）</Button>
-          <Button size="lg">大</Button>
-          <Button size="xl">超大</Button>
-          <Button size="2xl">最大</Button>
-          <Button variant="icon" aria-label="图标按钮">
-            <Icon as={Mail} className="text-foreground" />
-          </Button>
-          <Button size="lg" variant="icon" aria-label="大图标按钮">
-            <Icon as={Mail} className="text-foreground" />
-          </Button>
-        </ExampleRow>
-      </ExampleBlock>
-      <ExampleBlock title="扩展状态">
-        <ExampleRow>
-          <Button loading title="请稍候" />
           <Button
+            nativeHaptics
+            onPress={save}
+            loading={saving}
+            title={saving ? "正在保存…" : "保存更改"}
+          />
+          <Button nativeHaptics loading variant="secondary" title="正在同步" />
+          <Button nativeHaptics disabled title="暂无权限" />
+          <Button nativeHaptics disabled variant="danger" title="暂不可删除" />
+          <Button
+            nativeHaptics
             loading
-            loadingIcon={<Icon as={LoaderCircle} className="size-4 text-accent-foreground" />}
+            loadingIcon={<Icon as={LoaderCircle} size="sm" />}
             title="自定义加载图标"
           />
-          <Button nativeHaptics={nativeHaptics}>
-            <Icon as={Mail} className="text-accent-foreground" />
-            <Text>邮件登录</Text>
+        </ExampleRow>
+      </ExampleBlock>
+      <ExampleBlock title="图标与文字">
+        <ExampleRow>
+          <Button nativeHaptics>
+            <Icon as={Plus} size="sm" />
+            添加成员
           </Button>
-          <Button nativeHaptics={nativeHaptics} aria-label="打开邮件" variant="icon">
-            <Icon as={Mail} className="text-foreground" />
+          <Button nativeHaptics variant="secondary">
+            下载文件
+            <Icon as={ArrowDownToLine} size="sm" />
           </Button>
-          <Button nativeHaptics={nativeHaptics} title="Button Link" variant="link" />
-          <Button nativeHaptics={nativeHaptics} native title="Native Button" />
+          <Button nativeHaptics variant="danger">
+            <Icon as={Trash2} size="sm" />
+            <Text>删除草稿</Text>
+          </Button>
+        </ExampleRow>
+      </ExampleBlock>
+      <ExampleBlock title="纯图标按钮">
+        <ExampleRow>
+          <Button nativeHaptics isIconOnly size="sm" accessibilityLabel="打开邮件">
+            <Icon as={Mail} size="sm" />
+          </Button>
+          <Button nativeHaptics isIconOnly variant="secondary" circular accessibilityLabel="收藏">
+            <Icon as={Heart} />
+          </Button>
+          <Button nativeHaptics isIconOnly size="lg" variant="danger" accessibilityLabel="删除">
+            <Icon as={Trash2} />
+          </Button>
+        </ExampleRow>
+      </ExampleBlock>
+      <ExampleBlock title="宽度与自定义样式">
+        <Button nativeHaptics className="w-full" title="占满可用宽度" />
+        <ExampleRow>
+          <Button nativeHaptics variant="outline" buttonSize={{ width: 160 }} title="指定宽度" />
+          <Button
+            nativeHaptics
+            variant="ghost"
+            buttonColor="#16a34a"
+            textClassName="font-bold"
+            title="自定义文字"
+          />
+        </ExampleRow>
+      </ExampleBlock>
+      <ExampleBlock title="系统原生按钮">
+        <Text className="text-muted">
+          iOS 使用 SwiftUI，Android 使用 Compose；Web 回退为通用按钮。
+        </Text>
+        <ExampleRow>
+          <Button native nativeHaptics title="Native Button" />
           <Button
             native
-            nativeHaptics={nativeHaptics}
+            nativeHaptics
             nativeButtonStyle="glass"
-            buttonSize={{
-              width: 150,
-              height: 80,
-            }}
+            buttonSize={{ width: 150, height: 80 }}
             title="Native Button Size"
+          />
+          <Button
+            native
+            nativeHaptics
+            nativeButtonStyle="glassProminent"
+            nativeSystemImage="heart.fill"
+            accessibilityLabel="系统收藏"
+            title="收藏"
           />
         </ExampleRow>
       </ExampleBlock>

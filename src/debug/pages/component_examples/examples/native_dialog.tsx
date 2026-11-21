@@ -48,7 +48,7 @@ export function NativeDialogExample() {
       <ExampleBlock description={`最近结果：${result}`} title="多按钮确认">
         <Button onPress={() => void openDialog()}>打开原生弹窗</Button>
         <Button onPress={showBasicNativeDialog}>原生确认</Button>
-        <Button onPress={showDestructiveNativeDialog} variant="destructive">
+        <Button onPress={showDestructiveNativeDialog} variant="danger">
           原生危险确认
         </Button>
       </ExampleBlock>
