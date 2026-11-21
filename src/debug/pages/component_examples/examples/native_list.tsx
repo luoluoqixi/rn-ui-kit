@@ -683,7 +683,7 @@ export function NativeListExample() {
       <Text
         className="font-medium leading-none"
         numberOfLines={2}
-        size="sm"
+        type="body-sm"
         style={{ opacity: 0.6, textAlign: "center" }}
       >
         编辑模式：{editMode ? `已选 ${selectedIds.length} 项` : "关闭"} · 最近动作：{lastAction}

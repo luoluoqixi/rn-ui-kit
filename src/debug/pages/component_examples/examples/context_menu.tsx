@@ -100,8 +100,8 @@ export function ContextMenuExample() {
             nativeHaptics
             trigger={<Button variant="secondary">长按打开原生菜单</Button>}
           />
-          <Text variant="muted">最近动作：{action}</Text>
-          <Text variant="muted">详细信息：{showDetails ? "显示" : "隐藏"}</Text>
+          <Text color="muted">最近动作：{action}</Text>
+          <Text color="muted">详细信息：{showDetails ? "显示" : "隐藏"}</Text>
         </ExampleBlock>
       )}
 

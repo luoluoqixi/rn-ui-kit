@@ -42,7 +42,7 @@ export function ToastExample() {
       (id) => (
         <View className="min-w-64 gap-2 rounded-lg border border-border bg-background p-3 shadow-lg">
           <Text className="font-semibold">自定义 Toast</Text>
-          <Text variant="muted">任意 JSX 内容，支持自己的布局和操作。</Text>
+          <Text color="muted">任意 JSX 内容，支持自己的布局和操作。</Text>
           <Button size="sm" onPress={() => toast.close(id)}>
             关闭
           </Button>

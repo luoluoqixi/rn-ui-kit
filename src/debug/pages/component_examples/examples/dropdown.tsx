@@ -144,7 +144,7 @@ export function DropdownExample() {
     <ExampleStack>
       <ExampleBlock title="项目菜单">
         <DropdownPair native={false} items={items} triggerLabel="打开 Dropdown" />
-        <Text variant="muted">最近动作：{action}</Text>
+        <Text color="muted">最近动作：{action}</Text>
       </ExampleBlock>
       <ExampleBlock title="勾选标记位置">
         <Dropdown
@@ -166,7 +166,7 @@ export function DropdownExample() {
       {!isWeb() && (
         <ExampleBlock title="原生项目菜单">
           <DropdownPair native items={items} triggerLabel="Native" />
-          <Text variant="muted">最近动作：{action}</Text>
+          <Text color="muted">最近动作：{action}</Text>
         </ExampleBlock>
       )}
       <ExampleBlock title="禁用">

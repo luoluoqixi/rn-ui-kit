@@ -9,7 +9,8 @@ import { useResolvedNativeHaptics } from "../utils";
 import { resolveRenderProp } from "../utils/render";
 import { useUiTheme } from "../utils/theme";
 import type { SelectItemData, SelectProps } from "./types";
-import type { TextProps } from "../text";
+import { FontText } from "../provider/font_provider";
+import type { NativeTriggerLabelProps } from "../native_trigger";
 import * as React from "react";
 import { Platform, View, type TextStyle } from "react-native";
 import { ChevronDown } from "lucide-react-native";
@@ -57,19 +58,16 @@ export function itemLabel(item: SelectItemData | undefined, value?: string) {
 
 export function renderSelectText(
   value: React.ReactNode,
-  textProps?: TextProps,
+  textProps?: NativeTriggerLabelProps,
   defaultColor?: string,
   defaultOpacity = NATIVE_TRIGGER_LABEL_OPACITY,
   defaultFontSize = 16,
   defaultFontWeight?: TextStyle["fontWeight"],
 ) {
   if (typeof value !== "string" && typeof value !== "number") return value;
-  const { color, opacity, style, ...restTextProps } = (textProps ?? {}) as TextProps & {
-    color?: string;
-    opacity?: number;
-  };
+  const { color, opacity, style, ...restTextProps } = textProps ?? {};
   return (
-    <Text
+    <FontText
       {...restTextProps}
       style={[
         {
@@ -82,7 +80,7 @@ export function renderSelectText(
       ]}
     >
       {value}
-    </Text>
+    </FontText>
   );
 }
 
@@ -102,7 +100,7 @@ export function SelectedLabel({
   defaultFontSize?: number;
   defaultOpacity?: number;
   defaultFontWeight?: TextStyle["fontWeight"];
-  labelProps?: TextProps;
+  labelProps?: NativeTriggerLabelProps;
   props: SelectProps;
   value?: string;
 }) {
@@ -156,7 +154,7 @@ export const SelectNativeTrigger = React.forwardRef<any, SelectTriggerSharedProp
       <SelectedLabel
         defaultFontSize={getSelectTriggerFontSize(props)}
         defaultFontWeight={props.triggerFontWeight ?? SELECT_TRIGGER_FONT_WEIGHT}
-        labelProps={props.nativeTriggerLabelProps as TextProps}
+        labelProps={props.nativeTriggerLabelProps as NativeTriggerLabelProps}
         props={props}
         value={value}
       />

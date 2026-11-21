@@ -85,7 +85,7 @@ export function SelectExample() {
           placeholder="选择主题色"
           value={color}
         />
-        <Text variant="muted">当前主题色：{color ?? "未选择"}</Text>
+        <Text color="muted">当前主题色：{color ?? "未选择"}</Text>
       </ExampleBlock>
 
       <ExampleBlock title="原生示例">
@@ -156,7 +156,7 @@ export function SelectExample() {
           placeholder="选择主题"
           value={theme}
         />
-        <Text variant="muted">当前主题：{theme ?? "未选择"}</Text>
+        <Text color="muted">当前主题：{theme ?? "未选择"}</Text>
       </ExampleBlock>
 
       <ExampleBlock title="Grouped 示例">
@@ -168,7 +168,7 @@ export function SelectExample() {
           placeholder="选择排序方式"
           value={grouped}
         />
-        <Text variant="muted">当前排序：{grouped ?? "未选择"}</Text>
+        <Text color="muted">当前排序：{grouped ?? "未选择"}</Text>
       </ExampleBlock>
 
       <ExampleBlock title="其他模式">

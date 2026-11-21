@@ -127,7 +127,7 @@ test("zero values and callbacks survive, null/boolean slots create no containers
 
 test("slot classes override matching utilities and custom Text gets text context", async () => {
   // Web Title/Description are h3/p: custom content must use inline markup.
-  const inline = (key, value) => native ? <Text nativeID={key}>{value}</Text> : <Text asChild><span id={key}>{value}</span></Text>;
+  const inline = (key, value) => <Text nativeID={key}>{value}</Text>;
   await render({
     className: "gap-6", title: inline("nested-title", "Styled"),
     titleClassName: "text-accent", titleProps: { ...extension(id("title")), className: "text-success" },

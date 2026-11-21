@@ -462,6 +462,85 @@ Badge 示例展示数量/文字/图标、三尺寸、语义颜色、三种样式
 - 生产 Web 浏览器实测预设为 16 / 20 / 24、自定义为 18 / 26 / 40；六种语义色均解析为真实 SVG stroke。浅色 ocean → 深色 lavender → 恢复 ocean / 跟随系统后，前景、弱文字、强调及状态色随主题变化；原始紫色保持不变。Chip 内继承及 danger 显式覆盖正常，Chip / Badge 页面图标正常，未记录浏览器运行错误或警告。
 - 本轮未操作 iOS / Android 真机或执行原生 Release 编译。三端 JS/CSS 导出与参数边界测试不能替代设备验收；请在原生示例中观察深浅主题下的 Icon 和 Chip 图标，并检查 Toast 的状态色。
 
+## Progress、Spinner、Separator、Skeleton、Text 与 Label（2026-11-21）
+
+六个组件继续采用单一 index.ts、公共 types.ts、薄包装及两端 `_heroui` 适配器。类型入口只通过 import type 引用两端包；ref、事件和平台样式放在对应的 herouiNativeProps / herouiWebProps，slot 使用同样规则。没有新增原生依赖或调整 HeroUI 版本。
+
+| 本库组件 | Web | iOS / Android |
+| --- | --- | --- |
+| Progress | HeroUI ProgressBar，内部组合 Label / Output / Track / Fill | RN View + Reanimated 补齐，无 RNR primitive |
+| Spinner | HeroUI Spinner | HeroUI Native Spinner / Indicator |
+| Separator | HeroUI Separator | HeroUI Native Separator |
+| Skeleton | HeroUI Skeleton | HeroUI Native Skeleton |
+| Text | HeroUI Typography | HeroUI Native Typography / Typography.Heading |
+| Label | HeroUI Label | HeroUI Native Label / Label.Text |
+
+### 公共 API 与平台差异
+
+```tsx
+<Progress value={35} label="文件上传" showValueLabel size="md" color="accent" />
+<Progress isIndeterminate label="正在同步" />
+<Spinner size="sm" color="accent" isLoading={isSaving} />
+<Separator orientation="horizontal" variant="thin" />
+<Skeleton isLoading={isLoading} variant="shimmer" className="h-5 w-32 rounded-md">
+  <Text>加载后的内容</Text>
+</Skeleton>
+<Text type="h3">页面标题</Text>
+<Text type="body-sm" color="muted">补充说明</Text>
+<Label htmlFor="name" nativeID="name-label" controlRef={inputRef} isRequired>姓名</Label>
+```
+
+- **Progress**：使用 value / minValue / maxValue / isIndeterminate、label、showValueLabel、valueLabel 和 formatOptions。size 为 sm / md / lg，color 为 default / accent / success / warning / danger；labelProps、valueLabelProps、trackProps、indicatorProps 定制内部区域。共享范围处理会钳制数值，非法范围退回 0–100，零值填充宽度确实为 0。Native 确定进度使用 300ms timing，不确定进度以 40% 宽度扫动，处理 RTL、系统减少动态效果与动画清理；Web 沿用真实 ProgressBar 动画及 ARIA。两端均提供进度无障碍信息，不确定状态不虚报当前数值。Native 补齐实现不代表 HeroUI Native 本身存在 Progress 组件。
+- **Spinner**：预设 sm / md / lg，额外支持数字尺寸；color 提供 accent / current / success / warning / danger 及原始颜色字符串。Native 将 accent 映射到官方 default，current 通过 Uniwind 解析本库文字上下文；数字尺寸同时设置根和 Indicator SVG。isLoading=false 卸载指示器。Native 指示器定制在 indicatorProps.herouiNativeProps，不虚构两端相同的 SVG props。
+- **Separator**：orientation 为 horizontal / vertical，公共 variant 为 thin / thick，thickness 可明确厚度，isDecorative 控制辅助技术是否忽略。Native 原生支持的粗细语义映射到 Web 1 / 2px。Web 底层的 variant 实际控制颜色，与 Native 不同，因此只通过 herouiWebProps.variant 暴露，不将两种 variant 混在同一公共枚举。
+- **Skeleton**：统一 isLoading、variant=shimmer / pulse / none 和 children。Web 在封装层补齐加载完成后显示 children 的行为；占位 className 不带入实际内容，加载后由内容自己控制布局。Native 使用真实 Skeleton 与项目已有 react-native-svg，不新增模糊或渐变原生依赖。
+- **Label**：提供 htmlFor、nativeID、isRequired / isInvalid / isDisabled，以及 textClassName / textProps。Web 使用真实 label 与输入框 id 关联；Native 通过 controlRef 聚焦输入框，nativeID 设置在 Label.Text，可用于输入框 aria-labelledby。iOS 输入框仍需适当的 accessibilityLabel，不能仅依赖 Android 的 labelledby 行为。1.1.1 的 Label.isDisabled 仅处理外观，封装通过官方 asChild 及内部 Pressable.disabled 补齐真正禁用，避免禁用时仍调用 onPress 或聚焦。
+
+### Text 迁移与 Typography
+
+heroui-native **确实导出 Typography**：锁定的 1.1.1 主入口重新导出 components/text，公开子路径 heroui-native/text 也导出同一个 Typography。本批 Native 采用后者以保持组件级导入，Web 使用 @heroui/react/typography，没有用普通 RN Text 冒充 Typography。
+
+- 公共 type 为 h1–h6、body / body-sm / body-xs、code，并使用 HeroUI 的 align、color、weight 和 truncate。删除原 RNR 风格的 variant、八档 size、asChild 与 textVariants；仓库内示例消费者同步改用 type / color。样式密度通过 className 或明确的文字类型配置，不添加一个跨组件全局 size。
+- Native 标题通过真实 Typography.Heading 保留 heading 角色与动态字体设置；其他文字使用 Typography。Web 显式标题输出 h1–h6，显式正文输出 p，code 输出 code。未设置 type 的通用 Text 默认输出 span，便于放入已有按钮、标签和其他 Text 内，避免默认 p 导致非法嵌套。
+- **Web 版本适配点**：3.2.7 Typography 底层会在默认 elementType 后透传 React Aria props，但声明未暴露 elementType。Web 适配器仅在未设置 type 时通过局部对象传入 elementType=span；未使用 any 或不匹配的 ref 断言。没有使用 render hook 强换标签，以免产生 React Aria 的标签警告。此处有真实组件运行测试与浏览器 DOM 检查，后续升级 HeroUI 必须重新验证默认 span、显式 p / heading / code 和 ref。
+- 文字覆盖顺序为：调用方 className > 显式 Typography 参数 > 容器 TextClassContext > HeroUI 默认值。显式 muted / default、align、weight、type 会先转为对应 utilities，与上下文合并；避免 Card 的 text-foreground 压过显式 color=muted。继续注入项目字体，code 默认使用等宽字体，显式 fontFamily 与平台 style 仍可覆盖。
+- 通用 style 保留 RN TextStyle 快捷形式，Web 在适配边界转换点单位 lineHeight、横纵 padding / margin、fontVariant、transform 与文字阴影等；DOM 专属样式放在 herouiWebProps.style。numberOfLines、selectable 等常用能力保留，平台专有文字事件和 ref 使用对应平台扩展。
+- NativeTrigger 与 Select 的既有原生文字边界改用项目 FontText，保留原始颜色、RN ref / 事件与字体支持；不会强制套用新 Typography 的语义枚举。Link 实际封装 Button，其类型与新 Text 解耦并保留既有 size。没有迁移或删减这些组件的系统原生分支。
+
+### 示例与依赖清理
+
+六个示例页面继续使用本库单入口 API，并由 ExampleSection 的 Card 承载各组内容。演示覆盖 Progress 数值变化与自定义范围、Spinner 尺寸与加载状态、Separator 内容分组、Skeleton 成员加载与三种动画、Text 排版语义，以及 Label 输入关联和状态。参考官方演示内容，没有把 HeroUI 组合 API 暴露到示例调用中，也没有替换 Select / Dropdown / Sheet 等特殊示例。
+
+确认零源码消费者后移除 @rn-primitives/progress、@rn-primitives/separator、@rn-primitives/label 三个直接依赖并更新 bun.lock。其余旧组件依赖按消费者保留。TrueSheet、所有 patch 与弹层 host 均无改动。
+
+### 本批验证
+
+- 主测试 141 项通过、0 失败，1846 次断言，34 个测试文件。新增隔离 fixture 运行真实 Web / Native 组件，覆盖 Typography 标签与字体、默认行内文字、上下文样式优先级、RN 样式转换、Spinner 尺寸与显隐、Separator 方向/厚度/装饰状态、Skeleton 加载切换、Label 关联/聚焦/禁用，以及 Progress 范围、零值、无障碍和插槽。Native 的设备与动画环境使用替身，不能据此声称验证过真机动画。
+- 两端 ref、事件、slot 及旧参数拒绝的类型用例通过；库与示例应用 typecheck、库 build、示例生产 build:web 全部通过，git diff --check 通过。
+- 最终 Expo 三端带 source map 导出通过。Web / iOS / Android 分别包含 31 / 361 / 361 个目标 HeroUI 模块，另一端模块均为 0；每端只包含对应平台的六个适配器，已移除的三个 RNR primitive 均不再进入模块图。
+- 生产 Web 浏览器实测 Progress 增减、完成、自定义范围与 0% 填充，Spinner 停止/恢复与 16 / 24 / 32 和数字尺寸，Skeleton 内容切换及 shimmer / pulse / none 实际动画，Separator 横纵方向与 1 / 2 / 4px 厚度，Text h1–h6 / p / span / code、muted 与对齐，以及 Label 点击聚焦、必填、错误和禁用状态。Accordion 展开和 Card 按钮回归正常，Chip 39 个标签没有内部横向溢出或非法块元素嵌套；相关浏览器检查没有记录运行错误或警告。
+- 本轮未操作 iOS / Android 真机，也未执行原生 Release 编译。设备验收重点为 Native Progress 的确定/不确定动画与减少动态效果、Skeleton 动画和内容切换、系统大字体下 Typography 的表现，以及 Label 聚焦与禁用；已有系统原生组件、TrueSheet 和 patch 没有被本批迁移替换。
+
+## Reanimated 4.3.4：Native 动画调度修复（2026-11-21）
+
+用户反馈 iOS / Android 的 Progress 确定进度停在初始宽度、不确定进度不扫动，Skeleton 的 shimmer / pulse 不播放；同一应用的 Spinner 和 Accordion 动画正常。问题定位到 Reanimated 4.3.0 在 RN JS runtime 上提交 SharedValue 写入与 cancelAnimation 的调度顺序：前者直接 setAsync，后者经过 scheduleOnUI 的微任务批次，旧动画的取消可能晚于新动画启动执行。
+
+- 库 devDependencies / peerDependencies、示例应用 dependencies 统一从精确版本 4.3.0 升级到 4.3.4，并更新各自 bun.lock。保留 Worklets 0.8.1、RN 0.83.9、Expo 55.0.26 和其他依赖版本，没有调整组件实现或弹层 host。
+- 4.3.4 的正式发布源码已经将 RN JS runtime 的 SharedValue 写入统一通过 scheduleOnUI 提交，保留取消与启动的调用顺序。使用上游修复，不追加动画调度补丁，也不通过关闭系统减少动态效果来恢复动画。
+- 不升级到 Reanimated 4.8.0：该版本要求 RN 0.87–0.89 / Worklets 0.14.x。即使 4.6.0 的 RN 范围包含 0.83，它要求的 Worklets 0.12.x 也超出了当前 expo-modules-core 55.0.25 声明的 ^0.7.4 || ^0.8.0。上述版本为本次核对时的发布状态，不代表后续版本的兼容结论。
+- 保留原有 Web reduced-motion 回退及 useReducedMotion 运行时读取补丁。两处补丁改名为 react-native-reanimated@4.3.4.patch，顶部原注释和全部 hunk 逐字保留；四个补丁目标文件在 4.3.0 / 4.3.4 上游发布包中逐字一致。库根目录仍只声明原有 TrueSheet patchedDependency，Reanimated 补丁继续由示例应用实际声明，库保留同步给宿主的副本。
+
+### 补丁与动画回归验证
+
+- 已备份修改前完整补丁，在 4.3.4 原始发布包副本上 dry-run 并应用全部旧补丁，确认四个文件均实际应用，无跳过、无 offset。hunk 完整性检查通过。
+- 在示例应用执行项目 patch 缓存清理脚本及 bun install --force 后，四个实际补丁目标文件与预期最终源码逐字节一致；src / lib/module 的 mutables 文件也与上游修复一致。库与示例的两份补丁逐字节一致，内容与升级前旧补丁一致；两份锁文件没有连带更新其他包版本。
+- 新增 test/reanimated_scheduling.test.js / fixture.js：分别在隔离子进程执行已安装包的源码和 ESM 入口，使用真实 makeMutable、cancelAnimation、withTiming、withRepeat、Easing 与 valueSetter，只替换设备调度和序列化边界。七个场景覆盖确定进度更新、不确定进度、Skeleton shimmer / pulse 重启、启动后取消、重启后卸载，以及系统减少动态效果。4.3.0 的四个相关动画场景可复现失败，4.3.4 两个入口各七个场景均通过。模拟调度测试不能代替真机动画验收。
+- 主测试 143 项通过、0 失败，1848 次断言，35 个测试文件；库与示例 typecheck、库 build 通过。Reanimated 自带的 RN / Worklets 版本校验脚本通过。
+- Expo 清缓存后 Web / iOS / Android 生产导出及 source map 审核通过：分别包含 31 / 361 / 361 个目标 HeroUI 模块，另一端为 0；三端均只有一份 Reanimated 模块根路径，实际打包的 mutables 内容与已安装 4.3.4 文件逐字一致。Web 使用 lib/module 入口，Native 使用 src 入口。
+- Android 执行 :react-native-reanimated:assembleDebug，指定 arm64-v8a，Reanimated / Worklets 的 C++ 与 Java 编译、Reanimated AAR 组装成功；该检查不代表完整 App 安装或真机交互通过。
+- 本地 iOS Pods 已安装 RNReanimated 4.3.4，RNWorklets 仍为 0.8.1。pod install 成功，但系统 Ruby 2.6 的 Array 缺少 filter_map，Expo-precompiled 读取 SPM 配置时有非致命警告；未据此声称完成 iOS 原生编译。
+- 用户需重新构建并安装 iOS / Android 应用后，确认 Progress 的 +10 / 完成 / 不确定进度、Skeleton shimmer / pulse 和内容切换，并回归 Spinner、Accordion、TrueSheet 及系统减少动态效果。已有 Release 安装包不能仅通过重启 Metro 更新原生依赖。
+
 ## 后续批次
 
 1. **主题重构（已实现）**：见上文第二阶段。真机重新观察配色后进入简单组件迁移。

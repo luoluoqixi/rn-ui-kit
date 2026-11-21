@@ -138,7 +138,7 @@ export function SheetExample() {
       <NativeSheet detents={[0.4, 0.6, 1]} handle onOpenChange={setDetentsOpen} open={detentsOpen}>
         <View className="gap-3 p-5">
           <Text className="font-semibold">多档 detents</Text>
-          <Text variant="muted">多档 detents [0.4, 0.6, 1]</Text>
+          <Text color="muted">多档 detents [0.4, 0.6, 1]</Text>
           <Button onPress={() => setDetentsOpen(false)} variant="outline">
             关闭
           </Button>
@@ -155,7 +155,7 @@ export function SheetExample() {
       >
         <View className="gap-3 p-5">
           <Text className="font-semibold">百分比 snapPoints</Text>
-          <Text variant="muted">当前档位：{["40%", "65%", "90%"][percentPosition]}</Text>
+          <Text color="muted">当前档位：{["40%", "65%", "90%"][percentPosition]}</Text>
           <ExampleRow>
             <Button onPress={() => setPercentPosition(0)} variant="outline">
               40%
@@ -183,7 +183,7 @@ export function SheetExample() {
       >
         <View className="gap-3 p-5">
           <Text className="font-semibold">外层 Sheet</Text>
-          <Text variant="muted">可以继续打开内层 Sheet。detents=&#123;[0.4, 0.8]&#125;</Text>
+          <Text color="muted">可以继续打开内层 Sheet。detents=&#123;[0.4, 0.8]&#125;</Text>
           <Button onPress={() => setNestedOpen(false)} variant="outline">
             关闭外层
           </Button>
@@ -199,7 +199,7 @@ export function SheetExample() {
       >
         <View className="gap-3 p-5">
           <Text className="font-semibold">内层 Sheet</Text>
-          <Text variant="muted">这是从外层 Sheet 中打开的嵌套 Sheet。</Text>
+          <Text color="muted">这是从外层 Sheet 中打开的嵌套 Sheet。</Text>
           <Button onPress={() => setNestedInnerOpen(false)} variant="outline">
             关闭内层
           </Button>

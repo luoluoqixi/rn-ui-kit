@@ -44,7 +44,7 @@ export function ColorPickerExample() {
               <View key={name} style={{ gap: 4, width: 100 }}>
                 <View style={{ backgroundColor: theme[name], height: 48, borderRadius: 6, borderWidth: 1, borderColor: theme.border }} />
                 <Text>{name}</Text>
-                <Text variant="muted">{theme[name]}</Text>
+                <Text color="muted">{theme[name]}</Text>
               </View>
             );
           })}

@@ -76,7 +76,7 @@ export function SplitLayoutExample() {
           </SplitLayout.Pane>
           <SplitLayout.Pane minSize={180}>
             <View style={[styles.splitPane, { backgroundColor: colors.screen }]}>
-              <Text variant="h3">主内容</Text>
+              <Text type="h3">主内容</Text>
               <Text className="text-muted">
                 此示例没有传 storageKey 或 storageAdapter，不会持久化。
               </Text>

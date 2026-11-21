@@ -23,7 +23,7 @@ export function ComponentExamplePlaceholder({
 }) {
   return (
     <View className="gap-4 p-4">
-      <Text variant="muted">
+      <Text color="muted">
         {name} 示例：{status}
       </Text>
       <Card

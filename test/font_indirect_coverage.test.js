@@ -8,7 +8,6 @@ function source(file) {
 const indirectText = {
   "dialog/dialog.tsx": ["DialogPrimitive.Title", "DialogPrimitive.Description"],
   "alert_dialog/alert_dialog.tsx": ["AlertDialogPrimitive.Title", "AlertDialogPrimitive.Description"],
-  "label/label.tsx": ["LabelPrimitive.Text"],
   "select/select_basic.tsx": ["SelectPrimitive.Value", "SelectPrimitive.Label", "SelectPrimitive.ItemText"],
   "context_menu/context_menu.tsx": ["ContextMenuPrimitive.Label"],
   "dropdown/dropdown.tsx": ["DropdownPrimitive.Label"],

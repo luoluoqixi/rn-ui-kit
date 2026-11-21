@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react-native";
 import React from "react";
 import { Platform, Pressable, StyleSheet, View, type TextStyle } from "react-native";
-import { Text } from "../text";
+import { FontText as Text } from "../provider/font_provider";
 import { cn } from "../utils/cn";
 import { useUiTheme } from "../utils/theme";
 import {
@@ -12,7 +12,6 @@ import {
   NATIVE_TRIGGER_WEB_PRESS_OPACITY,
 } from "./constants";
 
-import type { TextProps } from "../text";
 import {
   NativeTriggerFaceProps,
   NativeTriggerIcon,
@@ -59,15 +58,12 @@ const nativeTriggerIconSizes: Record<NativeTriggerSize, { chevron: number; stack
 
 function renderTriggerLabel(
   label: React.ReactNode,
-  labelProps: TextProps | undefined,
+  labelProps: NativeTriggerFaceProps["labelProps"],
   defaultColor: string,
   fontSize: number,
   fontWeight: TextStyle["fontWeight"] = "500",
 ) {
-  const { color, opacity, style, ...textProps } = (labelProps ?? {}) as TextProps & {
-    color?: string;
-    opacity?: number;
-  };
+  const { color, opacity, style, ...textProps } = labelProps ?? {};
 
   if (typeof label === "string" || typeof label === "number") {
     return (
@@ -139,13 +135,11 @@ export const NativeTriggerFace = React.forwardRef<View, NativeTriggerFaceProps>(
     const labelStyle = StyleSheet.flatten(labelProps?.style) as
       | { color?: TriggerIconColor }
       | undefined;
-    const labelColor = (labelProps as (TextProps & { color?: TriggerIconColor }) | undefined)
-      ?.color;
+    const labelColor = labelProps?.color;
     const iconColor: TriggerIconColor =
       iconColorProp ?? labelColor ?? labelStyle?.color ?? theme.foreground;
     // 图标跟随显式设置的文字透明度，避免文字已经恢复为 1 时右侧箭头仍然偏淡。
-    const configuredLabelOpacity = (labelProps as (TextProps & { opacity?: number }) | undefined)
-      ?.opacity;
+    const configuredLabelOpacity = labelProps?.opacity;
     const iconOpacity =
       typeof configuredLabelOpacity === "number"
         ? configuredLabelOpacity
