@@ -11,7 +11,7 @@ export function NativeListColorPickerSheet(props: NativeListColorPickerSheetProp
   return (
     <NativeListColorPickerSheetBase
       {...props}
-      nativeButtonSwiftProps={{ modifiers: [tint(theme.primary)] }}
+      nativeButtonSwiftProps={{ modifiers: [tint(theme.accent)] }}
     />
   );
 }

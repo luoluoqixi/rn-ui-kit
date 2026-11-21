@@ -15,7 +15,7 @@ const legacy: TrueSheetProps = {
 const modern: TrueSheetProps = { scrollableRef: scrollRef, placement: "trailing", children: null };
 const list: TrueSheetProps = { scrollableRef: listRef, children: null };
 const sheet: NativeSheetProps = { ...legacy, detents: ["auto", 0.8], onSnapPointChange: (index: number) => { void index; } };
-const theme: Pick<UiPreferences["appearance"], "backgroundFollowsTheme"> = { backgroundFollowsTheme: false };
+const theme: Pick<UiPreferences["appearance"], "themeMode"> = { themeMode: "system" };
 void theme;
 export const contract = <>
   <TrueSheet {...modern} /><TrueSheet {...list} />

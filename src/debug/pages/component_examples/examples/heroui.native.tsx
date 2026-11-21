@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { View, Text, TextInput } from "react-native";
-import { Button, Dialog } from "heroui-native";
+import { View, Text } from "react-native";
+import { Button, Dialog, Input } from "heroui-native";
 import { NativeSheet, NativeSheetScrollContent } from "rn-ui-kit/core";
 
 function DialogProbe({ label }: { label: string }) {
@@ -13,7 +13,7 @@ function DialogProbe({ label }: { label: string }) {
         <Dialog.Content>
           <Dialog.Title>HeroUI Native 弹层验证</Dialog.Title>
           <Dialog.Description>检查遮罩、点击、返回键、键盘和关闭后 Sheet 的交互。</Dialog.Description>
-          <TextInput accessibilityLabel="HeroUI 键盘验证" placeholder="输入后收起键盘，再关闭弹层" className="rounded-lg bg-field p-3 text-field-foreground" />
+          <Input accessibilityLabel="HeroUI 键盘验证" placeholder="输入后收起键盘，再关闭弹层" className="rounded-lg bg-field p-3 text-field-foreground" />
           <Button onPress={() => setOpen(false)}>关闭 HeroUI 弹层</Button>
         </Dialog.Content>
       </Dialog.Portal>
@@ -27,7 +27,7 @@ export function HeroUIExample() {
   return (
     <View className="gap-4 rounded-xl bg-surface p-4" testID="heroui-smoke-native">
       <Text className="text-foreground">当前底座：heroui-native（iOS / Android）</Text>
-      <Text className="text-foreground">第一阶段使用 HeroUI 默认主题；项目主题色映射将在下一阶段统一。</Text>
+      <Text className="text-foreground">已接入统一主题：请切换明暗模式和主题色，检查按钮、说明文字、输入框与 Sheet 内弹层。</Text>
       <Button onPress={() => setCount(value => value + 1)}>HeroUI 计数：{count}</Button>
       <Button variant="secondary">次要按钮</Button>
       <Button isDisabled>禁用按钮</Button>

@@ -378,7 +378,7 @@ function AlertDialogDescription({
 }: AlertDialogDescriptionProps) {
   return (
     <AlertDialogPrimitive.Description
-      className={cn("text-muted-foreground text-sm", className)}
+      className={cn("text-muted text-sm", className)}
       {...props}
       style={useDefaultTextStyle(props.style, className)}
     />

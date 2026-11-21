@@ -24,7 +24,7 @@ export function SwitchNative({
     ...props
   } = (nativeSwiftProps ?? {}) as Partial<ExpoSwiftToggleProps>;
   // NativeList uses the same semantic primary token for the SwiftUI switch tint.
-  const themeTint = toSwiftUIHexColor(theme.primary) ?? theme.primary;
+  const themeTint = toSwiftUIHexColor(theme.accent) ?? theme.accent;
 
   return (
     <Host

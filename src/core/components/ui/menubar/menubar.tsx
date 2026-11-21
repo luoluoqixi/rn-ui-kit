@@ -236,9 +236,9 @@ function MenubarTrigger({
       value={cn(
         cn(
           menubarTriggerTextSizeClasses[size],
-          "font-medium select-none group-active:text-accent-foreground",
+          "font-medium select-none group-active:text-accent-soft-foreground",
         ),
-        value === itemValue && "text-accent-foreground",
+        value === itemValue && "text-accent-soft-foreground",
       )}
     >
       <MenubarPrimitive.Trigger
@@ -249,11 +249,11 @@ function MenubarTrigger({
           ),
           Platform.select({
             web: cn(
-              "hover:bg-accent hover:text-accent-foreground outline-none",
+              "hover:bg-accent-soft hover:text-accent-soft-foreground outline-none",
               cursorDefault && !hasCursorOverride && "!cursor-default",
             ),
           }),
-          value === itemValue && "bg-accent",
+          value === itemValue && "bg-accent-soft",
           className,
         )}
         {...props}
@@ -292,8 +292,8 @@ function MenubarSubTrigger({
     <TextClassContext.Provider
       value={cn(
         cn(menuTextSizeClasses[size], "select-none"),
-        !disabled && "group-active:text-accent-foreground",
-        open && "text-accent-foreground",
+        !disabled && "group-active:text-accent-soft-foreground",
+        open && "text-accent-soft-foreground",
       )}
     >
       <MenubarPrimitive.SubTrigger
@@ -302,12 +302,12 @@ function MenubarSubTrigger({
             "group flex flex-row items-center justify-between rounded-sm px-2",
             menuItemPaddingClasses[size],
           ),
-          !disabled && "active:bg-accent",
+          !disabled && "active:bg-accent-soft",
           Platform.select({
-            web: "focus:bg-accent focus:text-accent-foreground cursor-default outline-none [&_svg]:pointer-events-none",
+            web: "focus:bg-accent-soft focus:text-accent-soft-foreground cursor-default outline-none [&_svg]:pointer-events-none",
           }),
           className,
-          open && "bg-accent",
+          open && "bg-accent-soft",
           inset && menuItemInsetClasses[size],
         )}
         {...props}
@@ -348,7 +348,7 @@ function MenubarSubContent({
     <NativeOnlyAnimatedView entering={FadeIn.reduceMotion(ReduceMotion.System)}>
       <MenubarPrimitive.SubContent
         className={cn(
-          "bg-popover border-border overflow-hidden rounded-md border p-1 shadow-lg shadow-black/5",
+          "bg-overlay border-border overflow-hidden rounded-md border p-1 shadow-lg shadow-black/5",
           Platform.select({
             web: "animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 fade-in-0 data-[state=closed]:zoom-out-95 zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-(--radix-context-menu-content-transform-origin) z-50 min-w-[8rem] max-h-[45vh] overflow-y-auto ui-menu-scrollbar",
           }),
@@ -368,7 +368,7 @@ function MenubarSubContent({
       >
         <MenubarContentSizeContext.Provider value={size}>
           <TextClassContext.Provider
-            value={cn("text-popover-foreground", menuTextSizeClasses[size])}
+            value={cn("text-overlay-foreground", menuTextSizeClasses[size])}
           >
             {children}
           </TextClassContext.Provider>
@@ -425,7 +425,7 @@ function MenubarContent({
           pointerEvents="box-none"
         >
           <TextClassContext.Provider
-            value={cn("text-popover-foreground", menuTextSizeClasses[size])}
+            value={cn("text-overlay-foreground", menuTextSizeClasses[size])}
           >
             <MenubarPrimitive.Content
               style={
@@ -435,7 +435,7 @@ function MenubarContent({
                 ] as any
               }
               className={cn(
-                "bg-popover border-border max-h-[45vh] min-w-[12rem] overflow-hidden rounded-md border p-1 shadow-lg shadow-black/5",
+                "bg-overlay border-border max-h-[45vh] min-w-[12rem] overflow-hidden rounded-md border p-1 shadow-lg shadow-black/5",
                 Platform.select({
                   web: cn(
                     "animate-in fade-in-0 zoom-in-95 max-h-[45vh] overflow-y-auto origin-(--radix-context-menu-content-transform-origin) z-50 cursor-default ui-menu-scrollbar",
@@ -500,12 +500,12 @@ function MenubarItem({
   return (
     <TextClassContext.Provider
       value={cn(
-        cn(menuTextSizeClasses[size], "select-none text-popover-foreground"),
-        !disabled && "group-active:text-popover-foreground",
-        variant === "destructive" && "text-destructive",
+        cn(menuTextSizeClasses[size], "select-none text-overlay-foreground"),
+        !disabled && "group-active:text-overlay-foreground",
+        variant === "destructive" && "text-danger",
         variant === "destructive" &&
           !disabled &&
-          "group-active:text-destructive",
+          "group-active:text-danger",
       )}
     >
       <MenubarPrimitive.Item
@@ -514,17 +514,17 @@ function MenubarItem({
             "group relative flex flex-row items-center gap-2 rounded-sm px-2",
             menuItemPaddingClasses[size],
           ),
-          !disabled && "active:bg-accent",
+          !disabled && "active:bg-accent-soft",
           Platform.select({
             web: cn(
-              "focus:bg-accent focus:text-accent-foreground cursor-default outline-none data-[disabled]:pointer-events-none",
+              "focus:bg-accent-soft focus:text-accent-soft-foreground cursor-default outline-none data-[disabled]:pointer-events-none",
               variant === "destructive" &&
-                "focus:bg-destructive/10 dark:focus:bg-destructive/20",
+                "focus:bg-danger/10 dark:focus:bg-danger/20",
             ),
           }),
           !disabled &&
             variant === "destructive" &&
-            "active:bg-destructive/10 dark:active:bg-destructive/20",
+            "active:bg-danger/10 dark:active:bg-danger/20",
           disabled && "opacity-50",
           inset && menuItemInsetClasses[size],
           className,
@@ -562,8 +562,8 @@ function MenubarCheckboxItem({
   return (
     <TextClassContext.Provider
       value={cn(
-        cn(menuTextSizeClasses[size], "text-popover-foreground select-none"),
-        !disabled && "group-active:text-accent-foreground",
+        cn(menuTextSizeClasses[size], "text-overlay-foreground select-none"),
+        !disabled && "group-active:text-accent-soft-foreground",
       )}
     >
       <MenubarPrimitive.CheckboxItem
@@ -572,9 +572,9 @@ function MenubarCheckboxItem({
             "group relative flex flex-row items-center gap-2 rounded-sm px-2",
             menuItemPaddingClasses[size],
           ),
-          !disabled && "active:bg-accent",
+          !disabled && "active:bg-accent-soft",
           Platform.select({
-            web: "focus:bg-accent focus:text-accent-foreground cursor-default outline-none data-[disabled]:pointer-events-none",
+            web: "focus:bg-accent-soft focus:text-accent-soft-foreground cursor-default outline-none data-[disabled]:pointer-events-none",
           }),
           disabled && "opacity-50",
           className,
@@ -624,8 +624,8 @@ function MenubarRadioItem({
   return (
     <TextClassContext.Provider
       value={cn(
-        cn(menuTextSizeClasses[size], "text-popover-foreground select-none"),
-        !disabled && "group-active:text-accent-foreground",
+        cn(menuTextSizeClasses[size], "text-overlay-foreground select-none"),
+        !disabled && "group-active:text-accent-soft-foreground",
       )}
     >
       <MenubarPrimitive.RadioItem
@@ -634,9 +634,9 @@ function MenubarRadioItem({
             "group relative flex flex-row items-center gap-2 rounded-sm px-2",
             menuItemPaddingClasses[size],
           ),
-          !disabled && "active:bg-accent",
+          !disabled && "active:bg-accent-soft",
           Platform.select({
-            web: "focus:bg-accent focus:text-accent-foreground cursor-default outline-none data-[disabled]:pointer-events-none",
+            web: "focus:bg-accent-soft focus:text-accent-soft-foreground cursor-default outline-none data-[disabled]:pointer-events-none",
           }),
           disabled && "opacity-50",
           className,
@@ -711,7 +711,7 @@ function MenubarShortcut({
   return (
     <Text
       className={cn(
-        "text-muted-foreground ml-auto tracking-widest",
+        "text-muted ml-auto tracking-widest",
         menuTextSizeClasses[size],
         className,
       )}

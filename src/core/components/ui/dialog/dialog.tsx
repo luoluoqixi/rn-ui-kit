@@ -316,7 +316,7 @@ function DialogContent({
               className={cn(
                 "absolute right-4 top-4 rounded opacity-70 active:opacity-100",
                 Platform.select({
-                  web: "ring-offset-background focus:ring-ring data-[state=open]:bg-accent transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-2",
+                  web: "ring-offset-background focus:ring-focus data-[state=open]:bg-accent-soft transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-2",
                 }),
               )}
               hitSlop={12}
@@ -324,7 +324,7 @@ function DialogContent({
               <Icon
                 as={X}
                 className={cn(
-                  "text-accent-foreground web:pointer-events-none size-4 shrink-0",
+                  "text-accent-soft-foreground web:pointer-events-none size-4 shrink-0",
                 )}
               />
               <Text className="sr-only">Close</Text>
@@ -379,7 +379,7 @@ function DialogDescription({
 }: React.ComponentProps<typeof DialogPrimitive.Description>) {
   return (
     <DialogPrimitive.Description
-      className={cn("text-muted-foreground text-sm", className)}
+      className={cn("text-muted text-sm", className)}
       {...props}
       style={useDefaultTextStyle(props.style, className)}
     />

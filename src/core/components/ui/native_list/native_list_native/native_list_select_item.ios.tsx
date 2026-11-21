@@ -87,7 +87,7 @@ function NativeIos15MenuSelectRow({
     selectedItem == null
       ? (toPlainText(selectProps.placeholder) ?? "请选择")
       : getSelectLabel(selectedItem, selectedValue ?? undefined);
-  const triggerColor = itemProps.valueColor ?? theme.primary;
+  const triggerColor = itemProps.valueColor ?? theme.accent;
 
   return (
     <NativeRowContainer
@@ -132,7 +132,7 @@ function NativeIos15MenuSelectRow({
                 ]}
               >
                 <Image
-                  color={itemProps.iconColor ?? theme.primary}
+                  color={itemProps.iconColor ?? theme.accent}
                   size={itemProps.iconSize ?? 20}
                   systemName={itemProps.sfSymbol}
                 />

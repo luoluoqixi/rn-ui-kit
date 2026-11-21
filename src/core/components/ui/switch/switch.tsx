@@ -103,9 +103,9 @@ function Switch({
           "flex shrink-0 flex-row items-center rounded-full border border-transparent shadow-sm shadow-black/5",
           switchSize.track,
           Platform.select({
-            web: "focus-visible:border-ring focus-visible:ring-ring/50 peer inline-flex outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed",
+            web: "focus-visible:border-focus focus-visible:ring-focus/50 peer inline-flex outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed",
           }),
-          checked ? "bg-primary" : "bg-input dark:bg-input/80",
+          checked ? "bg-accent" : "bg-field-border dark:bg-field-border/80",
           props.disabled && "opacity-50",
           className,
         )}
@@ -121,7 +121,7 @@ function Switch({
               web: "pointer-events-none block ring-0",
             }),
             checked
-              ? cn("dark:bg-primary-foreground", switchSize.checked)
+              ? cn("dark:bg-accent-foreground", switchSize.checked)
               : "dark:bg-foreground translate-x-0",
           )}
         />

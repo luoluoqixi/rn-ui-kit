@@ -1,4 +1,4 @@
-import { type ReactNode, createContext, useContext, useEffect, useMemo } from "react";
+import { type ReactNode, createContext, useContext, useLayoutEffect, useMemo } from "react";
 import { ScopedVariables, Uniwind } from "uniwind";
 
 import {
@@ -6,6 +6,7 @@ import {
   type AccentThemeName,
 } from "./accent_theme";
 import type { ResolvedColorScheme } from "./settings";
+import { semanticColorsToVariables } from "./theme_variables";
 
 /** 编号越大强调越强：light 逐渐加深，dark 逐渐提亮。 */
 export type AccentScale = Record<
@@ -14,29 +15,42 @@ export type AccentScale = Record<
 >;
 
 export type SemanticColors = AccentScale & {
+  background: string;
+  foreground: string;
+  surface: string;
+  surfaceForeground: string;
+  surfaceSecondary: string;
+  surfaceSecondaryForeground: string;
+  surfaceTertiary: string;
+  surfaceTertiaryForeground: string;
+  overlay: string;
+  overlayForeground: string;
+  backdrop: string;
+  /** Muted text, never a container background. */
+  muted: string;
   accent: string;
   accentForeground: string;
-  background: string;
-  primaryBackground: string;
+  default: string;
+  defaultForeground: string;
+  success: string;
+  successForeground: string;
+  warning: string;
+  warningForeground: string;
+  danger: string;
+  dangerForeground: string;
+  fieldBackground: string;
+  fieldForeground: string;
+  fieldPlaceholder: string;
+  fieldBorder: string;
+  segment: string;
+  segmentForeground: string;
   border: string;
-  card: string;
-  cardForeground: string;
-  destructive: string;
-  destructiveForeground: string;
-  foreground: string;
-  input: string;
-  muted: string;
-  mutedForeground: string;
-  popover: string;
-  popoverForeground: string;
-  primary: string;
-  primaryForeground: string;
-  ring: string;
-  secondary: string;
-  secondaryForeground: string;
+  separator: string;
+  focus: string;
+  link: string;
 };
 
-/** Complete semantic color set for one light/dark theme pair. */
+/** HeroUI semantic colors for one complete light/dark theme pair. */
 export interface UiThemeConfig {
   light: SemanticColors;
   dark: SemanticColors;
@@ -47,47 +61,10 @@ export function resolveUiColors(
   accentThemeName: AccentThemeName,
   theme?: UiThemeConfig,
 ): SemanticColors {
-  if (theme != null) return theme[colorScheme];
-
-  return resolveGeneratedAccentTheme(accentThemeName)[colorScheme];
+  return (theme ?? resolveGeneratedAccentTheme(accentThemeName))[colorScheme];
 }
 
-export function semanticColorsToVariables(colors: SemanticColors) {
-  return {
-    "--color-accent01": colors.accent01,
-    "--color-accent02": colors.accent02,
-    "--color-accent03": colors.accent03,
-    "--color-accent04": colors.accent04,
-    "--color-accent05": colors.accent05,
-    "--color-accent06": colors.accent06,
-    "--color-accent07": colors.accent07,
-    "--color-accent08": colors.accent08,
-    "--color-accent09": colors.accent09,
-    "--color-accent10": colors.accent10,
-    "--color-accent11": colors.accent11,
-    "--color-accent12": colors.accent12,
-    "--color-accent": colors.accent,
-    "--color-accent-foreground": colors.accentForeground,
-    "--color-background": colors.background,
-    "--color-border": colors.border,
-    "--color-card": colors.card,
-    "--color-card-foreground": colors.cardForeground,
-    "--color-destructive": colors.destructive,
-    "--color-destructive-foreground": colors.destructiveForeground,
-    "--color-foreground": colors.foreground,
-    "--color-input": colors.input,
-    "--color-muted": colors.muted,
-    "--color-muted-foreground": colors.mutedForeground,
-    "--color-popover": colors.popover,
-    "--color-popover-foreground": colors.popoverForeground,
-    "--color-primary-background": colors.primaryBackground,
-    "--color-primary": colors.primary,
-    "--color-primary-foreground": colors.primaryForeground,
-    "--color-ring": colors.ring,
-    "--color-secondary": colors.secondary,
-    "--color-secondary-foreground": colors.secondaryForeground,
-  };
-}
+export { semanticColorsToVariables } from "./theme_variables";
 
 const UiThemeContext = createContext<SemanticColors | undefined>(undefined);
 const UiColorSchemeContext = createContext<ResolvedColorScheme>("light");
@@ -105,15 +82,23 @@ export function UiThemeProvider({
   followsSystem: boolean;
   theme?: UiThemeConfig;
 }) {
-  const colors = useMemo(
-    () => resolveUiColors(colorScheme, accentThemeName, theme),
-    [accentThemeName, colorScheme, theme],
+  const resolvedTheme = useMemo(
+    () => theme ?? resolveGeneratedAccentTheme(accentThemeName),
+    [accentThemeName, theme],
   );
+  const colors = resolvedTheme[colorScheme];
   const variables = useMemo(() => semanticColorsToVariables(colors), [colors]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    // Native portals can outlive their source subtree; Web portals mount under
+    // document.body. Keep global theme variables in sync as well as the scope.
+    for (const scheme of ["light", "dark"] as const) {
+      Uniwind.updateCSSVariables(scheme, semanticColorsToVariables(resolvedTheme[scheme]));
+    }
+    // A fixed Uniwind theme also pins Native Appearance. Preserve its adaptive
+    // mode so following the system continues to react to future device changes.
     Uniwind.setTheme(followsSystem ? "system" : colorScheme);
-  }, [colorScheme, followsSystem]);
+  }, [colorScheme, followsSystem, resolvedTheme]);
 
   return (
     <UiColorSchemeContext.Provider value={colorScheme}>
@@ -140,21 +125,21 @@ export function useComponentThemeTokens(): Record<string, ComponentThemeValue> {
   return useMemo(() => {
     const value = (val: string): ComponentThemeValue => ({ val });
     return {
-      accent10: value(colors.primary),
+      accent10: value(colors.accent),
       background: value(colors.background),
-      backgroundHover: value(colors.accent),
-      backgroundPress: value(colors.accent),
+      backgroundHover: value(colors.accent04),
+      backgroundPress: value(colors.accent04),
       borderColor: value(colors.border),
       color: value(colors.foreground),
-      color06: value(colors.mutedForeground),
-      color10: value(colors.primary),
-      color3: value(colors.muted),
-      color4: value(colors.accent),
-      color5: value(colors.accent),
+      color06: value(colors.muted),
+      color10: value(colors.accent),
+      color3: value(colors.surfaceSecondary),
+      color4: value(colors.accent04),
+      color5: value(colors.accent04),
       color7: value(colors.border),
-      gray8: value(colors.mutedForeground),
-      gray9: value(colors.mutedForeground),
-      gray11: value(colors.mutedForeground),
+      gray8: value(colors.muted),
+      gray9: value(colors.muted),
+      gray11: value(colors.muted),
       gray12: value(colors.foreground),
     };
   }, [colors]);

@@ -39,7 +39,7 @@ test("asChild 保留子 Pressable 的事件、style 和关闭行为", async () =
   root = createRoot(mount);
   await act(() => root.render(
     <Primitive.Root open onOpenChange={() => closed++}>
-      <AlertDialogSolidAction asChild variant="default" colors={{ primary: "#2563eb", destructive: "#ba1a1a" }}>
+      <AlertDialogSolidAction asChild variant="default" colors={{ accent: "#2563eb", danger: "#ba1a1a" }}>
         <RNW.Pressable onPress={() => pressed++} style={{ borderWidth: 2 }}>
           <RNW.Text>确认</RNW.Text>
         </RNW.Pressable>
@@ -68,7 +68,7 @@ for (const [variant, hoverColor, pressedColor] of [
       <Primitive.Root open onOpenChange={(open) => { if (!open) closed++; }}>
         <AlertDialogSolidAction
           variant={variant}
-          colors={{ primary: "#2563eb", destructive: "#ba1a1a" }}
+          colors={{ accent: "#2563eb", danger: "#ba1a1a" }}
           onHoverIn={() => hoverCalls++}
           onPress={() => pressCalls++}
         ><RNW.Text>执行</RNW.Text></AlertDialogSolidAction>
@@ -98,7 +98,7 @@ test("禁用按钮不产生交互色或关闭弹窗", async () => {
   root = createRoot(mount);
   await act(() => root.render(
     <Primitive.Root open onOpenChange={() => closed++}>
-      <AlertDialogSolidAction disabled variant="destructive" colors={{ primary: "#2563eb", destructive: "#ba1a1a" }}>
+      <AlertDialogSolidAction disabled variant="destructive" colors={{ accent: "#2563eb", danger: "#ba1a1a" }}>
         <RNW.Text>删除</RNW.Text>
       </AlertDialogSolidAction>
     </Primitive.Root>,
@@ -120,7 +120,7 @@ test("自定义 style 保持优先级，hover 离开回调仍执行，ref 仍指
   root = createRoot(mount);
   await act(() => root.render(
     <Primitive.Root open>
-      <AlertDialogSolidAction ref={ref} variant="default" colors={{ primary: "#2563eb", destructive: "#ba1a1a" }}
+      <AlertDialogSolidAction ref={ref} variant="default" colors={{ accent: "#2563eb", danger: "#ba1a1a" }}
         onHoverOut={() => hoverOut++} style={({ pressed }) => ({ backgroundColor: pressed ? "black" : "white" })}>
         <RNW.Text>确认</RNW.Text>
       </AlertDialogSolidAction>

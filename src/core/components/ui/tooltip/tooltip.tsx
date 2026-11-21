@@ -109,13 +109,13 @@ function TooltipContent({
             as="Pressable"
           >
             <TextClassContext.Provider
-              value={cn(tooltipSizes[size].text, "text-primary-foreground")}
+              value={cn(tooltipSizes[size].text, "text-accent-foreground")}
             >
               <TooltipPrimitive.Content
                 sideOffset={sideOffset}
                 style={contentStyle as any}
                 className={cn(
-                  cn("bg-primary z-50 rounded-md", tooltipSizes[size].content),
+                  cn("bg-accent z-50 rounded-md", tooltipSizes[size].content),
                   Platform.select({
                     web: cn(
                       "animate-in fade-in-0 zoom-in-95 origin-(--radix-tooltip-content-transform-origin) w-fit text-balance",

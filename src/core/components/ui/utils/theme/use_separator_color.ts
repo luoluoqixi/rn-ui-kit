@@ -1,6 +1,6 @@
 import { useUiTheme } from "./ui_theme";
 
 export function useSeparatorColor(fallback = "#D6D9DE") {
-  const color = useUiTheme().border;
+  const color = useUiTheme().separator;
   return color.length > 0 ? color : fallback;
 }

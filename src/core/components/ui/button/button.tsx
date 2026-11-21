@@ -25,38 +25,38 @@ const buttonVariants = cva(
   cn(
     "group shrink-0 flex-row items-center justify-center gap-2 rounded-md shadow-none",
     Platform.select({
-      web: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive whitespace-nowrap outline-none focus-visible:ring-[3px] [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+      web: "focus-visible:border-focus focus-visible:ring-focus/50 aria-invalid:ring-danger/20 dark:aria-invalid:ring-danger/40 aria-invalid:border-danger whitespace-nowrap outline-none focus-visible:ring-[3px] [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
     }),
   ),
   {
     variants: {
       variant: {
-        default: "bg-primary shadow-sm shadow-black/5",
+        default: "bg-accent shadow-sm shadow-black/5",
         destructive: cn(
-          "bg-destructive shadow-sm shadow-black/5",
+          "bg-danger shadow-sm shadow-black/5",
           Platform.select({
-            web: "focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
+            web: "focus-visible:ring-danger/20 dark:focus-visible:ring-danger/40",
           }),
         ),
         outline: cn(
-          "border-border bg-background active:bg-accent dark:bg-input/30 dark:border-input border shadow-sm shadow-black/5",
+          "border-border bg-background active:bg-accent-soft dark:bg-field-border/30 dark:border-field-border border shadow-sm shadow-black/5",
           Platform.select({
             web: "hover:bg-accent03 disabled:hover:bg-background disabled:active:bg-background",
             // Native 中 dark 背景会覆盖单独的 active，组合状态需明确提高优先级。
-            native: "dark:active:bg-accent",
+            native: "dark:active:bg-accent-soft",
           }),
         ),
         secondary: cn(
-          "bg-secondary active:bg-input shadow-sm shadow-black/5",
-          Platform.select({ web: "hover:bg-input/70" }),
+          "bg-default active:bg-field-border shadow-sm shadow-black/5",
+          Platform.select({ web: "hover:bg-field-border/70" }),
         ),
         ghost: cn(
-          "active:bg-accent",
+          "active:bg-accent-soft",
           Platform.select({ web: "hover:bg-accent03" }),
         ),
         link: Platform.select({ web: "hover:opacity-80" }),
         icon: cn(
-          "bg-transparent active:bg-accent",
+          "bg-transparent active:bg-accent-soft",
           Platform.select({ web: "hover:bg-accent03" }),
         ),
       },
@@ -115,19 +115,19 @@ const buttonTextVariants = cva(
   {
     variants: {
       variant: {
-        default: "text-primary-foreground",
-        destructive: "text-destructive-foreground",
+        default: "text-accent-foreground",
+        destructive: "text-danger-foreground",
         outline: cn(
-          "group-active:text-accent-foreground",
+          "group-active:text-accent-soft-foreground",
           Platform.select({
-            web: "group-hover:text-accent-foreground disabled:group-hover:text-foreground disabled:group-active:text-foreground",
+            web: "group-hover:text-accent-soft-foreground disabled:group-hover:text-foreground disabled:group-active:text-foreground",
           }),
         ),
-        secondary: "text-secondary-foreground",
-        ghost: "group-active:text-accent-foreground",
-        icon: "group-active:text-accent-foreground",
+        secondary: "text-default-foreground",
+        ghost: "group-active:text-accent-soft-foreground",
+        icon: "group-active:text-accent-soft-foreground",
         link: cn(
-          "text-primary underline underline-offset-4 group-active:opacity-70",
+          "text-accent underline underline-offset-4 group-active:opacity-70",
           Platform.select({ web: "group-hover:opacity-80" }),
         ),
       },
@@ -256,11 +256,11 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
         <ButtonNative
           matchContents={nativeMatchContents}
           androidColors={{
-            destructive: theme.destructive,
-            primary: theme.primary,
-            primaryForeground: theme.primaryForeground,
-            secondary: theme.secondary,
-            secondaryForeground: theme.secondaryForeground,
+            destructive: theme.danger,
+            primary: theme.accent,
+            primaryForeground: theme.accentForeground,
+            secondary: theme.default,
+            secondaryForeground: theme.defaultForeground,
           }}
           buttonSize={resolvedButtonSize}
           buttonColor={buttonColor}
@@ -290,11 +290,11 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
         matchContents={nativeMatchContents}
         accessibilityLabel={props["aria-label"]}
         androidColors={{
-          destructive: theme.destructive,
-          primary: theme.primary,
-          primaryForeground: theme.primaryForeground,
-          secondary: theme.secondary,
-          secondaryForeground: theme.secondaryForeground,
+          destructive: theme.danger,
+          primary: theme.accent,
+          primaryForeground: theme.accentForeground,
+          secondary: theme.default,
+          secondaryForeground: theme.defaultForeground,
         }}
         buttonSize={resolvedButtonSize}
         buttonColor={buttonColor}
@@ -355,7 +355,7 @@ const Button = React.forwardRef<React.ComponentRef<typeof Pressable>, ButtonProp
           // Keep the pre-Expo-types runtime contract: custom Button styles only receive `pressed`.
           typeof style === "function" ? style({ pressed } as never) : style,
           variant === "link" && pressed ? { opacity: 0.7 } : null,
-          variant === "secondary" && pressed ? { backgroundColor: theme.input } : null,
+          variant === "secondary" && pressed ? { backgroundColor: theme.fieldBorder } : null,
         ]}
       >
         {loading ? (

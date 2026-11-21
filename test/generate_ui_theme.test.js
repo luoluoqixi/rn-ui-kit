@@ -8,38 +8,13 @@ import {
 import { generateUiThemeFromPrimaryColor } from "../src/core/components/ui/utils/theme/generate_ui_theme";
 
 const semanticColorKeys = [
-  "accent01",
-  "accent02",
-  "accent03",
-  "accent04",
-  "accent05",
-  "accent06",
-  "accent07",
-  "accent08",
-  "accent09",
-  "accent10",
-  "accent11",
-  "accent12",
-  "accent",
-  "accentForeground",
-  "background",
-  "primaryBackground",
-  "border",
-  "card",
-  "cardForeground",
-  "destructive",
-  "destructiveForeground",
-  "foreground",
-  "input",
-  "muted",
-  "mutedForeground",
-  "popover",
-  "popoverForeground",
-  "primary",
-  "primaryForeground",
-  "ring",
-  "secondary",
-  "secondaryForeground",
+  ...Array.from({ length: 12 }, (_, index) => "accent" + String(index + 1).padStart(2, "0")),
+  "background", "foreground", "surface", "surfaceForeground",
+  "surfaceSecondary", "surfaceSecondaryForeground", "surfaceTertiary", "surfaceTertiaryForeground",
+  "overlay", "overlayForeground", "backdrop", "muted", "accent", "accentForeground",
+  "default", "defaultForeground", "success", "successForeground", "warning", "warningForeground",
+  "danger", "dangerForeground", "fieldBackground", "fieldForeground", "fieldPlaceholder", "fieldBorder",
+  "segment", "segmentForeground", "border", "separator", "focus", "link",
 ];
 
 function relativeLuminance(color) {
@@ -67,7 +42,7 @@ describe("generateUiThemeFromPrimaryColor", () => {
     for (const scheme of [theme.light, theme.dark]) {
       expect(Object.keys(scheme).sort()).toEqual([...semanticColorKeys].sort());
       for (const value of Object.values(scheme)) {
-        expect(value).toMatch(/^#[0-9a-f]{6}$/i);
+        expect(value).toMatch(/^#[0-9a-f]{6}(?:[0-9a-f]{2})?$/i);
       }
     }
   });
@@ -84,25 +59,42 @@ describe("generateUiThemeFromPrimaryColor", () => {
     }
   });
 
-  test("uses paired foreground colors with accessible contrast", () => {
-    const theme = generateUiThemeFromPrimaryColor("#facc15");
+  test("keeps text readable on HeroUI surfaces for preset and difficult custom seeds", () => {
+    for (const seed of [...Object.values(accentThemeSeeds), "#facc15", "#00d5e8", "#888888", "#fff", "#000"]) {
+      const theme = generateUiThemeFromPrimaryColor(seed);
+      for (const colors of [theme.light, theme.dark]) {
+        for (const [foreground, background] of [
+          ["foreground", "background"], ["surfaceForeground", "surface"],
+          ["surfaceSecondaryForeground", "surfaceSecondary"], ["surfaceTertiaryForeground", "surfaceTertiary"],
+          ["overlayForeground", "overlay"], ["accentForeground", "accent"],
+          ["defaultForeground", "default"], ["dangerForeground", "danger"],
+          ["successForeground", "success"], ["warningForeground", "warning"],
+          ["fieldForeground", "fieldBackground"], ["fieldPlaceholder", "fieldBackground"],
+          ["muted", "overlay"], ["muted", "surface"], ["muted", "surfaceSecondary"],
+        ]) {
+          expect(contrastRatio(colors[foreground], colors[background])).toBeGreaterThanOrEqual(4.5);
+        }
+      }
+    }
+  });
 
-    for (const scheme of [theme.light, theme.dark]) {
-      expect(contrastRatio(scheme.foreground, scheme.background)).toBeGreaterThanOrEqual(4.5);
-      expect(contrastRatio(scheme.primaryForeground, scheme.primary)).toBeGreaterThanOrEqual(4.5);
-      expect(contrastRatio(scheme.destructiveForeground, scheme.destructive)).toBeGreaterThanOrEqual(4.5);
-      expect(contrastRatio(scheme.accentForeground, scheme.accent)).toBeGreaterThanOrEqual(4.5);
-      expect(contrastRatio(scheme.secondaryForeground, scheme.secondary)).toBeGreaterThanOrEqual(4.5);
-      expect(contrastRatio(scheme.mutedForeground, scheme.muted)).toBeGreaterThanOrEqual(4.5);
+  test("accent changes leave neutral backgrounds independent", () => {
+    const blue = generateUiThemeFromPrimaryColor("#2563eb");
+    const pink = generateUiThemeFromPrimaryColor("#db2777");
+    for (const mode of ["light", "dark"]) {
+      for (const key of ["background", "surface", "surfaceSecondary", "surfaceTertiary", "overlay", "fieldBackground"]) {
+        expect(blue[mode][key]).toBe(pink[mode][key]);
+      }
+      expect(blue[mode].accent).not.toBe(pink[mode].accent);
     }
   });
 
   test("keeps bright light-theme primaries close to the selected color", () => {
     const theme = generateUiThemeFromPrimaryColor("#00d5e8");
 
-    expect(theme.light.primary).toBe("#00d5e8");
-    expect(theme.light.primaryForeground).toBe("#000000");
-    expect(contrastRatio(theme.light.primaryForeground, theme.light.primary)).toBeGreaterThanOrEqual(
+    expect(theme.light.accent).toBe("#00d5e8");
+    expect(theme.light.accentForeground).toBe("#000000");
+    expect(contrastRatio(theme.light.accentForeground, theme.light.accent)).toBeGreaterThanOrEqual(
       4.5,
     );
   });
@@ -141,15 +133,15 @@ describe("主色强调层级", () => {
         const colors = theme[mode];
         const luminances = Array.from({ length: 12 }, (_, i) => {
           const value = colors[`accent${String(i + 1).padStart(2, "0")}`];
-          expect(value).toMatch(/^#[0-9a-f]{6}$/i);
+          expect(value).toMatch(/^#[0-9a-f]{6}(?:[0-9a-f]{2})?$/i);
           return relativeLuminance(value);
         });
         for (let i = 1; i < luminances.length; i++) {
           if (mode === "light") expect(luminances[i]).toBeLessThan(luminances[i - 1]);
           else expect(luminances[i]).toBeGreaterThan(luminances[i - 1]);
         }
-        if (mode === "light") expect(luminances[2]).toBeGreaterThan(relativeLuminance(colors.accent));
-        else expect(luminances[2]).toBeLessThan(relativeLuminance(colors.accent));
+        if (mode === "light") expect(luminances[2]).toBeGreaterThan(relativeLuminance(colors.accent04));
+        else expect(luminances[2]).toBeLessThan(relativeLuminance(colors.accent04));
         expect(contrastRatio(colors.foreground, colors.accent03)).toBeGreaterThanOrEqual(4.5);
       }
     }

@@ -300,10 +300,10 @@ export function NativeListExample() {
             }}
             editMode={editMode}
             editModeIcon={
-              customEditModeIcon ? <Square color={uiTheme.primary} size={24} /> : undefined
+              customEditModeIcon ? <Square color={uiTheme.accent} size={24} /> : undefined
             }
             editModeSelectedIcon={
-              customEditModeIcon ? <SquareCheckBig color={uiTheme.primary} size={24} /> : undefined
+              customEditModeIcon ? <SquareCheckBig color={uiTheme.accent} size={24} /> : undefined
             }
             refreshEnabledInEditMode={false}
             fixesIOS26NestedScrollIndicatorSafeArea

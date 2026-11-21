@@ -45,18 +45,18 @@ export function SplitLayoutExample() {
   return (
     <View style={[styles.splitRoot, { backgroundColor: colors.screen }]}>
       <View style={styles.splitToolbar}>
-        <Button className="border-primary" onPress={toggleSidebar} size="sm" variant="outline">
-          <Text className="text-primary">{sidebarVisible ? "隐藏侧栏" : "显示侧栏"}</Text>
+        <Button className="border-accent" onPress={toggleSidebar} size="sm" variant="outline">
+          <Text className="text-accent">{sidebarVisible ? "隐藏侧栏" : "显示侧栏"}</Text>
         </Button>
         <Button
-          className="border-primary"
+          className="border-accent"
           onPress={() => layoutRef.current?.reset()}
           size="sm"
           variant="outline"
         >
-          <Text className="text-primary">重置尺寸</Text>
+          <Text className="text-accent">重置尺寸</Text>
         </Button>
-        <Text className="text-muted-foreground">拖动中间分隔条调整宽度</Text>
+        <Text className="text-muted">拖动中间分隔条调整宽度</Text>
       </View>
       <View style={styles.splitHost}>
         <SplitLayout
@@ -71,13 +71,13 @@ export function SplitLayoutExample() {
           <SplitLayout.Pane minSize={120} preferredSize={220} snap>
             <View style={[styles.splitPane, { backgroundColor: colors.card }]}>
               <Text className="font-bold">侧栏</Text>
-              <Text className="text-muted-foreground">Pane 1</Text>
+              <Text className="text-muted">Pane 1</Text>
             </View>
           </SplitLayout.Pane>
           <SplitLayout.Pane minSize={180}>
             <View style={[styles.splitPane, { backgroundColor: colors.screen }]}>
               <Text variant="h3">主内容</Text>
-              <Text className="text-muted-foreground">
+              <Text className="text-muted">
                 此示例没有传 storageKey 或 storageAdapter，不会持久化。
               </Text>
             </View>

@@ -14,26 +14,26 @@ const badgeVariants = cva(
   cn(
     "border-border group shrink-0 flex-row items-center justify-center overflow-hidden rounded-full border",
     Platform.select({
-      web: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive w-fit whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] [&>svg]:pointer-events-none [&>svg]:size-3",
+      web: "focus-visible:border-focus focus-visible:ring-focus/50 aria-invalid:ring-danger/20 dark:aria-invalid:ring-danger/40 aria-invalid:border-danger w-fit whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] [&>svg]:pointer-events-none [&>svg]:size-3",
     }),
   ),
   {
     variants: {
       variant: {
         default: cn(
-          "bg-primary border-transparent",
-          Platform.select({ web: "[a&]:hover:bg-primary/90" }),
+          "bg-accent border-transparent",
+          Platform.select({ web: "[a&]:hover:bg-accent/90" }),
         ),
         secondary: cn(
-          "bg-secondary border-transparent",
-          Platform.select({ web: "[a&]:hover:bg-secondary/90" }),
+          "bg-default border-transparent",
+          Platform.select({ web: "[a&]:hover:bg-default/90" }),
         ),
         destructive: cn(
-          "bg-destructive border-transparent",
-          Platform.select({ web: "[a&]:hover:bg-destructive/90" }),
+          "bg-danger border-transparent",
+          Platform.select({ web: "[a&]:hover:bg-danger/90" }),
         ),
         outline: Platform.select({
-          web: "[a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
+          web: "[a&]:hover:bg-accent-soft [a&]:hover:text-accent-soft-foreground",
         }),
       },
       size: {
@@ -57,8 +57,8 @@ const badgeVariants = cva(
 const badgeTextVariants = cva("font-medium", {
   variants: {
     variant: {
-      default: "text-primary-foreground",
-      secondary: "text-secondary-foreground",
+      default: "text-accent-foreground",
+      secondary: "text-default-foreground",
       destructive: "text-white",
       outline: "text-foreground",
     },

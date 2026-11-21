@@ -20,7 +20,6 @@ const PREFERENCES_STORAGE_KEY = "rn-ui-kit_example.preferences.v1";
 const defaultPreferences = {
   appearance: {
     accentColor: "ocean",
-    backgroundFollowsTheme: false,
     themeMode: "system",
   },
 } satisfies UiPreferences;
@@ -51,15 +50,10 @@ function parseStoredPreferences(value: string | null): UiPreferences | null {
       appearance.themeMode === "system"
         ? appearance.themeMode
         : defaultPreferences.appearance.themeMode;
-    const backgroundFollowsTheme =
-      typeof appearance.backgroundFollowsTheme === "boolean"
-        ? appearance.backgroundFollowsTheme
-        : defaultPreferences.appearance.backgroundFollowsTheme;
 
     return {
       appearance: {
         accentColor,
-        backgroundFollowsTheme,
         themeMode,
       },
     };

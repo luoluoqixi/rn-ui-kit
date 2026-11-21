@@ -15,7 +15,7 @@ const compiled = transformFileSync(require.resolve("react-native/Libraries/Style
 const nativeModule = { exports: {} };
 new Function("module", "exports", "require", compiled.code)(nativeModule, nativeModule.exports, require);
 const flattenStyle = nativeModule.exports.default;
-const colors = { primary: "#2563eb", destructive: "#ba1a1a" };
+const colors = { accent: "#2563eb", danger: "#ba1a1a" };
 
 function resolveInteractionStyle(variant, pressed, disabled = false, theme = colors) {
   let style;
@@ -29,7 +29,7 @@ function resolveInteractionStyle(variant, pressed, disabled = false, theme = col
 }
 
 test("Native 空闲和禁用按钮保留 className 生成的背景", () => {
-  for (const [variant, backgroundColor] of [[undefined, colors.primary], ["default", colors.primary], ["destructive", colors.destructive], ["secondary", "#eeeeee"]]) {
+  for (const [variant, backgroundColor] of [[undefined, colors.accent], ["default", colors.accent], ["destructive", colors.danger], ["secondary", "#eeeeee"]]) {
     for (const [pressed, disabled] of [[false, false], [false, true], [true, true]]) {
       const interaction = resolveInteractionStyle(variant, pressed, disabled);
       expect(flattenStyle([{ backgroundColor }, interaction]).backgroundColor).toBe(backgroundColor);
@@ -38,11 +38,11 @@ test("Native 空闲和禁用按钮保留 className 生成的背景", () => {
 });
 
 test("Native 按下只覆盖实色按钮，其他 variant 和动态颜色保留底色", () => {
-  expect(flattenStyle([{ backgroundColor: colors.primary }, resolveInteractionStyle("default", true)]).backgroundColor).toBe("#3f76ed");
-  expect(flattenStyle([{ backgroundColor: colors.destructive }, resolveInteractionStyle("destructive", true)]).backgroundColor).toBe("#c23535");
+  expect(flattenStyle([{ backgroundColor: colors.accent }, resolveInteractionStyle("default", true)]).backgroundColor).toBe("#3f76ed");
+  expect(flattenStyle([{ backgroundColor: colors.danger }, resolveInteractionStyle("destructive", true)]).backgroundColor).toBe("#c23535");
   for (const variant of ["outline", "secondary", "ghost", "icon", "link"]) {
     expect(flattenStyle([{ backgroundColor: "#eeeeee" }, resolveInteractionStyle(variant, true)]).backgroundColor).toBe("#eeeeee");
   }
-  const dynamic = { primary: "var(--primary)", destructive: "#ba1a1a" };
+  const dynamic = { accent: "var(--accent)", danger: "#ba1a1a" };
   expect(flattenStyle([{ backgroundColor: "#2563eb" }, resolveInteractionStyle("default", true, false, dynamic)]).backgroundColor).toBe("#2563eb");
 });

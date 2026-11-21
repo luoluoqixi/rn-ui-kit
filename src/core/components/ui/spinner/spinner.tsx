@@ -49,7 +49,7 @@ function WebSpinner({
         className={animating ? "animate-spin will-change-transform" : undefined}
         style={{ width: iconSize, height: iconSize }}
       >
-        <Loader2 color={color == null ? theme.primary : String(color)} size={iconSize} />
+        <Loader2 color={color == null ? theme.accent : String(color)} size={iconSize} />
       </View>
     </View>
   );
@@ -89,7 +89,7 @@ function NativeSpinner({
 
   return (
     <Animated.View {...(props as ComponentProps<typeof View>)} style={[style, animatedStyle]}>
-      <Loader2 color={color == null ? theme.primary : String(color)} size={iconSize} />
+      <Loader2 color={color == null ? theme.accent : String(color)} size={iconSize} />
     </Animated.View>
   );
 }

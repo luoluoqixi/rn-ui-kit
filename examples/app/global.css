@@ -1,6 +1,6 @@
 @import "tailwindcss";
-@import "../../src/styles.css";
 @import "@heroui/styles";
+@import "../../src/styles.css";
 
 /* Match Uniwind's root class without importing its Native-generated CSS. */
 @custom-variant light (&:where(.light, .light *));

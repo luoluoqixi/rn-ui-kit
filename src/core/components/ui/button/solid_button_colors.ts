@@ -2,7 +2,7 @@ import { mixInteractionColor } from "../utils/color/interaction_colors";
 import type { SemanticColors } from "../utils/theme/ui_theme";
 
 type SolidButtonColors = Pick<SemanticColors,
-  "primary" | "destructive"
+  "accent" | "danger"
 >;
 
 export function getSolidButtonInteractionColor(
@@ -13,10 +13,10 @@ export function getSolidButtonInteractionColor(
   if (state.disabled || (!state.pressed && !state.hovered)) return undefined;
   const amount = state.pressed ? 0.12 : 0.06;
   if (variant == null || variant === "default") {
-    return mixInteractionColor(colors.primary, amount);
+    return mixInteractionColor(colors.accent, amount);
   }
   if (variant === "destructive") {
-    return mixInteractionColor(colors.destructive, amount);
+    return mixInteractionColor(colors.danger, amount);
   }
   return undefined;
 }

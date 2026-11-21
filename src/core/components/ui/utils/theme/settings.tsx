@@ -1,22 +1,22 @@
 import { type ReactNode, createContext, useContext, useMemo } from "react";
 import { type ColorSchemeName, useColorScheme } from "react-native";
 
+import type { AccentThemeNames } from "./accent_theme";
+
+export {
+  defaultUiPreferences,
+  resolveUiPreferences,
+  type ResolvedColorScheme,
+  type ColorSchemeSetting,
+  type UiPreferences,
+} from "./preferences";
 import {
-  defaultAccentThemeName,
-  type AccentThemeName,
-  type AccentThemeNames,
-} from "./accent_theme";
-
-export type ResolvedColorScheme = "light" | "dark";
-export type ColorSchemeSetting = ResolvedColorScheme | "system";
-
-export type UiPreferences = {
-  appearance: {
-    accentColor: AccentThemeName;
-    backgroundFollowsTheme: boolean;
-    themeMode: ColorSchemeSetting;
-  };
-};
+  defaultUiPreferences,
+  resolveUiPreferences,
+  type ResolvedColorScheme,
+  type ColorSchemeSetting,
+  type UiPreferences,
+} from "./preferences";
 
 export type UiPreferencesContextValue = {
   accentThemeNames: AccentThemeNames;
@@ -39,28 +39,7 @@ export type UiPreferencesProviderProps = {
   preferences?: Partial<UiPreferences>;
 };
 
-export const defaultUiPreferences: UiPreferences = {
-  appearance: {
-    accentColor: defaultAccentThemeName,
-    backgroundFollowsTheme: false,
-    themeMode: "system",
-  },
-};
-
 const noopAsync = async () => undefined;
-
-export function resolveUiPreferences(
-  preferences: Partial<UiPreferences> | undefined,
-): UiPreferences {
-  return {
-    ...defaultUiPreferences,
-    ...preferences,
-    appearance: {
-      ...defaultUiPreferences.appearance,
-      ...preferences?.appearance,
-    },
-  };
-}
 
 const UiPreferencesContext = createContext<UiPreferencesContextValue>({
   accentThemeNames: [],

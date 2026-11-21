@@ -7,13 +7,10 @@ export type AppBackgroundLevel = "screen" | "sheet" | "card" | "header";
 export type AppBackgroundColors = Record<AppBackgroundLevel, string>;
 export type AppBackgroundColorsByScheme = Record<ResolvedColorScheme, AppBackgroundColors>;
 
-/** 分别配置 backgroundFollowsTheme=true 和 false 时使用的应用背景。 */
-export type AppBackgroundColorsConfig = {
-  /** backgroundFollowsTheme=false 时的覆盖色；未配置时使用标准默认色。 */
-  false?: AppBackgroundColorsByScheme;
-  /** backgroundFollowsTheme=true 时的覆盖色；未配置时使用当前 UI 主题色。 */
-  true?: AppBackgroundColorsByScheme;
-};
+/** Container-owned background overrides, independent of the accent preference. */
+export type AppBackgroundColorsConfig = Partial<
+  Record<ResolvedColorScheme, Partial<AppBackgroundColors>>
+>;
 
 export const STANDARD_IOS_BACKGROUND_COLORS: AppBackgroundColorsByScheme = {
   light: {
@@ -52,4 +49,11 @@ export function getStandardAppBackgroundColors(
   colorScheme: ResolvedColorScheme,
 ): AppBackgroundColors {
   return STANDARD_IOS_BACKGROUND_COLORS[colorScheme];
+}
+
+export function resolveAppBackgroundColors(
+  colorScheme: ResolvedColorScheme,
+  configured?: AppBackgroundColorsConfig | null,
+): AppBackgroundColors {
+  return { ...getStandardAppBackgroundColors(colorScheme), ...configured?.[colorScheme] };
 }

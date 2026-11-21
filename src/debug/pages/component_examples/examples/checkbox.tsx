@@ -52,9 +52,9 @@ export function CheckboxExample() {
           labelPosition="right"
           card
           id="checkbox-notifications-card"
-          checkedClassName="border-primary bg-primary"
-          indicatorClassName="bg-primary"
-          iconClassName="text-primary-foreground"
+          checkedClassName="border-accent bg-accent"
+          indicatorClassName="bg-accent"
+          iconClassName="text-accent-foreground"
         />
         <Checkbox
           checked={values.notifications2}
@@ -64,9 +64,9 @@ export function CheckboxExample() {
           labelPosition="left"
           card
           id="checkbox-notifications-card2"
-          checkedClassName="border-primary bg-primary"
-          indicatorClassName="bg-primary"
-          iconClassName="text-primary-foreground"
+          checkedClassName="border-accent bg-accent"
+          indicatorClassName="bg-accent"
+          iconClassName="text-accent-foreground"
         />
       </ExampleBlock>
       <ExampleBlock title="大小示例">

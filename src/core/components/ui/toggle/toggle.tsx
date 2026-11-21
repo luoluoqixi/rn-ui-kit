@@ -12,9 +12,9 @@ import type { ToggleProps, ToggleSize } from "./types";
 
 const toggleVariants = cva(
   cn(
-    "group aria-[checked=false]:active:bg-accent aria-[pressed=false]:active:bg-accent data-[state=off]:active:bg-accent flex flex-row items-center justify-center gap-2 rounded-md",
+    "group aria-[checked=false]:active:bg-accent-soft aria-[pressed=false]:active:bg-accent-soft data-[state=off]:active:bg-accent-soft flex flex-row items-center justify-center gap-2 rounded-md",
     Platform.select({
-      web: "aria-[checked=false]:hover:bg-accent03 aria-[pressed=false]:hover:bg-accent03 data-[state=off]:hover:bg-accent03 focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive inline-flex cursor-default whitespace-nowrap outline-none transition-[color,box-shadow] focus-visible:ring-[3px] disabled:pointer-events-none [&_svg]:pointer-events-none",
+      web: "aria-[checked=false]:hover:bg-accent03 aria-[pressed=false]:hover:bg-accent03 data-[state=off]:hover:bg-accent03 focus-visible:border-focus focus-visible:ring-focus/50 aria-invalid:ring-danger/20 dark:aria-invalid:ring-danger/40 aria-invalid:border-danger inline-flex cursor-default whitespace-nowrap outline-none transition-[color,box-shadow] focus-visible:ring-[3px] disabled:pointer-events-none [&_svg]:pointer-events-none",
     }),
   ),
   {
@@ -22,7 +22,7 @@ const toggleVariants = cva(
       variant: {
         default: "bg-transparent",
         outline: cn(
-          "border-input border bg-transparent shadow-sm shadow-black/5",
+          "border-field-border border bg-transparent shadow-sm shadow-black/5",
           Platform.select({
             web: "aria-[checked=false]:hover:bg-accent03 aria-[pressed=false]:hover:bg-accent03 data-[state=off]:hover:bg-accent03",
           }),
@@ -100,7 +100,7 @@ function Toggle({
       : props.style;
   const interactionStyle = StyleSheet.flatten([
     resolvedStyle,
-    isPressed && !props.pressed && !props.disabled ? { backgroundColor: theme.accent } : undefined,
+    isPressed && !props.pressed && !props.disabled ? { backgroundColor: theme.accent04 } : undefined,
   ]);
   const resolvedChildren =
     resolveRenderProp(title, {
@@ -110,7 +110,7 @@ function Toggle({
 
   return (
     <TextClassContext.Provider
-      value={cn(toggleTextVariants({ size }), props.pressed && "text-accent-foreground", className)}
+      value={cn(toggleTextVariants({ size }), props.pressed && "text-accent-soft-foreground", className)}
     >
       <ToggleSizeContext.Provider value={size ?? "default"}>
         <TogglePrimitive.Root
@@ -118,7 +118,7 @@ function Toggle({
           className={cn(
             toggleVariants({ variant, size }),
             props.disabled && "opacity-50",
-            props.pressed && "bg-accent",
+            props.pressed && "bg-accent-soft",
             className,
           )}
           style={interactionStyle}

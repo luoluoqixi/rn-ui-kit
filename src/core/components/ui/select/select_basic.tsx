@@ -104,7 +104,7 @@ function SelectValue({ className, ...props }: SelectValueProps) {
       {...props}
       className={cn(
         "text-foreground line-clamp-1 flex-row items-center gap-2 text-sm",
-        !value && "text-muted-foreground",
+        !value && "text-muted",
         className,
       )}
       placeholder=""
@@ -128,9 +128,9 @@ function SelectTrigger({
   return (
     <SelectPrimitive.Trigger
       className={cn(
-        "border-input bg-background flex h-11 flex-row items-center justify-between gap-2 rounded-md border px-5 py-2.5 shadow-sm shadow-black/5",
+        "border-field-border bg-background flex h-11 flex-row items-center justify-between gap-2 rounded-md border px-5 py-2.5 shadow-sm shadow-black/5",
         Platform.select({
-          web: "focus-visible:border-ring focus-visible:ring-ring/50 w-fit whitespace-nowrap text-sm outline-none transition-[color,box-shadow] focus-visible:ring-[3px] disabled:cursor-not-allowed hover:bg-muted",
+          web: "focus-visible:border-focus focus-visible:ring-focus/50 w-fit whitespace-nowrap text-sm outline-none transition-[color,box-shadow] focus-visible:ring-[3px] disabled:cursor-not-allowed hover:bg-surface-secondary",
         }),
         size === "sm" && "h-8 py-1.5",
         props.disabled && "opacity-50",
@@ -160,7 +160,7 @@ function SelectTrigger({
       <Icon
         as={ChevronDown}
         aria-hidden
-        className="text-muted-foreground size-4 shrink-0"
+        className="text-muted size-4 shrink-0"
       />
     </SelectPrimitive.Trigger>
   );
@@ -254,12 +254,12 @@ function SelectContent({
           >
             <SelectContentSizeContext.Provider value={size}>
               <TextClassContext.Provider
-                value={cn("text-popover-foreground", menuTextSizeClasses[size])}
+                value={cn("text-overlay-foreground", menuTextSizeClasses[size])}
               >
                 <SelectPrimitive.Content
                   {...props}
                   className={cn(
-                    "bg-popover border-border relative z-50 min-w-[8rem] rounded-md border shadow-md shadow-black/5",
+                    "bg-overlay border-border relative z-50 min-w-[8rem] rounded-md border shadow-md shadow-black/5",
                     Platform.select({
                       web: cn(
                         "animate-in fade-in-0 zoom-in-95 max-h-[45vh] overflow-x-hidden",
@@ -355,7 +355,7 @@ function SelectLabel({ className, ...props }: SelectLabelProps) {
   return (
     <SelectPrimitive.Label
       className={cn(
-        "text-muted-foreground px-2",
+        "text-muted px-2",
         menuTextSizeClasses[size],
         menuItemPaddingClasses[size],
         className,
@@ -405,11 +405,11 @@ function SelectItem({
       label={label}
       className={cn(
         cn(
-          "active:bg-accent group relative flex w-full flex-row items-center gap-2 rounded-sm pl-2 pr-8",
+          "active:bg-accent-soft group relative flex w-full flex-row items-center gap-2 rounded-sm pl-2 pr-8",
           menuItemPaddingClasses[size],
         ),
         Platform.select({
-          web: "focus:bg-accent focus:text-accent-foreground cursor-default outline-none data-[disabled]:pointer-events-none",
+          web: "focus:bg-accent-soft focus:text-accent-soft-foreground cursor-default outline-none data-[disabled]:pointer-events-none",
         }),
         props.disabled && "opacity-50",
         className,
@@ -420,7 +420,7 @@ function SelectItem({
           <Icon
             as={Check}
             className={cn(
-              "text-muted-foreground shrink-0",
+              "text-muted shrink-0",
               menuIconSizeClasses[size],
             )}
           />
@@ -433,7 +433,7 @@ function SelectItem({
           {...itemTextProps}
           className={cn(
             cn(
-              "text-foreground select-none group-active:text-accent-foreground",
+              "text-foreground select-none group-active:text-accent-soft-foreground",
               menuTextSizeClasses[size],
             ),
             customLabel && "hidden",
@@ -443,7 +443,7 @@ function SelectItem({
         {description != null
           ? normalizeText(
               description,
-              cn("text-muted-foreground", menuTextSizeClasses[size]),
+              cn("text-muted", menuTextSizeClasses[size]),
             )
           : null}
       </View>

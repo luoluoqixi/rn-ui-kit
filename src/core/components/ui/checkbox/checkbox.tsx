@@ -106,10 +106,10 @@ function Checkbox({
       : props.style;
   const pressedRootStyle =
     isPressed && !resolvedChecked && !props.disabled
-      ? { backgroundColor: theme.accent }
+      ? { backgroundColor: theme.accent04 }
       : undefined;
   const rootStyle = StyleSheet.flatten([resolvedRootStyle, pressedRootStyle]);
-  const pressedCheckedBackground = withAlpha(theme.primary, 0.85);
+  const pressedCheckedBackground = withAlpha(theme.accent, 0.85);
   const indicatorStyle = StyleSheet.flatten([
     indicatorProps?.style,
     isPressed && resolvedChecked && !props.disabled
@@ -147,7 +147,7 @@ function Checkbox({
     );
     const descriptionContent = normalizeCheckboxChildren(
       renderedDescription,
-      cn("text-muted-foreground text-sm", descriptionClassName),
+      cn("text-muted text-sm", descriptionClassName),
     );
 
     return (
@@ -161,19 +161,19 @@ function Checkbox({
               : "items-center self-start",
           labelPosition === "left" && "flex-row-reverse",
           card && "rounded-lg border border-border p-3",
-          card && resolvedChecked === true && "border-primary bg-primary/10",
+          card && resolvedChecked === true && "border-accent bg-accent/10",
           card &&
             resolvedChecked === true &&
             !props.disabled &&
             Platform.select({
-              web: "hover:bg-primary/15 active:bg-primary/15",
-              native: "active:bg-primary/15",
+              web: "hover:bg-accent/15 active:bg-accent/15",
+              native: "active:bg-accent/15",
             }),
           card &&
             resolvedChecked !== true &&
             !props.disabled &&
             Platform.select({
-              web: "hover:bg-accent/50 active:bg-accent/50",
+              web: "hover:bg-accent-soft/50 active:bg-accent-soft/50",
             }),
           props.disabled && "opacity-50",
           containerClassName,
@@ -206,14 +206,14 @@ function Checkbox({
           {...props}
           checked={resolvedChecked}
           className={cn(
-            "group border-input dark:bg-input/30 shrink-0 rounded-[4px] border shadow-sm shadow-black/5",
+            "group border-field-border dark:bg-field-border/30 shrink-0 rounded-[4px] border shadow-sm shadow-black/5",
             checkboxSizeClasses[size],
             Platform.select({
-              web: !resolvedChecked && "group-hover:bg-accent/50 group-active:bg-accent/50",
+              web: !resolvedChecked && "group-hover:bg-accent-soft/50 group-active:bg-accent-soft/50",
               native: "overflow-hidden",
             }),
             renderedDescription != null && !card && "mt-0.5",
-            resolvedChecked === true && cn("border-primary", checkedClassName),
+            resolvedChecked === true && cn("border-accent", checkedClassName),
             props.disabled && "opacity-50",
             className,
           )}
@@ -225,10 +225,10 @@ function Checkbox({
           <CheckboxPrimitive.Indicator
             {...indicatorProps}
             className={cn(
-              "bg-primary h-full w-full items-center justify-center",
+              "bg-accent h-full w-full items-center justify-center",
               resolvedChecked &&
                 Platform.select({
-                  web: "group-hover:bg-primary/85 group-active:bg-primary/85",
+                  web: "group-hover:bg-accent/85 group-active:bg-accent/85",
                 }),
               indicatorClassName,
               indicatorProps?.className,
@@ -241,7 +241,7 @@ function Checkbox({
               size={iconProps?.size ?? checkboxIconSizes[size]}
               strokeWidth={iconProps?.strokeWidth ?? (Platform.OS === "web" ? 2.5 : 3.5)}
               color={iconProps?.color}
-              className={cn("text-primary-foreground", iconClassName, iconProps?.className)}
+              className={cn("text-accent-foreground", iconClassName, iconProps?.className)}
             />
           </CheckboxPrimitive.Indicator>
         </CheckboxPrimitive.Root>
@@ -256,18 +256,18 @@ function Checkbox({
   return (
     <CheckboxPrimitive.Root
       className={cn(
-        "group border-input dark:bg-input/30 shrink-0 rounded-[4px] border shadow-sm shadow-black/5",
+        "group border-field-border dark:bg-field-border/30 shrink-0 rounded-[4px] border shadow-sm shadow-black/5",
         checkboxSizeClasses[size],
         Platform.select({
-          web: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive peer cursor-default outline-none transition-shadow focus-visible:ring-[3px] disabled:cursor-not-allowed",
+          web: "focus-visible:border-focus focus-visible:ring-focus/50 aria-invalid:ring-danger/20 dark:aria-invalid:ring-danger/40 aria-invalid:border-danger peer cursor-default outline-none transition-shadow focus-visible:ring-[3px] disabled:cursor-not-allowed",
           native: "overflow-hidden",
         }),
         !resolvedChecked &&
           Platform.select({
-            native: "active:bg-accent/50",
-            web: "hover:bg-accent/50 active:bg-accent/50",
+            native: "active:bg-accent-soft/50",
+            web: "hover:bg-accent-soft/50 active:bg-accent-soft/50",
           }),
-        resolvedChecked && cn("border-primary", checkedClassName),
+        resolvedChecked && cn("border-accent", checkedClassName),
         props.disabled && "opacity-50",
         className,
       )}
@@ -303,10 +303,10 @@ function Checkbox({
       <CheckboxPrimitive.Indicator
         {...indicatorProps}
         className={cn(
-          "bg-primary h-full w-full items-center justify-center",
+          "bg-accent h-full w-full items-center justify-center",
           resolvedChecked &&
             Platform.select({
-              web: "group-hover:bg-primary/85 group-active:bg-primary/85",
+              web: "group-hover:bg-accent/85 group-active:bg-accent/85",
             }),
           indicatorClassName,
           indicatorProps?.className,
@@ -319,7 +319,7 @@ function Checkbox({
           size={iconProps?.size ?? checkboxIconSizes[size]}
           strokeWidth={iconProps?.strokeWidth ?? (Platform.OS === "web" ? 2.5 : 3.5)}
           color={iconProps?.color}
-          className={cn("text-primary-foreground", iconClassName, iconProps?.className)}
+          className={cn("text-accent-foreground", iconClassName, iconProps?.className)}
         />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>

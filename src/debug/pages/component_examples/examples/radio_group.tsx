@@ -24,7 +24,7 @@ export function RadioGroupExample() {
           onValueChange={onValueChange}
           value={value}
         />
-        <Text className="text-muted-foreground">当前排序：{value}</Text>
+        <Text className="text-muted">当前排序：{value}</Text>
       </ExampleBlock>
       <ExampleBlock title="大小">
         <RadioGroup

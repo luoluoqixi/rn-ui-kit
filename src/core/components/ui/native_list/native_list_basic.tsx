@@ -111,7 +111,7 @@ function resolveBasicDividerColor(color: string) {
 function useBasicDividerColor() {
   const theme = useUiTheme();
   const configuredColor = React.useContext(NativeListBasicDividerColorContext);
-  return configuredColor ?? resolveBasicDividerColor(theme.mutedForeground);
+  return configuredColor ?? resolveBasicDividerColor(theme.muted);
 }
 
 function BasicRowDivider() {
@@ -327,13 +327,13 @@ export function NativeListRow({
         {
           alignSelf: "stretch",
           backgroundColor: edit.editingSelected
-            ? theme.accent
+            ? theme.accent04
             : (pressed || (!edit.editMode && navigationSelected)) &&
                 edit.onPress != null && !suppressPressBackground
-              ? (pressBackgroundColor ?? theme.accent)
+              ? (pressBackgroundColor ?? theme.accent04)
               : hovered && edit.onPress != null && !disabled
                 ? (hoverBackgroundColor ?? theme.accent03)
-                : (backgroundColor ?? defaultRowBackgroundColor ?? theme.card),
+                : (backgroundColor ?? defaultRowBackgroundColor ?? theme.surface),
           opacity:
             disabled && resolvedDisabledStyle
               ? NATIVE_LIST_DISABLED_OPACITY
@@ -353,8 +353,8 @@ export function NativeListRow({
       <View pointerEvents={edit.editMode ? "none" : "auto"} style={styles.rowContent}>
         {edit.editMode && edit.selectionEnabled
           ? edit.editingSelected
-            ? (editIcons.editModeSelectedIcon ?? <CheckCircle2 color={theme.primary} size={20} />)
-            : (editIcons.editModeIcon ?? <Circle color={theme.mutedForeground} size={20} />)
+            ? (editIcons.editModeSelectedIcon ?? <CheckCircle2 color={theme.accent} size={20} />)
+            : (editIcons.editModeIcon ?? <Circle color={theme.muted} size={20} />)
           : null}
         {icon == null ? null : <View style={styles.icon}>{icon}</View>}
         <View style={styles.labels}>
@@ -367,7 +367,7 @@ export function NativeListRow({
             {title}
           </RowText>
           <RowText
-            color={subtitleColor ?? theme.mutedForeground}
+            color={subtitleColor ?? theme.muted}
             fontSize={subtitleFontSize ?? 13}
             numberOfLines={3}
           >
@@ -376,7 +376,7 @@ export function NativeListRow({
           {normalizeRowTextChildren(children)}
         </View>
         <RowText
-          color={valueColor ?? theme.mutedForeground}
+          color={valueColor ?? theme.muted}
           fontSize={valueFontSize ?? 15}
           numberOfLines={1}
           style={{ opacity: valueOpacity }}
@@ -384,10 +384,10 @@ export function NativeListRow({
           {value}
         </RowText>
         {!edit.editMode && selected ? (
-          <Check color={theme.primary} size={18} strokeWidth={2.5} />
+          <Check color={theme.accent} size={18} strokeWidth={2.5} />
         ) : null}
         {normalizeRowTextChildren(trailing)}
-        {chevron ? <ChevronRight color={theme.mutedForeground} size={18} /> : null}
+        {chevron ? <ChevronRight color={theme.muted} size={18} /> : null}
       </View>
       <BasicRowDivider />
     </Pressable>
@@ -875,12 +875,12 @@ export function NativeListCustomItem({
         {
           alignSelf: "stretch",
           backgroundColor: edit.editingSelected
-            ? theme.accent
+            ? theme.accent04
             : pressed
-              ? (pressBackgroundColor ?? theme.accent)
+              ? (pressBackgroundColor ?? theme.accent04)
               : hovered && !disabled
                 ? (hoverBackgroundColor ?? theme.accent03)
-                : (backgroundColor ?? defaultRowBackgroundColor ?? theme.card),
+                : (backgroundColor ?? defaultRowBackgroundColor ?? theme.surface),
           opacity: disabled && resolvedDisabledStyle ? NATIVE_LIST_DISABLED_OPACITY : 1,
           width: "100%",
           position: "relative",
@@ -894,8 +894,8 @@ export function NativeListCustomItem({
       <View pointerEvents={edit.editMode ? "none" : "auto"} style={styles.customRowContent}>
         {edit.editMode && edit.selectionEnabled
           ? edit.editingSelected
-            ? (editIcons.editModeSelectedIcon ?? <CheckCircle2 color={theme.primary} size={20} />)
-            : (editIcons.editModeIcon ?? <Circle color={theme.mutedForeground} size={20} />)
+            ? (editIcons.editModeSelectedIcon ?? <CheckCircle2 color={theme.accent} size={20} />)
+            : (editIcons.editModeIcon ?? <Circle color={theme.muted} size={20} />)
           : null}
         {normalizeRowTextChildren(children)}
       </View>
@@ -1179,7 +1179,7 @@ export function NativeListRoot({
           basicRefreshControl
         ) : (
           <RefreshControl
-            colors={[refreshColor ?? theme.primary]}
+            colors={[refreshColor ?? theme.accent]}
             enabled={!editMode}
             onRefresh={() => {
               setRefreshing(true);
@@ -1187,7 +1187,7 @@ export function NativeListRoot({
             }}
             progressBackgroundColor={backgrounds.screen}
             refreshing={refreshing}
-            tintColor={refreshColor ?? theme.primary}
+            tintColor={refreshColor ?? theme.accent}
           />
         )
       }

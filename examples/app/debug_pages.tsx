@@ -137,18 +137,6 @@ function createThemeDebugPage(
               }}
               title="主题模式"
             />
-            <NativeListSwitchItem
-              switchProps={{
-                checked: preferences.appearance.backgroundFollowsTheme,
-                onCheckedChange: (value) => {
-                  updatePreferences((current) => ({
-                    ...current,
-                    appearance: { ...current.appearance, backgroundFollowsTheme: value },
-                  }));
-                },
-              }}
-              title="背景跟随主题"
-            />
           </NativeListSection>
           {layoutHost !== "nativeSheet" ? (
             <NativeListSection title="调试导航">
@@ -185,7 +173,7 @@ export function createAppDebugPages(
         usesHostNavigation,
         setUsesHostNavigation,
       ),
-      description: "切换示例应用的主题色、模式和背景行为。",
+      description: "切换示例应用的主题色与明暗模式。",
       key: "app-theme",
       label: "主题切换",
       presentation: "scroll",

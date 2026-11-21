@@ -91,7 +91,7 @@ export const SelectDropdown = React.forwardRef<SelectHandle, SelectProps>(
         }}
         nativeTriggerFeedbackOpacity={props.nativeTriggerFeedbackOpacity}
         nativeTriggerHoverBackground={props.nativeTriggerHoverBackground}
-        nativeSelectedItemBackgroundColor={theme.accent}
+        nativeSelectedItemBackgroundColor={theme.accent04}
         onOpenChange={props.onOpenChange}
         onOpenWillChange={props.onOpenWillChange}
         triggerClassName={props.className}

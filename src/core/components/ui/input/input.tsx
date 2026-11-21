@@ -28,7 +28,7 @@ function Input({
   void placeholderClassName;
   const baseClassName = unstyled
     ? "text-foreground min-w-0 flex-row items-center outline-none"
-    : "dark:bg-input/30 border-input bg-background text-foreground flex w-full min-w-0 flex-row items-center rounded-md border shadow-sm shadow-black/5";
+    : "dark:bg-field-border/30 border-field-border bg-background text-foreground flex w-full min-w-0 flex-row items-center rounded-md border shadow-sm shadow-black/5";
   return (
     <TextInput
       {...props}
@@ -49,13 +49,13 @@ function Input({
           ),
         Platform.select({
           web: cn(
-            "selection:bg-primary selection:text-primary-foreground outline-none transition-[color,box-shadow]",
+            "selection:bg-accent selection:text-accent-foreground outline-none transition-[color,box-shadow]",
             !unstyled &&
-              "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+              "focus-visible:border-focus focus-visible:ring-focus/50 focus-visible:ring-[3px]",
             !unstyled &&
-              "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+              "aria-invalid:ring-danger/20 dark:aria-invalid:ring-danger/40 aria-invalid:border-danger",
           ),
-          native: "placeholder:text-muted-foreground/50",
+          native: "placeholder:text-muted/50",
         }),
         className,
       )}

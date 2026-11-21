@@ -150,7 +150,7 @@ function RadioGroupItem({
       ? props.style({ hovered: isHovered, pressed: isPressed })
       : props.style;
   const pressedItemStyle =
-    isPressed && !checked && !resolvedDisabled ? { backgroundColor: theme.accent } : undefined;
+    isPressed && !checked && !resolvedDisabled ? { backgroundColor: theme.accent04 } : undefined;
   const itemStyle = StyleSheet.flatten([resolvedItemStyle, pressedItemStyle]);
   const renderContext: RadioGroupItemRenderContext = {
     checked: checked === true,
@@ -218,14 +218,14 @@ function RadioGroupItem({
           {...props}
           aria-label={props["aria-label"]}
           className={cn(
-            "border-input dark:bg-input/30 aspect-square shrink-0 items-center justify-center rounded-full border shadow-sm shadow-black/5",
+            "border-field-border dark:bg-field-border/30 aspect-square shrink-0 items-center justify-center rounded-full border shadow-sm shadow-black/5",
             sizeStyles.indicator,
             Platform.select({
-              web: !checked && "group-hover:bg-accent/50 group-active:bg-accent/50",
+              web: !checked && "group-hover:bg-accent-soft/50 group-active:bg-accent-soft/50",
               native: "overflow-hidden",
             }),
             renderedDescription != null && "mt-0.5",
-            checked && "border-primary",
+            checked && "border-accent",
             resolvedDisabled && "opacity-50",
             className,
           )}
@@ -239,7 +239,7 @@ function RadioGroupItem({
           <RadioGroupPrimitive.Indicator
             {...indicatorProps}
             className={cn(
-              cn("bg-primary rounded-full", sizeStyles.dot),
+              cn("bg-accent rounded-full", sizeStyles.dot),
               indicatorClassName,
               indicatorProps?.className,
             )}
@@ -257,7 +257,7 @@ function RadioGroupItem({
           )}
           {normalizeText(
             renderedDescription,
-            cn(sizeStyles.label, "text-muted-foreground", descriptionClassName),
+            cn(sizeStyles.label, "text-muted", descriptionClassName),
           )}
         </View>
       </Pressable>
@@ -268,15 +268,15 @@ function RadioGroupItem({
     <RadioGroupPrimitive.Item
       {...props}
       className={cn(
-        "border-input dark:bg-input/30 aspect-square shrink-0 items-center justify-center rounded-full border shadow-sm shadow-black/5",
+        "border-field-border dark:bg-field-border/30 aspect-square shrink-0 items-center justify-center rounded-full border shadow-sm shadow-black/5",
         sizeStyles.indicator,
         Platform.select({
-          web: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 dark:aria-invalid:border-destructive outline-none transition-all focus-visible:ring-[3px] disabled:cursor-not-allowed",
+          web: "focus-visible:border-focus focus-visible:ring-focus/50 aria-invalid:ring-danger/20 dark:aria-invalid:ring-danger/40 dark:aria-invalid:border-danger outline-none transition-all focus-visible:ring-[3px] disabled:cursor-not-allowed",
         }),
         !checked &&
           Platform.select({
-            native: "active:bg-accent/50",
-            web: "hover:bg-accent/50 active:bg-accent/50",
+            native: "active:bg-accent-soft/50",
+            web: "hover:bg-accent-soft/50 active:bg-accent-soft/50",
           }),
         resolvedDisabled && "opacity-50",
         className,
@@ -308,7 +308,7 @@ function RadioGroupItem({
       <RadioGroupPrimitive.Indicator
         {...indicatorProps}
         className={cn(
-          cn("bg-primary rounded-full", sizeStyles.dot),
+          cn("bg-accent rounded-full", sizeStyles.dot),
           indicatorClassName,
           indicatorProps?.className,
         )}

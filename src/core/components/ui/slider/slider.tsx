@@ -125,9 +125,9 @@ function NonNativeSlider({
   const resolvedMin = min ?? 0;
   const resolvedMax = max ?? 100;
   const range = resolvedMax - resolvedMin;
-  const activeTrackColor = resolveColor(colors?.activeTrackColor, theme.primary);
-  const inactiveTrackColor = resolveColor(colors?.inactiveTrackColor, theme.muted);
-  const thumbColor = resolveColor(colors?.thumbColor, theme.primary);
+  const activeTrackColor = resolveColor(colors?.activeTrackColor, theme.accent);
+  const inactiveTrackColor = resolveColor(colors?.inactiveTrackColor, theme.surfaceSecondary);
+  const thumbColor = resolveColor(colors?.thumbColor, theme.accent);
   const activeThumbBorderColor =
     colorScheme === "dark" ? theme.foreground : brightenColor(thumbColor, 0.3);
   const defaultThumbBorderColor = withAlpha(theme.foreground, colorScheme === "dark" ? 0.18 : 0.04);

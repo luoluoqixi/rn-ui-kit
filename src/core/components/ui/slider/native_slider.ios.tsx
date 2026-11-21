@@ -35,7 +35,7 @@ export function NativeSlider({
         ? stepProp
         : 1;
   const currentValue = resolveSliderFirstValue(value ?? defaultValue, safeMin);
-  const trackTintColor = toSwiftUIHexColor(theme.primary);
+  const trackTintColor = toSwiftUIHexColor(theme.accent);
 
   // 触感反馈：iOS 原生 Slider 在边界位置可能已有系统反馈，因此边界值不重复触发。
   const resolvedNativeHaptics = useResolvedNativeHaptics(nativeHaptics, {

@@ -38,11 +38,11 @@ export function NativeSlider({
 
   // 无用户颜色时从 UI 主题读取默认色，所有值转换为 Android ARGB 整数。
   const resolvedColors = {
-    activeTickColor: toARGB(colorsProp?.activeTickColor ?? theme.primary),
-    activeTrackColor: toARGB(colorsProp?.activeTrackColor ?? theme.primary),
-    inactiveTickColor: toARGB(colorsProp?.inactiveTickColor ?? theme.mutedForeground),
-    inactiveTrackColor: toARGB(colorsProp?.inactiveTrackColor ?? theme.muted),
-    thumbColor: toARGB(colorsProp?.thumbColor ?? theme.primary),
+    activeTickColor: toARGB(colorsProp?.activeTickColor ?? theme.accent),
+    activeTrackColor: toARGB(colorsProp?.activeTrackColor ?? theme.accent),
+    inactiveTickColor: toARGB(colorsProp?.inactiveTickColor ?? theme.muted),
+    inactiveTrackColor: toARGB(colorsProp?.inactiveTrackColor ?? theme.surfaceSecondary),
+    thumbColor: toARGB(colorsProp?.thumbColor ?? theme.accent),
   };
 
   // 触感反馈按 interval / step 计算 bucket，仅在跨 bucket 时触发，避免拖动过程中连续震动。

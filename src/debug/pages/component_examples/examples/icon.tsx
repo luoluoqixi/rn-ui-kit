@@ -34,7 +34,7 @@ export function IconExample() {
           <Icon as={Search} size="md" />
           <Icon as={Search} size="lg" />
           <Icon as={Search} size="xl" />
-          <Icon as={Search} size="2xl" className="text-primary" />
+          <Icon as={Search} size="2xl" className="text-accent" />
         </ExampleRow>
       </ExampleBlock>
     </ExampleStack>

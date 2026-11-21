@@ -86,7 +86,7 @@ function TabsList({ className, size, ...props }: TabsListProps) {
   return (
     <TabsPrimitive.List
       className={cn(
-        "bg-muted flex flex-row items-center justify-center rounded-lg",
+        "bg-surface-secondary flex flex-row items-center justify-center rounded-lg",
         tabsSizes[resolvedSize].list,
         Platform.select({ web: "inline-flex w-fit", native: "mr-auto" }),
         className,
@@ -123,7 +123,7 @@ function TabsTrigger({
   return (
     <TextClassContext.Provider
       value={cn(
-        "text-muted-foreground font-medium",
+        "text-muted font-medium",
         tabsSizes[resolvedSize].text,
         isActive ? "text-foreground" : inactiveTextInteractionClass,
       )}
@@ -133,10 +133,10 @@ function TabsTrigger({
           "group flex flex-row items-center justify-center rounded-md border border-transparent shadow-none shadow-black/5",
           tabsSizes[resolvedSize].trigger,
           Platform.select({
-            web: "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring web:h-[calc(100%-1px)] inline-flex cursor-default whitespace-nowrap transition-[color,box-shadow] focus-visible:outline-1 focus-visible:ring-[3px] disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0",
+            web: "focus-visible:border-focus focus-visible:ring-focus/50 focus-visible:outline-focus web:h-[calc(100%-1px)] inline-flex cursor-default whitespace-nowrap transition-[color,box-shadow] focus-visible:outline-1 focus-visible:ring-[3px] disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0",
           }),
           props.disabled && "opacity-50",
-          isActive && "bg-background dark:border-foreground/10 dark:bg-input/30",
+          isActive && "bg-background dark:border-foreground/10 dark:bg-field-border/30",
           className,
         )}
         {...props}

@@ -109,7 +109,7 @@ function useDebugStackScreenOptions(overrides?: RnUiKitDebugPanelPageScreenOptio
           headerBackgroundColor: appBackgroundColors.header,
           screenBackgroundColor: appBackgroundColors.screen,
         }),
-        headerTintColor: theme.primary,
+        headerTintColor: theme.accent,
         headerTitleStyle: { color: theme.foreground },
         ...overrides,
       }),
@@ -117,7 +117,7 @@ function useDebugStackScreenOptions(overrides?: RnUiKitDebugPanelPageScreenOptio
       appBackgroundColors.header,
       appBackgroundColors.screen,
       resolvedColorScheme,
-      theme.primary,
+      theme.accent,
       theme.foreground,
       overrides,
     ],
@@ -163,7 +163,7 @@ function useDebugSheetStackScreenOptions(overrides?: RnUiKitDebugPanelNativeShee
     // iOS 15–25 必须保持 translucent，内容才能延伸到导航栏下方并触发
     // scrollEdgeAppearance / standardAppearance 原生切换。
     headerTransparent: transparentHeader || nativeScrollEdgeHeader,
-    headerTintColor: theme.primary,
+    headerTintColor: theme.accent,
     headerTitleStyle: { color: theme.foreground },
     ...overrides,
   };

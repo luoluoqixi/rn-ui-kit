@@ -76,8 +76,8 @@ export const DropdownNativeTrigger = React.forwardRef<
         Platform.OS === "web" &&
           nativeTriggerHoverBackground &&
           cn(
-            "rounded-md hover:bg-accent hover:text-accent-foreground disabled:hover:bg-transparent disabled:hover:text-foreground",
-            open && "bg-accent text-accent-foreground",
+            "rounded-md hover:bg-accent-soft hover:text-accent-soft-foreground disabled:hover:bg-transparent disabled:hover:text-foreground",
+            open && "bg-accent-soft text-accent-soft-foreground",
           ),
         nativeTriggerProps?.className,
         className,

@@ -21,7 +21,7 @@ export const NATIVE_LIST_BASIC_DIVIDER_OPACITY = 0.3;
 export const NATIVE_LIST_TRAILING_TRIGGER_OPACITY = 1;
 
 /** NativeList 右侧 Select/Dropdown trigger 使用的语义主题色键。 */
-export const NATIVE_LIST_TRAILING_TRIGGER_COLOR_TOKEN = "primary" as const;
+export const NATIVE_LIST_TRAILING_TRIGGER_COLOR_TOKEN = "accent" as const;
 
 /** NativeList 右侧 Select/Dropdown trigger 的统一常规字重。 */
 export const NATIVE_LIST_TRAILING_TRIGGER_FONT_WEIGHT: TextStyle["fontWeight"] = "400";
@@ -54,4 +54,4 @@ export const NATIVE_LIST_ITEM_PRESS_OPACITY = NATIVE_LIST_TRAILING_TRIGGER_PRESS
 export const NATIVE_LIST_BASIC_SECTION_TEXT_FONT_SIZE = 13;
 
 /** Basic NativeList Section 标题和 footer 的默认主题色键。 */
-export const NATIVE_LIST_BASIC_SECTION_TEXT_COLOR_TOKEN = "mutedForeground" as const;
+export const NATIVE_LIST_BASIC_SECTION_TEXT_COLOR_TOKEN = "muted" as const;

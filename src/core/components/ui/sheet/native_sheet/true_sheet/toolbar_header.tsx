@@ -49,7 +49,7 @@ export function TrueSheetToolbarHeader({
           onPress={onBack}
           style={styles.backButton}
         >
-          <ChevronLeft color={theme.primary} size={28} strokeWidth={2} />
+          <ChevronLeft color={theme.accent} size={28} strokeWidth={2} />
         </Pressable>
       ) : (
         <View style={styles.backPlaceholder} />

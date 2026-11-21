@@ -6,7 +6,7 @@
 
 > `dev-heroui` 分支正在迁移 HeroUI。该分支的双平台样式/Metro 接入、验证入口及迁移边界见 [HeroUI 迁移说明](./docs/heroui-migration.md)；下方原有 Uniwind 接入片段尚未覆盖新的双入口配置。
 
-面向个人 Expo 项目的跨平台 UI 组件库。基础组件采用 React Native Reusables 的源码与 API，样式由 Uniwind 驱动；需要系统能力的组件继续由 rn-ui-kit 提供 iOS、Android 与 Web 平台实现。
+面向个人 Expo 项目的跨平台 UI 组件库。基础组件源自 React Native Reusables，当前在 dev-heroui 分支逐步迁移到 HeroUI，样式由 Uniwind 驱动；需要系统能力的组件继续由 rn-ui-kit 提供 iOS、Android 与 Web 平台实现。
 
 > [!WARNING]
 > 此库只服务于维护者自己的 App，不承诺通用组件库所需的 API 稳定性或版本兼容范围。
@@ -106,7 +106,6 @@ export default function App() {
       preferences={{
         appearance: {
           accentColor: "ocean",
-          backgroundFollowsTheme: false,
           themeMode: "system",
         },
       }}
@@ -126,30 +125,37 @@ Toast 默认在 Android/iOS 使用 Burnt，Web 使用基础 Sonner Toast。可�
 <RootProvider toasterProps={{ defaultNative: false }}>{children}</RootProvider>
 ```
 
-主题使用 RNR New York 风格的语义变量，如 `background`、`primaryBackground`、`foreground`、`primary`、`accent`、`muted`、`card`、`popover`、`border` 与 `ring`。完整自定义主题可覆盖全部语义字段。主色色阶提供 `accent01`～`accent12`，编号越大强调程度越强：light 下逐渐加深，dark 下逐渐提亮；它们由当前主色的 HCT 调色板生成，支持所有预设和自定义主色。
+主题采用 HeroUI 语义：背景与正文为 `background / foreground`，普通容器为 `surface`，弹层为 `overlay`，主操作色为 `accent`，弱文字为 `muted`，危险状态为 `danger`。不要将 `muted` 用作背景色；次级背景使用 `surfaceSecondary` / `bg-surface-secondary`。配对文字色使用 `accentForeground`、`surfaceForeground` 等。旧的 `primary / card / popover / mutedForeground / destructive / ring` token 已移除，组件的 variant 名称没有因此改变。
 
-可通过 `useUiTheme().accent03` 或 Uniwind `bg-accent03` / `hover:bg-accent03` 使用。`accent01`～`accent02` 适合轻染背景，`accent03` 适合 hover，`accent04` 对应内置主题的 `accent`；更高等级可用于边框、实色强调或文字，需根据用途选择前景色。原有 `accent`、`primary` 保持原值与语义，色阶不保证 `primary` 固定对应某一级。
+`accent01`～`accent12` 作为主色色阶保留，light 逐渐加深、dark 逐渐提亮；可通过 `useUiTheme().accent03` 或 `bg-accent03` 使用。`accent` 本身现在表示实色主操作色；轻染交互背景使用 HeroUI 的 `bg-accent-soft`。圆角沿用对应 HeroUI 平台的默认比例。
 
-完整自定义 `UiThemeConfig` 的 light/dark 需同时提供这些色阶；推荐先调用 `generateUiThemeFromPrimaryColor()`，再覆盖需要的语义字段。ColorPicker 调试页可预览当前主题的全部色阶。
+内置强调色：`mono`、`ocean`、`sakura`、`lavender`、`sunset`、`forest`、`ruby`、`golden`、`aqua`。`accentColor` 也接受不透明的 `#RGB / #RRGGBB` 自定义颜色。
 
-内置强调色：`mono`、`ocean`、`sakura`、`lavender`、`sunset`、`forest`、`ruby`、`golden`、`aqua`。
-
-也可以通过 `UiThemeConfig` 传入完整的自定义主题。主题必须同时提供 `light` 和 `dark` 两套
-`SemanticColors`，并可通过 `primaryBackground` 为“背景跟随主题”单独指定带主色调的应用背景；
-原有的 `background` 字段不会被替换：
+完整自定义主题推荐从 `generateUiThemeFromPrimaryColor()` 扩展，light/dark 均提供 `SemanticColors`：
 
 ```tsx
+const generated = generateUiThemeFromPrimaryColor("#7c3aed");
 const theme: UiThemeConfig = {
-  light: { /* SemanticColors */ },
-  dark: { /* SemanticColors */ },
+  light: { ...generated.light, surface: "#ffffff" },
+  dark: { ...generated.dark, surface: "#18181b" },
 };
-
 <RootProvider theme={theme}>{children}</RootProvider>;
 ```
 
+`backgroundFollowsTheme` 已删除，旧偏好读取时丢弃这个字段。主题 seed 不会再染色屏幕/Sheet 背景。应用容器背景由 `appBackgroundColors` 按明暗模式覆盖，单个 Sheet 或页面也可以传自己的背景属性；默认保持中性背景及 iOS 原有玻璃行为：
+
+```tsx
+<RootProvider appBackgroundColors={{
+  light: { screen: "#f2f2f7", sheet: "#f2f2f7" },
+  dark: { screen: "#0e0e0e", header: "#1c1c1e" },
+}}>{children}</RootProvider>
+```
+
+这里只需配置要覆盖的层级，其余 `screen / sheet / card / header` 使用默认值。全局主题变量会同步到 Web 根节点与 Native Uniwind，保证 body portal 与 HeroUI 原生弹层使用相同语义色。一个应用保持一个全局 RootProvider；这里不提供多个根主题相互隔离的保证。
+
 非原生 `Button` 的 `default` / `destructive` 基于各自背景计算不透明的交互背景：light/dark 下均在 hover 混入 6% 白色，按下混入 12% 白色，让按下比 hover 更浅；文字保留配对色。按下优先于 hover，禁用和 loading 时不产生交互变色；显式 `style` 可覆盖这些背景。计算支持不透明 hex、RGB/HSL 颜色，透明色或无法解析的动态颜色保留原背景。
 
-`destructiveForeground` 是 `destructive` 的配对文字色，由主题生成器的 Material `onError` 提供，并可通过 `text-destructive-foreground` 使用。完整自定义主题需在 light/dark 中提供该字段，或基于 `generateUiThemeFromPrimaryColor()` 的结果扩展。原生 Button 继续使用系统反馈。
+`dangerForeground` 是 `danger` 的配对文字色，由主题生成器的 Material `onError` 提供，并可通过 `text-danger-foreground` 使用。完整自定义主题需在 light/dark 中提供该字段，或基于 `generateUiThemeFromPrimaryColor()` 的结果扩展。原生 Button 继续使用系统反馈。
 
 `RootProvider` 负责手势根节点、安全区、颜色模式、语义颜色、导航主题、Sheet、Portal、Toast、原生对话框和触觉反馈上下文。
 

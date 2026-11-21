@@ -37,7 +37,7 @@ export function ButtonExample() {
             仅更新
           </Button>
         </ExampleRow>
-        <Text className="text-muted-foreground">已完成 {count} 次保存</Text>
+        <Text className="text-muted">已完成 {count} 次保存</Text>
       </ExampleBlock>
       <ExampleBlock title="操作层级">
         <ExampleRow>
@@ -79,11 +79,11 @@ export function ButtonExample() {
           <Button loading title="请稍候" />
           <Button
             loading
-            loadingIcon={<Icon as={LoaderCircle} className="size-4 text-primary-foreground" />}
+            loadingIcon={<Icon as={LoaderCircle} className="size-4 text-accent-foreground" />}
             title="自定义加载图标"
           />
           <Button nativeHaptics={nativeHaptics}>
-            <Icon as={Mail} className="text-primary-foreground" />
+            <Icon as={Mail} className="text-accent-foreground" />
             <Text>邮件登录</Text>
           </Button>
           <Button nativeHaptics={nativeHaptics} aria-label="打开邮件" variant="icon">

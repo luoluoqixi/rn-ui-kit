@@ -39,16 +39,16 @@ export function SwitchNative({
     ...props
   } = (nativeComposeProps ?? {}) as Partial<ExpoComposeSwitchProps>;
   const colors = normalizeComposeColors({
-    checkedThumbColor: theme.primaryForeground,
-    checkedTrackColor: theme.primary,
-    checkedBorderColor: theme.primary,
+    checkedThumbColor: theme.accentForeground,
+    checkedTrackColor: theme.accent,
+    checkedBorderColor: theme.accent,
     uncheckedThumbColor: theme.background,
-    uncheckedTrackColor: theme.input,
-    uncheckedBorderColor: theme.input,
+    uncheckedTrackColor: theme.fieldBorder,
+    uncheckedBorderColor: theme.fieldBorder,
     // Material's disabled alpha values, applied to the current semantic theme colors.
-    disabledCheckedThumbColor: withAlpha(theme.primaryForeground, 0.38),
-    disabledCheckedTrackColor: withAlpha(theme.primary, 0.12),
-    disabledCheckedBorderColor: withAlpha(theme.primary, 0.12),
+    disabledCheckedThumbColor: withAlpha(theme.accentForeground, 0.38),
+    disabledCheckedTrackColor: withAlpha(theme.accent, 0.12),
+    disabledCheckedBorderColor: withAlpha(theme.accent, 0.12),
     disabledUncheckedThumbColor: withAlpha(theme.foreground, 0.38),
     disabledUncheckedTrackColor: withAlpha(theme.foreground, 0.12),
     disabledUncheckedBorderColor: withAlpha(theme.foreground, 0.12),

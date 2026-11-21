@@ -14,7 +14,7 @@ function DialogProbe({ label }: { label: string }) {
             <Modal.Dialog>
               <Modal.Header><Modal.Heading>HeroUI Web 弹层验证</Modal.Heading></Modal.Header>
               <Modal.Body>
-                <p>检查遮罩、焦点、Escape 和关闭后 Sheet 的交互。</p>
+                <p className="text-muted">检查遮罩、焦点、Escape 和关闭后 Sheet 的交互。</p>
                 <input aria-label="HeroUI 键盘验证" placeholder="输入后按 Escape 关闭" className="rounded-lg border border-border bg-field p-3 text-field-foreground" />
               </Modal.Body>
               <Modal.Footer><Button onPress={() => setOpen(false)}>关闭 HeroUI 弹层</Button></Modal.Footer>
@@ -32,7 +32,7 @@ export function HeroUIExample() {
   return (
     <div className="flex flex-col gap-4 rounded-xl bg-surface p-4 text-foreground" data-testid="heroui-smoke-web">
       <p>当前底座：@heroui/react（Web）</p>
-      <p>第一阶段使用 HeroUI 默认主题；项目主题色映射将在下一阶段统一。</p>
+      <p>已接入统一主题：请切换明暗模式和主题色，检查按钮、说明文字、输入框与 Sheet 内弹层。</p>
       <div className="flex flex-wrap gap-3">
         <Button onPress={() => setCount(value => value + 1)}>HeroUI 计数：{count}</Button>
         <Button variant="secondary">次要按钮</Button>

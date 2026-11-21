@@ -27,7 +27,7 @@ export function RnUiKitUiComponentsDebugPage({ header }: RnUiKitUiComponentsDebu
             <ExampleEntry definition={definition} key={definition.key} />
           ))}
         </ExampleStack>
-        <Text className="text-muted-foreground text-center text-xs">
+        <Text className="text-muted text-center text-xs">
           组件总览与组件示例使用相同的实现和交互逻辑。
         </Text>
       </View>

@@ -159,7 +159,7 @@ export const SelectSheet = React.forwardRef<SelectHandle, SelectProps>(function 
         grabberContentInsetTop={Platform.OS === "web" ? 0 : SELECT_SHEET_GRABBER_CONTENT_INSET_TOP}
         grabberOptions={{
           adaptive: false,
-          color: withGrabberAlpha(theme.mutedForeground, 0.65),
+          color: withGrabberAlpha(theme.muted, 0.65),
           height: SELECT_SHEET_GRABBER_HEIGHT,
           topMargin: SELECT_SHEET_GRABBER_TOP_MARGIN,
           width: SELECT_SHEET_GRABBER_WIDTH,

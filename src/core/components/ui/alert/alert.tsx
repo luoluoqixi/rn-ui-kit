@@ -59,14 +59,14 @@ function Alert({
     <TextClassContext.Provider
       value={cn(
         "text-sm text-foreground",
-        variant === "destructive" && "text-destructive",
+        variant === "destructive" && "text-danger",
         className,
       )}
     >
       <View
         role="alert"
         className={cn(
-          "bg-card border-border relative w-full rounded-lg border px-4 pb-2 pt-3.5",
+          "bg-surface border-border relative w-full rounded-lg border px-4 pb-2 pt-3.5",
           className,
         )}
         {...props}
@@ -84,7 +84,7 @@ function Alert({
             size={iconSize ?? iconProps?.size}
             className={cn(
               iconSize == null && iconProps?.size == null ? "size-4" : undefined,
-              variant === "destructive" && "text-destructive",
+              variant === "destructive" && "text-danger",
               iconClassName,
               iconProps?.className,
             )}
@@ -132,8 +132,8 @@ function AlertDescription({ className, ...props }: React.ComponentProps<typeof T
   return (
     <Text
       className={cn(
-        "text-muted-foreground ml-0.5 pb-1.5 text-sm leading-relaxed",
-        textClass?.includes("text-destructive") && "text-destructive/90",
+        "text-muted ml-0.5 pb-1.5 text-sm leading-relaxed",
+        textClass?.includes("text-danger") && "text-danger/90",
         className,
       )}
       {...props}

@@ -153,7 +153,7 @@ export function RnUiKitComponentExampleDetailPage({
         { paddingLeft: 16 + insets.left, paddingRight: 16 + insets.right },
       ]}
     >
-      <Text className="text-muted-foreground">
+      <Text className="text-muted">
         {definition.description ?? `${definition.label} 示例`}
       </Text>
       <ActiveExample />

@@ -56,7 +56,7 @@ export function ButtonNative({
             buttonStyle(nativeButtonStyle),
             disabled(isDisabled),
             swiftAccessibilityLabel(accessibilityLabel ?? title),
-            ...(buttonColor == null ? [foregroundStyle(theme.primary)] : []),
+            ...(buttonColor == null ? [foregroundStyle(theme.accent)] : []),
             ...(overriddenModifiers ?? []),
             ...(buttonColor == null ? [] : [foregroundStyle(buttonColor)]),
           ]}

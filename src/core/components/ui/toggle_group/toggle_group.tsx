@@ -130,7 +130,7 @@ function ToggleGroupItem({
       : props.style;
   const interactionStyle = StyleSheet.flatten([
     resolvedStyle,
-    isPressed && !pressed && !props.disabled ? { backgroundColor: theme.accent } : undefined,
+    isPressed && !pressed && !props.disabled ? { backgroundColor: theme.accent04 } : undefined,
   ]);
   const hasCustomSizing = hasExplicitItemSizing(className, props.style);
   const renderedTitle = resolveRenderProp(title, {
@@ -141,7 +141,7 @@ function ToggleGroupItem({
 
   return (
     <TextClassContext.Provider
-      value={cn(toggleTextVariants({ size: resolvedSize }), pressed && "text-accent-foreground")}
+      value={cn(toggleTextVariants({ size: resolvedSize }), pressed && "text-accent-soft-foreground")}
     >
       <ToggleSizeContext.Provider value={resolvedSize === "default" ? "md" : resolvedSize}>
         <ToggleGroupPrimitive.Item
@@ -152,7 +152,7 @@ function ToggleGroupItem({
               size: resolvedSize,
             }),
             props.disabled && "opacity-50",
-            pressed && "bg-accent",
+            pressed && "bg-accent-soft",
             "min-w-0 shrink-0 rounded-none shadow-none",
             isFirst && "rounded-l-md",
             isLast && "rounded-r-md",

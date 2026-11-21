@@ -292,7 +292,7 @@ function TrueSheetStackHostInner<ParamList extends ParamListBase = ParamListBase
       ? {}
       : { headerRight: customHeaderRight }),
     headerShown: true,
-    headerTintColor: theme.primary,
+    headerTintColor: theme.accent,
     headerTitleStyle: { color: theme.foreground },
     ...screenOptions,
   };

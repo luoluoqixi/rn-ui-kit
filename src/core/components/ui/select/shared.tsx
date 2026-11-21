@@ -179,8 +179,8 @@ export const SelectNativeTrigger = React.forwardRef<any, SelectTriggerSharedProp
           Platform.OS === "web" &&
             hoverBackground &&
             cn(
-              "rounded-md hover:bg-accent hover:text-accent-foreground disabled:hover:bg-transparent disabled:hover:text-foreground",
-              active && "bg-accent text-accent-foreground",
+              "rounded-md hover:bg-accent-soft hover:text-accent-soft-foreground disabled:hover:bg-transparent disabled:hover:text-foreground",
+              active && "bg-accent-soft text-accent-soft-foreground",
             ),
           props.nativeTriggerProps?.className,
           triggerProps.className,
@@ -286,7 +286,7 @@ export const SelectBasicTrigger = React.forwardRef<
           value={value}
         />
       )}
-      <Icon aria-hidden as={ChevronDown} className="text-muted-foreground size-4 shrink-0" />
+      <Icon aria-hidden as={ChevronDown} className="text-muted size-4 shrink-0" />
     </Button>
   );
 });

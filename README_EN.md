@@ -81,7 +81,6 @@ export default function App() {
       preferences={{
         appearance: {
           accentColor: "ocean",
-          backgroundFollowsTheme: false,
           themeMode: "system",
         },
       }}
@@ -101,26 +100,13 @@ globally with `toasterProps.defaultNative`; a per-call `native` option takes pre
 <RootProvider toasterProps={{ defaultNative: false }}>{children}</RootProvider>
 ```
 
-Themes follow the RNR New York semantic variable model: `background`, `primaryBackground`, `foreground`, `primary`, `accent`, `muted`, `card`, `popover`, `border`, and `ring`. Complete custom themes can override every semantic field.
+Themes now use HeroUI semantics: background/foreground, surface, overlay, accent, muted (secondary text), default, danger, and field colors. The old primary/card/popover/mutedForeground/destructive/ring tokens have been removed. Component variant names and system-native implementations are retained. The accent01–accent12 HCT scale remains available; accent itself now means the solid action color.
 
-主色色阶提供 `accent01`～`accent12`，编号越大强调越强（light 加深、dark 提亮）。通过 `useUiTheme().accent03` 或 `hover:bg-accent03` 使用；`accent03` 适合 hover，内置主题的 `accent04` 对应原有 `accent`。完整自定义主题需在 light/dark 中提供全部色阶，推荐基于 `generateUiThemeFromPrimaryColor()` 的结果覆盖语义字段。
+Generate a complete light/dark theme with generateUiThemeFromPrimaryColor(), then override specific SemanticColors fields. Presets and custom opaque #RGB / #RRGGBB seeds are supported. Neutral container colors stay independent of the seed. HeroUI supplies the radius scale and derived interaction colors.
 
-Built-in accents: `mono`, `ocean`, `sakura`, `lavender`, `sunset`, `forest`, `ruby`, `golden`, and `aqua`.
+backgroundFollowsTheme has been removed and is discarded when stored example preferences are loaded. Configure application container backgrounds through appBackgroundColors.light/dark with optional screen/sheet/card/header overrides; individual containers keep their own background props. Global source variables are synchronized for Web body portals and Native overlays. Use one global RootProvider per application.
 
-You can also pass a complete custom theme through `UiThemeConfig`. Both `light` and `dark`
-`SemanticColors` sets are required. Use `primaryBackground` for a subtly accent-tinted app
-background when background-following is enabled; the existing `background` value remains unchanged:
-
-```tsx
-const theme: UiThemeConfig = {
-  light: { /* SemanticColors */ },
-  dark: { /* SemanticColors */ },
-};
-
-<RootProvider theme={theme}>{children}</RootProvider>;
-```
-
-非原生 `Button` 的 `default` / `destructive` 使用自身色调生成 hover（6%）和按下（12%）背景，在 light/dark 下均向白色混合，按下比 hover 更浅。新增 `destructiveForeground` 来自 Material `onError`；完整自定义主题的 light/dark 需提供该字段，或基于 `generateUiThemeFromPrimaryColor()` 扩展。详见 [中文主题说明](./README.md)。
+See the [Chinese theme guide](./README.md#3-provider-与主题) and [migration details](./docs/heroui-migration.md) for configuration and migration boundaries.
 
 `RootProvider` installs gesture, safe-area, color scheme, navigation theme, sheet, portal, toast, native dialog, and haptics contexts.
 

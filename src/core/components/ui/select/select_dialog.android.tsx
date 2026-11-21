@@ -71,8 +71,8 @@ export const SelectDialog = React.forwardRef<SelectHandle, SelectProps>(
                     {...({
                       swatchColor: item.swatchColor,
                       style: {
-                        backgroundColor: selected ? theme.accent : "transparent",
-                        color: selected ? theme.accentForeground : theme.foreground,
+                        backgroundColor: selected ? theme.accent04 : "transparent",
+                        color: selected ? theme.accent12 : theme.foreground,
                       },
                     } as object)}
                   />

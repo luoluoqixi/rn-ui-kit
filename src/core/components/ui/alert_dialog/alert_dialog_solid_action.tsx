@@ -6,7 +6,7 @@ import type { AlertDialogActionProps } from "./types";
 import { useSolidButtonInteraction } from "../button/use_solid_button_interaction";
 
 type SolidActionProps = AlertDialogActionProps & {
-  colors: Pick<SemanticColors, "primary" | "destructive">;
+  colors: Pick<SemanticColors, "accent" | "danger">;
   variant: "default" | "destructive";
 };
 

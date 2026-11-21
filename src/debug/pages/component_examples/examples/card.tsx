@@ -11,7 +11,7 @@ export function CardExample() {
           description="上次同步于今天"
           footer={
             <ExampleRow style={{ height: 34 }}>
-              <Text className="text-muted-foreground">2 位协作者</Text>
+              <Text className="text-muted">2 位协作者</Text>
               <Link size="sm">查看详情</Link>
             </ExampleRow>
           }

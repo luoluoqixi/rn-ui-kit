@@ -49,10 +49,10 @@ function Card({
   const hasHeader = renderedHeader != null || renderedTitle != null || renderedDescription != null;
 
   return (
-    <TextClassContext.Provider value="text-card-foreground">
+    <TextClassContext.Provider value="text-surface-foreground">
       <View
         className={cn(
-          "bg-card border-border flex flex-col gap-6 rounded-xl border py-6 shadow-sm shadow-black/5",
+          "bg-surface border-border flex flex-col gap-6 rounded-xl border py-6 shadow-sm shadow-black/5",
           className,
         )}
         {...props}
@@ -113,7 +113,7 @@ function CardTitle({ className, ref, ...props }: CardTitleProps) {
 }
 
 function CardDescription({ className, ...props }: CardDescriptionProps) {
-  return <Text className={cn("text-muted-foreground text-sm", className)} {...props} />;
+  return <Text className={cn("text-muted text-sm", className)} {...props} />;
 }
 
 function CardContent({ className, ...props }: CardContentProps) {

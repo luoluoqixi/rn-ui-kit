@@ -124,7 +124,7 @@ export const SelectNative = React.forwardRef<SelectHandle, SelectProps>(function
     >
       {React.cloneElement(nativeSelect, {
         className: cn(
-          "border-border bg-background text-foreground w-fit cursor-default appearance-none rounded-md border font-medium shadow-sm shadow-black/5 transition-colors hover:bg-accent hover:text-accent-foreground active:bg-accent dark:bg-input/30 dark:border-input dark:active:bg-input/50 dark:hover:bg-input/50 focus:border-ring focus:ring-ring/50 focus:outline-none focus:ring-[3px] disabled:opacity-50",
+          "border-border bg-background text-foreground w-fit cursor-default appearance-none rounded-md border font-medium shadow-sm shadow-black/5 transition-colors hover:bg-accent-soft hover:text-accent-soft-foreground active:bg-accent-soft dark:bg-field-border/30 dark:border-field-border dark:active:bg-field-border/50 dark:hover:bg-field-border/50 focus:border-focus focus:ring-focus/50 focus:outline-none focus:ring-[3px] disabled:opacity-50",
           nativeSelectSizeClasses[selectSize] ?? nativeSelectSizeClasses.default,
           props.nativeSelectProps?.className,
           props.className,
@@ -140,7 +140,7 @@ export const SelectNative = React.forwardRef<SelectHandle, SelectProps>(function
       <ChevronDown
         aria-hidden
         className={cn(
-          "text-muted-foreground pointer-events-none absolute top-1/2 -translate-y-1/2 group-hover:text-accent-foreground group-active:text-accent-foreground",
+          "text-muted pointer-events-none absolute top-1/2 -translate-y-1/2 group-hover:text-accent-soft-foreground group-active:text-accent-soft-foreground",
           nativeSelectChevronClasses[selectSize] ?? nativeSelectChevronClasses.default,
         )}
       />
@@ -214,7 +214,7 @@ const NativeSelectTrigger = React.forwardRef<
         pointerEvents="none"
         className={cn(
           hoverBackground &&
-            "rounded-md hover:bg-accent group-hover:bg-accent group-active:bg-accent hover:text-accent-foreground group-hover:text-accent-foreground group-active:text-accent-foreground disabled:hover:bg-transparent disabled:group-hover:bg-transparent disabled:group-active:bg-transparent disabled:hover:text-foreground disabled:group-hover:text-foreground disabled:group-active:text-foreground",
+            "rounded-md hover:bg-accent-soft group-hover:bg-accent-soft group-active:bg-accent-soft hover:text-accent-soft-foreground group-hover:text-accent-soft-foreground group-active:text-accent-soft-foreground disabled:hover:bg-transparent disabled:group-hover:bg-transparent disabled:group-active:bg-transparent disabled:hover:text-foreground disabled:group-hover:text-foreground disabled:group-active:text-foreground",
           props.nativeTriggerProps?.className,
           props.className,
         )}

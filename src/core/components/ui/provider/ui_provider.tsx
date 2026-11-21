@@ -1,3 +1,5 @@
+import { useColorScheme } from "react-native";
+
 import { TextFontProvider } from "./font_provider";
 import { HeroUIProvider } from "./heroui_provider";
 import { PortalHost } from "@rn-primitives/portal";
@@ -11,6 +13,8 @@ import { NativeHapticsProvider } from "../utils";
 import {
   AppBackgroundColorsProvider,
   resolveAccentThemeName,
+  resolveColorSchemeSettings,
+  resolveUiPreferences,
   UiPreferencesProvider,
   UiThemeProvider,
 } from "../utils/theme";
@@ -30,8 +34,14 @@ export function UIProvider({
   toasterProps,
   textFontFamily,
 }: UIProviderProps) {
+  const systemColorScheme = useColorScheme();
+  const resolvedPreferences = resolveUiPreferences(preferences, colorScheme);
+  const resolvedColorScheme = resolveColorSchemeSettings(
+    resolvedPreferences.appearance.themeMode,
+    systemColorScheme,
+  );
   const resolvedAccentThemeName = resolveAccentThemeName(
-    accentThemeName ?? preferences?.appearance?.accentColor,
+    accentThemeName ?? resolvedPreferences.appearance.accentColor,
   );
 
   return (
@@ -39,12 +49,12 @@ export function UIProvider({
       <KeyboardProvider {...keyboardAnimationProviderProps}>
         <UiPreferencesProvider
           accentThemeNames={accentThemeNames}
-          preferences={preferences}
+          preferences={resolvedPreferences}
         >
           <UiThemeProvider
             accentThemeName={resolvedAccentThemeName}
-            colorScheme={colorScheme ?? "light"}
-            followsSystem={preferences?.appearance?.themeMode === "system"}
+            colorScheme={resolvedColorScheme}
+            followsSystem={resolvedPreferences.appearance.themeMode === "system"}
             theme={theme}
           >
             <HeroUIProvider>

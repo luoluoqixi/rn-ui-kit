@@ -9,8 +9,8 @@ import {
 
 import { SheetProvider } from "../sheet/provider";
 import {
-  getAppWindowBackgroundColor,
   resolveAccentThemeName,
+  resolveAppBackgroundColors,
   resolveColorSchemeSettings,
   resolveUiColors,
   resolveUiPreferences,
@@ -37,17 +37,21 @@ export function RootProvider({
     accentThemeName ?? resolvedPreferences.appearance.accentColor,
   );
   const semanticColors = resolveUiColors(resolvedColorScheme, resolvedAccentThemeName, theme);
-  const configuredBackgroundColors = appBackgroundColors?.[
-    resolvedPreferences.appearance.backgroundFollowsTheme ? "true" : "false"
-  ];
-  const rootBackgroundColor =
-    configuredBackgroundColors?.[resolvedColorScheme]?.screen ??
-    (resolvedPreferences.appearance.backgroundFollowsTheme
-      ? semanticColors.primaryBackground
-      : getAppWindowBackgroundColor(resolvedColorScheme));
-
-  const resolvedNavigationTheme =
-    navigationTheme ?? (resolvedColorScheme === "dark" ? DarkTheme : DefaultTheme);
+  const backgrounds = resolveAppBackgroundColors(resolvedColorScheme, appBackgroundColors);
+  const rootBackgroundColor = backgrounds.screen;
+  const baseNavigationTheme = resolvedColorScheme === "dark" ? DarkTheme : DefaultTheme;
+  const resolvedNavigationTheme = navigationTheme ?? {
+    ...baseNavigationTheme,
+    colors: {
+      ...baseNavigationTheme.colors,
+      primary: semanticColors.accent,
+      background: backgrounds.screen,
+      card: backgrounds.header,
+      text: semanticColors.foreground,
+      border: semanticColors.border,
+      notification: semanticColors.danger,
+    },
+  };
 
   return (
     <GestureHandlerRootView style={{ backgroundColor: rootBackgroundColor, flex: 1 }}>
@@ -56,7 +60,7 @@ export function RootProvider({
           {...providerProps}
           accentThemeName={resolvedAccentThemeName}
           appBackgroundColors={appBackgroundColors}
-          colorScheme={resolvedColorScheme}
+          colorScheme={colorScheme}
           preferences={resolvedPreferences}
           theme={theme}
         >

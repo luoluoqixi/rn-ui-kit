@@ -201,7 +201,7 @@ const SplitLayoutInner = forwardRef<SplitLayoutHandle, SplitLayoutProps>(
     const stableDefaultSizes = stableDefaultSizesRef.current;
     const theme = useUiTheme();
     const separatorColor = useSeparatorColor();
-    const sashActiveColor = theme.primary || FALLBACK_SASH_ACTIVE_COLOR;
+    const sashActiveColor = theme.accent || FALLBACK_SASH_ACTIVE_COLOR;
     const {
       ready: storageReady,
       state: storedState,
