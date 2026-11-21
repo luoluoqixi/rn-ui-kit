@@ -81,8 +81,8 @@ export function RnUiKitDebugHomePage({
       <NativeListSection title="分区行为">
         <NativeListSwitchItem
           switchProps={{
-            checked: openSectionsInSheet,
-            onCheckedChange: onOpenSectionsInSheetChange ?? (() => undefined),
+            isSelected: openSectionsInSheet,
+            onSelectedChange: onOpenSectionsInSheetChange ?? (() => undefined),
           }}
           title="分区嵌套 NativeSheet"
         />
@@ -125,8 +125,8 @@ function SectionSheetPositionSlider({
       <Minimize2 color="#71717a" size={18} />
       <View style={styles.detentSliderControl}>
         <Slider
-          max={2}
-          min={0}
+          maxValue={2}
+          minValue={0}
           onValueChange={(value) => {
             const nextPosition = value[0] ?? draftPositionRef.current;
             draftPositionRef.current = nextPosition;

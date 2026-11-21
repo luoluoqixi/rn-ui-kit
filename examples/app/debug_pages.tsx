@@ -142,8 +142,8 @@ function createThemeDebugPage(
             <NativeListSection title="调试导航">
               <NativeListSwitchItem
                 switchProps={{
-                  checked: usesHostNavigation,
-                  onCheckedChange: setUsesHostNavigation,
+                  isSelected: usesHostNavigation,
+                  onSelectedChange: setUsesHostNavigation,
                 }}
                 title="使用 Host 导航模式"
               />

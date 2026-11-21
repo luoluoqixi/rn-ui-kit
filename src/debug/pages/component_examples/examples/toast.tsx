@@ -60,7 +60,7 @@ export function ToastExample() {
       >
         {!isWeb() && (
           <ExampleRow>
-            <Switch checked={isNative} onCheckedChange={setIsNative} label="使用 Native Toast" />
+            <Switch isSelected={isNative} onSelectedChange={setIsNative} label="使用 Native Toast" />
           </ExampleRow>
         )}
         <ExampleRow>

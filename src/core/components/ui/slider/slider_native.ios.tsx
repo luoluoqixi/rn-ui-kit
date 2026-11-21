@@ -1,5 +1,5 @@
 import { Host, Slider as ExpoSlider } from "@luoluoqixi/expo-ui-55/swift-ui";
-import { tint } from "@luoluoqixi/expo-ui-55/swift-ui/modifiers";
+import { disabled, tint } from "@luoluoqixi/expo-ui-55/swift-ui/modifiers";
 import { useEffect, useRef } from "react";
 import { View } from "react-native";
 
@@ -10,10 +10,12 @@ import {
   useResolvedNativeHaptics,
   useUiTheme,
 } from "../utils";
-import { resolveSliderFirstValue, type SliderProps } from "./types";
+import type { SliderNativeProps } from "./types";
+import { resolveSliderFirstValue } from "./slider_state";
 
 export function NativeSlider({
   defaultValue,
+  isDisabled,
   max,
   min,
   nativeHaptics,
@@ -24,7 +26,7 @@ export function NativeSlider({
   step: stepProp,
   style,
   value,
-}: SliderProps) {
+}: SliderNativeProps) {
   const theme = useUiTheme();
   const safeMin = min ?? 0;
   const safeMax = max ?? 100;
@@ -84,7 +86,7 @@ export function NativeSlider({
         <ExpoSlider
           max={safeMax}
           min={safeMin}
-          modifiers={trackTintColor == null ? undefined : [tint(trackTintColor)]}
+          modifiers={[disabled(isDisabled === true), ...(trackTintColor == null ? [] : [tint(trackTintColor)])]}
           onEditingChanged={(isEditing) => {
             if (!isEditing) {
               onChangeFinished?.(latestValueRef.current);

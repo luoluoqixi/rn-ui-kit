@@ -8,11 +8,13 @@ import {
   useResolvedNativeHaptics,
   useUiTheme,
 } from "../utils";
-import { resolveSliderFirstValue, type SliderProps } from "./types";
+import type { SliderNativeProps } from "./types";
+import { resolveSliderFirstValue } from "./slider_state";
 
 export function NativeSlider({
   colors: colorsProp,
   defaultValue,
+  isDisabled,
   max,
   min,
   nativeHaptics,
@@ -24,7 +26,7 @@ export function NativeSlider({
   step: stepProp,
   style,
   value,
-}: SliderProps) {
+}: SliderNativeProps) {
   const theme = useUiTheme();
   const safeMin = min ?? 0;
   const safeMax = max ?? 100;
@@ -102,6 +104,7 @@ export function NativeSlider({
     <Host style={[{ height: 48, justifyContent: "center", width: "100%" }, style]}>
       <ExpoSlider
         colors={resolvedColors as any}
+        enabled={!isDisabled}
         max={safeMax}
         min={safeMin}
         onValueChange={handleValueChange}

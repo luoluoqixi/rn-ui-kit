@@ -172,20 +172,20 @@ export function NativeListExample() {
       <View style={styles.exampleHeader}>
         {isIos() && (
           <Switch
-            checked={native}
+            isSelected={native}
             label="使用原生 List 外观"
             labelPosition="right"
-            onCheckedChange={(nextNative) => {
+            onSelectedChange={(nextNative) => {
               setFallbackMounted(false);
               setNative(nextNative);
             }}
           />
         )}
         <Switch
-          checked={editMode}
+          isSelected={editMode}
           label={`编辑模式（已选 ${selectedIds.length} 项）`}
           labelPosition="right"
-          onCheckedChange={(nextEditMode) => {
+          onSelectedChange={(nextEditMode) => {
             setEditMode(nextEditMode);
             if (!nextEditMode) {
               setSelectedIds([]);
@@ -193,28 +193,28 @@ export function NativeListExample() {
           }}
         />
         <Switch
-          checked={rowsDisabled}
+          isSelected={rowsDisabled}
           label="NativeList disabled"
           labelPosition="right"
-          onCheckedChange={setRowsDisabled}
+          onSelectedChange={setRowsDisabled}
         />
         {isIos15() && native ? (
           <>
             <Switch
-              checked={usesComplexSectionTrailing}
+              isSelected={usesComplexSectionTrailing}
               label="复杂 Section trailing（iOS15 调试）"
               labelPosition="right"
-              onCheckedChange={setUsesComplexSectionTrailing}
+              onSelectedChange={setUsesComplexSectionTrailing}
             />
           </>
         ) : null}
         {!(isIos() && native) && (
           <Switch
-            checked={customEditModeIcon}
-            disabled={isIos() && native}
+            isSelected={customEditModeIcon}
+            isDisabled={isIos() && native}
             label="自定义编辑模式图标"
             labelPosition="right"
-            onCheckedChange={setCustomEditModeIcon}
+            onSelectedChange={setCustomEditModeIcon}
           />
         )}
         {isIos() && native ? (
@@ -469,7 +469,7 @@ export function NativeListExample() {
                 icon={<RefreshCw color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
                 sfSymbol="arrow.clockwise"
                 selectionId="auto-sync"
-                switchProps={{ checked: autoSyncEnabled, onCheckedChange: setAutoSyncEnabled }}
+                switchProps={{ isSelected: autoSyncEnabled, onSelectedChange: setAutoSyncEnabled }}
                 title="自动同步"
               />
               <NativeListSelectItem

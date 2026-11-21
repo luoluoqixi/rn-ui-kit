@@ -22,10 +22,10 @@ export function NativeListSwitchItem({ switchProps, ...itemProps }: NativeListSw
   const editMode = useNativeListEditMode();
   const theme = useTheme();
   const [uncontrolledChecked, setUncontrolledChecked] = useState(
-    switchProps.defaultChecked ?? false,
+    switchProps.defaultSelected ?? false,
   );
-  const checked = switchProps.checked ?? uncontrolledChecked;
-  const disabled = Boolean(itemProps.disabled || switchProps.disabled);
+  const checked = switchProps.isSelected ?? uncontrolledChecked;
+  const disabled = Boolean(itemProps.disabled || switchProps.isDisabled);
   const inheritedHaptics = useResolvedNativeListHaptics(
     itemProps.nativeHaptics ?? switchProps.nativeHaptics,
   );
@@ -39,8 +39,8 @@ export function NativeListSwitchItem({ switchProps, ...itemProps }: NativeListSw
         ? (toSwiftUIHexColor(itemProps.btnTint) ?? itemProps.btnTint)
         : themeSwitchTint;
   const handleCheckedChange = (nextChecked: boolean) => {
-    if (switchProps.checked == null) setUncontrolledChecked(nextChecked);
-    switchProps.onCheckedChange?.(nextChecked);
+    if (switchProps.isSelected == null) setUncontrolledChecked(nextChecked);
+    switchProps.onSelectedChange?.(nextChecked);
   };
   const handleSwiftToggleChange = (nextChecked: boolean) => {
     handleCheckedChange(nextChecked);

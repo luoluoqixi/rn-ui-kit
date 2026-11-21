@@ -1,1 +1,0 @@
-export { useSliderBehavior } from "./slider";

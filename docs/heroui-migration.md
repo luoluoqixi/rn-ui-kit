@@ -672,6 +672,45 @@ Web 根节点是真实 HeroUI / React Aria 的单个 button，没有再包一个
 - 最终生产 Web 浏览器确认单一 button 根、无嵌套 button，七变种与三尺寸正常；点击 / Space / Enter 各触发一次，加载中禁用且完成后恢复。Dialog 键盘打开、取消和焦点返回，嵌套 Dropdown / Popover 的打开、Escape 与焦点返回，Dialog → TrueSheet → 内层 Dialog → 返回 Sheet → 关闭 Sheet，以及子 AlertDialog 取消后保留父层均已回归；浏览器日志没有运行错误或警告。
 - 本轮没有操作 iOS / Android 真机，也没有执行新的原生 Release 编译。请重点验收系统原生按钮的 glass / glassProminent、SF Symbol、指定尺寸、Compose override 和触感；HeroUI 自绘按钮的按压缩放 / 高亮、加载、长按、图标和文字，以及它们作为 Dialog / 菜单 / TrueSheet 触发器时的表现。自动化测试与三端导出不能替代真机手势、动画或原生层级验收。
 
+## Switch 与 Slider：HeroUI 与系统原生分支（2026-11-21）
+
+两者的自绘分支分别使用 heroui-native/switch、heroui-native/slider 与 @heroui/react/switch、@heroui/react/slider。公共类型集中在 types.ts，两套库仅用 import type 引入；各组件只有一个 index.ts，运行时由 *_heroui.tsx / *_heroui.native.tsx 隔离。
+
+### 公共 API
+
+- **Switch** 使用 isSelected / defaultSelected / onSelectedChange / isDisabled，删除原 RNR checked / defaultChecked / onCheckedChange / disabled 及 Switch.Root 别名。size 收敛为 sm / md / lg，默认 md；Web 使用官方尺寸，HeroUI Native 保留默认 md，sm / lg 只调整轨道和滑块几何尺寸，不覆盖官方动画。保留 label / labelPosition / labelClassName / containerClassName、nativeSwiftProps / nativeComposeProps / nativeHaptics，补充 description、labelProps、controlProps、thumbProps 与 thumbContent。label / description / thumbContent 可按选择和禁用状态动态渲染；复杂标签节点保持原有布局，不强制包入 Text。
+- **Switch 自绘交互**：Native 使用真实 ControlField 共享按压状态，内部真实 Switch / Thumb 负责反馈和动画，避免标签与控件各自触发一次事件；无障碍入口在字段根，视觉控件不重复暴露。Web 保留真实 Switch.Content 的标签、键盘、焦点和表单语义，说明在内容外关联；labelPosition=left 时取消说明默认的左侧缩进。
+- **Slider** 使用 value / defaultValue / onChange / onChangeEnd、minValue / maxValue、step、isDisabled、orientation、formatOptions；删除旧 min / max、八档 size 与 thumbCount。两端均无内置 Slider size，使用官方默认外观，通过 trackProps / fillProps / thumbProps 调整局部密度与视觉。传数字即单值，传数组自动生成对应数量的滑块；泛型同时推断 onChange / onChangeEnd 的数字或数组类型。
+- **Slider 单入口内容**：label / description、showValueLabel / valueLabel、outputProps、thumbLabels、对应文字 className / props 直接配置，无需调用方组合。带 label 默认显示数值，showValueLabel=false 可关闭；formatOptions 支持百分比、货币、单位。区间值按大小排列并钳制，处理小数步长精度与无效输入，滑块的边界和手势交给官方组件。Web 使用真实 Label / Output 与隐藏 range input，保留方向键、Home / End、焦点及表单能力；Native 使用真实 Output / Track / Fill / Thumb 与官方手势。
+- **Slider 项目扩展**：保留 colors、style、trackStyle / activeTrackStyle / thumbStyle、nativeHaptics / nativeHapticsInterval。保留既有 onValueChange / onValueChangeFinished 数组回调，以及 onChangeFinished 首值回调；新的 onChangeEnd 保留 value 的实际形状。无需用这些便捷回调维护第二套状态。
+- **step=0 的边界**：系统 Slider 继续使用真正连续模式；两套 HeroUI 都需要正的 step，封装将 0 转为区间跨度的 1/10000，避免除零或 NaN。需要明确业务精度时建议直接传正小数步长。没有改变 Reanimated、Worklets 或 HeroUI 依赖版本。
+- **平台扩展**：herouiNativeProps / herouiWebProps 及各 slot 分别保留真实 RN / DOM ref、样式、动画与事件类型，不能覆盖公共选择或数值模型。Switch 的 style 沿用系统 host 样式用途，自绘根样式用平台 props；Slider 的共享 RN style 与各 slot style 仍保留，Web 在边界转换，平台样式可进一步覆盖。
+
+~~~tsx
+<Switch native={false} label="接收通知" description="及时获知重要动态。" defaultSelected nativeHaptics />
+<Switch native label="系统开关" isSelected={enabled} onSelectedChange={setEnabled} />
+<Slider native={false} label="音量" value={volume} onChange={setVolume} onChangeEnd={saveVolume} />
+<Slider native={false} label="价格范围" defaultValue={[200, 800]} maxValue={1000} step={10}
+  formatOptions={{ style: "currency", currency: "CNY" }} />
+<Slider native label="系统连续值" step={0} value={volume} onChange={setVolume} />
+~~~
+
+### 系统能力与调用方
+
+- 两者在 iOS / Android 继续默认使用系统原生控件；native=false 才选择 HeroUI。Web 始终使用 HeroUI。Slider 在竖向或多个值时自动选择 HeroUI，不再让系统 Slider 静默丢弃后续值。
+- Switch 的 SwiftUI Toggle / Compose Switch 两份 renderer 未修改。保留 Swift modifiers、Compose colors / enabled、原生事件 override、Host safe-area 修复与尺寸缩放。iOS 16+ 系统开关不重复补震，旧 iOS 与外部标签切换保留项目触感策略。
+- Slider 的原 native_slider.* 文件按约定改名为 slider_native.*，只调整内部类型 / 辅助函数 import，并补充 isDisabled 到 Swift disabled modifier / Compose enabled。原来的 Host safe-area 修复、iOS 连续 / step、iOS 边界系统反馈去重、Android step→steps、主题颜色、Android 触感 bucket 与 nativeHapticsInterval 均保留；有关 iOS 26 系统 Slider 边界重复触感的原注释仍在。入口统一维护非受控状态并接入最终值回调，系统实现未重写为自绘。
+- NativeList 的共享、自绘与 iOS 系统行仅更新 switchProps 字段名称；原生 SwiftToggle、行布局与触感策略保持原样。相关调试首页、主题页、Accordion、Toast、GlassEffect、ScrollView、NativeList 调用方同步更新。Sheet 分区高度控制保留单元素数组值和原有完成回调。
+- 两个示例参考官方 Native App 的基础、禁用、定制、区间与竖向内容，保持单入口调用、Card 分组及中文功能文案；原生开关、禁用、标签位置，以及原生连续 / 步进 / 外部更新示例继续保留，示例显式启用 nativeHaptics。
+- 删除无人使用的旧 Slider 自绘手势层，以及 @rn-primitives/switch 和它独占的 @radix-ui/react-switch 锁文件节点。没有修改 TrueSheet patch、弹层 host 或其他原生实现。
+
+### 本批验证与设备验收
+
+- 全量主测试 152 项通过、0 失败，1867 次断言，38 个测试文件。Switch / Slider 的独立子进程使用真实安装的 HeroUI 组件，Web 6 个场景，iOS / Android 各 9 个场景，覆盖受控 / 非受控状态、标签、禁用、回调次数、尺寸 / slot / ref、区间 / 小数 / 格式化、竖向手势与触感 bucket，以及既有系统 renderer 的路由、平台覆盖参数、连续 / 步进、颜色和完成回调；设备视图、动画与手势执行边界使用测试替身。公共类型正反用例同时检查泛型回调、平台 ref / 事件、原生参数与旧 API 拒绝。
+- 库及示例应用 typecheck、库 build、git diff --check 通过。Expo Web / iOS / Android 生产导出通过，source map 审计分别包含 74 / 361 / 361 个目标 HeroUI 模块，另一端模块均为 0。
+- 最新生产 Web 产物验证了 Switch 标签点击、空格切换与三档受控状态同步，Slider 方向键与完成值同步、区间端点限制；本批此前还实际拖动了 Slider，确认拖动值与结束值同步。319px 窄屏两页均未产生横向溢出，区间、数值格式、竖向与禁用示例显示正常；相关浏览器检查未记录运行错误或警告。本批未单独完成深色模式或 TrueSheet 内的浏览器回归。
+- 本轮未操作 iOS / Android 真机，也未执行新的原生 Release 编译。请在两端确认 native=false 时 Switch 按压 / 滑块动画、标签切换、Slider 拖动 / 轨道点击 / 区间 / 竖向手势和触感；native=true 时确认系统开关、连续 / 步进滑块、禁用、外部更新与最终值回调，另在 TrueSheet 中观察手势冲突、层级与关闭后的交互恢复。
+
 ## 后续批次
 
 1. **主题重构（已实现）**：见上文第二阶段。真机重新观察配色后进入简单组件迁移。

@@ -18,9 +18,9 @@ export function ScrollViewExample() {
     <ExampleStack>
       <ExampleBlock title="独立滚动区域">
         <Switch
-          checked={customScrollbar}
+          isSelected={customScrollbar}
           label="可拖拽滚动条"
-          onCheckedChange={setCustomScrollbar}
+          onSelectedChange={setCustomScrollbar}
         />
         <View style={styles.scrollFrame}>
           <ScrollView
@@ -42,8 +42,8 @@ export function ScrollViewExample() {
         <View style={styles.insetControl}>
           <Text>上下偏移: {verticalInset}px</Text>
           <Slider
-            max={64}
-            min={0}
+            maxValue={64}
+            minValue={0}
             native={false}
             onChange={setVerticalInset}
             step={1}
@@ -53,8 +53,8 @@ export function ScrollViewExample() {
         <View style={styles.insetControl}>
           <Text>左右偏移: {horizontalInset}px</Text>
           <Slider
-            max={64}
-            min={0}
+            maxValue={64}
+            minValue={0}
             native={false}
             onChange={setHorizontalInset}
             step={1}

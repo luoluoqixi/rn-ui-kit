@@ -11,18 +11,18 @@ export function NativeListSwitchItem(props: NativeListSwitchItemProps) {
   const { switchProps, ...itemProps } = props;
   const editMode = useNativeListEditMode();
   const [uncontrolledChecked, setUncontrolledChecked] = React.useState(
-    switchProps.defaultChecked ?? false,
+    switchProps.defaultSelected ?? false,
   );
-  const checked = switchProps.checked ?? uncontrolledChecked;
-  const disabled = Boolean(itemProps.disabled || switchProps.disabled);
+  const checked = switchProps.isSelected ?? uncontrolledChecked;
+  const disabled = Boolean(itemProps.disabled || switchProps.isDisabled);
   const inheritedHaptics = useResolvedNativeListHaptics(
     itemProps.nativeHaptics ?? switchProps.nativeHaptics,
   );
   const toggle = () => {
     if (disabled || editMode) return;
     const next = !checked;
-    if (switchProps.checked == null) setUncontrolledChecked(next);
-    switchProps.onCheckedChange?.(next);
+    if (switchProps.isSelected == null) setUncontrolledChecked(next);
+    switchProps.onSelectedChange?.(next);
   };
   return (
     <NativeListRow
@@ -40,11 +40,11 @@ export function NativeListSwitchItem(props: NativeListSwitchItemProps) {
         <Switch
           {...switchProps}
           native={!isWeb()}
-          size={switchProps.size ?? (isWeb() ? "xl" : undefined)}
-          checked={checked}
-          disabled={disabled || editMode}
+          size={switchProps.size}
+          isSelected={checked}
+          isDisabled={disabled || editMode}
           nativeHaptics={inheritedHaptics ?? true}
-          onCheckedChange={toggle}
+          onSelectedChange={toggle}
         />
       }
     />

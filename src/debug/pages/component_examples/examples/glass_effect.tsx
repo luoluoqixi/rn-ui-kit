@@ -639,8 +639,8 @@ export function GlassEffectExample() {
           />
           <NativeListSwitchItem
             switchProps={{
-              checked: animateStyleChanges,
-              onCheckedChange: setAnimateStyleChanges,
+              isSelected: animateStyleChanges,
+              onSelectedChange: setAnimateStyleChanges,
             }}
             title="动画切换 style"
           />
@@ -671,7 +671,7 @@ export function GlassEffectExample() {
             title="tintColor"
           />
           <NativeListSwitchItem
-            switchProps={{ checked: interactive, onCheckedChange: setInteractive }}
+            switchProps={{ isSelected: interactive, onSelectedChange: setInteractive }}
             title="isInteractive"
           />
         </NativeListSection>
@@ -719,11 +719,11 @@ export function GlassEffectExample() {
           title="任意 children"
         >
           <NativeListSwitchItem
-            switchProps={{ checked: compact, onCheckedChange: setCompact }}
+            switchProps={{ isSelected: compact, onSelectedChange: setCompact }}
             title="紧凑高度"
           />
           <NativeListSwitchItem
-            switchProps={{ checked: showSubtitle, onCheckedChange: setShowSubtitle }}
+            switchProps={{ isSelected: showSubtitle, onSelectedChange: setShowSubtitle }}
             title="显示音乐副标题"
           />
           <NativeListSelectItem
@@ -746,7 +746,7 @@ export function GlassEffectExample() {
             title="搜索文本"
           />
           <NativeListSwitchItem
-            switchProps={{ checked: playing, onCheckedChange: setPlaying }}
+            switchProps={{ isSelected: playing, onSelectedChange: setPlaying }}
             title="音乐播放状态"
           />
         </NativeListSection>

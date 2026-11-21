@@ -1,8 +1,11 @@
-import type { ColorValue, StyleProp, ViewProps, ViewStyle } from "react-native";
+import type { ComponentProps, ReactNode } from "react";
+import type { ColorValue, StyleProp, ViewStyle } from "react-native";
+import type { Slider as NativeSlider } from "heroui-native/slider";
+import type { Slider as WebSlider } from "@heroui/react/slider";
+import type { FieldMetadata, FieldSlotProps } from "../utils/field_types";
+import type { NativeHapticsSetting, RenderProp } from "../utils";
 
-import type { NativeHapticsSetting } from "../utils";
-
-/** Slider colors. Android native uses all fields; non-native uses track and thumb colors. */
+/** Android system slider supports all colors; HeroUI supports track and thumb colors. */
 export type SliderColors = {
   activeTickColor?: ColorValue;
   activeTrackColor?: ColorValue;
@@ -10,48 +13,70 @@ export type SliderColors = {
   inactiveTrackColor?: ColorValue;
   thumbColor?: ColorValue;
 };
-
-export type SliderValue = number[] | number;
-export type SliderSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+export type SliderValue = number | number[];
 export type SliderOrientation = "horizontal" | "vertical";
+export type SliderRenderContext = { values: number[]; formattedValue: string; isDisabled: boolean };
+export type SliderProps<T extends SliderValue = number> =
+  Pick<FieldMetadata, "label" | "labelProps" | "labelClassName" | "description" | "descriptionProps" | "descriptionClassName"> &
+  FieldSlotProps<ComponentProps<typeof NativeSlider>, ComponentProps<typeof WebSlider>,
+    "value" | "defaultValue" | "onChange" | "onChangeEnd" | "minValue" | "maxValue" | "step" | "isDisabled" | "orientation" | "formatOptions"> & {
+    value?: T;
+    defaultValue?: T;
+    onChange?: (value: T) => void;
+    onChangeEnd?: (value: T) => void;
+    minValue?: number;
+    maxValue?: number;
+    /** Positive step, or 0 for continuous system sliders / fine-grained HeroUI sliders. */
+    step?: number;
+    isDisabled?: boolean;
+    orientation?: SliderOrientation;
+    /** Defaults true; ranges and vertical orientation always use HeroUI. */
+    native?: boolean;
+    nativeHaptics?: NativeHapticsSetting;
+    nativeHapticsInterval?: number;
+    accessibilityLabel?: string;
+    thumbLabels?: string[];
+    nativeID?: string;
+    formatOptions?: Intl.NumberFormatOptions;
+    showValueLabel?: boolean;
+    valueLabel?: RenderProp<SliderRenderContext>;
+    outputProps?: FieldSlotProps<ComponentProps<typeof NativeSlider.Output>, ComponentProps<typeof WebSlider.Output>>;
+    trackProps?: FieldSlotProps<ComponentProps<typeof NativeSlider.Track>, ComponentProps<typeof WebSlider.Track>>;
+    fillProps?: FieldSlotProps<ComponentProps<typeof NativeSlider.Fill>, ComponentProps<typeof WebSlider.Fill>>;
+    thumbProps?: FieldSlotProps<ComponentProps<typeof NativeSlider.Thumb>, ComponentProps<typeof WebSlider.Thumb>, "index" | "isDisabled">;
+    colors?: SliderColors;
+    style?: StyleProp<ViewStyle>;
+    trackStyle?: StyleProp<ViewStyle>;
+    activeTrackStyle?: StyleProp<ViewStyle>;
+    thumbStyle?: StyleProp<ViewStyle>;
+    /** Existing convenience callbacks retained independently of the HeroUI value shape. */
+    onValueChange?: (values: number[]) => void;
+    onValueChangeFinished?: (values: number[]) => void;
+    onChangeFinished?: (firstValue: number) => void;
+  };
 
-export function resolveSliderValues(value: SliderValue | undefined): number[] | undefined {
-  if (value == null) return undefined;
-  return Array.isArray(value) ? value : [value];
-}
+/** Internal adapter contract: thumbs always receive an array; public callbacks preserve input shape. */
+export type SliderAdapterProps = Omit<SliderProps<SliderValue>, "value" | "onChange" | "onChangeEnd"> & {
+  values: number[];
+  onChange: (value: SliderValue) => void;
+  onChangeEnd: (value: SliderValue) => void;
+  formattedValue: string;
+};
 
-export function resolveSliderFirstValue(value: SliderValue | undefined, fallback: number) {
-  return resolveSliderValues(value)?.[0] ?? fallback;
-}
-
-export interface SliderProps extends ViewProps {
-  className?: string;
+/** Internal system-renderer API, preserving its native events and feedback policy. */
+export type SliderNativeProps = {
+  value?: SliderValue;
   defaultValue?: SliderValue;
-  disabled?: boolean;
-  max?: number;
   min?: number;
-  native?: boolean;
-  /** Non-native slider orientation. Vertical sliders use the custom implementation. */
-  orientation?: SliderOrientation;
-  /** Size of the non-native track and thumb. Defaults to `default` (`md`). */
-  size?: SliderSize;
+  max?: number;
+  step?: number;
+  isDisabled?: boolean;
   colors?: SliderColors;
-  /** Slider-specific tick feedback; enabled by default, or disable with false. */
+  style?: StyleProp<ViewStyle>;
   nativeHaptics?: NativeHapticsSetting;
   nativeHapticsInterval?: number;
-  /** Convenience callback for single-value sliders; receives the first thumb value. */
   onChange?: (value: number) => void;
-  /** Convenience callback after a single-value slider finishes changing. */
   onChangeFinished?: (value: number) => void;
-  onValueChange?: (value: number[]) => void;
-  onValueChangeFinished?: (value: number[]) => void;
-  step?: number;
-  /** Overrides the track container style. */
-  trackStyle?: StyleProp<ViewStyle>;
-  /** Overrides each active track segment style. */
-  activeTrackStyle?: StyleProp<ViewStyle>;
-  /** Overrides each thumb style. */
-  thumbStyle?: StyleProp<ViewStyle>;
-  thumbCount?: number;
-  value?: SliderValue;
-}
+  onValueChange?: (values: number[]) => void;
+  onValueChangeFinished?: (values: number[]) => void;
+};

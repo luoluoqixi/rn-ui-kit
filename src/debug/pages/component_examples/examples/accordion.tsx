@@ -184,7 +184,7 @@ function DepthExample() {
   const [depth, setDepth] = useState(true);
   return (
     <>
-      <Switch native={false} checked={depth} onCheckedChange={setDepth} label="景深效果" />
+      <Switch native={false} isSelected={depth} onSelectedChange={setDepth} label="景深效果" />
       <Accordion
         nativeHaptics
         value={value}

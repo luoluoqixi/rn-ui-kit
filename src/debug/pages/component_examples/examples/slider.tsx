@@ -1,118 +1,52 @@
 import { useState } from "react";
-
-import { Button, Slider, Text, isWeb } from "rn-ui-kit/core";
 import { View } from "react-native";
-import { ExampleBlock, ExampleRow, ExampleStack } from "../shared";
+import { Button, Slider, Text, isWeb } from "rn-ui-kit/core";
+import { ExampleRow, ExampleSection, ExampleStack } from "../shared";
 
 export function SliderExample() {
-  const [steppedValue, setSteppedValue] = useState(56);
-  const [continuousValue, setContinuousValue] = useState(50);
-  const [finishedValue, setFinishedValue] = useState(56);
-  const [rangeValues, setRangeValues] = useState([25, 75]);
-  const [verticalValue, setVerticalValue] = useState(64);
+  const [volume, setVolume] = useState(30);
+  const [finished, setFinished] = useState(30);
   const [nativeValue, setNativeValue] = useState(56);
-  const [nativeStepValue, setNativeStepValue] = useState(40);
-
-  return (
-    <ExampleStack>
-      <ExampleBlock description={`拖动结束值：${finishedValue}`} title="Slider">
-        <Text className="font-medium">步进值：{steppedValue}</Text>
-        <Slider
-          max={100}
-          min={0}
-          native={false}
-          onChange={(value) => setSteppedValue(value)}
-          onChangeFinished={(value) => setFinishedValue(value)}
-          step={1}
-          value={steppedValue}
-        />
-        <Text className="font-medium">连续值：{continuousValue.toFixed(2)}</Text>
-        <Slider
-          max={100}
-          min={0}
-          native={false}
-          onChange={(value) => setContinuousValue(value)}
-          step={0}
-          value={continuousValue}
-        />
-        <Text className="font-medium">
-          范围值：{rangeValues[0]} - {rangeValues[1]}
-        </Text>
-        <Slider
-          max={100}
-          min={0}
-          native={false}
-          onValueChange={setRangeValues}
-          step={5}
-          thumbCount={2}
-          value={rangeValues}
-        />
-        <ExampleRow>
-          <Button onPress={() => setSteppedValue(0)} title="最小" variant="outline" />
-          <Button onPress={() => setSteppedValue(50)} title="默认" variant="outline" />
-          <Button onPress={() => setSteppedValue(100)} title="最大" variant="outline" />
-        </ExampleRow>
-      </ExampleBlock>
-
-      <ExampleBlock description={`横向值：${verticalValue}`} title="横向 Slider">
-        <View className="h-56 flex-col items-center justify-around px-8">
-          {(["xs", "sm", "md", "lg", "xl"] as const).map((size) => (
-            <Slider
-              key={size}
-              max={100}
-              min={0}
-              native={false}
-              onChange={setVerticalValue}
-              orientation="horizontal"
-              size={size}
-              value={verticalValue}
-            />
-          ))}
-        </View>
-      </ExampleBlock>
-
-      <ExampleBlock description={`竖向值：${verticalValue}`} title="竖向 Slider">
-        <View className="h-56 flex-row items-center justify-around px-8">
-          {(["xs", "sm", "md", "lg", "xl"] as const).map((size) => (
-            <Slider
-              key={size}
-              max={100}
-              min={0}
-              native={false}
-              onChange={setVerticalValue}
-              orientation="vertical"
-              size={size}
-              value={verticalValue}
-            />
-          ))}
-        </View>
-      </ExampleBlock>
-
-      {!isWeb() ? (
-        <ExampleBlock description="Expo UI 原生平台实现。" title="原生 Slider">
-          <Text className="font-medium">原生值：{nativeValue.toFixed(2)}</Text>
-          <Slider
-            max={100}
-            min={0}
-            step={0}
-            onChange={(value) => setNativeValue(value)}
-            value={nativeValue}
-          />
-          <Text className="font-medium">原生步进值：{nativeStepValue}</Text>
-          <Slider
-            max={100}
-            min={0}
-            onChange={setNativeStepValue}
-            step={1}
-            value={nativeStepValue}
-          />
-          <ExampleRow>
-            <Button onPress={() => setNativeValue(0)} title="最小" variant="outline" />
-            <Button onPress={() => setNativeValue(50)} title="默认" variant="outline" />
-            <Button onPress={() => setNativeValue(100)} title="最大" variant="outline" />
-          </ExampleRow>
-        </ExampleBlock>
-      ) : null}
-    </ExampleStack>
-  );
+  const [nativeStep, setNativeStep] = useState(40);
+  return <ExampleStack>
+    <ExampleSection title="基础滑块" description={'拖动或点击轨道调节音量；结束值：' + finished}>
+      <Slider native={false} nativeHaptics label="音量" value={volume} onChange={setVolume} onChangeEnd={setFinished} />
+      <ExampleRow>
+        <Button nativeHaptics title="静音" variant="secondary" onPress={() => setVolume(0)} />
+        <Button nativeHaptics title="恢复" variant="secondary" onPress={() => setVolume(50)} />
+        <Button nativeHaptics title="最大" variant="secondary" onPress={() => setVolume(100)} />
+      </ExampleRow>
+    </ExampleSection>
+    <ExampleSection title="区间与数值格式" description="两个滑块限制可选区间，输出跟随数值格式。">
+      <Slider native={false} nativeHaptics label="折扣范围" defaultValue={[0.2, 0.75]} minValue={0} maxValue={1} step={0.01} formatOptions={{ style: "percent" }} />
+      <Slider native={false} nativeHaptics label="价格范围" defaultValue={[200, 800]} maxValue={1000} step={10} formatOptions={{ style: "currency", currency: "CNY", maximumFractionDigits: 0 }} />
+      <Slider native={false} nativeHaptics label="舒适温度" defaultValue={[18, 24]} minValue={10} maxValue={35} formatOptions={{ style: "unit", unit: "celsius" }} />
+    </ExampleSection>
+    <ExampleSection title="竖向滑块" description="从下往上调节；竖向模式使用自绘实现。">
+      <View className="h-48 flex-row items-center justify-around gap-8 px-4">
+        {[30, 50, 70].map((value, i) => <Slider key={i} native={false} nativeHaptics orientation="vertical"
+          accessibilityLabel={'均衡器 ' + (i + 1)} defaultValue={value} />)}
+      </View>
+    </ExampleSection>
+    <ExampleSection title="自定义轨道" description="按场景调整轨道颜色和粗细。">
+      <Slider native={false} nativeHaptics label="电量目标" defaultValue={65}
+        trackProps={{ className: "h-3 bg-success/10" }} fillProps={{ className: "bg-success" }}
+        thumbProps={{ className: "bg-success", herouiNativeProps: { classNames: { thumbKnob: "bg-success-foreground" } } }} />
+      <Slider native={false} nativeHaptics label="提醒强度" defaultValue={40}
+        trackProps={{ className: "h-1 bg-warning/15" }} fillProps={{ className: "bg-warning" }} thumbProps={{ className: "bg-warning" }} />
+    </ExampleSection>
+    <ExampleSection title="禁用状态" description="暂时不可调整的设置保留当前值。">
+      <Slider native={false} nativeHaptics label="锁定音量" defaultValue={40} isDisabled />
+    </ExampleSection>
+    {!isWeb() && <ExampleSection title="系统原生滑块" description="保留连续拖动、步进、触感和外部更新。">
+      <Slider native nativeHaptics label="连续值" step={0} value={nativeValue} onChange={setNativeValue} formatOptions={{ maximumFractionDigits: 2 }} />
+      <Slider native nativeHaptics label="步进值" step={1} value={nativeStep} onChange={setNativeStep} />
+      <Text color="muted">原生连续值：{nativeValue.toFixed(2)}</Text>
+      <ExampleRow>
+        <Button nativeHaptics title="最小" variant="outline" onPress={() => setNativeValue(0)} />
+        <Button nativeHaptics title="默认" variant="outline" onPress={() => setNativeValue(50)} />
+        <Button nativeHaptics title="最大" variant="outline" onPress={() => setNativeValue(100)} />
+      </ExampleRow>
+    </ExampleSection>}
+  </ExampleStack>;
 }

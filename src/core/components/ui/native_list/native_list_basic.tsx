@@ -477,18 +477,18 @@ export function NativeListItem(props: NativeListItemProps) {
 export function NativeListSwitchItem({ switchProps, ...itemProps }: NativeListSwitchItemProps) {
   const editMode = useNativeListEditMode();
   const [uncontrolledChecked, setUncontrolledChecked] = useState(
-    switchProps.defaultChecked ?? false,
+    switchProps.defaultSelected ?? false,
   );
-  const checked = switchProps.checked ?? uncontrolledChecked;
-  const disabled = itemProps.disabled || switchProps.disabled;
+  const checked = switchProps.isSelected ?? uncontrolledChecked;
+  const disabled = itemProps.disabled || switchProps.isDisabled;
   const inheritedHaptics = useResolvedNativeListHaptics(
     itemProps.nativeHaptics ?? switchProps.nativeHaptics,
   );
   const toggle = () => {
     if (disabled) return;
     const next = !checked;
-    if (switchProps.checked == null) setUncontrolledChecked(next);
-    switchProps.onCheckedChange?.(next);
+    if (switchProps.isSelected == null) setUncontrolledChecked(next);
+    switchProps.onSelectedChange?.(next);
   };
   return (
     <NativeListRow
@@ -502,10 +502,10 @@ export function NativeListSwitchItem({ switchProps, ...itemProps }: NativeListSw
       trailing={
         <Switch
           {...switchProps}
-          checked={checked}
-          disabled={disabled || editMode}
+          isSelected={checked}
+          isDisabled={disabled || editMode}
           nativeHaptics={inheritedHaptics ?? true}
-          onCheckedChange={toggle}
+          onSelectedChange={toggle}
         />
       }
     />
