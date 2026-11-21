@@ -1,111 +1,42 @@
 import { useState } from "react";
-import { Checkbox } from "rn-ui-kit/core";
-import { ExampleBlock, ExampleRow, ExampleStack } from "../shared";
-
+import { Check } from "lucide-react-native";
+import { Checkbox, Icon, Text } from "rn-ui-kit/core";
+import { ExampleSection, ExampleStack } from "../shared";
 export function CheckboxExample() {
-  const [values, setValues] = useState({
-    terms: true,
-    terms2: true,
-    termsWithDescription: true,
-    notifications: false,
-    notifications2: false,
-    xs: false,
-    sm: false,
-    md: false,
-    lg: false,
-    xl: false,
-  });
-
-  const update = (key: keyof typeof values) => (checked: boolean) => {
-    setValues((current) => ({ ...current, [key]: checked }));
-  };
-
+  const [selected, setSelected] = useState(false);
   return (
     <ExampleStack>
-      <ExampleBlock title="通知偏好">
+      <ExampleSection title="基本用法">
         <Checkbox
-          checked={values.terms2}
-          onCheckedChange={update("terms2")}
-          label="接受服务条款 Left"
-          labelPosition="left"
-          id="checkbox-terms-left"
+          label="接收产品更新"
+          description="我们只会发送重要发布信息。"
+          isSelected={selected}
+          onSelectedChange={setSelected}
         />
+        <Text color="muted">{selected ? "已订阅" : "未订阅"}</Text>
+      </ExampleSection>
+      <ExampleSection title="状态">
+        <Checkbox label="已选中" defaultSelected />
+        <Checkbox label="禁用" isDisabled />
+        <Checkbox label="已选中并禁用" defaultSelected isDisabled />
         <Checkbox
-          checked={values.terms}
-          onCheckedChange={update("terms")}
           label="接受服务条款"
-          id="checkbox-terms"
+          isInvalid
+          errorMessage="请先同意服务条款。"
         />
+      </ExampleSection>
+      <ExampleSection title="自定义指示器">
         <Checkbox
-          checked={values.termsWithDescription}
-          onCheckedChange={update("termsWithDescription")}
-          label="接受服务条款"
-          description="勾选此项即表示你同意服务条款和隐私政策。"
-          id="checkbox-terms-description"
+          label="圆形选框"
+          controlProps={{ className: "rounded-full" }}
+          indicator={({ isSelected }) =>
+            isSelected ? (
+              <Icon as={Check} size={12} className="text-accent-foreground" />
+            ) : null
+          }
+          defaultSelected
         />
-        <Checkbox label="启用通知" id="checkbox-notifications" disabled />
-        <Checkbox
-          checked={values.notifications}
-          onCheckedChange={update("notifications")}
-          label="启用通知 Right"
-          description="你可以随时启用或停用通知。"
-          labelPosition="right"
-          card
-          id="checkbox-notifications-card"
-          checkedClassName="border-accent bg-accent"
-          indicatorClassName="bg-accent"
-          iconClassName="text-accent-foreground"
-        />
-        <Checkbox
-          checked={values.notifications2}
-          onCheckedChange={update("notifications2")}
-          label="启用通知 Left"
-          description="你可以随时启用或停用通知。"
-          labelPosition="left"
-          card
-          id="checkbox-notifications-card2"
-          checkedClassName="border-accent bg-accent"
-          indicatorClassName="bg-accent"
-          iconClassName="text-accent-foreground"
-        />
-      </ExampleBlock>
-      <ExampleBlock title="大小示例">
-        <Checkbox
-          checked={values.xs}
-          onCheckedChange={update("xs")}
-          label="超小 Checkbox"
-          size="xs"
-          id="checkbox-xs"
-        />
-        <Checkbox
-          checked={values.sm}
-          onCheckedChange={update("sm")}
-          label="小 Checkbox"
-          size="sm"
-          id="checkbox-sm"
-        />
-        <Checkbox
-          checked={values.md}
-          onCheckedChange={update("md")}
-          label="默认 Checkbox"
-          size="md"
-          id="checkbox-md"
-        />
-        <Checkbox
-          checked={values.lg}
-          onCheckedChange={update("lg")}
-          label="大 Checkbox"
-          size="lg"
-          id="checkbox-lg"
-        />
-        <Checkbox
-          checked={values.xl}
-          onCheckedChange={update("xl")}
-          label="超大 Checkbox"
-          size="xl"
-          id="checkbox-xl"
-        />
-      </ExampleBlock>
+      </ExampleSection>
     </ExampleStack>
   );
 }

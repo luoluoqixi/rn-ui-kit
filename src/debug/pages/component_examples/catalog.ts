@@ -7,6 +7,9 @@ import { SpinnerExample } from "./examples/spinner";
 import { ProgressExample } from "./examples/progress";
 import { ToastExample } from "./examples/toast";
 import { NativeDialogExample } from "./examples/native_dialog";
+import { InputGroupExample } from "./examples/input_group";
+import { InputOTPExample } from "./examples/input_otp";
+import { TextFieldExample } from "./examples/text_field";
 import { InputExample } from "./examples/input";
 import { TextAreaExample } from "./examples/text_area";
 import { SelectExample } from "./examples/select";
@@ -67,6 +70,9 @@ export const componentExampleDefinitions: ComponentExampleDefinition[] = [
     label: "Icon",
   },
   { Component: InputExample, key: "input", label: "Input" },
+  { Component: InputGroupExample, key: "input-group", label: "InputGroup" },
+  { Component: InputOTPExample, key: "input-otp", label: "InputOTP" },
+  { Component: TextFieldExample, key: "text-field", label: "TextField" },
   { Component: LabelExample, key: "label", label: "Label" },
   { Component: LinkExample, key: "link", label: "Link" },
   {
@@ -104,7 +110,7 @@ export const componentExampleDefinitions: ComponentExampleDefinition[] = [
   { Component: SwitchExample, key: "switch", label: "Switch" },
   { Component: TabsExample, key: "tabs", label: "Tabs" },
   { Component: TextExample, key: "text", label: "Text" },
-  { Component: TextAreaExample, key: "text-area", label: "TextArea" },
+  { Component: TextAreaExample, key: "text-area", label: "Textarea" },
   { Component: ToastExample, key: "toast", label: "Toast" },
   { Component: ToggleExample, key: "toggle", label: "Toggle" },
   { Component: ToggleGroupExample, key: "toggle-group", label: "ToggleGroup" },

@@ -164,7 +164,7 @@ const theme: UiThemeConfig = {
 | 分类 | 组件 |
 | --- | --- |
 | 操作与反馈 | `Button`、`Checkbox`、`Switch`、`Toggle`、`ToggleGroup`、`Slider`、`Spinner`、`Progress`、`Toast`、`NativeDialog` |
-| 表单 | `Input`、`Textarea`、`Select`、`RadioGroup`、`Label` |
+| 表单 | `Input`、`InputGroup`、`InputOTP`、`TextField`、`Textarea`、`Select`、`RadioGroup`、`Label` |
 | 布局与组合 | `Accordion`、`Tabs`、`SplitView` / `SplitLayout`、`Card`、`Separator` |
 | 弹层 | `Dialog`、`AlertDialog`、`ContextMenu`、`Dropdown`、`Menubar`、`Popover`、`Sheet` / `NativeSheet`、`Tooltip` |
 | 列表与滚动 | `NativeList`、`ScrollView` |
@@ -175,7 +175,9 @@ const theme: UiThemeConfig = {
 
 HeroUI 迁移分支已接入 `Accordion`、`Card`、`Alert`、`Avatar`、`Badge`、`Chip`。这些组件使用单入口 props API，Native / Web 分别采用各自的 HeroUI 实现；旧 RNR 专属参数不再保留。独立标签使用 `Chip`（原标签型 Badge 已更名）；数量角标或状态点使用 `<Badge content={5}><Avatar /></Badge>`，Web 使用 HeroUI Badge，Native 使用 Chip 补齐定位。`Icon` 保留 Lucide + Uniwind 封装。`AspectRatio` 已删除，固定比例布局直接使用容器的 `aspectRatio` 样式；`Collapsible` 已删除，基础内容展开/收起使用单项 `Accordion`。具体 API 与验证记录见 [HeroUI 迁移文档](docs/heroui-migration.md)。
 
-第一版迁移中，`Select`、`Slider` 与 `Spinner` 是保证公开类型和编译稳定的占位实现；Select/Slider 的旧源码保留在 `legacy/`，后续单独重构。非原生 Toast UI 同样暂不渲染，native Toast 继续使用 Burnt。
+表单批次已迁移 `Link`、`Input`、`Checkbox`、`RadioGroup`、`Tabs`、`Textarea`，新增 `InputGroup`、`InputOTP` 与 `TextField`，全部采用单入口 props API；此前的 `Progress`、`Spinner`、`Separator`、`Skeleton`、`Text` 和 `Label` 也已完成迁移。详见 [HeroUI 迁移文档](docs/heroui-migration.md)。
+
+第一版迁移中，`Select` 与 `Slider` 是保证公开类型和编译稳定的占位实现；Select/Slider 的旧源码保留在 `legacy/`，后续单独重构。非原生 Toast UI 同样暂不渲染，native Toast 继续使用 Burnt。
 
 `Dropdown` 和 `ContextMenu` 在 Web 使用 RNR primitives，在 iOS/Android 使用共享的 Zeego 数据模型与原生实现。两者支持 compound API，也支持 rn-ui-kit 的 `items`、原生图标、haptics 与 native trigger 扩展。
 

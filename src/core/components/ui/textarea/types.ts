@@ -1,23 +1,19 @@
-import { FontTextInput as TextInput } from "../provider/font_provider";
-
-export type TextareaSize =
-  | "default"
-  | "2xs"
-  | "xs"
-  | "sm"
-  | "md"
-  | "lg"
-  | "xl"
-  | "2xl";
-
-export type TextareaProps = Omit<
-  React.ComponentProps<typeof TextInput>,
-  "size"
-> &
-  React.RefAttributes<TextInput> & {
-    disabled?: boolean;
-    placeholderClassName?: string;
-    /** Controls text size only; textarea height remains content-driven. */
-    size?: TextareaSize;
-    unstyled?: boolean;
-  };
+import type { ComponentProps } from "react";
+import type { TextArea as NativeInput } from "heroui-native/text-area";
+import type { TextArea as WebInput } from "@heroui/react/textarea";
+import type { FieldSlotProps, TextInputOptions } from "../utils/field_types";
+export type { TextInputHandle } from "../utils/field_types";
+export type TextareaProps = TextInputOptions & {
+  rows?: number;
+} & FieldSlotProps<
+    ComponentProps<typeof NativeInput>,
+    ComponentProps<typeof WebInput>,
+    | Exclude<keyof TextInputOptions, "style">
+    | "editable"
+    | "secureTextEntry"
+    | "disabled"
+    | "readOnly"
+    | "required"
+    | "id"
+    | "rows"
+  >;

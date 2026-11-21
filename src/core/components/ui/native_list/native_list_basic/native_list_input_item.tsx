@@ -1,6 +1,6 @@
 import * as React from "react";
 import { View } from "react-native";
-import { Input } from "../../input";
+import { Input } from "../input_control";
 import { NativeListCustomItem, NativeListRow } from "../native_list_basic";
 import { useNativeListEditMode } from "../edit_mode";
 import type { NativeListInputItemProps } from "../types";

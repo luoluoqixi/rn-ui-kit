@@ -541,6 +541,89 @@ heroui-native **确实导出 Typography**：锁定的 1.1.1 主入口重新导�
 - 本地 iOS Pods 已安装 RNReanimated 4.3.4，RNWorklets 仍为 0.8.1。pod install 成功，但系统 Ruby 2.6 的 Array 缺少 filter_map，Expo-precompiled 读取 SPM 配置时有非致命警告；未据此声称完成 iOS 原生编译。
 - 用户需重新构建并安装 iOS / Android 应用后，确认 Progress 的 +10 / 完成 / 不确定进度、Skeleton shimmer / pulse 和内容切换，并回归 Spinner、Accordion、TrueSheet 及系统减少动态效果。已有 Release 安装包不能仅通过重启 Metro 更新原生依赖。
 
+## Link 与表单、选择组件（2026-11-21）
+
+本批迁移 Link、Input、Checkbox、RadioGroup、Tabs、Textarea，新增 InputGroup、InputOTP、TextField。继续使用单一 index.ts、公共 types.ts、薄包装和两端 `_heroui` 实现；运行时代码按平台解析，公共类型通过 import type 引用两端，不要求调用方组合 HeroUI 子组件。
+
+| 本库组件 | Web | iOS / Android |
+| --- | --- | --- |
+| Link | HeroUI Link | HeroUI Native LinkButton |
+| Input | HeroUI Input | HeroUI Native Input |
+| InputGroup | HeroUI InputGroup | HeroUI Native InputGroup |
+| InputOTP | HeroUI InputOTP | HeroUI Native InputOTP |
+| TextField | HeroUI TextField | HeroUI Native TextField |
+| Checkbox | HeroUI Checkbox | HeroUI Native ControlField + Checkbox |
+| RadioGroup | HeroUI RadioGroup + Radio | HeroUI Native RadioGroup + Radio |
+| Tabs | HeroUI Tabs | HeroUI Native Tabs |
+| Textarea | HeroUI TextArea | HeroUI Native TextArea |
+
+### 单入口 API
+
+```tsx
+<Link href="https://example.com" size="sm">查看文档</Link>
+<Input value={name} onChangeText={setName} placeholder="姓名" />
+<InputGroup prefix="¥" suffix="CNY" inputMode="decimal" />
+<InputOTP maxLength={6} groupSize={3} onComplete={verifyCode} />
+<TextField
+  label="联系邮箱"
+  description="仅用于接收重要通知。"
+  value={email}
+  onChangeText={setEmail}
+  type="email"
+  isRequired
+  isInvalid={invalid}
+  errorMessage="请输入有效的邮箱地址。"
+/>
+<TextField multiline rows={4} label="补充说明" />
+<Checkbox label="接收通知" description="可随时关闭。" defaultSelected />
+<RadioGroup
+  label="同步方式"
+  defaultValue="auto"
+  items={[{ value: "auto", label: "自动" }, { value: "manual", label: "手动" }]}
+/>
+<Tabs
+  items={[
+    { value: "overview", title: "概览", content: <Overview /> },
+    { value: "activity", title: "动态", content: <Activity /> },
+  ]}
+/>
+<Textarea rows={4} placeholder="输入备注…" />
+```
+
+- **尺寸**：Link 提供 sm / md / lg，Native 使用 LinkButton 的内置尺寸，Web 使用对应文字 utilities。其余八个组件沿用 HeroUI 默认密度及 className / slot 定制，不复制旧 RNR size 枚举，也不新增全局 size Provider。
+- **平台扩展**：herouiNativeProps / herouiWebProps 分别提供真实的 RN / DOM ref、事件、动画与样式。公共状态参数优先，由封装统一适配；不要在平台扩展中另建一套选择或输入状态。Web 的输入、Link、Tabs trigger 与错误文字样式保留底层支持的 style 回调形式。
+- **Link**：公共 href / onPress() / isDisabled，两端默认文字使用 text-accent，跟随主题主色，labelClassName 可显式覆盖。官方 Native LinkButton 本身沿用 ghost Button 的文字色；本地官方 Terms & Privacy 示例在 LinkButton.Label 上额外设置 text-accent-soft-foreground，在线文档同类示例使用 text-accent，蓝色不是 LinkButton 固定写死的默认颜色。Web 保留真实 anchor 语义、target 与 rel，target=_blank 默认 noopener noreferrer。Native 由 Linking.openURL 打开 href；原生事件回调可 preventDefault 取消后续封装处理。DOM 与 RN 事件没有合并成一个虚假的通用事件类型。
+
+### 输入与完整字段
+
+- **Input / Textarea**：共享 value / defaultValue / onChangeText、primary / secondary、isDisabled / isReadOnly / isInvalid / isRequired、type / inputMode / autoComplete、placeholder / maxLength 等参数。Textarea 额外提供 rows，Web 映射到 rows，Native 映射到 numberOfLines；实际高度可通过 className / style 调整。Native 只读映射到 editable，Web 保留真实 readOnly；不会把 HTML 专属状态属性作为 RN 参数传入。
+- **ref**：公共 controlRef 使用 TextInputHandle，只暴露跨端都成立的 focus() / blur()。完整原生 TextInput、DOM input / textarea ref 放在对应 herouiNativeProps / herouiWebProps.ref。InputGroup 的根 ref 与输入 ref 分开，输入 ref 放在 inputProps 的平台扩展中。
+- **InputGroup**：prefix / suffix 直接接受文字、图标或交互内容；prefixProps / suffixProps.isDecorative 标记纯装饰，交互按钮不要设为装饰。inputProps / inputClassName 定制输入区域。默认 min-w-0 允许输入区域在窄屏收缩，防止后缀挤出边界。
+- **TextField**：label / description / errorMessage、对应 className 与 slot props 一次配置。自动生成并关联标签、说明与错误 ID，Native 标签通过 controlRef 聚焦。默认渲染 Input；multiline / rows 改用 Textarea；inputGroupProps 改用 InputGroup。多行时忽略 inputGroupProps。inputProps / textareaProps 定制实际输入，根平台扩展配置 TextField 容器。Web 默认 validationBehavior=aria，isInvalid 与 errorMessage 由调用方决定；封装不会自行校验邮箱或提交表单。
+- **TextField Web 状态**：value / defaultValue / onChangeText 同时在 React Aria 字段根衔接，内部输入不重复注册公共回调，避免根上下文覆盖非受控初值，或同次编辑触发两次回调。普通、multiline、InputGroup 三种形态均有初值与单次回调回归。
+- **InputOTP**：默认六格、数字输入；maxLength / groupSize 自动生成分组与分隔符，提供 value / defaultValue / onChangeText / onComplete、pattern、pasteTransformer、placeholder、variant 及禁用 / 错误状态，支持 groupProps / slotProps / separatorProps。长度钳制到 1–32，非有限长度回退六格，无效分组大小回退单组。Native 使用真实 SlotPlaceholder / SlotValue / SlotCaret 并注入项目字体。Web ref 指向隐藏输入，Native ref 为官方 focus / blur / clear / setValue actions，保留各端实际类型，不伪装成同一种 ref。
+
+### 选择与导航
+
+- **Checkbox**：使用 isSelected / defaultSelected / onSelectedChange，提供 label / description / errorMessage、labelPosition、controlProps / indicatorProps 与自定义 indicator；label / description 可根据选择、禁用和错误状态动态渲染。已移除 card 参数、对应回调上下文字段及“整行选择”示例，Checkbox 不再内置带边框、选中底色的卡片行模式；列表行布局、行选择与容器外观留到 NativeList 阶段组合。Native 继续使用真实 ControlField 保留普通标签点击切换，内层 Checkbox 避免重复的触摸和辅助技术入口；不向调用方开放会覆盖 ControlField 内部切换逻辑的根 onPress。
+- **RadioGroup**：items 驱动，公共 value / defaultValue / onValueChange；提供组标签 / 说明 / 错误、逐项说明、禁用、orientation、labelPosition、自定义 indicator 与 itemProps。Web 保留真实 Radio 的键盘方向键与表单语义，Native 保留真实 RadioGroup.Item 行交互。
+- **Tabs**：items 提供 value / title / content，支持受控或非受控选择，默认选择首个未禁用项；提供 primary / secondary、整组和逐项禁用、list / trigger / content / indicator props、isScrollable。keepMounted 保留非激活面板的组件状态，并显式隐藏它们，避免仅强制挂载时多块面板同时显示；默认按官方行为卸载非激活内容。Native 使用官方 Indicator 和 ScrollView，Web 标题继承选中态文字色。
+- Checkbox、RadioGroup 和 Tabs 提供 nativeHaptics 并默认启用，继续接受项目统一触感设置；Web 不触发原生震动。
+
+### 保留独立实现与清理依赖
+
+- NativeList 的既有自绘行依赖 RN TextInput 的 unstyled、旧行内密度、ref 和事件，不应被新的公共 Input API 改写。将其原输入实现移到 NativeList 内部 input_control.tsx / textarea_control.tsx / input_control_types.ts，调用处仅切换内部 import；这不是公共 Input 的 RNR 参数兼容层。NativeList iOS 实现及其他组件的系统原生分支没有修改。
+- 表单内普通 Text 使用的 Web Typography 会继承 React Aria TextContext，未提供 slot 时可能触发要求 description / errorMessage slot 的错误。Text 的 Web 适配器现为未显式设置 slot 的普通文字隔离该上下文，显式 slot 保留原行为。为使用这个正式导出的上下文，将原有传递依赖 react-aria-components 1.22.1 声明为直接依赖，版本未变。
+- 删除已无源码消费者的 @rn-primitives/checkbox、@rn-primitives/radio-group、@rn-primitives/tabs 直接依赖和锁文件节点。未连带升级其他包；HeroUI Native 1.1.1、HeroUI React / styles 3.2.7、Reanimated 4.3.4、TrueSheet 4.1.2 保持不变，所有 patch 与弹层 host 未改动。
+- 九个示例均使用本库单入口 API 和 ExampleSection 的 Card 分组，参考官方 Native App 的演示内容并按功能编写文案；目录新增 InputGroup / InputOTP / TextField。Label 示例同步适配新的公共输入参数与 controlRef。
+
+### 本批验证与设备验收
+
+- 主测试 146 项通过、0 失败，1861 次断言，36 个测试文件；表单 fixture 分别运行真实 Web / Native HeroUI 组件，每端 11 个场景，覆盖初值 / 受控输入 / 回调次数、标签关联、禁用 / 只读 / 错误、OTP 输入与粘贴、选择切换、Tabs 面板保留、Link 激活与字体、Typography 表单上下文和平台样式。Native 的设备、SVG 与动画环境使用替身，不代表真机验收。另有公共类型正反用例验证 ref / 事件边界及旧 RNR 参数拒绝。
+- 库与示例应用 typecheck、库 build、git diff --check 通过。Expo Web / iOS / Android 生产 JS/CSS 导出通过；实际 source map 的目标 HeroUI 模块数分别为 67 / 361 / 361，另一端模块均为 0；九个适配器各端只包含对应实现，已删除的三个 RNR primitive 没有进入产物。
+- 生产 Web 浏览器实测九个页面：输入编辑、标签聚焦、只读 / 禁用 / 错误恢复、密码显示切换、OTP 完成与粘贴过滤、Checkbox 空格切换、Radio 方向键、Tabs 键盘与滚动切换 / 禁用 / 文字状态色、Textarea 多行、Link 键盘激活及 anchor 属性。TextField 的非受控初值和三种输入形态的单次回调均已回归。319px 窄屏下 InputGroup、OTP 和 Tabs 分组未产生内部横向溢出，相关浏览器检查未记录运行错误或警告。本批未单独完成九页深色模式验收。
+- 本轮未操作 iOS / Android 真机，也未执行新的原生 Release 编译。请在两端逐页验收软键盘类型、中文输入与光标、密码切换、OTP 粘贴 / 自动填充 / 焦点和光标动画、Label 聚焦、Checkbox / RadioGroup 触摸与触感、Tabs 指示器 / 滚动 / 面板切换，以及系统大字体与深浅主题。再在 TrueSheet 中回归输入聚焦、键盘避让及关闭后恢复交互；现有 TrueSheet 与旧弹层宿主没有在本批重构。
+
 ## 后续批次
 
 1. **主题重构（已实现）**：见上文第二阶段。真机重新观察配色后进入简单组件迁移。

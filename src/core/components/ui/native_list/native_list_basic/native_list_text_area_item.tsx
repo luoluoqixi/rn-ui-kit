@@ -1,7 +1,7 @@
 import * as React from "react";
 import { StyleSheet } from "react-native";
 import { NativeListCustomItem } from "../native_list_basic";
-import { Textarea } from "../../textarea";
+import { Textarea } from "../textarea_control";
 import { useNativeListEditMode } from "../edit_mode";
 import type { NativeListTextAreaItemProps } from "../types";
 

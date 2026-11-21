@@ -1,36 +1,65 @@
-import type { ComponentProps, ReactNode } from "react";
-import type * as TabsPrimitive from "@rn-primitives/tabs";
-
+import type { ComponentProps } from "react";
+import type { Tabs as NativeTabs } from "heroui-native/tabs";
+import type { Tabs as WebTabs } from "@heroui/react/tabs";
+import type { FieldSlotProps } from "../utils/field_types";
 import type { NativeHapticsSetting, RenderProp } from "../utils";
-
-export type TabsSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
-
-export type TabsItemData = {
-  content: RenderProp<TabsItemData>;
-  contentProps?: Omit<ComponentProps<typeof TabsPrimitive.Content>, "children" | "value">;
-  disabled?: boolean;
-  title: RenderProp<TabsItemData>;
-  triggerProps?: Omit<ComponentProps<typeof TabsPrimitive.Trigger>, "children" | "value"> & {
-    size?: TabsSize;
-  };
+export type TabsRenderContext = {
   value: string;
+  isSelected: boolean;
+  isDisabled: boolean;
 };
-
-export type TabsProps = Omit<ComponentProps<typeof TabsPrimitive.Root>, "children"> & {
-  children?: ReactNode;
-  contentProps?: Omit<ComponentProps<typeof TabsPrimitive.Content>, "children" | "value">;
-  items?: TabsItemData[];
-  listProps?: ComponentProps<typeof TabsPrimitive.List> & { size?: TabsSize };
-  nativeHaptics?: NativeHapticsSetting;
-  size?: TabsSize;
-  triggerProps?: Omit<ComponentProps<typeof TabsPrimitive.Trigger>, "children" | "value"> & {
-    size?: TabsSize;
-  };
+export type TabsTriggerProps = FieldSlotProps<
+  ComponentProps<typeof NativeTabs.Trigger>,
+  ComponentProps<typeof WebTabs.Tab>,
+  "value" | "id" | "isDisabled"
+>;
+export type TabsContentProps = FieldSlotProps<
+  ComponentProps<typeof NativeTabs.Content>,
+  ComponentProps<typeof WebTabs.Panel>,
+  "value" | "id" | "forceMount" | "shouldForceMount"
+>;
+export type TabsListProps = FieldSlotProps<
+  ComponentProps<typeof NativeTabs.List>,
+  ComponentProps<typeof WebTabs.List>
+>;
+export type TabsItemData = {
+  value: string;
+  title: RenderProp<TabsRenderContext>;
+  content: RenderProp<TabsRenderContext>;
+  isDisabled?: boolean;
+  triggerProps?: TabsTriggerProps;
+  contentProps?: TabsContentProps;
+  titleClassName?: string;
 };
-
-export type TabsListProps = ComponentProps<typeof TabsPrimitive.List> & { size?: TabsSize };
-export type TabsTriggerProps = Omit<ComponentProps<typeof TabsPrimitive.Trigger>, "children"> & {
-  children?: ReactNode;
+export type TabsProps = FieldSlotProps<
+  ComponentProps<typeof NativeTabs>,
+  ComponentProps<typeof WebTabs>,
+  | "value"
+  | "onValueChange"
+  | "variant"
+  | "selectedKey"
+  | "defaultSelectedKey"
+  | "onSelectionChange"
+  | "isDisabled"
+  | "orientation"
+> & {
+  items: TabsItemData[];
+  value?: string;
+  defaultValue?: string;
+  onValueChange?: (value: string) => void;
+  variant?: "primary" | "secondary";
+  isDisabled?: boolean;
+  accessibilityLabel?: string;
   nativeHaptics?: NativeHapticsSetting;
-  size?: TabsSize;
+  listProps?: TabsListProps;
+  triggerProps?: TabsTriggerProps;
+  contentProps?: TabsContentProps;
+  indicatorProps?: FieldSlotProps<
+    ComponentProps<typeof NativeTabs.Indicator>,
+    ComponentProps<typeof WebTabs.Indicator>
+  >;
+  /** Keep inactive panels mounted on both platforms. */
+  keepMounted?: boolean;
+  /** Horizontal overflow; Native uses the official animated ScrollView. */
+  isScrollable?: boolean;
 };

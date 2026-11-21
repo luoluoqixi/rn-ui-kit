@@ -1,56 +1,62 @@
-import type { ComponentProps, ReactNode } from "react";
-import type * as RadioGroupPrimitive from "@rn-primitives/radio-group";
-
+import type { ComponentProps } from "react";
+import type { RadioGroup as NativeGroup } from "heroui-native/radio-group";
+import type { Radio as NativeRadio } from "heroui-native/radio";
+import type { RadioGroup as WebGroup } from "@heroui/react/radio-group";
+import type { Radio as WebRadio } from "@heroui/react/radio";
+import type { FieldMetadata, FieldSlotProps } from "../utils/field_types";
 import type { NativeHapticsSetting, RenderProp } from "../utils";
-
 export type RadioGroupItemRenderContext = {
-  checked: boolean;
-  disabled?: boolean;
   value: string;
+  isSelected: boolean;
+  isDisabled: boolean;
+  isInvalid: boolean;
 };
-
-export type RadioGroupSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
-
-export interface RadioGroupItemData {
-  "aria-label"?: string;
-  "description"?: RenderProp<RadioGroupItemRenderContext>;
-  "descriptionClassName"?: string;
-  "disabled"?: boolean;
-  "label"?: RenderProp<RadioGroupItemRenderContext>;
-  "labelClassName"?: string;
-  "labelPosition"?: "left" | "right";
-  "size"?: RadioGroupSize;
-  "itemProps"?: Omit<RadioGroupItemProps, "value" | "label" | "description">;
-  "value": string;
-}
-
-export type RadioGroupItemProps = Omit<
-  ComponentProps<typeof RadioGroupPrimitive.Item>,
-  "children"
+export type RadioGroupItemProps = FieldSlotProps<
+  ComponentProps<typeof NativeGroup.Item>,
+  ComponentProps<typeof WebRadio>,
+  "value" | "isDisabled" | "isInvalid" | "variant" | "isSelected" | "onChange"
 > & {
-  description?: RenderProp<RadioGroupItemRenderContext>;
-  descriptionClassName?: string;
-  indicatorProps?: ComponentProps<typeof RadioGroupPrimitive.Indicator>;
-  indicatorClassName?: string;
   label?: RenderProp<RadioGroupItemRenderContext>;
+  description?: RenderProp<RadioGroupItemRenderContext>;
   labelClassName?: string;
+  descriptionClassName?: string;
   labelPosition?: "left" | "right";
-  nativeHaptics?: NativeHapticsSetting;
-  size?: RadioGroupSize;
-  containerClassName?: string;
+  isDisabled?: boolean;
+  accessibilityLabel?: string;
+  indicator?: RenderProp<RadioGroupItemRenderContext>;
+  indicatorProps?: FieldSlotProps<
+    ComponentProps<typeof NativeRadio.Indicator>,
+    ComponentProps<typeof WebRadio.Control>
+  >;
 };
-
-export type RadioGroupProps = Omit<
-  ComponentProps<typeof RadioGroupPrimitive.Root>,
-  "children" | "onValueChange" | "value"
-> & {
-  children?: ReactNode;
-  defaultValue?: string;
-  items?: RadioGroupItemData[];
-  itemProps?: Omit<RadioGroupItemProps, "value" | "label" | "description">;
-  labelPosition?: "left" | "right";
-  nativeHaptics?: NativeHapticsSetting;
-  size?: RadioGroupSize;
-  onValueChange?: (value: string) => void;
-  value?: string;
-};
+export type RadioGroupItemData = RadioGroupItemProps & { value: string };
+export type RadioGroupProps = FieldMetadata &
+  FieldSlotProps<
+    ComponentProps<typeof NativeGroup>,
+    ComponentProps<typeof WebGroup>,
+    | "value"
+    | "onValueChange"
+    | "defaultValue"
+    | "onChange"
+    | "isDisabled"
+    | "isInvalid"
+    | "variant"
+    | "name"
+    | "orientation"
+    | "isRequired"
+  > & {
+    items: RadioGroupItemData[];
+    itemProps?: RadioGroupItemProps;
+    value?: string;
+    defaultValue?: string;
+    onValueChange?: (value: string) => void;
+    isDisabled?: boolean;
+    isInvalid?: boolean;
+    isRequired?: boolean;
+    variant?: "primary" | "secondary";
+    orientation?: "horizontal" | "vertical";
+    labelPosition?: "left" | "right";
+    name?: string;
+    accessibilityLabel?: string;
+    nativeHaptics?: NativeHapticsSetting;
+  };

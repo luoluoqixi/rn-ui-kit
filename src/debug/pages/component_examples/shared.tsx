@@ -27,7 +27,13 @@ export function ComponentExamplePlaceholder({
         {name} 示例：{status}
       </Text>
       <Card
-        content={children ?? <Text>此示例保留独立文件和路由，具体交互将在后续迁移阶段补齐。</Text>}
+        content={
+          children ?? (
+            <Text>
+              此示例保留独立文件和路由，具体交互将在后续迁移阶段补齐。
+            </Text>
+          )
+        }
         contentProps={{ className: "gap-3" }}
         title={name}
       />
@@ -65,16 +71,20 @@ export function ExampleStack({ children }: { children: ReactNode }) {
 export function ExampleSection({
   children,
   title,
+  description,
   withCard = true,
 }: {
   children: ReactNode;
   title: string;
+  description?: string;
   withCard?: boolean;
 }) {
   return (
     <ExampleSectionView className="gap-3">
       {withCard ? (
-        <ExampleBlock title={title}>{children}</ExampleBlock>
+        <ExampleBlock title={title} description={description}>
+          {children}
+        </ExampleBlock>
       ) : (
         <>
           <Text className="text-sm text-muted">{title}</Text>
@@ -115,6 +125,11 @@ export function ExampleRow({
 }
 
 const styles = StyleSheet.create({
-  row: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  row: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
   stack: { gap: 16, width: "100%" },
 });

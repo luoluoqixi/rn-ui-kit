@@ -3,7 +3,7 @@ import * as React from "react";
 import { Children, Fragment, isValidElement, type ReactNode, useState } from "react";
 import { Platform, Pressable, RefreshControl, StyleSheet, View } from "react-native";
 
-import { Input } from "../input";
+import { Input } from "./input_control";
 import { ContextMenu } from "../context_menu";
 import { Dropdown } from "../dropdown";
 import { Select } from "../select";
@@ -11,7 +11,7 @@ import { resolveSelectItemGroups } from "../select/select_grouping";
 import type { SelectHandle } from "../select/types";
 import { Switch } from "../switch";
 import { Text } from "../text";
-import { Textarea } from "../textarea";
+import { Textarea } from "./textarea_control";
 import { ScrollView } from "../scroll_view";
 import { triggerNativeHaptics } from "../utils";
 import { resolveRenderProp } from "../utils/render";

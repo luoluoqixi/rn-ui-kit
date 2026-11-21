@@ -1,27 +1,57 @@
 import { useState } from "react";
-import { Button, Input, Label } from "rn-ui-kit/core";
-import { ExampleBlock, ExampleStack } from "../shared";
-
+import { Input, Text, TextField } from "rn-ui-kit/core";
+import { ExampleSection, ExampleStack } from "../shared";
 export function InputExample() {
-  const [value, setValue] = useState("rn-ui-kit");
-  const [slug, setSlug] = useState("component-lab");
+  const [value, setValue] = useState("");
   return (
     <ExampleStack>
-      <ExampleBlock>
-        <Label nativeID="component-example-name">显示名称</Label>
-        <Input onChangeText={setValue} placeholder="输入组件名称" value={value} />
-        <Label nativeID="component-example-slug">URL 标识</Label>
-        <Input onChangeText={setSlug} placeholder="my-workspace" value={slug} />
-        <Button>确定</Button>
-      </ExampleBlock>
-      <ExampleBlock>
-        <Label nativeID="component-example-name">大小</Label>
-        <Input size="xs" placeholder="超小 Input" />
-        <Input size="sm" placeholder="小 Input" />
-        <Input size="md" placeholder="默认 Input" />
-        <Input size="lg" placeholder="大 Input" />
-        <Input size="xl" placeholder="超大 Input" />
-      </ExampleBlock>
+      <ExampleSection title="基本输入" description="输入内容会同步到下方预览。">
+        <Input
+          accessibilityLabel="组件名称"
+          placeholder="输入组件名称"
+          value={value}
+          onChangeText={setValue}
+        />
+        <Text color="muted">{value || "等待输入…"}</Text>
+      </ExampleSection>
+      <ExampleSection title="标签与说明">
+        <TextField
+          label="电子邮箱"
+          description="用于接收工作区邀请。"
+          type="email"
+          autoComplete="email"
+          placeholder="name@example.com"
+        />
+      </ExampleSection>
+      <ExampleSection title="两种样式">
+        <Input
+          accessibilityLabel="主要样式"
+          placeholder="Primary"
+          variant="primary"
+        />
+        <Input
+          accessibilityLabel="次要样式"
+          placeholder="Secondary"
+          variant="secondary"
+        />
+      </ExampleSection>
+      <ExampleSection title="输入状态">
+        <Input
+          accessibilityLabel="禁用输入"
+          defaultValue="不可编辑"
+          isDisabled
+        />
+        <Input
+          accessibilityLabel="只读输入"
+          defaultValue="可以聚焦并选择内容"
+          isReadOnly
+        />
+        <Input
+          accessibilityLabel="无效输入"
+          defaultValue="无效邮箱地址"
+          isInvalid
+        />
+      </ExampleSection>
     </ExampleStack>
   );
 }

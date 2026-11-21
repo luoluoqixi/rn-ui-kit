@@ -1,2 +1,2 @@
-export * from "./radio_group";
+export { RadioGroup } from "./radio_group";
 export type * from "./types";

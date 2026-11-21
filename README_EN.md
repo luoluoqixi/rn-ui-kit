@@ -115,7 +115,7 @@ See the [Chinese theme guide](./README.md#3-provider-与主题) and [migration d
 | Category | Components |
 | --- | --- |
 | Actions and feedback | `Button`, `Checkbox`, `Switch`, `Toggle`, `ToggleGroup`, `Slider`, `Spinner`, `Progress`, `Toast`, `NativeDialog` |
-| Forms | `Input`, `Textarea`, `Select`, `RadioGroup`, `Label` |
+| Forms | `Input`, `InputGroup`, `InputOTP`, `TextField`, `Textarea`, `Select`, `RadioGroup`, `Label` |
 | Layout | `Accordion`, `Tabs`, `SplitView` / `SplitLayout`, `Card`, `Separator` |
 | Overlays | `Dialog`, `AlertDialog`, `ContextMenu`, `Dropdown`, `Menubar`, `Popover`, `Sheet` / `NativeSheet`, `Tooltip` |
 | Lists | `NativeList`, `ScrollView` |
@@ -127,7 +127,9 @@ See the [Chinese theme guide](./README.md#3-provider-与主题) and [migration d
 
 The HeroUI migration branch includes `Accordion`, `Card`, `Alert`, `Avatar`, `Badge`, and `Chip`, with a single props-based entry and separate platform implementations. The former label-style Badge is now `Chip`. Use `<Badge content={5}><Avatar /></Badge>` for an anchored indicator, or omit `content` for a status dot. Badge uses HeroUI Badge on Web and a positioned HeroUI Native Chip on iOS/Android; standalone Chip uses HeroUI Chip on both platforms. `Icon` keeps its Lucide + Uniwind wrapper. See [the migration guide](docs/heroui-migration.md) for API details and verification boundaries.
 
-In the first migration baseline, `Select`, `Slider`, and `Spinner` are compile-safe placeholders. Select and Slider source references live under `legacy/` for later focused migrations. Non-native Toast UI is also a no-op; native Toast continues to use Burnt.
+The form batch migrates `Link`, `Input`, `Checkbox`, `RadioGroup`, `Tabs`, and `Textarea`, and adds `InputGroup`, `InputOTP`, and `TextField`, all with one props-based entry. `Progress`, `Spinner`, `Separator`, `Skeleton`, `Text`, and `Label` were migrated earlier. See the [migration guide](docs/heroui-migration.md).
+
+In the first migration baseline, `Select` and `Slider` are compile-safe placeholders. Select and Slider source references live under `legacy/` for later focused migrations. Non-native Toast UI is also a no-op; native Toast continues to use Burnt.
 
 `Dropdown` and `ContextMenu` use RNR primitives on Web and a shared Zeego-backed native data model on iOS and Android. Both compound APIs and rn-ui-kit extensions such as `items`, native icons, haptics, and native triggers are available.
 

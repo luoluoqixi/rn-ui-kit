@@ -1,12 +1,18 @@
-import type { TextInput } from "react-native";
-
-export type InputSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
-
-export type InputProps = Omit<React.ComponentProps<typeof TextInput>, "size"> &
-  React.RefAttributes<TextInput> & {
-    autoFocusNative?: boolean;
-    disabled?: boolean;
-    size?: InputSize;
-    placeholderClassName?: string;
-    unstyled?: boolean;
-  };
+import type { ComponentProps } from "react";
+import type { Input as NativeInput } from "heroui-native/input";
+import type { Input as WebInput } from "@heroui/react/input";
+import type { FieldSlotProps, TextInputOptions } from "../utils/field_types";
+export type { TextInputHandle } from "../utils/field_types";
+export type InputProps = TextInputOptions &
+  FieldSlotProps<
+    ComponentProps<typeof NativeInput>,
+    ComponentProps<typeof WebInput>,
+    | Exclude<keyof TextInputOptions, "style">
+    | "editable"
+    | "secureTextEntry"
+    | "disabled"
+    | "readOnly"
+    | "required"
+    | "id"
+    | "rows"
+  >;
