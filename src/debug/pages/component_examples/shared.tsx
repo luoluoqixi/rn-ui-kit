@@ -61,12 +61,26 @@ export function ExampleStack({ children }: { children: ReactNode }) {
   return <View style={styles.stack}>{children}</View>;
 }
 
-/** A quiet section label without adding a Card around the showcased component. */
-export function ExampleSection({ children, title }: { children: ReactNode; title: string }) {
+/** Group demos in a Card; Card demos opt out to avoid nested containers. */
+export function ExampleSection({
+  children,
+  title,
+  withCard = true,
+}: {
+  children: ReactNode;
+  title: string;
+  withCard?: boolean;
+}) {
   return (
     <ExampleSectionView className="gap-3">
-      <Text className="text-sm text-muted">{title}</Text>
-      {children}
+      {withCard ? (
+        <ExampleBlock title={title}>{children}</ExampleBlock>
+      ) : (
+        <>
+          <Text className="text-sm text-muted">{title}</Text>
+          {children}
+        </>
+      )}
     </ExampleSectionView>
   );
 }

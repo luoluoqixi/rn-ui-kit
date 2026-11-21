@@ -319,7 +319,8 @@ test.skipIf(!native)("native example labels and accordions share stable layout-a
   // Keep this fixture limited to Accordion and the actual example section,
   // without loading unrelated system-native components from the UI barrel.
   mock.module("../src/core/components/ui", () => ({
-    Card: NativeView, Input: NativeView, NativeList: NativeView,
+    Card: ({ title, content }) => <NativeView><Text>{title}</Text>{content}</NativeView>,
+    Input: NativeView, NativeList: NativeView,
     NativeListNavigationItem: NativeView, NativeListSection: NativeView, Text, Textarea: NativeView,
   }));
   const { ExampleSection, ExampleStack } = await import("../src/debug/pages/component_examples/shared");

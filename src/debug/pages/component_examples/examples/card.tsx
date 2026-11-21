@@ -30,7 +30,7 @@ export function CardExample() {
 
   return (
     <ExampleStack>
-      <ExampleSection title="基础卡片">
+      <ExampleSection title="基础卡片" withCard={false}>
         <Card
           header={<View className="gap-1"><Text className="text-lg font-medium text-pink-400">HEADER</Text><Text className="text-lg font-medium">标题与正文</Text></View>}
           content="通过 header、content 和 footer 组织内容，底部可直接传入操作按钮。"
@@ -45,7 +45,7 @@ export function CardExample() {
         />
       </ExampleSection>
 
-      <ExampleSection title="图片卡片">
+      <ExampleSection title="图片卡片" withCard={false}>
         <View className="flex-row gap-4">
           {communities.map(community => (
             <Card key={community.title} className="min-w-0 flex-1"
@@ -57,7 +57,7 @@ export function CardExample() {
         </View>
       </ExampleSection>
 
-      <ExampleSection title="横向图片卡片">
+      <ExampleSection title="横向图片卡片" withCard={false}>
         {events.map(event => (
           <Card key={event.title} variant="tertiary"
             content={
@@ -76,7 +76,7 @@ export function CardExample() {
         ))}
       </ExampleSection>
 
-      <ExampleSection title="背景图片卡片">
+      <ExampleSection title="背景图片卡片" withCard={false}>
         <Card className="overflow-hidden p-0"
           content={
             <ImageBackground source={{ uri: assets + "neo2.jpeg" }} accessibilityLabel="Neo 家用机器人" resizeMode="cover" style={{ minHeight: 300, padding: 20 }}>
@@ -93,7 +93,7 @@ export function CardExample() {
         />
       </ExampleSection>
 
-      <ExampleSection title="Variants">
+      <ExampleSection title="Variants" withCard={false}>
         {variants.map(({ variant, title, description }) => (
           <Card key={variant} variant={variant} title={title} description={description} className={variant === "transparent" ? "border border-border shadow-none" : undefined} />
         ))}

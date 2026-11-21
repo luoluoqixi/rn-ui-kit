@@ -33,7 +33,6 @@ import { SeparatorExample } from "./examples/separator";
 import { LinkExample } from "./examples/link";
 import { AlertExample } from "./examples/alert";
 import { BadgeExample } from "./examples/badge";
-import { AspectRatioExample } from "./examples/aspect_ratio";
 import { CollapsibleExample } from "./examples/collapsible";
 import { SkeletonExample } from "./examples/skeleton";
 import { ToggleExample } from "./examples/toggle";
@@ -48,7 +47,6 @@ export const componentExampleDefinitions: ComponentExampleDefinition[] = [
   { Component: AccordionExample, key: "accordion", label: "Accordion" },
   { Component: AlertExample, key: "alert", label: "Alert" },
   { Component: AlertDialogExample, key: "alert-dialog", label: "AlertDialog" },
-  { Component: AspectRatioExample, key: "aspect-ratio", label: "AspectRatio" },
   { Component: AvatarExample, key: "avatar", label: "Avatar" },
   { Component: BadgeExample, key: "badge", label: "Badge" },
   { Component: ButtonExample, key: "button", label: "Button" },

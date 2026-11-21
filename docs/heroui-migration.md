@@ -224,7 +224,8 @@ Metro 的平台解析与 TypeScript 的解析不是同一个机制。编辑器�
 - 默认参考 HeroUI Native 官方 app 的演示内容、分组与简洁程度。本机参考仓库为 `/Users/luoqixi/luoqixi/project/AI/heroui-native`，对应页面在 `example/src/app/(home)/components/`。参考项目只读，不把它的依赖、国际化框架或路由一并搬入本项目。
 - 参考内容与视觉演示，不复制组合式调用。示例默认使用 rn-ui-kit 的单入口组件与 props，不直接引用平台 HeroUI 组件和内部 hook；需要自定义图标或图片时可以传普通节点。
 - 本项目在同一页连续展示多组示例，具体文案按每组功能分别编写，说明当前效果与操作方法；不重复照搬官方独立示例页中相同的 FAQ 或业务场景文本。
-- 简单组件的分组使用 ExampleSection（标签与演示），不为每个演示额外套一张 Card。示例聚焦实际使用场景，复杂参数组合、非法输入、ref、字体和边界值主要通过自动化测试与 API 文档覆盖。
+- 简单组件的分组使用 ExampleSection，默认复用 ExampleBlock 的 Card 承载标题与演示，使各组有清晰的背景和边界。Card 自身的示例显式设置 withCard={false}，只保留分组标签与演示，避免重复嵌套 Card。示例聚焦实际使用场景，复杂参数组合、非法输入、ref、字体和边界值主要通过自动化测试与 API 文档覆盖。
+- 示例目录与页面标题使用本库公开组件名称；Badge 对外只显示 Badge，不附加底层 Chip 实现名称。
 - Native 的 ExampleSection 使用同一个布局动画容器包裹分组标签和演示内容，使前一组高度变化时后续分组整体移动。组件自己的布局动画不负责其外部的普通 View / Text；不要为此全局改造 Text，或把示例页面的布局逻辑塞进 Accordion。Web 的分组容器继续使用普通 View。
 - Select、Dropdown、Sheet 等项目深度定制示例，以及各组件系统原生 UI 的专属示例，保留其项目特有内容。遇到特殊示例而无法确定是否应替换时，先向用户确认，不自动用官方基础示例覆盖。
 - 此约定也写入 `.agents/AGENTS.md`，供后续组件任务读取。
@@ -323,6 +324,60 @@ Card 原先是项目内的 View / Text 自绘封装，并没有单独的 RNR Car
 - 全量主测试仍为 135 项通过、0 失败，1814 次断言；Native Accordion 独立测试由 9 增至 10 个场景，69 次断言，增加分组标签与演示共享布局动画容器、展开 / 收起后保持后续触发区节点的检查。DOM 测试仅记录布局动画配置并验证交互，不计算原生布局动画帧。
 - 库与示例 typecheck、库 build、Expo 三端带 source map 导出及平台审计通过。Web / iOS / Android 的 HeroUI 模块仍为 17 / 361 / 361，另一端模块均为 0；实际 source map 确认 Web 仅包含普通分组容器，iOS / Android 仅包含 Native 动画容器。
 - 本轮没有操作真机；需要在设备上展开 / 收起前面的分组，检查后续分组标签与演示是否同步平滑移动，并在系统减少动态效果开启时确认无需动画。此修复针对示例分组的外层重排，不能据自动化测试声称已排除所有设备上的条目动画问题。
+
+## Alert、Avatar、Badge（Chip）迁移（2026-11-21）
+
+本批替换三个组件的自绘实现：Native 使用 heroui-native 对应组件的公开子路径，Web 使用 @heroui/react 对应子路径；Badge 的底层组件为 Chip，对外继续保留 Badge 名称。这三个组件原来均无独立的系统原生实现，因此没有新增 native 开关或空壳原生分支。没有改动 TrueSheet、现有弹层 host 或任何补丁。
+
+文件结构沿用第三阶段约定：唯一 index.ts、公共 types.ts、薄包装组件、默认 Web 适配器与 _heroui.native.tsx 适配器。两端底层 props 通过 import type 引入同一个 types.ts，ref、事件、样式和动画仍分别放入 herouiNativeProps / herouiWebProps。slot 上也遵循同样约定，不能通过底层 children、asChild / render 绕开封装管理的结构。
+
+### 公共 API
+
+| 组件 | 主要配置 | 尺寸与默认值 |
+| --- | --- | --- |
+| Alert | status、title、description、content、action、indicator；保留 icon / iconProps / iconSize / iconAlign 等项目快捷配置 | 两端均无 size，不额外创建；status 默认 default |
+| Avatar | src、alt、fallback、variant、color；imageProps / fallbackProps 及对应 className | size 为 sm / md / lg，默认 md；variant 默认 default；color 默认 accent |
+| Badge | label、children、icon、startContent、endContent、variant、color；labelProps / labelClassName | size 为 sm / md / lg，默认 md；variant 默认 primary；color 默认 accent |
+
+Avatar / Badge 的共同默认值采用 HeroUI Native，Web 显式传入相同值，避免同一调用在两端出现不同的初始语义色。HeroUI Web 上游的 Avatar color、Chip variant / color 默认值与 Native 不同，这里是封装层明确做出的统一选择。Alert 沿用两端共有的 default 状态。
+
+- Alert 的 status 为 default / accent / success / warning / danger。默认显示对应状态图标；自定义 indicator 或 icon 可以替换，indicator 为 null / false 时隐藏。title / description 各自有 props 与 className，content 与 children 追加在正文列内，action 位于正文列外侧。使用真实 HeroUI Indicator / Content / Title / Description，按实际存在的标题、说明建立无障碍 ID 关联；不保留 RNR 的 destructive variant 或公开组合式子组件。
+- Avatar 的 variant 为 default / soft，color 为 default / accent / success / warning / danger。src 是通用 URL；Native 本地资源可使用 imageProps.herouiNativeProps.source，显式 src 优先。fallback 省略时显示人物图标，字符串为文字回退，也支持节点和接收当前尺寸/颜色等信息的回调；null / false 隐藏回退，数字 0 正常显示。alt 默认为“头像”，空字符串表示装饰图片。保留真实 HeroUI 图片加载和失败回退，不另造加载状态；图片子组件在清空 src 时保持挂载，让底层恢复失败/无源回退状态。fallbackClassName 设置容器，fallbackTextClassName 设置文字；Web 回退层有独立背景，自定义头像底色时需要同时设置该层。公开调用不再提供 Avatar.Image / Avatar.Fallback 组合入口。
+- Badge 的 variant 为 primary / secondary / tertiary / soft，color 为 default / accent / success / warning / danger。children 优先于 label，并且不会调用被覆盖的 label 回调；startContent 优先于 icon 快捷方式，显式 null 可以隐藏图标。内部使用真实 Chip.Label，图标与自定义 Text 接收尺寸、语义颜色和 label 样式上下文。没有为 Web 的展示型 Chip 发明通用点击模型；平台底层事件仍可分别配置。不保留旧 RNR/CVA 的 default / outline / destructive 等 badge variant。
+- 新文字边界继续注入项目字体，Native 保留 HeroText 的字体缩放设置；显式 slot 字体/样式和 font-mono 覆盖仍生效。View 内容槽中的直接字符串、数字与 Fragment 内直接文本通过共享 slot_content 辅助函数包装为项目 Text，自定义元素保持不变。Web 的文本槽仍遵循 HTML 的行内内容限制，复杂正文放到 content。
+
+调用保持单入口：
+
+~~~tsx
+<Alert status="success" title="已保存" description="更改已经生效。" />
+<Avatar src={user.avatar} alt={user.name} fallback="LQ" size="lg" variant="soft" />
+<Badge label="已完成" color="success" variant="soft" icon={Check} />
+~~~
+
+### 示例与删除内容
+
+- 所有七处 Accordion 示例调用显式启用 nativeHaptics，包括景深示例。仅调整示例默认值，组件本身的默认触觉策略不变，Web 不触发原生震动。
+- Alert 参考官方四组演示形式：默认/强调、语义状态、附带操作、自定义指示器。刷新、重试、关闭与重新显示为本地可交互状态。
+- Avatar 参考官方八组形式：尺寸、文字回退、柔和文字、默认人物图标、柔和图标、自定义回退、重叠头像、自定义尺寸/形状/状态。图片沿用官方资源。
+- Badge 参考官方九组形式：尺寸、variant、四组 variant × color、前置图标/状态点、尾部内容、自定义样式。状态点使用行内 SVG，避免 Web Chip 的 span 内嵌入 View 生成的 div。
+- 示例继续使用本库单入口 API、ExampleSection / ExampleRow / ExampleStack；连续页面按功能使用不同中文文案，没有引入官方路由或组合式调用。
+- 删除 AspectRatio 实现、公共类型、barrel 导出、示例文件及目录入口。固定比例直接用容器 aspectRatio 样式即可。
+- 移除已经没有消费者的 @rn-primitives/aspect-ratio 与 @rn-primitives/avatar 两项依赖，并由 Bun 更新根锁文件。README 组件表同步更新；其余 RNR 依赖按剩余消费者保留。
+
+### 本批验证
+
+- 主测试 137 项通过、0 失败，1816 次断言，32 个测试文件。新隔离 fixture 在 Web / Native 各执行 6 个场景，运行真实 HeroUI 组件与 primitive，覆盖语义状态、可选标题/说明关联、ref、回调与数字 0、操作事件、Avatar 图片成功/失败/换源/清空后的回退、Chip 标签与前后内容、字体及平台 props 隔离。Native 的设备、SVG 与动画环境使用替身，不据此声称已验证真机动画。
+- 新增公共类型检查：同一个入口同时支持 Native / DOM refs、事件与样式，拒绝旧尺寸/variant、混用平台 ref、绕开受控结构和虚构 native 模式。库与示例应用 typecheck、库 build、示例生产 build:web 均通过。
+- Expo 同一配置的三端带 source map 导出通过。Web / iOS / Android 模块图分别包含 24 / 361 / 361 个目标 HeroUI 模块，另一端模块均为 0；实际 source map 仅包含对应平台的三个适配器，均不再包含 @rn-primitives/avatar 或 @rn-primitives/aspect-ratio。
+- 生产 Web 页面检查通过：Alert 刷新、重试、关闭与重新显示正常，Avatar 的 14 张示例图片实际完成加载并显示，文字与图标回退可见，Badge 的 39 个示例标签无内部横向溢出、无非法 div 嵌入；上述页面未记录运行错误或警告。修正自定义 Avatar 回退层背景后重新构建并检查。
+- 本轮未操作 iOS / Android 真机或执行原生 Release 编译。设备上仍需确认 Accordion 触觉反馈、Avatar 图片加载/失败过渡和本地资源，以及系统大字体下 Alert 操作区域、头像文字与 Chip 标签的展示。
+
+### 示例分组容器调整（2026-11-21）
+
+- Badge 的示例目录、导航标题与页面说明统一使用 Badge，不再附加 Chip。
+- ExampleSection 默认复用 ExampleBlock，以本库 Card 承载每组标题与演示，覆盖 Accordion、Alert、Avatar、Badge。Card 示例的五处分组显式设置 withCard={false}，保留原有单层卡片。Native 外层 ExampleSectionView 及其布局动画配置保持原样，继续包裹整组内容。
+- 调整 Accordion 现有布局回归 fixture 的 Card 替身以呈现 title / content 插槽，原有分组稳定性及展开 / 收起检查通过。主测试 137 项通过、0 失败；库与示例 typecheck、库 build、示例 build:web 均通过。
+- 生产 Web 页面确认 Badge 名称，以及 Accordion / Alert / Avatar / Badge 各组背景与标题；Card 页面没有嵌套 Card，示例卡片无内部横向溢出，Accordion 展开交互正常，浏览器未记录运行错误或警告。本轮未操作 iOS / Android 真机，原生重排动画需设备验收。
 
 ## 后续批次
 

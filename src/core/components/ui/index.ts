@@ -1,7 +1,6 @@
 export * from "./accordion";
 export * from "./alert";
 export * from "./alert_dialog";
-export * from "./aspect_ratio";
 export * from "./avatar";
 export * from "./badge";
 export * from "./button";

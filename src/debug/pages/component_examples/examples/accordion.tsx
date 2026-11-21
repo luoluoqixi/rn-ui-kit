@@ -186,6 +186,7 @@ function DepthExample() {
     <>
       <Switch native={false} checked={depth} onCheckedChange={setDepth} label="景深效果" />
       <Accordion
+        nativeHaptics
         value={value}
         onValueChange={setValue}
         hideSeparator
@@ -225,13 +226,14 @@ export function AccordionExample() {
   return (
     <ExampleStack>
       <ExampleSection title="默认样式">
-        <Accordion defaultValue="2" items={defaultItems} contentClassName="px-7" />
+        <Accordion nativeHaptics defaultValue="2" items={defaultItems} contentClassName="px-7" />
       </ExampleSection>
       <ExampleSection title="Surface 样式">
-        <Accordion variant="surface" items={surfaceItems} contentClassName="px-7" />
+        <Accordion nativeHaptics variant="surface" items={surfaceItems} contentClassName="px-7" />
       </ExampleSection>
       <ExampleSection title="多项展开">
         <Accordion
+          nativeHaptics
           selectionMode="multiple"
           variant="surface"
           defaultValue={["1", "3"]}
@@ -241,6 +243,7 @@ export function AccordionExample() {
       </ExampleSection>
       <ExampleSection title="无分隔线">
         <Accordion
+          nativeHaptics
           hideSeparator
           items={separatorItems}
           triggerProps={{ className: "rounded-lg" }}
@@ -249,6 +252,7 @@ export function AccordionExample() {
       </ExampleSection>
       <ExampleSection title="自定义指示器">
         <Accordion
+          nativeHaptics
           variant="surface"
           items={indicatorItems}
           contentClassName="px-7"
@@ -257,6 +261,7 @@ export function AccordionExample() {
       </ExampleSection>
       <ExampleSection title="自定义入场动画">
         <Accordion
+          nativeHaptics
           variant="surface"
           items={enteringItems.map((item, index) => ({
             ...item,

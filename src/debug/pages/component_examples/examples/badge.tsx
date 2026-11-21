@@ -1,38 +1,56 @@
-import { Badge } from "rn-ui-kit/core";
-import { BadgeCheck } from "lucide-react-native";
-import { ExampleBlock, ExampleRow, ExampleStack } from "../shared";
+import { Bell, Circle, Plus, Star, X } from "lucide-react-native";
+import { Badge, Icon, type BadgeColor, type BadgeVariant } from "rn-ui-kit/core";
+import { ExampleRow, ExampleSection, ExampleStack } from "../shared";
+
+const colors: { color: BadgeColor; label: string }[] = [
+  { color: "accent", label: "强调" }, { color: "default", label: "默认" },
+  { color: "success", label: "成功" }, { color: "warning", label: "警告" }, { color: "danger", label: "危险" },
+];
+const variants: { variant: BadgeVariant; title: string }[] = [
+  { variant: "primary", title: "Primary 实色" }, { variant: "secondary", title: "Secondary 中性背景" },
+  { variant: "tertiary", title: "Tertiary 透明背景" }, { variant: "soft", title: "Soft 柔和背景" },
+];
 
 export function BadgeExample() {
   return (
     <ExampleStack>
-      <ExampleBlock title="项目状态">
+      <ExampleSection title="三种尺寸">
+        <ExampleRow><Badge size="sm" label="小标签" /><Badge size="md" label="中标签" /><Badge size="lg" label="大标签" /></ExampleRow>
+      </ExampleSection>
+      <ExampleSection title="四种样式">
+        <ExampleRow>{variants.map(({ variant }) => <Badge key={variant} variant={variant} label={variant} />)}</ExampleRow>
+      </ExampleSection>
+      {variants.map(({ variant, title }) => (
+        <ExampleSection key={variant} title={title}>
+          <ExampleRow>{colors.map(({ color, label }) => <Badge key={color} color={color} variant={variant} label={label} />)}</ExampleRow>
+        </ExampleSection>
+      ))}
+      <ExampleSection title="前置图标与状态点">
         <ExampleRow>
-          <Badge label="xs" size="xs" />
-          <Badge label="sm" size="sm" />
-          <Badge label="md" size="md" />
-          <Badge label="lg" size="lg" />
-          <Badge label="xl" size="xl" />
+          <Badge icon={Bell} variant="tertiary" label="精选" />
+          <Badge icon={Plus} variant="secondary" color="success" label="新内容" />
+          <Badge icon={Star} size="lg" variant="soft" color="warning" label="收藏" />
         </ExampleRow>
         <ExampleRow>
-          <Badge label="稳定" />
-          <Badge label="次要" variant="secondary" />
-          <Badge label="阻塞" variant="destructive" />
-          <Badge label="轮廓" variant="outline" />
+          <Badge variant="secondary" color="success" label="已完成" startContent={<Icon as={Circle} size={6} fill="currentColor" strokeWidth={0} className="mr-1 text-success" />} />
+          <Badge variant="secondary" color="warning" label="待处理" startContent={<Icon as={Circle} size={6} fill="currentColor" strokeWidth={0} className="mr-1 text-warning" />} />
+          <Badge variant="secondary" color="danger" label="未通过" startContent={<Icon as={Circle} size={6} fill="currentColor" strokeWidth={0} className="mr-1 text-danger" />} />
         </ExampleRow>
+      </ExampleSection>
+      <ExampleSection title="后置内容">
         <ExampleRow>
-          <Badge
-            className="bg-blue-500 dark:bg-blue-600"
-            icon={BadgeCheck}
-            iconClassName="text-white"
-            label="已验证"
-            labelClassName="text-white"
-            variant="secondary"
-          />
-          <Badge className="min-w-5 rounded-full px-1" label="8" />
-          <Badge className="min-w-5 rounded-full px-1" label="99" variant="destructive" />
-          <Badge className="min-w-5 rounded-full px-1" label="20+" variant="outline" />
+          <Badge size="sm" variant="secondary" label="尾部图标" endContent={<Icon as={X} size={12} />} />
+          <Badge color="danger" label="状态标签" endContent={<Icon as={X} size={14} />} />
+          <Badge size="lg" variant="secondary" color="default" label="附加内容" endContent={<Icon as={Plus} size={14} />} />
         </ExampleRow>
-      </ExampleBlock>
+      </ExampleSection>
+      <ExampleSection title="自定义样式">
+        <ExampleRow>
+          <Badge label="自定义间距" className="bg-purple-600 px-6" labelClassName="text-white" />
+          <Badge label="调整圆角" variant="soft" className="rounded-sm bg-purple-100" labelClassName="text-purple-800" />
+          <Badge label="强调文字" size="lg" color="success" labelClassName="font-bold" />
+        </ExampleRow>
+      </ExampleSection>
     </ExampleStack>
   );
 }
