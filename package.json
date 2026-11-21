@@ -77,7 +77,6 @@
     "@react-native/normalize-colors": "0.83.9",
     "@rn-primitives/alert-dialog": "=1.5.2",
     "@rn-primitives/checkbox": "=1.5.2",
-    "@rn-primitives/collapsible": "=1.5.2",
     "@rn-primitives/context-menu": "=1.5.2",
     "@rn-primitives/dialog": "=1.5.2",
     "@rn-primitives/dropdown-menu": "=1.5.2",

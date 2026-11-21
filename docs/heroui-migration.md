@@ -79,7 +79,7 @@ Web CSS 不导入 `uniwind` 样式：它是 Native 编译时生成的文件，�
 bun run start --clear
 ```
 
-原有 `web` / `ios` / `android` 命令也保留。验证页入口为：**组件示例 → HeroUI 接入验证**。
+原有 `web` / `ios` / `android` 命令也保留。初期底座的“HeroUI 接入验证”页面在完成真机验证后已移除；后续通过 **组件示例** 中各个已迁移组件的页面进行验证。
 
 验证页直接渲染对应平台的真实 HeroUI 组件，提供计数、次要/禁用按钮、独立弹层，以及现有 NativeSheet 内的 HeroUI 弹层。弹层内有输入框供键盘验证使用。没有用现有 rn-ui-kit Button 代替 HeroUI 组件完成验证。
 
@@ -371,6 +371,13 @@ Avatar / Badge 的共同默认值采用 HeroUI Native，Web 显式传入相同�
 - Expo 同一配置的三端带 source map 导出通过。Web / iOS / Android 模块图分别包含 24 / 361 / 361 个目标 HeroUI 模块，另一端模块均为 0；实际 source map 仅包含对应平台的三个适配器，均不再包含 @rn-primitives/avatar 或 @rn-primitives/aspect-ratio。
 - 生产 Web 页面检查通过：Alert 刷新、重试、关闭与重新显示正常，Avatar 的 14 张示例图片实际完成加载并显示，文字与图标回退可见，Badge 的 39 个示例标签无内部横向溢出、无非法 div 嵌入；上述页面未记录运行错误或警告。修正自定义 Avatar 回退层背景后重新构建并检查。
 - 本轮未操作 iOS / Android 真机或执行原生 Release 编译。设备上仍需确认 Accordion 触觉反馈、Avatar 图片加载/失败过渡和本地资源，以及系统大字体下 Alert 操作区域、头像文字与 Chip 标签的展示。
+
+### 移除 Collapsible 与临时接入验证页（2026-11-21）
+
+- Collapsible 在仓库内只被其自身示例引用，没有其他组件依赖，也没有独立的系统原生实现。删除实现、公共类型、barrel 导出和示例；基础内容展开/收起使用单项 Accordion，不增加旧 API 兼容层。
+- 删除专属依赖 @rn-primitives/collapsible，并更新锁文件及中英文组件清单。Accordion 的 isCollapsible 属性继续保留，它控制 Accordion 是否允许收起，与已删除的独立 Collapsible 组件无关。
+- 用户已完成 HeroUI 与 TrueSheet 的真机组合验证，删除“HeroUI 接入验证”目录项以及 Web / Native 两个临时页面。平台隔离配置、HeroUI Provider、自动化检查和现有 TrueSheet 示例保留。
+- 验证：主测试 137 项通过、0 失败；库与示例 typecheck、库 build、示例 build:web 均通过。确认 Web 产物不再包含两个已删除示例或 Collapsible 专属依赖引用，并清理当前 dist 中这些源文件遗留的编译文件；没有操作 iOS / Android 真机。
 
 ### 示例分组容器调整（2026-11-21）
 

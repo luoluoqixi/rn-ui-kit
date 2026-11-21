@@ -1,5 +1,4 @@
 import { ButtonExample } from "./examples/button";
-import { HeroUIExample } from "./examples/heroui";
 import { CheckboxExample } from "./examples/checkbox";
 import { SwitchExample } from "./examples/switch";
 import { ToggleGroupExample } from "./examples/toggle_group";
@@ -33,7 +32,6 @@ import { SeparatorExample } from "./examples/separator";
 import { LinkExample } from "./examples/link";
 import { AlertExample } from "./examples/alert";
 import { BadgeExample } from "./examples/badge";
-import { CollapsibleExample } from "./examples/collapsible";
 import { SkeletonExample } from "./examples/skeleton";
 import { ToggleExample } from "./examples/toggle";
 import { IconExample } from "./examples/icon";
@@ -43,7 +41,6 @@ import { ColorPickerExample } from "./examples/color_picker";
 import type { ComponentExampleDefinition } from "./types";
 
 export const componentExampleDefinitions: ComponentExampleDefinition[] = [
-  { Component: HeroUIExample, key: "heroui", label: "HeroUI 接入验证" },
   { Component: AccordionExample, key: "accordion", label: "Accordion" },
   { Component: AlertExample, key: "alert", label: "Alert" },
   { Component: AlertDialogExample, key: "alert-dialog", label: "AlertDialog" },
@@ -53,7 +50,6 @@ export const componentExampleDefinitions: ComponentExampleDefinition[] = [
   { Component: CardExample, key: "card", label: "Card" },
   { Component: CheckboxExample, key: "checkbox", label: "Checkbox" },
   { Component: ColorPickerExample, key: "color-picker", label: "ColorPicker" },
-  { Component: CollapsibleExample, key: "collapsible", label: "Collapsible" },
   { Component: ContextMenuExample, key: "context-menu", label: "ContextMenu" },
   { Component: DialogExample, key: "dialog", label: "Dialog" },
   { Component: DropdownExample, key: "dropdown", label: "Dropdown" },
