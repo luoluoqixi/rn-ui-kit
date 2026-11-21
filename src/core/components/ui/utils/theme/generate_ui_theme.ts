@@ -39,30 +39,33 @@ function createSemanticColors(
   danger: string,
   dangerForeground: string,
 ): SemanticColors {
+  // Shared Web / Native neutral palette follows heroui-native 1.1.1 variables.css,
+  // converted from OKLCH to sRGB hex for the system-native color bridges.
   // Neutral containers intentionally do not change when the accent seed changes.
   // Application screen/Sheet backgrounds belong to appBackgroundColors instead.
-  const foreground = dark ? "#fafafa" : "#18181b";
+  const foreground = dark ? "#fcfcfc" : "#18181b";
   const surface = dark ? "#18181b" : "#ffffff";
-  const surfaceSecondary = dark ? "#27272a" : "#f4f4f5";
-  const muted = dark ? "#a1a1aa" : "#62626c";
-  const border = dark ? "#3f3f46" : "#d4d4d8";
+  const surfaceSecondary = dark ? "#232325" : "#efeff0";
+  // Native's default light muted is too light for 4.5:1 on secondary surfaces.
+  const muted = dark ? "#9f9fa9" : "#62626c";
+  const border = dark ? "#28282c" : "#dedee0";
   return {
     ...scale,
-    background: dark ? "#09090b" : "#f7f7f8",
+    background: dark ? "#060607" : "#f5f5f5",
     foreground,
     surface,
     surfaceForeground: foreground,
     surfaceSecondary,
     surfaceSecondaryForeground: foreground,
-    surfaceTertiary: dark ? "#303036" : "#e4e4e7",
+    surfaceTertiary: dark ? "#262728" : "#eaeaeb",
     surfaceTertiaryForeground: foreground,
-    overlay: dark ? "#202024" : "#ffffff",
+    overlay: surface,
     overlayForeground: foreground,
     backdrop: dark ? "#00000099" : "#00000066",
     muted,
     accent,
     accentForeground: accentForeground(accent),
-    default: surfaceSecondary,
+    default: dark ? "#27272a" : "#ebebec",
     defaultForeground: foreground,
     success: dark ? "#86efac" : "#15803d",
     successForeground: dark ? "#000000" : "#ffffff",
@@ -70,14 +73,14 @@ function createSemanticColors(
     warningForeground: "#000000",
     danger,
     dangerForeground,
-    fieldBackground: dark ? "#202024" : "#ffffff",
+    fieldBackground: surface,
     fieldForeground: foreground,
     fieldPlaceholder: muted,
     fieldBorder: border,
-    segment: surface,
+    segment: dark ? "#46464c" : "#ffffff",
     segmentForeground: foreground,
     border,
-    separator: dark ? "#3f3f46" : "#e4e4e7",
+    separator: dark ? "#47474b" : "#aaaaad",
     focus: accent,
     link: foreground,
   };

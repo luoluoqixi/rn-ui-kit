@@ -35,7 +35,9 @@ test("theme provider preserves Native adaptive mode, syncs both palettes and upd
     // Fixed light/dark would pin Native Appearance and stop future OS changes.
     expect(calls.at(-1)).toBe("system");
     expect(variablesByScheme.light["--muted"]).toBe("#62626c");
-    expect(variablesByScheme.dark["--muted"]).toBe("#a1a1aa");
+    expect(variablesByScheme.dark["--muted"]).toBe("#9f9fa9");
+    expect(variablesByScheme.light["--separator"]).toBe("#aaaaad");
+    expect(variablesByScheme.dark["--separator"]).toBe("#47474b");
     expect(mount.textContent).toBe("light:" + variablesByScheme.light["--accent"] + ":#62626c");
 
     await React.act(() => root.render(
@@ -43,7 +45,7 @@ test("theme provider preserves Native adaptive mode, syncs both palettes and upd
     ));
     expect(calls.at(-1)).toBe("system");
     expect(variablesByScheme.light["--accent"]).toBe("#00d5e8");
-    expect(mount.textContent).toBe("dark:" + variablesByScheme.dark["--accent"] + ":#a1a1aa");
+    expect(mount.textContent).toBe("dark:" + variablesByScheme.dark["--accent"] + ":#9f9fa9");
 
     await React.act(() => root.render(
       <UiThemeProvider accentThemeName="ocean" colorScheme="dark" followsSystem={false}><Probe /></UiThemeProvider>,

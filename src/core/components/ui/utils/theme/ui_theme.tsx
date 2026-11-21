@@ -8,12 +8,13 @@ import {
 import type { ResolvedColorScheme } from "./settings";
 import { semanticColorsToVariables } from "./theme_variables";
 
-/** 编号越大强调越强：light 逐渐加深，dark 逐渐提亮。 */
+/** 项目扩展，非 HeroUI 标准 token。编号越大强调越强：light 逐渐加深，dark 逐渐提亮。 */
 export type AccentScale = Record<
   `accent${"01" | "02" | "03" | "04" | "05" | "06" | "07" | "08" | "09" | "10" | "11" | "12"}`,
   string
 >;
 
+/** HeroUI source color tokens in camelCase, plus the project's AccentScale extension. */
 export type SemanticColors = AccentScale & {
   background: string;
   foreground: string;
@@ -119,7 +120,7 @@ export function useUiColorScheme(): ResolvedColorScheme {
 
 type ComponentThemeValue = { val: string };
 
-/** Internal bridge for native components that consume concrete color values. */
+/** Internal legacy aliases for system-native consumers; these are not HeroUI CSS tokens. */
 export function useComponentThemeTokens(): Record<string, ComponentThemeValue> {
   const colors = useUiTheme();
   return useMemo(() => {

@@ -82,10 +82,26 @@ describe("generateUiThemeFromPrimaryColor", () => {
     const blue = generateUiThemeFromPrimaryColor("#2563eb");
     const pink = generateUiThemeFromPrimaryColor("#db2777");
     for (const mode of ["light", "dark"]) {
-      for (const key of ["background", "surface", "surfaceSecondary", "surfaceTertiary", "overlay", "fieldBackground"]) {
+      for (const key of ["background", "surface", "surfaceSecondary", "surfaceTertiary", "overlay", "fieldBackground", "muted", "default", "segment", "border", "separator"]) {
         expect(blue[mode][key]).toBe(pink[mode][key]);
       }
       expect(blue[mode].accent).not.toBe(pink[mode].accent);
+    }
+  });
+
+  test("keeps Native-style surface hierarchy and visible separators in the shared palette", () => {
+    for (const seed of Object.values(accentThemeSeeds)) {
+      const theme = generateUiThemeFromPrimaryColor(seed);
+      for (const mode of ["light", "dark"]) {
+        const colors = theme[mode];
+        const levels = ["surface", "surfaceSecondary", "surfaceTertiary"].map(key => relativeLuminance(colors[key]));
+        for (let index = 1; index < levels.length; index++) {
+          if (mode === "light") expect(levels[index]).toBeLessThan(levels[index - 1]);
+          else expect(levels[index]).toBeGreaterThan(levels[index - 1]);
+        }
+        expect(contrastRatio(colors.separator, colors.surface)).toBeGreaterThanOrEqual(mode === "light" ? 2 : 1.8);
+        expect(contrastRatio(colors.separator, colors.surface)).toBeGreaterThan(contrastRatio(colors.border, colors.surface));
+      }
     }
   });
 

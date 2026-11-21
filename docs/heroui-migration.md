@@ -146,6 +146,28 @@ bun run check:heroui-bundle android examples/app/.expo/heroui-verification
 - HCT 继续用于强调色生成，保留预设和自定义 hex seed，以及 accent01–accent12。中性容器色独立于 seed，实色主操作色根据实际相对亮度选黑/白文字。对所有预设及白、黑、黄色、青色、中灰 seed 检查文字对比度。
 - `scripts/generate-default-themes.js` 同时生成静态 JS 配色与 `src/theme.css`。调整生成器后执行 `bun run generate:default-themes`，禁止手改生成文件。CSS 只扩展 accent 色阶；HeroUI 负责常规颜色 utilities、派生交互色及圆角比例。
 
+### 共用视觉与变量命名核对（2026-11-22）
+
+Web / iOS / Android 继续共用一套颜色，默认中性色以锁定的 heroui-native 1.1.1 `src/styles/variables.css` 为参考：background / foreground、surface 三级、overlay、fieldBackground、default、segment、border 和 separator 转换为等价的 sRGB hex，便于既有 SwiftUI / Compose 颜色桥接使用。不会在运行时读取 node_modules 或按平台生成不同的主题。
+
+- separator：浅色从 `#e4e4e7` 调整为 `#aaaaad`，深色从 `#3f3f46` 调整为 `#47474b`，分别接近 Native 默认的 OKLCH 74% / 40% 明度。两端的 Separator 及其他读取此 token 的组件共同生效；组件自身的粗细与透明度不变。
+- surfaceSecondary / surfaceTertiary 恢复 Native 的明暗层级，default 不再直接复用 surfaceSecondary；深色 segment 使用更亮的独立容器色。border 与 separator 各自承担边框、内容分隔职责。
+- 保留项目主色 seed / HCT 色阶、状态色、遮罩透明度和表单边框策略；浅色 muted 保留较深的 `#62626c`，以维持浅灰容器上的文字对比度。此次调整是向 Native 靠拢，不是逐项复制官方默认主题。应用 screen / sheet / card / header 的容器背景仍由 appBackgroundColors 管理。
+
+当前 32 个基础语义颜色转换后的 CSS 名称，均能在已安装的 HeroUI Native 与 HeroUI Web 默认主题中找到对应声明。TypeScript 使用 camelCase，生成 CSS 时使用官方 kebab-case：
+
+| 项目 TypeScript 字段 | HeroUI CSS 源变量 | 常用 utility |
+| --- | --- | --- |
+| accent / accentForeground | --accent / --accent-foreground | bg-accent / text-accent-foreground |
+| surfaceSecondary | --surface-secondary | bg-surface-secondary |
+| fieldBackground | --field-background | bg-field |
+| muted | --muted | text-muted |
+| separator | --separator | bg-separator |
+
+`accent01–accent12` 是本项目的扩展色阶，不是 HeroUI 标准变量。`useComponentThemeTokens()` 中的 color10 / gray9 / backgroundHover 等是部分系统原生消费者使用的内部桥接别名，不会输出为 CSS 变量，也不属于公共 HeroUI token；后续迁移 NativeList 时再随消费者整理。HeroUI 的派生交互色、圆角、阴影等继续由库本身提供，SemanticColors 并非完整复制官方全部主题配置。
+
+验证：全量测试 154 项通过、0 失败，2020 次断言；库及示例应用 typecheck、库 build、Web 生产导出与 git diff --check 通过。两端真实 Tailwind CSS 编译检查了新的 light / dark separator 源变量，Provider fixture 确认全局两套配色与动态切换同步；新增检查验证官方变量名称、容器明暗层级和分割线对比度。生产 Web 的 Separator 页面浅 / 深色实测分别得到 rgb(170, 170, 173) / rgb(71, 71, 75)，检查未记录运行错误或警告。本轮未操作真机，也未重新导出 Native 或编译原生应用。
+
 ### 修复变量冲突与 portal 主题
 
 用户截图中浅色 Dialog 的说明文字偏白。已确认旧 ScopedVariables 把 `--color-muted` 设置为 RNR 的浅背景色，而 HeroUI 将同一 token 用于文字；`accent` 也存在软背景与实色操作的语义冲突。
