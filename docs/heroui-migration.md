@@ -327,6 +327,8 @@ Card 原先是项目内的 View / Text 自绘封装，并没有单独的 RNR Car
 
 ## Alert、Avatar、Badge（Chip）迁移（2026-11-21）
 
+> 本节记录首轮迁移。当时的标签型 Badge 已在后续“Icon、Chip 与角标 Badge”批次更名为 Chip；新的 Badge 专用于依附内容的角标。当前 API 以下文的新批次说明为准。
+
 本批替换三个组件的自绘实现：Native 使用 heroui-native 对应组件的公开子路径，Web 使用 @heroui/react 对应子路径；Badge 的底层组件为 Chip，对外继续保留 Badge 名称。这三个组件原来均无独立的系统原生实现，因此没有新增 native 开关或空壳原生分支。没有改动 TrueSheet、现有弹层 host 或任何补丁。
 
 文件结构沿用第三阶段约定：唯一 index.ts、公共 types.ts、薄包装组件、默认 Web 适配器与 _heroui.native.tsx 适配器。两端底层 props 通过 import type 引入同一个 types.ts，ref、事件、样式和动画仍分别放入 herouiNativeProps / herouiWebProps。slot 上也遵循同样约定，不能通过底层 children、asChild / render 绕开封装管理的结构。
@@ -385,6 +387,80 @@ Avatar / Badge 的共同默认值采用 HeroUI Native，Web 显式传入相同�
 - ExampleSection 默认复用 ExampleBlock，以本库 Card 承载每组标题与演示，覆盖 Accordion、Alert、Avatar、Badge。Card 示例的五处分组显式设置 withCard={false}，保留原有单层卡片。Native 外层 ExampleSectionView 及其布局动画配置保持原样，继续包裹整组内容。
 - 调整 Accordion 现有布局回归 fixture 的 Card 替身以呈现 title / content 插槽，原有分组稳定性及展开 / 收起检查通过。主测试 137 项通过、0 失败；库与示例 typecheck、库 build、示例 build:web 均通过。
 - 生产 Web 页面确认 Badge 名称，以及 Accordion / Alert / Avatar / Badge 各组背景与标题；Card 页面没有嵌套 Card，示例卡片无内部横向溢出，Accordion 展开交互正常，浏览器未记录运行错误或警告。本轮未操作 iOS / Android 真机，原生重排动画需设备验收。
+
+## Icon、Chip 与角标 Badge（2026-11-21）
+
+### 定位与平台映射
+
+| 本库组件 | 用途 | Web | iOS / Android |
+| --- | --- | --- | --- |
+| Icon | 通用图标、尺寸与语义文字色适配 | Lucide + Uniwind | Lucide + Uniwind |
+| Chip | 独立标签、分类、带文字的状态 | HeroUI Chip | HeroUI Native Chip |
+| Badge | 依附头像、图标、按钮的数量角标或状态点 | HeroUI Badge / Anchor / Label | HeroUI Native Chip / Label + View 定位 |
+
+Icon 没有 RNR 运行时依赖，本批保留现有实现和公共类型。继续使用 as 选择 Lucide 图标，支持既有预设 size、数字尺寸和 className，颜色使用 text-accent / text-success 等语义类，并通过 TextClassContext 继承所在标签或按钮的前景色。没有引入新的图标库、全局图标注册表或系统原生图标替代层。示例补充自定义尺寸、语义颜色和在 Chip 中继承颜色。
+
+原标签型 Badge 的实现及快捷 API 完整移到 Chip：label / children、icon / iconProps / iconClassName、startContent / endContent、labelProps / labelClassName；children 优先，显式 false 可隐藏标签且不调用被覆盖的 label 回调。保留 sm / md / lg、primary / secondary / tertiary / soft、五种语义色，以及 md / primary / accent 的既有默认值。原九组标签示例更名为 Chip，单独列入组件目录。
+
+### Badge 单入口 API
+
+~~~tsx
+<Chip label="已完成" icon={Check} color="success" variant="soft" />
+
+<Badge content={5} color="danger" size="sm" accessibilityLabel="5 条未读消息">
+  <Avatar fallback="UI" />
+</Badge>
+
+<Badge color="success" size="sm" placement="bottom-right" accessibilityLabel="在线">
+  <Avatar fallback="UI" />
+</Badge>
+~~~
+
+- children 是被标记的锚点；content 才是角标，可传字符串、数字、行内节点或接收 size / variant / color / placement 的回调。数字 0 正常显示，省略或传 null / false 显示无文字状态点。长计数由调用方自行格式化成 99+，不暗中截断数值。复杂 View 不放入行内标签槽。
+- size 为 sm / md / lg，variant 为 primary / secondary / soft，color 为 default / accent / success / warning / danger。统一默认 md / primary / default，按 Web Badge 的尺寸和四角定位语义补齐 Native；Badge 不提供 Chip 的 tertiary。原 Badge 的 label / icon / startContent / endContent 等独立标签参数移到 Chip，不做兼容别名。
+- placement 为 top-right / top-left / bottom-right / bottom-left，默认 top-right。Native 在 Chip 外部使用相对定位的 View，Chip 绝对定位并按自身尺寸向外平移 25%；角标有背景色边框，父容器需允许溢出。Native 仍保留 Chip 的实际主题表面，未强制改写其所有颜色派生规则。
+- isHidden 只卸载角标，不卸载锚点或执行隐藏的 content 回调，保留锚点组件内部状态和交互。角标默认不拦截点击；需要独立操作的交互标签使用其他组件，不依赖该展示角标。
+- className / herouiNativeProps / herouiWebProps 配置角标本身；anchorProps / anchorClassName 配置外层，labelProps / labelClassName 配置角标文字。accessibilityLabel 为状态点或图标提供说明。TextClassContext 只作用于角标，不污染锚点；项目字体与 slot 显式字体覆盖继续生效。
+- Web Anchor 使用真正的 HeroUI Anchor，并以 div 承载 RN Web View / Button，避免默认 span 包含 div 的非法嵌套。类型入口明确对应 HTMLDivElement；角标根对应 HTMLSpanElement。Native 外框为 RN View，角标使用真实 Chip，ref / 事件保持各端原始类型。
+- 按统一文件规范保留一个 index.ts 和 types.ts。仅类型引用可以同时 import type 两端包，运行时 Web 适配器只导入 @heroui/react，Native 适配器只导入 heroui-native。没有修改依赖版本、TrueSheet、任何 patch 或系统原生实现。
+
+Badge 示例展示数量/文字/图标、三尺寸、语义颜色、三种样式、四角定位、状态点、动态计数与显隐；与 Chip、Icon 示例一样，所有分组继续由本库 Card 承载，调用方无需组合 HeroUI 子组件。
+
+### 本批验证
+
+- 主测试 137 项通过、0 失败，32 个测试文件。展示组件隔离 fixture 在 Web / Native 各执行 8 个场景；新增 Badge 实际结构、ref、数字 0、空内容状态点、尺寸/颜色/样式/四角、隐藏时不运行回调、显隐后锚点状态和点击、文字上下文边界及字体覆盖检查。Native 设备和动画环境仍使用替身。
+- 公共类型正反用例通过：同时验证 DOM / RN refs、底层事件、外框与文字槽，拒绝缺少锚点、旧 label API、不支持的 tertiary、平台 ref 混用，以及通过底层 props 绕过共享配置或替换渲染结构。库与示例 typecheck、库 build、示例 build:web 全部通过。
+- Expo 三端带 source map 导出通过，Web / iOS / Android 分别包含 18 / 361 / 361 个目标 HeroUI 模块，另一端模块均为 0。已在两个 Native 实际 bundle 中核对正负 x / y 四种平移 utilities 编译为 25% / -25%，不是仅保留未解析的类名。
+- 生产 Web 浏览器检查：Badge 的三尺寸、四角、文字/图标/状态点均可见；按钮计数从 5 增加到 6，隐藏角标后继续点击，再显示为 7。Chip 39 个示例标签无内部横向溢出、无 div 嵌入 Chip span；Icon 的预设、18 / 26 / 40 自定义尺寸及语义颜色正常，三个 Chip 内图标前景色分别与标签一致。相关页面未记录运行错误或警告。
+- 本轮未操作 iOS / Android 真机，也未运行新的原生 Release 编译；请重点确认 Badge 的四角定位、长内容、系统字体放大，以及 Native Chip 在不同主题表面上的展示。
+
+## Icon 尺寸与颜色 API 统一（2026-11-21）
+
+本批接续上一批“Icon 保留现有实现和公共类型”的记录，保留 Lucide + Uniwind 技术实现，但重新整理公共尺寸与颜色 API。已核对 HeroUI Native / React 技能、官方主题文档、锁定依赖及 Native 官方 app 示例：HeroUI 没有统一的 Icon 组件或全局 Icon 尺寸属性，官方示例按场景使用数字尺寸及主题颜色。以下三档是本库约定，不宣称是 HeroUI 官方 Icon API。
+
+~~~tsx
+<Icon as={Search} /> // md，默认跟随本库容器文字颜色
+<Icon as={Search} size="sm" color="muted" />
+<Icon as={Check} size="lg" color="success" />
+<Icon as={Bell} size={18} color="accent" />
+<Icon as={Bell} className="size-6 text-accent-foreground" />
+~~~
+
+- size 统一为 sm / md / lg 或 number；预设使用 size-4 / size-5 / size-6，在当前基础 spacing 下对应 16 / 20 / 24，默认 md。数字在 Native 使用点、Web 使用 CSS 像素。删除 default / 2xs / xs / xl / 2xl 及任意字符串尺寸；特殊尺寸用数字或 className。没有为 Icon 修改全局 spacing、主题变量或其他组件的尺寸体系。
+- color 的语义值为 inherit / foreground / muted / accent / success / warning / danger，默认 inherit；还保留 Lucide 原始 color 类型作为品牌图形等特殊场景的出口。语义值映射到静态 text-* utilities，由 Uniwind 解析实际颜色及响应主题更新，不能把 accent / danger 等直接传给 SVG。默认前景为 text-foreground。
+- inherit 指跟随本库 TextClassContext 的语义文字类，例如 Chip / Button 提供的容器前景色，不承诺在任意 React Native View 中自动继承颜色。显式 color="foreground" 可以恢复普通前景色。accent-foreground 等表示相应背景上的前景色，不能与 accent 强调色互换；这类组合按所在组件上下文或 className 选择。
+- 覆盖顺序：显式原始 color / 数字 size > 调用方 className > 语义 color / 预设 size > 容器上下文 > 默认值。raw color 与数字 size 直接交给 Lucide，并依照 Uniwind 原有规则覆盖类解析结果；其余情况保留主题类的动态解析。
+- Icon 为两端共享实现，无 HeroUI 运行时导入，不人为添加两份平台适配文件，也不增加 variant、背景容器或专属 Provider。继续导出单一入口及公共 types.ts。
+- BasicToaster 两端适配新 IconSize，默认 lg 维持原来的 24，显式 md 统一为 20；成功/提示/警告/错误图标改为 success / accent / warning / danger，随主题变化。只调整其 Icon 调用，没有迁移整个 Toast，也没有改动 Burnt 系统原生分支或 TrueSheet。
+- Icon 示例保留 Card 分组，展示三档尺寸、自定义数字/类尺寸、六种语义颜色、Chip 内前景色继承与显式覆盖；不增加冗长的边界用例组。
+
+### 本批验证
+
+- 主测试 138 项通过、0 失败，1835 次断言，33 个测试文件。新增隔离 fixture 的 4 个场景覆盖尺寸类、数值 0 / 自定义尺寸、语义色交由 Uniwind、继承上下文更新、显式覆盖及 Lucide props / ref。该 fixture 仅探测 Icon → Uniwind 参数边界，不把替身当作真实样式解析；两端实际 Tailwind 编译另行确认六种 text-* 色及三档 size utilities 都存在。
+- 公共类型正反用例通过：接受三档尺寸、数字、语义色和原始颜色，拒绝旧 default / xs 及任意字符串尺寸。库与示例 typecheck、库 build、示例生产 build:web 全部通过，git diff --check 通过。
+- Expo 三端带 source map 导出通过；Web / iOS / Android 的目标 HeroUI 模块分别为 18 / 361 / 361，另一端均为 0。没有改动依赖或平台隔离配置。
+- 生产 Web 浏览器实测预设为 16 / 20 / 24、自定义为 18 / 26 / 40；六种语义色均解析为真实 SVG stroke。浅色 ocean → 深色 lavender → 恢复 ocean / 跟随系统后，前景、弱文字、强调及状态色随主题变化；原始紫色保持不变。Chip 内继承及 danger 显式覆盖正常，Chip / Badge 页面图标正常，未记录浏览器运行错误或警告。
+- 本轮未操作 iOS / Android 真机或执行原生 Release 编译。三端 JS/CSS 导出与参数边界测试不能替代设备验收；请在原生示例中观察深浅主题下的 Icon 和 Chip 图标，并检查 Toast 的状态色。
 
 ## 后续批次
 

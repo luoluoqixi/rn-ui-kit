@@ -86,14 +86,16 @@ if (native) {
     const real = await import("../node_modules/heroui-native/src/components/" + component + "/" + component);
     mock.module("heroui-native/" + component, () => ({ [exportName]: real.default }));
   }
-  for (const component of ["alert", "avatar", "badge"]) {
+  for (const component of ["alert", "avatar", "chip", "badge"]) {
     const implementation = await import("../src/core/components/ui/" + component + "/" + component + "_heroui.native");
     mock.module("../src/core/components/ui/" + component + "/" + component + "_heroui", () => implementation);
   }
 }
 const { Alert } = await import("../src/core/components/ui/alert");
 const { Avatar } = await import("../src/core/components/ui/avatar");
+const { Chip } = await import("../src/core/components/ui/chip");
 const { Badge } = await import("../src/core/components/ui/badge");
+const { TextClassContext } = await import("../src/core/components/ui/text");
 const { TextFontProvider } = await import("../src/core/components/ui/provider/font_provider");
 const { createRoot } = await import("react-dom/client");
 const extension = props => native ? { herouiNativeProps: props } : { herouiWebProps: props };
@@ -205,10 +207,10 @@ test("Avatar delegates load/error/source removal to HeroUI and recovers fallback
   expect(node("image")).toBeNull();
 });
 
-test("Badge keeps real Chip labels, start/end order and hidden callback precedence", async () => {
+test("Chip keeps real Chip labels, start/end order and hidden callback precedence", async () => {
   let hidden = 0;
   const ref = React.createRef();
-  await render(Badge, {
+  await render(Chip, {
     label: () => { hidden++; return "Hidden"; }, children: 0,
     labelProps: extension({ ...id("label"), ref }), startContent: () => "Start", endContent: () => "End",
   });
@@ -216,12 +218,12 @@ test("Badge keeps real Chip labels, start/end order and hidden callback preceden
   expect(hidden).toBe(0);
   expect(ref.current).toBe(node("label"));
   expect(node("label").className).toContain("chip__label");
-  await render(Badge, { label: "Hidden", children: false, startContent: null, endContent: false });
+  await render(Chip, { label: "Hidden", children: false, startContent: null, endContent: false });
   expect(node("root").textContent).toBe("");
   for (const size of ["sm", "md", "lg"]) {
     for (const variant of ["primary", "secondary", "tertiary", "soft"]) {
       for (const color of ["default", "accent", "success", "warning", "danger"]) {
-        await render(Badge, { size, color, variant, label: context => context.color, labelProps: slot("label") });
+        await render(Chip, { size, color, variant, label: context => context.color, labelProps: slot("label") });
         expect(node("root").className).toContain(native ? "size-" + size : "chip--" + size);
         expect(node("label").textContent).toBe(color);
       }
@@ -229,12 +231,80 @@ test("Badge keeps real Chip labels, start/end order and hidden callback preceden
   }
 });
 
+test("Badge owns real indicator slots, refs, zero content and placement", async () => {
+  const refs = Object.fromEntries(["root", "anchor", "label"].map(key => [key, React.createRef()]));
+  const refSlot = key => extension({ ...id(key), ref: refs[key] });
+  let context;
+  await render(Badge, {
+    ...refSlot("root"), anchorProps: refSlot("anchor"), labelProps: refSlot("label"),
+    content: value => { context = value; return 0; }, children: <button>Anchor</button>,
+  });
+  expect(context).toEqual({ size: "md", variant: "primary", color: "default", placement: "top-right" });
+  expect(node("root").textContent).toBe("0");
+  expect(node("label").className).toContain(native ? "chip__label" : "badge__label");
+  expect(node("root").className).toContain(native ? "chip__root" : "badge--md");
+  expect(node("anchor").tagName).toBe("DIV");
+  for (const [key, ref] of Object.entries(refs)) expect(ref.current).toBe(node(key));
+  for (const placement of ["top-right", "top-left", "bottom-right", "bottom-left"]) {
+    for (const size of ["sm", "md", "lg"]) {
+      for (const variant of ["primary", "secondary", "soft"]) {
+        for (const color of ["default", "accent", "success", "warning", "danger"]) {
+          await render(Badge, { placement, size, variant, color, content: color, children: <button>Anchor</button> });
+          expect(node("root").textContent).toBe(color);
+          expect(node("root").className).toContain(native ? "size-" + size : "badge--" + size);
+          expect(node("root").className).toContain(native ? (placement.startsWith("top") ? "top-0" : "bottom-0") : "badge--" + placement);
+          if (native) expect(node("root").className).toContain(placement.endsWith("right") ? "right-0" : "left-0");
+        }
+      }
+    }
+  }
+  for (const content of [undefined, null, false]) {
+    await render(Badge, { content, accessibilityLabel: "Online", labelProps: slot("label"), children: <button>Anchor</button> });
+    expect(node("root").textContent).toBe("");
+    expect(node("label")).toBeNull();
+    expect(node("root").getAttribute("aria-label")).toBe("Online");
+  }
+});
+
+test("Badge visibility preserves anchor state, clicks and separate text contexts", async () => {
+  let calls = 0;
+  function Counter() {
+    const [count, setCount] = React.useState(0);
+    const textClass = React.useContext(TextClassContext);
+    return <button id="counter" data-text-class={textClass} onClick={() => setCount(count + 1)}>{count}</button>;
+  }
+  function Indicator() {
+    return <span id="indicator-context" data-text-class={React.useContext(TextClassContext)}>New</span>;
+  }
+  const props = { children: <Counter />, color: "danger", content: () => { calls++; return <Indicator />; } };
+  const wrap = value => <TextClassContext.Provider value="text-warning">{value}</TextClassContext.Provider>;
+  await render(Badge, { ...props, isHidden: true }, wrap);
+  const anchor = node("counter");
+  expect(calls).toBe(0);
+  expect(node("root")).toBeNull();
+  await act(() => anchor.dispatchEvent(new win.MouseEvent("click", { bubbles: true })));
+  expect(anchor.textContent).toBe("1");
+  await render(Badge, props, wrap);
+  expect(node("counter")).toBe(anchor);
+  expect(anchor.textContent).toBe("1");
+  expect(calls).toBe(1);
+  expect(anchor.getAttribute("data-text-class")).toBe("text-warning");
+  expect(node("indicator-context").getAttribute("data-text-class")).toContain("text-danger-foreground");
+  await render(Badge, { ...props, isHidden: true }, wrap);
+  expect(calls).toBe(1);
+  expect(node("counter")).toBe(anchor);
+  await act(() => anchor.dispatchEvent(new win.MouseEvent("click", { bubbles: true })));
+  await render(Badge, props, wrap);
+  expect(anchor.textContent).toBe("2");
+});
+
 test("new text boundaries honor project font, explicit styles and platform isolation", async () => {
   const wrap = value => <TextFontProvider family="Project Font">{value}</TextFontProvider>;
   for (const [Component, textSlot, textProps] of [
     [Alert, "titleProps", { title: "Title" }],
     [Avatar, "fallbackProps", { fallback: "AB" }],
-    [Badge, "labelProps", { label: "Badge" }],
+    [Chip, "labelProps", { label: "Chip" }],
+    [Badge, "labelProps", { content: "Badge", children: <button>Anchor</button> }],
   ]) {
     const fontSlot = extension({ ...id("text"), ...(native && Component === Avatar ? { textProps: { style: { fontFamily: "Explicit Font" } } } : { style: { fontFamily: "Explicit Font" } }) });
     await render(Component, { ...textProps, [textSlot]: fontSlot,

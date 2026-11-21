@@ -32,6 +32,7 @@ import { SeparatorExample } from "./examples/separator";
 import { LinkExample } from "./examples/link";
 import { AlertExample } from "./examples/alert";
 import { BadgeExample } from "./examples/badge";
+import { ChipExample } from "./examples/chip";
 import { SkeletonExample } from "./examples/skeleton";
 import { ToggleExample } from "./examples/toggle";
 import { IconExample } from "./examples/icon";
@@ -49,6 +50,7 @@ export const componentExampleDefinitions: ComponentExampleDefinition[] = [
   { Component: ButtonExample, key: "button", label: "Button" },
   { Component: CardExample, key: "card", label: "Card" },
   { Component: CheckboxExample, key: "checkbox", label: "Checkbox" },
+  { Component: ChipExample, key: "chip", label: "Chip" },
   { Component: ColorPickerExample, key: "color-picker", label: "ColorPicker" },
   { Component: ContextMenuExample, key: "context-menu", label: "ContextMenu" },
   { Component: DialogExample, key: "dialog", label: "Dialog" },

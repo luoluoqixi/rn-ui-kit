@@ -1,11 +1,14 @@
 import { TextClassContext } from "../text";
 import { cn } from "../utils/cn";
 
-import type { IconProps, IconSize } from "./types";
+import type { LucideProps } from "lucide-react-native";
+import type { IconColor, IconProps, IconSize } from "./types";
 import * as React from "react";
 import { withUniwind } from "uniwind";
 
-function IconImpl({ as: IconComponent, ...props }: IconProps) {
+type StyledIconProps = Omit<IconProps, "size" | "color"> & Pick<LucideProps, "size" | "color">;
+
+function IconImpl({ as: IconComponent, ...props }: StyledIconProps) {
   return <IconComponent {...props} />;
 }
 
@@ -21,53 +24,56 @@ const StyledIcon = withUniwind(IconImpl, {
 });
 
 const iconSizeClasses: Record<IconSize, string> = {
-  default: "size-5",
-  "2xs": "size-3",
-  "xs": "size-3.5",
-  "sm": "size-4",
-  "md": "size-5",
-  "lg": "size-6",
-  "xl": "size-7",
-  "2xl": "size-8",
+  sm: "size-4",
+  md: "size-5",
+  lg: "size-6",
+};
+const iconColorClasses: Record<IconColor, string> = {
+  inherit: "",
+  foreground: "text-foreground",
+  muted: "text-muted",
+  accent: "text-accent",
+  success: "text-success",
+  warning: "text-warning",
+  danger: "text-danger",
 };
 
-function isIconSize(size: IconProps["size"]): size is IconSize {
-  return typeof size === "string" && size in iconSizeClasses;
-}
-
 /**
- * A wrapper component for Lucide icons with Uniwind `className` support via `withUniwind`.
- *
- * This component allows you to render any Lucide icon while applying utility classes
- * using `uniwind`. It avoids the need to wrap or configure each icon individually.
- *
- * @component
+ * Lucide icons with HeroUI semantic colors and Uniwind utilities.
+ * Inherits the library container's text color, falling back to foreground.
+ * Classes override semantic presets; raw color and numeric size override classes.
+ * Preset sizes are library conveniences, not an official HeroUI Icon API.
  * @example
  * ```tsx
  * import { ArrowRight } from 'lucide-react-native';
- * import { Icon } from '@/registry/uniwind/registry/components/ui/icon';
+ * import { Icon } from 'rn-ui-kit/core';
  *
- * <Icon as={ArrowRight} className="text-red-500 size-4" />
+ * <Icon as={ArrowRight} size="sm" color="accent" />
+ * <Icon as={ArrowRight} className="size-4 text-muted" />
  * ```
- *
- * @param {LucideIcon} as - The Lucide icon component to render.
- * @param {string} className - Utility classes to style the icon using Uniwind.
- * @param {IconSize | string | number} size - One of the standard size names, or a native Lucide size.
- * @param {...LucideProps} ...props - Additional Lucide icon props passed to the "as" icon.
  */
-function Icon({ as: IconComponent, className, size = "default", ...props }: IconProps) {
+function Icon({
+  as: IconComponent,
+  className,
+  size = "md",
+  color = "inherit",
+  ...props
+}: IconProps) {
   const textClass = React.useContext(TextClassContext);
-  const isCustomSize = isIconSize(size);
+  const semanticColor = typeof color === "string" && Object.hasOwn(iconColorClasses, color);
   return (
     <StyledIcon
       as={IconComponent}
       className={cn(
         "text-foreground size-5",
         textClass,
-        isCustomSize ? iconSizeClasses[size] : undefined,
+        typeof size === "string" ? iconSizeClasses[size] : undefined,
+        semanticColor ? iconColorClasses[color as IconColor] : undefined,
         className,
       )}
-      {...(isCustomSize || size == null ? props : { ...props, size })}
+      {...props}
+      size={typeof size === "number" ? size : undefined}
+      color={semanticColor ? undefined : color}
     />
   );
 }

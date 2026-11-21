@@ -83,7 +83,7 @@ export function BasicToaster({
   viewportName,
   offset,
   defaultNative: _defaultNative,
-  iconSize = "default",
+  iconSize = "lg",
   basicHaptics,
   haptics,
   customToastViewProps,
@@ -119,12 +119,11 @@ export function BasicToaster({
       ...sonnerNativeProps?.toastOptions?.toastContentStyle,
     },
   };
-  const resolvedIconSize = iconSize === "default" || iconSize === "md" ? "lg" : iconSize;
   const icons = {
-    success: <Icon as={CheckCircle2} size={resolvedIconSize} color="#16a34a" />,
-    info: <Icon as={Info} size={resolvedIconSize} color="#2563eb" />,
-    warning: <Icon as={TriangleAlert} size={resolvedIconSize} color="#d97706" />,
-    error: <Icon as={CircleX} size={resolvedIconSize} color="#dc2626" />,
+    success: <Icon as={CheckCircle2} size={iconSize} color="success" />,
+    info: <Icon as={Info} size={iconSize} color="accent" />,
+    warning: <Icon as={TriangleAlert} size={iconSize} color="warning" />,
+    error: <Icon as={CircleX} size={iconSize} color="danger" />,
     ...sonnerNativeProps?.icons,
   };
   return (

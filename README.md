@@ -168,12 +168,12 @@ const theme: UiThemeConfig = {
 | 布局与组合 | `Accordion`、`Tabs`、`SplitView` / `SplitLayout`、`Card`、`Separator` |
 | 弹层 | `Dialog`、`AlertDialog`、`ContextMenu`、`Dropdown`、`Menubar`、`Popover`、`Sheet` / `NativeSheet`、`Tooltip` |
 | 列表与滚动 | `NativeList`、`ScrollView` |
-| 展示 | `Alert`、`Avatar`、`Badge`、`Skeleton`、`Text`、`Icon`、`Link`、`GlassEffect` |
+| 展示 | `Alert`、`Avatar`、`Badge`、`Chip`、`Skeleton`、`Text`、`Icon`、`Link`、`GlassEffect` |
 | 基础设施 | `RootProvider`、`UIProvider`、主题工具、导航工具、Portal 与平台工具 |
 
 `Form`、`Image`、`ListGroup`、`ListItem`、`FlashList`、`HoverCard` 和旧 `Menu` API 已删除。`TextArea` 已更名为 `Textarea`，`Menu` 已更名为 `Dropdown`。
 
-HeroUI 迁移分支已接入 `Accordion`、`Card`、`Alert`、`Avatar`、`Badge`（底层为 Chip）。这些组件使用单入口 props API，Native / Web 分别采用各自的 HeroUI 实现；旧 RNR 专属参数不再保留。`AspectRatio` 已删除，固定比例布局直接使用容器的 `aspectRatio` 样式；`Collapsible` 已删除，基础内容展开/收起使用单项 `Accordion`。具体 API 与验证记录见 [HeroUI 迁移文档](docs/heroui-migration.md)。
+HeroUI 迁移分支已接入 `Accordion`、`Card`、`Alert`、`Avatar`、`Badge`、`Chip`。这些组件使用单入口 props API，Native / Web 分别采用各自的 HeroUI 实现；旧 RNR 专属参数不再保留。独立标签使用 `Chip`（原标签型 Badge 已更名）；数量角标或状态点使用 `<Badge content={5}><Avatar /></Badge>`，Web 使用 HeroUI Badge，Native 使用 Chip 补齐定位。`Icon` 保留 Lucide + Uniwind 封装。`AspectRatio` 已删除，固定比例布局直接使用容器的 `aspectRatio` 样式；`Collapsible` 已删除，基础内容展开/收起使用单项 `Accordion`。具体 API 与验证记录见 [HeroUI 迁移文档](docs/heroui-migration.md)。
 
 第一版迁移中，`Select`、`Slider` 与 `Spinner` 是保证公开类型和编译稳定的占位实现；Select/Slider 的旧源码保留在 `legacy/`，后续单独重构。非原生 Toast UI 同样暂不渲染，native Toast 继续使用 Burnt。
 

@@ -119,11 +119,13 @@ See the [Chinese theme guide](./README.md#3-provider-与主题) and [migration d
 | Layout | `Accordion`, `Tabs`, `SplitView` / `SplitLayout`, `Card`, `Separator` |
 | Overlays | `Dialog`, `AlertDialog`, `ContextMenu`, `Dropdown`, `Menubar`, `Popover`, `Sheet` / `NativeSheet`, `Tooltip` |
 | Lists | `NativeList`, `ScrollView` |
-| Display | `Alert`, `Avatar`, `Badge`, `Skeleton`, `Text`, `Icon`, `Link`, `GlassEffect` |
+| Display | `Alert`, `Avatar`, `Badge`, `Chip`, `Skeleton`, `Text`, `Icon`, `Link`, `GlassEffect` |
 
 `Form`, `Image`, `ListGroup`, `ListItem`, `FlashList`, `HoverCard`, and the old `Menu` API were removed. `TextArea` is now `Textarea`, and `Menu` is now `Dropdown`.
 
 `AspectRatio` was removed; use the container's `aspectRatio` style. `Collapsible` was removed; use a single-item `Accordion` for basic content expansion and collapse.
+
+The HeroUI migration branch includes `Accordion`, `Card`, `Alert`, `Avatar`, `Badge`, and `Chip`, with a single props-based entry and separate platform implementations. The former label-style Badge is now `Chip`. Use `<Badge content={5}><Avatar /></Badge>` for an anchored indicator, or omit `content` for a status dot. Badge uses HeroUI Badge on Web and a positioned HeroUI Native Chip on iOS/Android; standalone Chip uses HeroUI Chip on both platforms. `Icon` keeps its Lucide + Uniwind wrapper. See [the migration guide](docs/heroui-migration.md) for API details and verification boundaries.
 
 In the first migration baseline, `Select`, `Slider`, and `Spinner` are compile-safe placeholders. Select and Slider source references live under `legacy/` for later focused migrations. Non-native Toast UI is also a no-op; native Toast continues to use Burnt.
 

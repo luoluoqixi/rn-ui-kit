@@ -26,13 +26,16 @@ for (const platform of ["web", "native"]) {
   test(platform + " actual Tailwind CSS resolves HeroUI text, surfaces and accent", async () => {
     const css = await readFile(new URL("../examples/app/global" + (platform === "native" ? ".native" : "") + ".css", import.meta.url), "utf8");
     const compiler = await compile(css, { base: appRoot, onDependency: () => {} });
-    const result = compiler.build(["text-muted", "bg-accent", "bg-surface", "bg-overlay", "text-field-foreground", "bg-accent03", "text-primary", "bg-card", "text-muted-foreground"]);
+    const iconColors = ["foreground", "muted", "accent", "success", "warning", "danger"];
+    const result = compiler.build(["size-4", "size-5", "size-6", ...iconColors.map(color => "text-" + color), "bg-accent", "bg-surface", "bg-overlay", "text-field-foreground", "bg-accent03", "text-primary", "bg-card", "text-muted-foreground"]);
     const colors = generateUiThemeFromPrimaryColor("#2563eb").light;
     expect(result).toContain("--muted: " + colors.muted);
     expect(result).toContain("--accent: " + colors.accent);
     expect(result).toContain(".text-muted");
     expect(result).toContain(".bg-accent03");
     expect(result).toContain("var(--muted)");
+    for (const color of iconColors) expect(result).toContain(".text-" + color + " {");
+    for (const size of [4, 5, 6]) expect(result).toContain(".size-" + size + " {");
     // Uniwind's generated local CSS may reserve removed variable names as unset
     // until the next Native bundle. The source and Web graph have no aliases.
     if (platform === "web") {

@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 
 for (const platform of ["web", "native"]) {
-  test(`Alert, Avatar and Badge ${platform}: real HeroUI behavior and platform props`, async () => {
+  test(`Alert, Avatar, Chip and Badge ${platform}: real HeroUI behavior and platform props`, async () => {
     const child = Bun.spawn([process.execPath, "test", "./test/display_components.fixture.jsx"], {
       cwd: new URL("../", import.meta.url).pathname,
       env: { ...process.env, DISPLAY_TEST_PLATFORM: platform },

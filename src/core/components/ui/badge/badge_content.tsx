@@ -1,4 +1,3 @@
-import { Icon } from "../icon";
 import { cn } from "../utils/cn";
 import { resolveRenderProp } from "../utils/render";
 import type { BadgeProps, BadgeRenderContext } from "./types";
@@ -8,23 +7,26 @@ const solidText = {
   success: "text-success-foreground", warning: "text-warning-foreground", danger: "text-danger-foreground",
 };
 const softText = {
-  default: "text-default-soft-foreground", accent: "text-accent-soft-foreground",
+  default: "text-default-foreground", accent: "text-accent-soft-foreground",
   success: "text-success-soft-foreground", warning: "text-warning-soft-foreground", danger: "text-danger-soft-foreground",
 };
-const textSize = { sm: "text-xs", md: "text-sm", lg: "text-base" };
-const iconSize = { sm: 12, md: 14, lg: 16 };
+export const badgeTextSizes = {
+  sm: "text-[10px] leading-[14px]", md: "text-xs leading-4", lg: "text-sm leading-5",
+};
+
 export function resolveBadgeContent(props: BadgeProps) {
   const context: BadgeRenderContext = {
-    size: props.size ?? "md", variant: props.variant ?? "primary", color: props.color ?? "accent", icon: props.icon,
+    size: props.size ?? "md",
+    variant: props.variant ?? "primary",
+    color: props.color ?? "default",
+    placement: props.placement ?? "top-right",
   };
   return {
     ...context,
-    textClass: cn("font-medium", textSize[context.size], (context.variant === "primary" ? solidText : softText)[context.color]),
-    label: props.children ?? resolveRenderProp(props.label, context),
-    start: props.startContent !== undefined ? resolveRenderProp(props.startContent, context) : props.icon ? (
-      <Icon as={props.icon} {...props.iconProps} size={props.iconProps?.size ?? iconSize[context.size]}
-        className={cn(props.iconClassName, props.iconProps?.className)} />
-    ) : undefined,
-    end: resolveRenderProp(props.endContent, context),
+    content: props.isHidden ? undefined : resolveRenderProp(props.content, context),
+    textClass: cn(
+      "font-medium", badgeTextSizes[context.size],
+      (context.variant === "primary" ? solidText : softText)[context.color],
+    ),
   };
 }
