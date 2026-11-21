@@ -1,5 +1,6 @@
 import { type ReactNode } from "react";
 import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
+import { ExampleSectionView } from "./example_section_view";
 
 import {
   Card,
@@ -63,10 +64,10 @@ export function ExampleStack({ children }: { children: ReactNode }) {
 /** A quiet section label without adding a Card around the showcased component. */
 export function ExampleSection({ children, title }: { children: ReactNode; title: string }) {
   return (
-    <View className="gap-3">
+    <ExampleSectionView className="gap-3">
       <Text className="text-sm text-muted">{title}</Text>
       {children}
-    </View>
+    </ExampleSectionView>
   );
 }
 

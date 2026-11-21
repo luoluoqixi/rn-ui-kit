@@ -225,6 +225,7 @@ Metro 的平台解析与 TypeScript 的解析不是同一个机制。编辑器�
 - 参考内容与视觉演示，不复制组合式调用。示例默认使用 rn-ui-kit 的单入口组件与 props，不直接引用平台 HeroUI 组件和内部 hook；需要自定义图标或图片时可以传普通节点。
 - 本项目在同一页连续展示多组示例，具体文案按每组功能分别编写，说明当前效果与操作方法；不重复照搬官方独立示例页中相同的 FAQ 或业务场景文本。
 - 简单组件的分组使用 ExampleSection（标签与演示），不为每个演示额外套一张 Card。示例聚焦实际使用场景，复杂参数组合、非法输入、ref、字体和边界值主要通过自动化测试与 API 文档覆盖。
+- Native 的 ExampleSection 使用同一个布局动画容器包裹分组标签和演示内容，使前一组高度变化时后续分组整体移动。组件自己的布局动画不负责其外部的普通 View / Text；不要为此全局改造 Text，或把示例页面的布局逻辑塞进 Accordion。Web 的分组容器继续使用普通 View。
 - Select、Dropdown、Sheet 等项目深度定制示例，以及各组件系统原生 UI 的专属示例，保留其项目特有内容。遇到特殊示例而无法确定是否应替换时，先向用户确认，不自动用官方基础示例覆盖。
 - 此约定也写入 `.agents/AGENTS.md`，供后续组件任务读取。
 
@@ -314,6 +315,14 @@ Card 原先是项目内的 View / Text 自绘封装，并没有单独的 RNR Car
 - 根据真机反馈，对照本地官方 DefaultVariantContent 补上 Native default variant 的 PressableFeedback 组合；不是关闭或开启全局动画，也没有为 Web 引入 Native 内容。Native 独立测试 9 个场景通过，新增场景覆盖真实反馈组件的按压事件链、ref、单一触发区、禁用与展开行为；动画 hook 被替换，实际缩放和底色过渡仍需真机复核。
 - 调整文案后的全量主测试 135 项通过、0 失败，1814 次断言；库与示例 typecheck、库 build、示例 build:web 通过。三端再次带 source map 导出及平台审计通过，Web / iOS / Android 的另一套 HeroUI 模块均为 0，HeroUI 模块数仍为 17 / 361 / 361。
 - 新生产 Web 页面确认 Accordion 七组功能文案各不相同；Card 在 1280px 视口下文案与五张图片正常显示，各卡片内容无横向溢出，浏览器未记录运行错误或警告。本次浏览器检查不能验证 Native 的按压动画。
+
+### 连续示例页的布局动画（2026-11-21）
+
+- 用户反馈 Accordion 展开时示例标题直接跳到新位置。核对锁定包与本地官方示例后，确认 HeroUI 的 Root / Item 已配置 layout transition；AccordionText 只有上下文与基本文字转换，没有额外原生布局节点。此前 ExampleSection 外层为普通 View，Accordion 的高度变化会直接重排后续分组，分组标签并不在它的动画范围内。官方示例每页一组，未覆盖本项目连续排列多组的情况。
+- 增加平台隔离的 example_section_view：Native 使用 Animated.View，让标签与演示作为整体过渡，沿用 HeroUI Native 1.1.1 Accordion 默认的 spring 参数（damping 140 / stiffness 1600 / mass 4），显式使用 ReduceMotion.System，并保留布局容器避免被折叠；Web 直接导出普通 View。未改变 Accordion 内部动画、文本封装、公共 props 或 TrueSheet 补丁。
+- 全量主测试仍为 135 项通过、0 失败，1814 次断言；Native Accordion 独立测试由 9 增至 10 个场景，69 次断言，增加分组标签与演示共享布局动画容器、展开 / 收起后保持后续触发区节点的检查。DOM 测试仅记录布局动画配置并验证交互，不计算原生布局动画帧。
+- 库与示例 typecheck、库 build、Expo 三端带 source map 导出及平台审计通过。Web / iOS / Android 的 HeroUI 模块仍为 17 / 361 / 361，另一端模块均为 0；实际 source map 确认 Web 仅包含普通分组容器，iOS / Android 仅包含 Native 动画容器。
+- 本轮没有操作真机；需要在设备上展开 / 收起前面的分组，检查后续分组标签与演示是否同步平滑移动，并在系统减少动态效果开启时确认无需动画。此修复针对示例分组的外层重排，不能据自动化测试声称已排除所有设备上的条目动画问题。
 
 ## 后续批次
 

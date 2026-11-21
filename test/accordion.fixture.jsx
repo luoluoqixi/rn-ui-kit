@@ -49,13 +49,15 @@ if (native) {
   const { useControllableState } = await import("../node_modules/heroui-native/src/helpers/internal/hooks/use-controllable-state");
   const [AnimationProvider, useAnimation] = createContext();
   const AnimatedView = React.forwardRef(function AnimatedView({ entering, exiting, layout, ...props }, ref) {
-    return <NativeView {...props} ref={ref} />;
+    return <NativeView {...props} ref={ref}
+      dataSet={{ ...props.dataSet, ...(layout ? { layoutTransition: "enabled" } : {}) }} />;
   });
   const animation = {};
-  for (const method of ["springify", "damping", "stiffness", "mass", "duration", "easing"]) animation[method] = () => animation;
+  for (const method of ["springify", "damping", "stiffness", "mass", "duration", "easing", "reduceMotion"]) animation[method] = () => animation;
   mock.module("react-native-reanimated", () => ({
     default: { View: AnimatedView, createAnimatedComponent: component => component },
     FadeIn: animation, FadeOut: animation, LinearTransition: animation,
+    ReduceMotion: { System: "system" },
     Easing: { in: value => value, out: value => value, ease: value => value },
   }));
   mock.module("../node_modules/heroui-native/src/helpers/internal/utils", () => ({
@@ -309,4 +311,35 @@ test.skipIf(!native)("native default feedback preserves a single trigger, press 
   await render({ items: [items[0]], variant: "surface" });
   expect(buttons()).toHaveLength(1);
   expect(document.querySelector(".pressable-feedback__highlight")).toBeNull();
+});
+
+test.skipIf(!native)("native example labels and accordions share stable layout-animated sections", async () => {
+  const sectionView = await import("../src/debug/pages/component_examples/example_section_view.native");
+  mock.module("../src/debug/pages/component_examples/example_section_view", () => sectionView);
+  // Keep this fixture limited to Accordion and the actual example section,
+  // without loading unrelated system-native components from the UI barrel.
+  mock.module("../src/core/components/ui", () => ({
+    Card: NativeView, Input: NativeView, NativeList: NativeView,
+    NativeListNavigationItem: NativeView, NativeListSection: NativeView, Text, Textarea: NativeView,
+  }));
+  const { ExampleSection, ExampleStack } = await import("../src/debug/pages/component_examples/shared");
+  await render({ items: [items[0]] }, accordion => (
+    <ExampleStack>
+      <ExampleSection title="First demo">{accordion}</ExampleSection>
+      <ExampleSection title="Following demo"><Accordion items={[items[1]]} /></ExampleSection>
+    </ExampleStack>
+  ));
+  const sections = [...document.querySelectorAll('[data-layout-transition="enabled"]')];
+  expect(sections).toHaveLength(2);
+  expect(sections[0].textContent).toContain("First demo");
+  expect(sections[0].contains(buttons()[0])).toBe(true);
+  expect(sections[1].textContent).toContain("Following demo");
+  const followingTrigger = buttons()[1];
+  expect(sections[1].contains(followingTrigger)).toBe(true);
+  await click(0);
+  expect(document.body.textContent).toContain("Content A");
+  await click(0);
+  expect(document.body.textContent).not.toContain("Content A");
+  expect(buttons()[1]).toBe(followingTrigger);
+  expect([...document.querySelectorAll('[data-layout-transition="enabled"]')]).toEqual(sections);
 });
