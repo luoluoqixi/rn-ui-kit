@@ -12,3 +12,5 @@ bun.lockb
 .temp/
 
 .agents
+# heroui-agents-md
+.heroui-docs/

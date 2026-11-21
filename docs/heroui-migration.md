@@ -1,4 +1,4 @@
-# HeroUI 迁移：底座隔离与主题重构
+# HeroUI 迁移：底座、主题与组件
 
 日期：2026-11-21。工作分支：`dev-heroui`。
 
@@ -30,14 +30,14 @@ TrueSheet 已完成 4.1.2 升级，用户已在 iOS / Android 真机验证大部
 
 - `heroui_provider.native.tsx` 使用发布包提供的 `HeroUINativeProvider`，关闭它的 Toast。沿用现有 GestureHandlerRootView、SafeAreaProvider、Toast 和 RNR/Teleport portal 系统。
 - `heroui_provider.tsx` 是 Web 的透传入口，无 HeroUI Native 导入。HeroUI React v3 不需要额外 Provider。
-- 1.1.1 发布包仅提供主入口、样式入口等有限 exports，未提供 `provider-raw`。不能直接照搬其他版本文档中的私有或未发布子路径。
+- Native 的导入路径以锁定包的 exports 为准。1.1.1 实际提供 provider-raw、accordion 等公开子路径；当前 Provider 仍沿用已验证的主入口。
 - Native Provider 自带其独立的 HeroUI PortalHost；本批没有据此改变现有弹层的宿主和层级。
 
 ## JS 与 CSS 分别隔离
 
 ### JS
 
-组件和内部适配层使用 `.native.tsx` 与默认 Web `.tsx` 文件分流，禁止在共享模块中同时导入两套 HeroUI 后再通过 `Platform.OS` 选择。Web 导入优先使用 `@heroui/react/button`、`@heroui/react/modal` 等公开子路径。Native 1.1.1 使用实际支持的主入口。
+组件和内部适配层使用 `.native.tsx` 与默认 Web `.tsx` 文件分流，禁止在共享模块中同时导入两套 HeroUI 后再通过 `Platform.OS` 选择。Web 导入优先使用 `@heroui/react/button`、`@heroui/react/modal` 等公开子路径。Native 同样优先使用锁定版本公开的组件子路径，例如 heroui-native/accordion。
 
 `scripts/metro/heroui.cjs` 导出 `withHeroUIConfig`，也通过 `rn-ui-kit/metro` 对外提供。它接续宿主原有 resolver，并检查包名及解析后的文件路径：
 
@@ -184,13 +184,91 @@ UiThemeProvider 同时提供 ScopedVariables，并通过 Uniwind.updateCSSVariab
 - 本轮未运行新的原生 Release 编译或真机配色回归；请在同一 HeroUI 验证页确认 Native 的明暗切换、说明/placeholder、主题色和 Sheet 内输入表现，特别是系统外观切换。
 - 依赖声明、锁文件、所有 patch 与 patch 顶部注释均未改动。
 
+## 第三阶段：组件封装约定
+
+### 文件命名与职责（后续迁移统一采用）
+
+以 Accordion 为例；其他组件将 accordion 替换为组件名：
+
+| 文件 | 职责 |
+| --- | --- |
+| index.ts | 唯一且简单的入口，仅导出组件及公共类型 |
+| types.ts | 通用模型、公共 props、类型入口；两端 HeroUI 均使用 import type |
+| types_heroui_native.ts | HeroUI Native 类型复杂时可选拆分，由 types.ts 引用或导出 |
+| types_heroui_web.ts | HeroUI Web 类型复杂时可选拆分，由 types.ts 引用或导出 |
+| types_native.ts | 已有系统原生实现的复杂类型；按需创建 |
+| accordion.tsx | 薄包装，选择已有系统原生实现或 HeroUI 适配器 |
+| accordion_heroui.native.tsx | iOS / Android 的 HeroUI Native 实现 |
+| accordion_heroui.tsx | Web 的 HeroUI React 实现 |
+| accordion_native.native.tsx | 已有系统原生实现；没有则不创建 |
+| accordion_native.tsx | Web 的浏览器原生实现或必要的空实现；按需创建 |
+
+允许必要的内部文本、状态辅助文件，但不再维护 types.shared.ts → types.native.ts 等多层公共类型转接。不创建平台版 index.native.ts。可选类型文件统一使用下划线命名，不使用 types.native.ts 让 Metro 隐式替换公共类型。
+
+Metro 的平台解析与 TypeScript 的解析不是同一个机制。编辑器可以通过 moduleSuffixes 等配置识别平台后缀，并非永远不能识别；但本工程不依赖消费者修改 tsconfig 来获得完整类型。每个平台实现显式引用同一 types.ts，VSCode 和库构建能同时检查两端。import type 在 JS 转译时擦除，声明文件仍保留引用供编辑器检查，因此两套类型可共存，运行时代码仍须隔离。
+
+两端互不兼容的 DOM / RN ref、事件、style、动画不能直接粗暴交叉成一个 props 类型，也不能用断言伪装成通用类型。通用封装参数直接提供；确需底层能力时，通过 herouiNativeProps / herouiWebProps 显式选择，在根或相应 slot 上配置。它们只在对应平台生效，不改变共享状态模型。native 一词仅表达系统原生实现，不能用这些 HeroUI 参数替代或删除已有 native API。
+
+### 尺寸与主题原则
+
+核对两份 HeroUI skill、官方 theming / Accordion 文档以及安装包后：HeroUI 没有给所有组件统一注入 size 的全局 Provider。Button 等组件有自己的 size variants；两端 Accordion 均没有 size 属性。
+
+- 组件有内置 size 时优先适配该能力，保留 HeroUI 默认值；不为每个组件复制旧 RNR 的八档尺寸表，也不要求所有组件具有相同 size 集合。
+- 组件无内置 size 时默认沿用 HeroUI。Accordion 本批不额外发明 size，删除迁移草稿中的 sizes.ts / AccordionSize。
+- 主题统一颜色、字体、圆角，以及 Tailwind / Uniwind 的间距和字号 token。局部密度通过 triggerProps.className、titleClassName、contentClassName 等 slot 设置，例如 py-2 / text-sm；不要把字体或内边距的差异藏进重复的组件尺寸枚举。
+- 今后如果确需应用级 compact / comfortable 密度，应作为单独的跨组件主题设计统一评估。修改基础 --spacing、--text-* 或根字号会影响整体布局，两端 rem 与原生单位也不必相同，不能把它宣称为无副作用的全局 size。
+- 当前不更改基础间距、全局字号或字体体系。Native skill 的 HSL 示例与锁定包和现行官方文档存在差异，继续以实际包的源 token / oklch 实现为准，不回退第二阶段主题。
+
+### 首个组件：Accordion
+
+仅迁移 Accordion，调用方仍只使用一个组件，不需要组合 HeroUI 子组件：
+
+```tsx
+<Accordion
+  selectionMode="single"
+  defaultValue="intro"
+  titleClassName="text-accent"
+  triggerProps={{ className: "py-3" }}
+  contentClassName="bg-surface-secondary"
+  items={[
+    { value: "intro", title: "介绍", content: "内容" },
+    {
+      value: "details",
+      title: item => item.value,
+      content: <CustomContent />,
+      titleClassName: "text-success",
+      triggerProps: { className: "px-6" },
+    },
+  ]}
+/>
+```
+
+- 共享 API：items、selectionMode、value / defaultValue / onValueChange、isCollapsible、isDisabled、variant、hideSeparator、nativeHaptics；不再导出旧 RNR compound 子组件或保留 type / collapsible / disabled 等旧参数别名。
+- single 的值是 string 或 undefined，multiple 的值是 string[]，由判别联合检查。显式传 value={undefined} 仍为受控的关闭状态；不传 value 才使用内部状态。item.value 必须非空且唯一。
+- 保留每项 title / content 节点或回调，以及根级和条目级 itemProps、headerProps、triggerProps、contentProps、titleClassName、contentClassName。条目级普通属性覆盖根默认值，className 使用 tailwind-merge 合并；整组禁用始终有效。titleClassName 只作用于标题文字。
+- 公共 triggerProps.onPress 接收实际平台事件联合；需要使用事件专有字段时先收窄。平台专有的 DOM / RN 扩展通过对应 props 对象获得正确提示，不向另一端透传。
+- Web 使用真实 HeroUI Item / Heading / Trigger / Indicator / Panel / Body；Native 使用真实 Item / Trigger / Indicator / Content，动画交给 HeroUI。headerProps 在 Web 配置 Heading，在 Native 配置包裹 Trigger 的可选 View，因为 Native Trigger 自带内部 Heading。
+- contentProps.className / contentClassName 配置带内边距的内容容器；Web 是 Body 的内部容器，Native 是 Content。Web 的 herouiWebProps 则指向动画 Panel（包含 ref），Native 的 herouiNativeProps 指向 Content。
+- 标题和基础文字保留项目字体上下文；自定义节点保持组件自身语义。Web 基础文字沿用 HeroUI 的 text-sm，Native 使用文档示例的 text-base；间距、指示器尺寸和动画沿用各自库默认值，不强求两个平台逐像素相同。
+- nativeHaptics 仅在 Native 有效；挂载、重复值、禁用和阻止收起时不触发。Accordion 原本没有系统原生实现，因此没有新增虚假的 native 分支。
+- 已移除无其他消费者的 @rn-primitives/accordion 直接依赖。其他组件与 TrueSheet 补丁保持本批之前的实现。
+
+### Accordion 验证（2026-11-21）
+
+- 133 项主测试通过，0 失败；其中 Accordion 通过隔离子进程分别运行真实 HeroUI Web / Native 组件，各覆盖 7 个交互场景，避免 mock 污染其他组件测试。Native 测试替换设备、动画和 SVG 环境，不能视为真机动画或手势验收。
+- 库与示例应用 typecheck、库 build 通过。新增编译检查同时使用两端 ref、事件及扩展 props，检查 selectionMode 的值类型，拒绝错误平台 ref 和越过共享状态的底层参数。
+- Expo Web / iOS / Android 同次带 source map 导出通过。Web 包含 15 个 HeroUI React 模块，iOS / Android 各包含 361 个 HeroUI Native 模块；另一端 HeroUI 模块均为 0。三端旧 RNR / Radix Accordion 模块均为 0，且只包含目标平台的 accordion_heroui 实现。
+- 产出的 types.js 仅为 export {}，两套 import type 均未进入 JS。公共 .d.ts 则保留类型引用供编辑器检查。
+- 生产 Web 浏览器实测单项切换、多项独立展开、外部受控切换与清空、不可收起、Enter 键展开和条目样式覆盖正常；默认触发区内边距为 16px，紧凑示例的纵向内边距为 8px。浏览器未发现运行错误。
+- 真机待在“组件示例 → Accordion”回归展开/收起动画、连续点击、触感、禁用和 TrueSheet 内滚动/输入；本批三端导出与 DOM 测试不能替代 iOS / Android 设备验收。
+
 ## 后续批次
 
 1. **主题重构（已实现）**：见上文第二阶段。真机重新观察配色后进入简单组件迁移。
-2. **简单自绘组件**：优先 Button、Accordion 等，在保留原有 API 和系统原生分支的前提下逐一替换。尺寸、disabled/loading、ref、事件及可访问性需要逐项适配，不能简单按同名属性透传。
+2. **简单自绘组件**：优先 Button、Accordion 等，不保留 RNR 特有 API，保留项目自定义的单入口封装习惯及所有系统原生分支，逐一设计新 API。尺寸、disabled/loading、ref、事件及可访问性需要逐项适配，不能简单按同名属性透传。
 3. **弹层**：Dialog、AlertDialog、Popover 等；先验证根页面、TrueSheet、嵌套 Sheet、导航和键盘，再替换现有实现，重点是两端原生层级和 Android 返回行为。
 4. **复杂组件**：Select、Dropdown、Menu 等，仅替换自绘分支。逐一盘点所有组件现有 native 功能，不能仅按少数几个组件名单保护。
-5. **独立组件与收尾**：SplitLayout、NativeList、ScrollView、NativeDialog、NativeTrigger、GlassEffect、ColorPicker 等以主题引用调整和组合回归为主。待全量迁移结束，才移除真正无用的 RNR 依赖、样式和兼容代码。
+5. **独立组件与收尾**：SplitLayout、NativeList、ScrollView、NativeDialog、NativeTrigger、GlassEffect、ColorPicker 等以主题引用调整和组合回归为主。已无消费者且替代实现验证完成的 RNR 依赖、样式和兼容代码可随对应批次清理。
 
 ## 参考资料
 
@@ -198,6 +276,10 @@ UiThemeProvider 同时提供 ScopedVariables，并通过 Uniwind.updateCSSVariab
 - HeroUI Native 索引: https://heroui.com/native/llms.txt
 - HeroUI React quick start: https://heroui.com/en/docs/react/getting-started/quick-start
 - HeroUI React 索引: https://heroui.com/react/llms.txt
+- HeroUI Native Accordion: https://heroui.com/en/docs/native/components/accordion
+- HeroUI Native theming: https://heroui.com/en/docs/native/getting-started/theming
+- HeroUI React Accordion: https://heroui.com/en/docs/react/components/accordion
+- HeroUI React theming: https://heroui.com/en/docs/react/getting-started/theming
 - Expo Tailwind / PostCSS: https://docs.expo.dev/guides/tailwind/
 
 API 与 exports 最终按锁定发布包中的 package.json、类型和源码核对，避免文档更新速度与 npm 发布包不同步。
