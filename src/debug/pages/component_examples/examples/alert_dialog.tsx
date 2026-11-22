@@ -9,8 +9,6 @@ export function AlertDialogExample() {
     <ExampleStack>
       <ExampleBlock description={`最近结果：${result}`} title="危险操作确认">
         <AlertDialog
-          dismissOnBackPress
-          dismissOnOverlayPress
           cancelLabel="取消"
           destructiveLabel="删除"
           description="此操作仅用于演示，不会删除真实数据。"

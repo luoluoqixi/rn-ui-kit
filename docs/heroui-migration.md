@@ -871,6 +871,163 @@ Web 根节点是真实 HeroUI / React Aria 的单个 button，没有再包一个
 - 新增回归在旧代码上失败，修正后 Web / iOS / Android 隔离回归全部通过；覆盖 highlight / ripple、gap=0 / 8、已选项连续两次长按的 out→press 顺序，检查不触发选择变化、反馈结束、实例稳定及下一次 ripple 触点。模型显式模拟动画残留 opacity，避免普通 DOM 静态样式优先级掩盖 Native 边界；它不执行原生动画或触摸命中测试，本轮未操作真机。
 - 全量主测试 157 项通过、0 失败；库及示例 typecheck、库 build、三端 Expo 生产导出、平台隔离审计与 git diff HEAD --check 通过。Web / iOS / Android 的目标 HeroUI 模块为 90 / 361 / 361，另一端均为 0。需要真机复核长按已选项松手、连续长短按，以及滑出取消和下一次 ripple 反馈。
 
+## 弹出层与复杂选择组件迁移（2026-11-22）
+
+本批只替换自绘弹层和 SelectBasic。继续使用单入口 props API、单一 index.ts / types.ts，以及 *_heroui.tsx / *_heroui.native.tsx 平台适配；公共类型通过 import type 引用两套库。未引入跨平台运行时分支导入。
+
+| 公共组件 | Web | iOS / Android 自绘路径 |
+| --- | --- | --- |
+| Dialog | HeroUI Modal | HeroUI Dialog |
+| AlertDialog | HeroUI AlertDialog | HeroUI Dialog，确认语义与受保护关闭策略 |
+| Popover | HeroUI Popover | HeroUI Popover |
+| Dropdown，native=false | HeroUI Dropdown | HeroUI Menu / SubMenu |
+| Select，native=false | HeroUI Select / ListBox | HeroUI Select |
+| Tooltip | HeroUI Tooltip | 原样渲染 children，无触摸拦截 |
+| Toast，自绘路径 | HeroUI ToastQueue / Provider | HeroUI ToastProvider / Toast |
+| 新增 ListGroup | HeroUI ListBox | HeroUI ListGroup |
+
+### Dialog、AlertDialog 与定位弹层
+
+- Dialog / AlertDialog 提供 title、description、content、trigger、actions，以及 actionLabel / cancelLabel / destructiveLabel 与各自的 Button props。content / actions 等支持接收 { open, close } 的渲染函数；open / defaultOpen / onOpenChange 使用统一受控规则。
+- Dialog 默认允许遮罩、Escape / Android 返回与 Native 滑动关闭。AlertDialog 默认不允许这些隐式关闭，使用取消 / 确认操作；Native 使用 Dialog 加确认语义封装。dismissOnOverlayPress 与 dismissOnBackPress 独立控制。
+- 取消关闭窗口；AlertDialog 的确认 / 危险操作默认关闭，事件 preventDefault 可阻止；普通 Dialog 的 action 默认保留窗口，设置 closeOnAction 才自动关闭，便于异步保存和校验。自定义 actions 使用 close 显式决定关闭时机。
+- Popover 保留 title / description / content、箭头与 side / align / sideOffset 配置，并提供 herouiWebProps / herouiNativeProps 逃生口。Tooltip Native 仅保留 children，不把长按改造成提示手势。
+- 新增文字槽注入项目字体；Web 子菜单与 Tooltip portal 也保留字体配置。原 NativeDialogProvider 的自绘 fallback 改用新的 AlertDialog props API，系统 NativeDialog 实现保持不变。
+
+~~~tsx
+<Dialog
+  trigger="编辑名称"
+  title="重命名工作区"
+  description="保存后将更新当前工作区名称。"
+  content={<Input value={name} onChangeText={setName} />}
+  cancelLabel="取消"
+  actionLabel="保存"
+  actionProps={{ onPress: save }}
+  closeOnAction
+/>
+
+<AlertDialog
+  trigger="删除记录"
+  title="删除这条记录？"
+  description="此操作无法撤销。"
+  cancelLabel="取消"
+  destructiveLabel="删除"
+  destructiveProps={{ onPress: remove }}
+/>
+~~~
+
+### Dropdown、Select 与系统原生保留范围
+
+- Dropdown 的系统原生菜单实现、NativeTrigger、菜单 ref、选中 / 禁用 / 危险项、子菜单、触感和操作回调保留。native=false 才进入 HeroUI 自绘路径；checkbox 项默认保留菜单，普通操作默认关闭。旧自绘 contentSize 与 RNR compound exports 不再维护，平台细节使用 heroui*Props。
+- Select 只替换 SelectBasic。wheel / native / dropdown / dialog / sheet 的路由、实现及其平台 fallback 保持原样。保留 items / options / itemGroups、受控 null、ref.open / ref.close、NativeTrigger、丰富标签、色块与选项前后内容。
+- NativeTrigger 已使用 foreground 等语义色与字体边界。为 NativeList 和系统原生触发器设计的扩展尺寸继续保留，不强行压缩为 HeroUI Button 的三档；只有使用项目 Button 的自绘 Select 触发器将扩展尺寸映射到 sm / md / lg。
+- Select / Dropdown 的深度定制示例继续保留；示例调用公开封装，不直接组合 HeroUI 内部组件。
+
+### Toast API 与宿主路由
+
+- useToast()、toast.message / info / success / error / warning / loading / custom / promise / close / closeAll、字符串或数字 ID、同 ID 更新、自定义 JSX、触感、viewportName / toasterId 路由保留。默认 native 选择及所有 Burnt 原生实现不变。
+- 新增独立命令桥接，区分调用方 ID 和 HeroUI 队列句柄；目标 viewport 尚未注册时等待，注册后再显示。同 ID 更新不重播 Native 入场；旧实例的退出回调不能删除后来复用同 ID 的实例。显式关闭和自动到期只派发对应平台的 onDismiss / onAutoClose，卸载和路由替换不误报用户关闭。
+- Web 支持上下与左右 / 居中的六个方向、操作 / 取消按钮、关闭按钮、默认样式和位置 / offset；Native 支持上下位置、触摸暂停计时、拖动 / 点击关闭、操作按钮、默认样式和关闭控件。loading 默认持续显示，duration 单位仍为毫秒。
+- 全局 Web Toast 继续移动稳定宿主到当前最深 modal / Sheet 作用域，保留同一通知实例。HeroUI 自己的 ToastRegion portal 通过 React Aria PortalProvider 留在该宿主内；Radix Branch、静默 aria-live 标记及 React Aria top-layer 标记保证内层通知可点击、不会误关外层。
+- 已移除 sonner / sonner-native 两个直接依赖及全部外部类型引用。sonnerOptions / sonnerNativeOptions / sonnerProps / sonnerNativeProps 的常用映射由项目自己的弃用兼容类型定义，不承诺旧渲染器专属动画、Native center 位置或未映射选项。新展示配置优先使用 herouiWebProps / herouiNativeProps。保留的 Burnt 0.13.0 自身仍依赖 sonner，因此 sonner 仍可能出现在安装目录与锁文件中；三个平台本库自绘 Toast 的运行时产物均不使用它。新增 react-aria 3.53.1 直接依赖用于公开 PortalProvider，版本与现有传递依赖一致。
+
+### ListGroup 与 NativeList 的边界
+
+ListGroup 提供 items / sections、标题、说明、前后内容、选中 / 禁用、分隔线、箭头和点击行为。Web 使用实际 ListBox 语义；有选择模式时方向键移动焦点、空格选择，Enter 执行动作。无选择模式可直接作为操作列表。
+
+~~~tsx
+<ListGroup
+  accessibilityLabel="工作区设置"
+  showSeparators
+  showChevron
+  items={[
+    { id: "profile", title: "个人资料", description: "修改姓名与头像", onPress: editProfile },
+    { id: "notifications", title: "通知", description: "管理接收方式", onPress: editNotifications },
+  ]}
+/>
+~~~
+
+本批不把 NativeList 的 basic section / item 整体替换成 ListBox。NativeList 行可嵌入 Switch、输入框、独立 Select / Dropdown 触发器与原生交互，这些不适合直接变成可选择的 option。系统 iOS 列表与现有 basic 实现保留；未来若只为统一圆角 / 背景 / 分隔线，可抽取无 collection 语义的视觉容器，共用 HeroUI token，避免把嵌套控件塞进 ListBox 选项。
+
+### TrueSheet、ContextMenu 与旧 host 清理
+
+- TrueSheet 源码、集成及全部 patch 不变。锁定 HeroUI Native 的 FullWindowOverlay 已有 AboveNativeSheet / TrueSheetOverlay 路径，本批使用官方 portal，不复制旧 RNR 的坐标修正。原生层级、Android 返回键和键盘仍需要真机回归。
+- Web 保留 ModalContentScope / OverlayPortalScope，确保子弹层留在当前 Dialog / Sheet 的交互和焦点范围。Dropdown 根菜单挂入该作用域，子菜单由 React Aria 自己的 popover group 承载；把每级子菜单强行移到外部 scope 会导致 inert 和焦点丢失。
+- Web 适配器通过透明的 HeroUIOverlayLayer 加入 Radix 的 layer 顺序。它阻止外层 Drawer 在 document capture 阶段提前响应 Escape，再由 React Aria 按原逻辑关闭当前弹层、恢复焦点或保护 AlertDialog；不代管指针关闭和原生行为。真实 Drawer 的回归覆盖逐级 Escape，防止一次按键连带关闭 Sheet 和外层 Dialog。
+- HeroUI Web Dropdown 的 100% 宽度上限在零尺寸局部宿主中会压缩菜单；适配器沿用其 55-spacing 默认宽度下限与视口上限，移除对宿主百分比宽度的依赖。公共 host 与 TrueSheet patch 无需调整。
+- ContextMenu 按要求暂不迁移。后续可以共用菜单数据模型、项内容及选中 / 禁用 / 危险样式，但右键 / 长按触发、坐标锚点和关闭 / 焦点策略需要单独适配；不能只给 Dropdown 设置 open 就视为完整右键菜单。系统原生 ContextMenu 保持现状。
+- 删除旧 Dialog / AlertDialog / Popover / Dropdown / Select / Tooltip 的直接 RNR 依赖和专属 helper。ContextMenu、Menubar、Floating、Toast / Sheet 的作用域与窗口路由仍有消费者，不能整体删除所有旧 host。保留相应 Portal、Radix 与 native 分支依赖。
+
+### 本批验证与设备回归
+
+- 库和 Expo 示例应用的 typecheck、库 build 通过；主测试 141 项通过、0 失败。弹层子进程回归分别验证真实 HeroUI Web 组件、iOS / Android 适配器和 Toast portal；Native 适配器测试使用边界 mock，不代表真机验收。
+- Expo `export --platform all --source-maps` 通过。最终 source map：Web 4666 个模块，iOS 4520 个模块，Android 4459 个模块。平台隔离审计全部通过：Web 无 HeroUI Native，iOS / Android 无 HeroUI Web；三端 Sonner / Sonner Native 与本批移除的六类 RNR 运行时模块均为 0。
+- 生产 Web 产物已实测 Dialog → TrueSheet → 子 Dialog / AlertDialog / Popover / Select / Dropdown 的嵌套交互、输入焦点、保护性确认框，以及子菜单 / 根菜单逐级 Escape 后保留 Sheet 和外层 Dialog。根菜单关闭后焦点返回 Sheet 菜单触发器。
+- 全局 Toast 在 Dialog / Sheet 间迁移时保留实例；通知内容可交互，关闭通知后 Sheet 仍可输入、继续打开菜单。关闭按钮沿用 HeroUI 的悬停显示行为，浏览器验证需先使按钮可见，避免直接点击透明按钮坐标落到下面的遮罩。回归测试另覆盖实际关闭控件及其移除后的外层保留。
+- git diff 检查确认 TrueSheet 源码 / 集成 / patch、NativeTrigger、NativeList、系统 Dropdown / Select 分支和公共 OverlayPortalScope 未改动。
+
+本批没有运行新的 iOS / Android 真机验收或原生 Release 构建。下一轮设备验证重点：
+
+1. Dialog / AlertDialog / Popover / Menu / Select 在根页面、TrueSheet、嵌套 Sheet 内的层级、键盘与 Android 返回键，确认只关闭当前应关闭的一层。
+2. Dropdown 的系统原生菜单、子菜单、选中 / 禁用项和 NativeList 内的 NativeTrigger；Select 的 wheel / native / dropdown / dialog / sheet 各模式及 ref.open / ref.close。
+3. HeroUI 自绘 Toast 的连续通知、同 ID 更新、操作 / 取消 / 关闭、倒计时、Sheet 内交互及 viewport 路由；Burnt 原生 Toast / Alert 的原有表现。
+4. 主题 / 字体、深色模式和无障碍焦点。Tooltip 在 Native 按约定仅渲染 children，不新增长按或悬停行为。
+
+### 首轮设备反馈修正（2026-11-22）
+
+- Native Dropdown 的 SubMenu.Trigger 直接使用项目 Text，沿用官方子菜单标题的主题色、字号、字重；不再把依赖 Menu.Item context 的 Menu.ItemTitle 放在子菜单触发器中。正常菜单项仍使用 Menu.ItemTitle。
+- Select 的 HeroUI Native Trigger 设为 variant="unstyled"，只提供选择交互；NativeTrigger 或项目 Button 各自负责外观和尺寸，避免 asChild 仍注入默认 Select 背景、阴影、padding 和最小高度。
+- Popover 示例设置 w-72 与 90vw 的视口宽度上限，编辑输入框有足够空间；不统一改写全部 Popover 的内容宽度。
+- Native Toast 补齐官方默认横向布局（图标、正文、关闭控件），自定义内容按剩余宽度伸展。示例移除内部额外的 border / background / shadow / padding，由外层 HeroUI Toast 负责表面样式。
+- 新增 heroui-native@1.1.1.patch，仅修正 Toast 拖拽露出后方内容时的高度与遮盖层：后方 Toast 恢复自身自然高度，两层遮盖都淡出；取消拖拽后恢复堆叠高度和遮盖。同步修改 source 与 ESM 两个入口，保留原有滑动、主题、动画与队列。库与示例声明同一补丁，未改动 TrueSheet 补丁。
+- UIProvider 将项目的 Teleport、AppBackgroundColors、NativeHaptics、ToastDefaults Provider 放在 HeroUIProvider 外层。HeroUI 的 PortalHost 与应用内容因此共享同一组上下文，Dialog 内的 Sheet 不再因跨出 Teleport Provider 而报错；没有为每个弹层创建独立的 Teleport manager。
+- 回归增加子菜单 Item context 约束、Select unstyled 契约、真实 HeroUI Portal store 下的上下文与更新验证，以及安装后的 Toast source / ESM 动画 hook 的拖拽、取消、升到前台和多行高度变化验证。动画测试模拟 Reanimated 调度与完成，不代表原生逐帧动画或触摸验收。
+- 本轮验证：主测试 143 项通过、0 失败；库和示例 typecheck、库 build、三端 Expo 生产导出与平台隔离审计通过。三端 source map 均无 Sonner / Sonner Native 运行时模块；Web 实际检查 Popover 编辑区域宽度及自定义 Toast 单层表面。Toast 回归在同版本未打补丁的 source / ESM 上均失败，应用补丁后均通过；hunk 校验、同版本副本 dry-run、库与示例强制安装及最终文件逐字节比对通过。TrueSheet / NativeTrigger / NativeList 与系统原生实现未改动，仍需真机复核 Dropdown 子菜单、Toast 连续拖拽和 Dialog 内打开 Sheet。
+
+### 第二轮设备反馈修正（2026-11-22）
+
+- Native Select 在 TrueSheet 内错位的原因是触发器 `measure()` 返回当前 React Native 根视图的坐标，而 HeroUI 的全屏弹层使用窗口坐标。新增透明的 `HeroUIWindowAnchor`，仅将 HeroUI 内部的测量句柄转换为 `measureInWindow()`；不增加原生视图，保留真实触发器、调用方 ref、事件和样式。Select、Dropdown、Popover 三条自绘定位路径共用此适配；系统原生路径与 NativeTrigger 不改动。Select Trigger 继续使用 `variant="unstyled"`。
+- Native Dialog / AlertDialog 保留 HeroUI 的内容、遮罩、交互和动画组件，但不再经过官方 Dialog.Portal 的全屏置顶窗口。复用现有 `OverlayPortalWindow forceFullScreen`，以透明 React Native Modal 参与原生控制器呈现顺序，使之后打开的 TrueSheet 能显示在 Dialog 上方。沿用 Modal 的独立 overlay scope、Android 手势根、主题和 React 上下文；Android 返回键仍独立遵守 `dismissOnBackPress`。TrueSheet 源码、集成与补丁未改动。
+- `Dialog.portalProps` 现在仅配置容器的 `className` / `style`；呈现宿主由上述 Native Modal 管理，不再暴露无效的 HeroUI Portal host / forceMount / FullWindowOverlay 参数。Web Dialog 的呈现方式不变。
+- 嵌套示例的 `sheetOpen` 位于父 Dialog 外部，关闭 Dialog 不会自动清除这个受控状态。示例在父 Dialog 的 `onOpenChange(false)` 中复位它，避免下次打开父 Dialog 时子 Sheet 跟着出现。组件不擅自修改调用方持有的其他受控弹层状态。
+- Dropdown 新增自绘菜单参数：项的 `separatorVariant`（thin / thick）、`shortcut`（仅提示，不注册快捷键）、`selectionIndicatorVariant`（checkmark / dot）、`shouldCloseOnSelect`；`contentProps.maxHeight` 为逻辑像素，默认 320。Native 使用可滚动内容并按窗口安全区限制高度；Web 把高度上限传给实际 React Aria Popover，避免定位计算覆盖单独设置的 CSS maxHeight。系统原生菜单继续采用系统外观，不受这些自绘外观参数影响。
+- Dropdown 示例保留项目原有系统原生、自绘、NativeTrigger、子菜单、勾选位置和禁用场景，补充分区与快捷键、单选 / 多选、40 项滚动长菜单（高度上限 280）及上 / 下 / 左 / 右弹出方向。均使用本库单入口 props，不在示例中直接组合 HeroUI 内部组件。
+- 回归测试让安装包中的真实 Select / Menu / Popover Trigger 与真实定位 hook 经过窗口坐标适配，覆盖根页面、Sheet / Modal 非零原点、重新打开、命令式打开及调用方 ref / 事件保留；Native Dialog 另验证真实项目 Modal 宿主的上下文、独立 scope、Android 手势根和内容卸载重置。Native 边界仍使用 mock，不能代替设备绘制、原生 presenter 或手势验收。
+- 本轮验证：全量 `bun test test` 为 144 项通过、0 失败；库及示例 typecheck、库 build、三端 Expo 生产导出通过。平台隔离审计通过：Web 4666 个模块，iOS 4521 个模块，Android 4460 个模块；Web 无 HeroUI Native，iOS / Android 无 HeroUI Web，三端均无 Sonner / Sonner Native 运行时模块。生产 Web 实际验证粗 / 细分隔线、快捷键提示、单选互斥、多选保持、280 高度的长菜单末项选择、四向定位，以及 Dialog → Sheet → 子 Dialog 的打开、输入和逐层关闭；浏览器未记录错误。
+
+本轮仍需 iOS / Android 真机复核：根页面与 TrueSheet 内的 Select / Dropdown / Popover 定位；Dialog → Sheet → 子 Dialog / AlertDialog 的原生层级、Android 返回键与关闭后重开；Dropdown 长菜单拖动、子菜单交互及 NativeTrigger。
+
+### 第三轮设备反馈修正（2026-11-22）
+
+- AlertDialog 两端适配器原本已默认禁止遮罩与返回键 / Escape 关闭，但示例显式开启了 `dismissOnOverlayPress` 和 `dismissOnBackPress`。移除示例覆盖，恢复确认框默认保护行为；公共类型补充这两个参数的默认值。Dialog 仍默认允许这两种关闭方式，调用方可分别设置为 false；AlertDialog 也可分别显式开启。
+- 第二轮仅切换 `measureInWindow()` 的修复不足：当前 React Native Fabric 的 `measure` 与 `measureInWindow` 都经由 shadow layout 计算，遇到 TrueSheet 的 `RootNodeKind` 即停止，后者也不会自动得到原生 Sheet 呈现位置。旧测试错误地把 `measureInWindow` mock 为完整窗口坐标，未能覆盖实际边界。修正测试后，三个真实 HeroUI Trigger 在旧适配器上均复现缺少 Sheet 顶部偏移的错误。
+- `HeroUIWindowAnchor` 现在读取已有 TrueSheet 布局上下文中的原生 `sheetTopPosition`，仅在最近 scoped host 属于 TrueSheet 时补上窗口 Y 偏移；不使用固定安全区 / detent 估算。嵌套 Sheet 只使用最近一层的绝对位置；Sheet 内全屏 Dialog 的独立 host 不重复补偿。Sheet 原生位置变化时，已打开的弹层重新测量，触发器不必依赖新的 Yoga onLayout；真实触发器 ref、事件、尺寸与命令式打开路径保留。
+- Select / Dropdown / Popover 的全窗口 portal 内增加纯 React 坐标作用域，不增加原生视图。弹层内再打开子弹层时不复用外层 Sheet 偏移；若其中打开新的子 Sheet，则按新的 Sheet host 使用其自己的偏移。Web、系统原生分支、NativeTrigger 与 TrueSheet 源码 / 集成 / 补丁均未调整。
+- 回归覆盖根页面、Sheet / 嵌套 Sheet、全屏 Dialog 继承的 Sheet 上下文、已打开弹层的 Sheet 位置更新、默认打开 / 命令式打开，以及全窗口弹层中的子弹层；使用安装包真实 Select / Menu / Popover Trigger 和定位 hook。关闭行为测试使用真实 Web HeroUI / React Aria 的遮罩指针事件及 Native 适配器的实际 AlertDialog 包装，验证默认保护和两个参数的独立覆盖。Native 测量和原生窗口边界仍为 mock，不能代替真机绘制验收。
+- 本轮全量 `bun test test` 为 144 项通过、0 失败；库及示例 typecheck、库 build、三端 Expo 生产导出及平台隔离审计通过（Web 4666、iOS 4521、Android 4460 个 source-map 模块；错误平台模块均为 0）。仍需在 iOS / Android 真机确认 TrueSheet 内三个自绘弹层与 NativeTrigger 的实际落点，以及切换 Sheet 高度后重新打开、Sheet → Dialog 内子弹层的定位。
+
+### 第四轮设备反馈修正（2026-11-22）
+
+- 用户确认三个定位弹层的大幅错位已经解决，但 iOS Sheet 中的菜单与触发器之间仍比普通页面更远；截图中也可见水平起点的轻微差异。上一轮的 Fabric `measureInWindow + sheetTopPosition` 仅处理平移，无法包含 iOS 浮动 Sheet 的 UIKit 外层缩放与横向内缩。
+- `HeroUIWindowAnchor` 在 iOS 的最近 TrueSheet 作用域内，改用已锁定并接入的 `react-native-keyboard-controller@1.22.4` 导出接口 `KeyboardControllerNative.viewPositionInWindow(findNodeHandle(trigger))`。已核对安装包 iOS 实现：它查找实际 UIView，经 `convertRect` 返回窗口矩形的 x / y / width / height，包含祖先原生变换；成功时直接交给 HeroUI 定位，不再叠加 Sheet 顶部位置，也不修改公共 sideOffset 或加入固定像素修正。
+- 普通页面、独立 Dialog、全窗口弹层内的子弹层维持原来的测量路径；嵌套的新 Sheet 则使用自己的实际窗口矩形。Android 的该依赖接口使用屏幕坐标，本轮继续保留此前已验证的 Fabric + 最近 Sheet 位置路径，避免引入系统栏偏移。
+- 原生测量异步返回；新测量会使旧结果失效，关闭 / 卸载后不再回写触发器位置。原生视图找不到、命令失败或返回无效尺寸时，回退至原来的 Sheet 位置补偿。Sheet 位置变化仍触发已打开弹层重测。此轮未新增依赖或原生模块，不要求因这次 JS 修改重新编译原生应用；TrueSheet 源码、集成、补丁以及系统原生组件分支均未调整。
+- 新回归先在旧实现上复现失败，再覆盖浮动 Sheet 的缩放 / 水平位移及实际弹层间距、异步结果乱序、关闭 / 卸载、测量失败回退，并继续使用安装包真实 Select / Menu / Popover Trigger 与定位 hook。iOS 测量 fixture 18 项通过；Android 同一 fixture 的 9 项适用检查通过。原生窗口测量仍为 mock，尚未在本轮操作真机，不能将这些检查视为设备验收。
+- 全量 `bun test test` 145 项通过、0 失败；库及示例 typecheck、库 build、三端 Expo 生产导出与平台隔离审计通过（Web 4666、iOS 4521、Android 4460 个 source-map 模块；错误平台模块均为 0）。真机继续对比普通页面与 Sheet 内三个组件的触发器间距和左右对齐，并复查不同 detent、嵌套 Sheet、Sheet → Dialog 内的定位。
+
+### Dropdown / Select 菜单对齐策略（2026-11-22）
+
+- 用户已确认上一轮三个弹层在 Sheet 中的实际定位正常。本轮仅调整 Dropdown / Select 自绘菜单的对齐默认值，保留窗口测量适配与全部系统原生分支。
+- 两个组件均复用已有 `contentProps.align`（start / center / end）。相对 trigger 从上 / 下弹出时，iOS / Android 默认 center，Web 默认 start；整行 trigger 因而在移动端默认以整行中心为菜单中心，而非屏幕中心。左右弹出维持此前 Native start、Web center 的默认值；此时显式 start / end 对应上 / 下沿。临近边缘时仍由 HeroUI 的碰撞避让修正最终位置。
+- 显式 `contentProps.align` 覆盖默认值；`contentProps.herouiNativeProps.align / placement` 与 `contentProps.herouiWebProps.placement` 保留更高优先级。Web 将左右弹出的 start / end 转为 React Aria 接受的 top / bottom，避免产生无效的 `left start` 等 placement。上述参数只影响 HeroUI 自绘路径，系统原生菜单仍按现有 native 专属配置和系统行为处理。
+
+~~~tsx
+<Dropdown native={false} items={menuItems} contentProps={{ align: "center" }} />
+<Select native={false} items={options} contentProps={{ align: "center" }} />
+~~~
+
+本轮 Web 真实 HeroUI / React Aria fixture 17 项、iOS 和 Android 适配 fixture 各 12 项通过；新增覆盖两组件的平台默认值、四向弹出、显式对齐与平台参数覆盖。库与示例 typecheck、库 build 及 git diff --check 通过。本轮未重新运行生产导出或操作真机。
+
 ## 后续批次
 
 1. **主题重构（已实现）**：见上文第二阶段。真机重新观察配色后进入简单组件迁移。

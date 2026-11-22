@@ -1,0 +1,77 @@
+# HeroUI Native 1.1.1: reveal complete stacked Toast content while the front Toast is dragged.
+# Restore each Toast natural height and remove both covers during the drag; keep normal stacking and cancellation.
+# Update both source (Metro source condition) and published ESM entry points.
+diff --git a/src/components/toast/toast.animation.ts b/src/components/toast/toast.animation.ts
+--- a/src/components/toast/toast.animation.ts
++++ b/src/components/toast/toast.animation.ts
+@@ -233,6 +233,7 @@
+       }
+       return {
+         isFront,
++        revealContent: frontDrag?.get() === 1,
+         front: frontId !== undefined ? heightsValue[frontId] : undefined,
+         own: id !== undefined ? heightsValue[id] : undefined,
+       };
+@@ -240,10 +241,10 @@
+     (current) => {
+       isCovered.set(current.isFront ? 0 : 1);
+ 
+-      if (current.isFront) {
++      if (current.isFront || current.revealContent) {
+         if (isHeightFree.get()) return;
+ 
+-        // Coming back to the front: spring to its own natural height, then
++        // Returning to the front or revealing during a drag: spring to its own natural height, then
+         // release the explicit height so content changes can resize it.
+         if (current.own === undefined || isAnimationDisabledValue) {
+           isHeightFree.set(true);
+@@ -539,11 +540,11 @@
+ 
+   /**
+    * Edge cover: hides the cut-off bottom line of content in the visible strip
+-   * of a stacked toast. Unlike the full cover it stays while the front toast
++   * of a stacked toast. Like the full cover it clears while the front toast
+    * is dragged.
+    */
+   const rCoverEdgeStyle = useAnimatedStyle(() => {
+-    const edgeOpacity = isCovered.get();
++    const edgeOpacity = frontDrag?.get() === 1 ? 0 : isCovered.get();
+     return {
+       opacity: isAnimationDisabledValue
+         ? edgeOpacity
+diff --git a/lib/module/components/toast/toast.animation.js b/lib/module/components/toast/toast.animation.js
+--- a/lib/module/components/toast/toast.animation.js
++++ b/lib/module/components/toast/toast.animation.js
+@@ -229,15 +229,16 @@
+     }
+     return {
+       isFront,
++      revealContent: frontDrag?.get() === 1,
+       front: frontId !== undefined ? heightsValue[frontId] : undefined,
+       own: id !== undefined ? heightsValue[id] : undefined
+     };
+   }, current => {
+     isCovered.set(current.isFront ? 0 : 1);
+-    if (current.isFront) {
++    if (current.isFront || current.revealContent) {
+       if (isHeightFree.get()) return;
+ 
+-      // Coming back to the front: spring to its own natural height, then
++      // Returning to the front or revealing during a drag: spring to its own natural height, then
+       // release the explicit height so content changes can resize it.
+       if (current.own === undefined || isAnimationDisabledValue) {
+         isHeightFree.set(true);
+@@ -451,11 +452,11 @@
+ 
+   /**
+    * Edge cover: hides the cut-off bottom line of content in the visible strip
+-   * of a stacked toast. Unlike the full cover it stays while the front toast
++   * of a stacked toast. Like the full cover it clears while the front toast
+    * is dragged.
+    */
+   const rCoverEdgeStyle = useAnimatedStyle(() => {
+-    const edgeOpacity = isCovered.get();
++    const edgeOpacity = frontDrag?.get() === 1 ? 0 : isCovered.get();
+     return {
+       opacity: isAnimationDisabledValue ? edgeOpacity : withTiming(edgeOpacity, COVER_TIMING_CONFIG)
+     };

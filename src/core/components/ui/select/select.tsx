@@ -1,8 +1,7 @@
 import * as React from "react";
 import { Platform } from "react-native";
-import * as SelectPrimitive from "@rn-primitives/select";
 
-import { SelectBasicComponent, SelectBasic } from "./select_basic";
+import { SelectBasic } from "./select_basic";
 import { SelectDialog } from "./select_dialog";
 import { SelectDropdown } from "./select_dropdown";
 import { SelectNative } from "./select_native";
@@ -54,23 +53,5 @@ const SelectRoot = React.forwardRef<SelectHandle, SelectProps>(
   },
 );
 
-const SelectComponent = Object.assign(SelectRoot, {
-  Content: SelectBasicComponent.Content,
-  Group: SelectBasicComponent.Group,
-  Item: SelectBasicComponent.Item,
-  ItemIndicator: SelectPrimitive.ItemIndicator,
-  ItemText: SelectBasicComponent.ItemText,
-  Label: SelectBasicComponent.Label,
-  Overlay: SelectPrimitive.Overlay,
-  Portal: SelectPrimitive.Portal,
-  Root: SelectRoot,
-  ScrollDownButton: SelectBasicComponent.ScrollDownButton,
-  ScrollUpButton: SelectBasicComponent.ScrollUpButton,
-  Separator: SelectBasicComponent.Separator,
-  Trigger: SelectBasicComponent.Trigger,
-  Value: SelectBasicComponent.Value,
-  Viewport: SelectPrimitive.Viewport,
-});
-
-export { SelectComponent as Select };
+export { SelectRoot as Select };
 export type { SelectHandle } from "./types";

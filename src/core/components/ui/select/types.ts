@@ -2,7 +2,9 @@ import type { ComponentProps, ReactNode } from "react";
 import type { StyleProp, TextStyle, ViewProps, ViewStyle } from "react-native";
 import type { Picker } from "@react-native-picker/picker";
 
-import type * as SelectPrimitive from "@rn-primitives/select";
+import type { Select as HeroNativeSelect } from "heroui-native/select";
+import type { Select as HeroWebSelect } from "@heroui/react/select";
+import type { ListBox } from "@heroui/react/list-box";
 import type { ButtonProps } from "../button";
 import type {
   NativeTriggerFeedbackOpacity,
@@ -77,48 +79,40 @@ export interface SelectItemGroupData {
 
 export type SelectOption = SelectItemData;
 export type SelectOptionGroup = SelectItemGroupData;
-export type SelectRootPrimitiveProps = Omit<
-  ComponentProps<typeof SelectPrimitive.Root>,
-  "children" | "onValueChange" | "value" | "defaultValue" | "disabled" | "ref"
->;
-export type SelectTriggerProps = ComponentProps<typeof SelectPrimitive.Trigger> & {
-  size?: "default" | "sm";
+export type SelectRootPrimitiveProps = { open?: boolean; defaultOpen?: boolean };
+export type SelectContentProps = {
+  className?: string;
+  side?: "top" | "bottom" | "left" | "right";
+  /** 相对 trigger 的次轴对齐；上下弹出默认 Native center、Web start。
+   * 左右弹出默认保持 Native start、Web center，此时 start / end 对应上 / 下沿。 */
+  align?: "start" | "center" | "end";
+  sideOffset?: number;
+  herouiNativeProps?: Omit<Extract<ComponentProps<typeof HeroNativeSelect.Content>, { presentation: "popover" }>, "children" | "presentation">;
+  herouiWebProps?: Omit<ComponentProps<typeof HeroWebSelect.Popover>, "children">;
 };
-export type SelectValueProps = ComponentProps<typeof SelectPrimitive.Value>;
-export type SelectContentProps = ComponentProps<typeof SelectPrimitive.Content> & {
-  size?: SelectContentSize;
-  portalHost?: string;
-  showScrollButtons?: boolean;
-  /** Internal initial offset used to bring the selected item into view. */
-  initialScrollOffset?: number;
-  viewportProps?: ComponentProps<typeof SelectPrimitive.Viewport>;
-};
-export type SelectItemProps = Omit<
-  ComponentProps<typeof SelectPrimitive.Item>,
-  "children" | "label"
-> & {
+export type SelectItemProps = {
+  className?: string;
+  style?: StyleProp<ViewStyle>;
+  value?: string;
   children?: ReactNode;
-  description?: ReactNode;
-  startContent?: ReactNode;
-  endContent?: ReactNode;
-  label?: string;
-  itemIndicatorProps?: ComponentProps<typeof SelectPrimitive.ItemIndicator>;
-  itemTextProps?: ComponentProps<typeof SelectPrimitive.ItemText>;
+  herouiNativeProps?: Omit<ComponentProps<typeof HeroNativeSelect.Item>, "children" | "value" | "label">;
+  herouiWebProps?: Omit<ComponentProps<typeof ListBox.Item>, "children" | "id">;
 };
-export type SelectLabelProps = ComponentProps<typeof SelectPrimitive.Label>;
-export type SelectGroupProps = ComponentProps<typeof SelectPrimitive.Group>;
-export type SelectSeparatorProps = ComponentProps<typeof SelectPrimitive.Separator>;
+export type SelectLabelProps = TextProps;
 
 export interface SelectProps extends Omit<ViewProps, "ref">, SelectRootPrimitiveProps {
   children?: ReactNode;
+  accessibilityLabel?: string;
+  herouiNativeProps?: Omit<ComponentProps<typeof HeroNativeSelect>, "children" | "value" | "defaultValue" | "onValueChange" | "isOpen" | "isDefaultOpen" | "onOpenChange" | "selectionMode">;
+  herouiWebProps?: Omit<ComponentProps<typeof HeroWebSelect>, "children" | "value" | "defaultValue" | "onChange" | "isOpen" | "defaultOpen" | "onOpenChange" | "selectionMode">;
   contentProps?: SelectContentProps;
   defaultValue?: string | null;
   disabled?: boolean;
   isDisabled?: boolean;
   itemGroups?: SelectItemGroupData[];
-  itemIndicatorProps?: ComponentProps<typeof SelectPrimitive.ItemIndicator>;
+  itemIndicatorProps?: { className?: string };
   itemProps?: Omit<SelectItemProps, "value" | "children">;
-  itemTextProps?: ComponentProps<typeof SelectPrimitive.ItemText>;
+  itemTextProps?: TextProps;
   items?: SelectItemData[];
   native?: SelectNativeMode;
   nativeDropdownAlign?: SelectNativeDropdownAlign;
@@ -185,7 +179,7 @@ export interface SelectProps extends Omit<ViewProps, "ref">, SelectRootPrimitive
   /** Font weight for generated Select trigger labels. Defaults to `500`. */
   triggerFontWeight?: TextStyle["fontWeight"];
   value?: string | null;
-  viewportProps?: ComponentProps<typeof SelectPrimitive.Viewport>;
+  viewportProps?: ViewProps;
 }
 
 export type NativeSelectProps = SelectProps;

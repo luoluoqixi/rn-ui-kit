@@ -10,7 +10,8 @@ import type {
 } from "../native_trigger";
 import type { NativeHapticsDelay, NativeHapticsSetting, RenderProp } from "../utils";
 import type * as Zeego from "zeego/dropdown-menu";
-import type * as DropdownPrimitive from "@rn-primitives/dropdown-menu";
+import type { Menu } from "heroui-native/menu";
+import type { Dropdown } from "@heroui/react/dropdown";
 
 export type DropdownSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
 export type DropdownSelectionIndicatorPosition = "left" | "right";
@@ -53,7 +54,7 @@ export interface NativeDropdownItemData {
   "destructive"?: boolean;
   "disabled"?: boolean;
   "icon"?: RenderProp<NativeDropdownItemData>;
-  /** Custom menus: set false to omit this item's empty icon slot. Defaults to true; supplied icons remain visible. */
+  /** Custom menus: set false to omit this item's empty icon slot. Defaults to false; supplied icons remain visible. */
   reserveIconSpace?: boolean;
   "iconProps"?: NativeDropdownItemIconProps;
   "indicator"?: RenderProp<NativeDropdownItemData>;
@@ -67,6 +68,14 @@ export interface NativeDropdownItemData {
   /** 自定义菜单的勾选标记位置，覆盖 Dropdown 配置；系统原生菜单忽略此项。 */
   selectionIndicatorPosition?: DropdownSelectionIndicatorPosition;
   "separator"?: boolean;
+  /** 自绘菜单分隔线的粗细；系统原生菜单继续采用系统分组。 */
+  separatorVariant?: "thin" | "thick";
+  /** 自绘菜单右侧的快捷键提示文字；不会注册键盘快捷键。 */
+  shortcut?: string;
+  /** 选择项默认使用勾号，单选菜单可改用圆点。 */
+  selectionIndicatorVariant?: "checkmark" | "dot";
+  /** 自绘菜单选择此项后是否关闭；默认 checkbox 项保持打开。 */
+  shouldCloseOnSelect?: boolean;
   "subMenu"?: NativeDropdownItemData[];
   "triggerProps"?: Record<string, unknown>;
   "subMenuProps"?: Record<string, unknown>;
@@ -74,6 +83,8 @@ export interface NativeDropdownItemData {
   "subMenuTitle"?: RenderProp<NativeDropdownItemData> | false;
   "subtitle"?: string;
   "textValue"?: string;
+  herouiNativeProps?: Omit<ComponentProps<typeof Menu.Item>, "children" | "id" | "onPress">;
+  herouiWebProps?: Omit<ComponentProps<typeof Dropdown.Item>, "children" | "id" | "onAction">;
   "value": string;
 }
 
@@ -117,25 +128,17 @@ export type NativeDropdownRootExtensions = {
 };
 
 /** Props applied to the generated non-native menu content. */
-export type DropdownContentProps = Omit<
-  ComponentProps<typeof DropdownPrimitive.Content>,
-  "children" | "side"
-> & {
-  /** Web 支持沿窗口纵轴移动左右展开的菜单；原生端仍使用上下定位。 */
+export type DropdownContentProps = {
+  className?: string;
   side?: "top" | "bottom" | "left" | "right";
-  children?: ReactNode | ((state: unknown) => ReactNode);
-  size?: DropdownSize;
-  overlayClassName?: string;
-  overlayStyle?: import("react-native").StyleProp<import("react-native").ViewStyle>;
-  portalHost?: string;
-};
-
-export type DropdownSubContentProps = Omit<
-  ComponentProps<typeof DropdownPrimitive.SubContent>,
-  "children"
-> & {
-  children?: ReactNode;
-  size?: DropdownSize;
+  /** 相对 trigger 的次轴对齐；上下弹出默认 Native center、Web start。
+   * 左右弹出默认保持 Native start、Web center，此时 start / end 对应上 / 下沿。 */
+  align?: "start" | "center" | "end";
+  sideOffset?: number;
+  /** 自绘菜单滚动区域的高度上限（逻辑像素），默认 320。 */
+  maxHeight?: number;
+  herouiNativeProps?: Omit<Extract<ComponentProps<typeof Menu.Content>, { presentation: "popover" }>, "children" | "presentation">;
+  herouiWebProps?: Omit<ComponentProps<typeof Dropdown.Popover>, "children">;
 };
 
 /** Props applied to the generated Zeego menu content on native platforms. */
@@ -146,12 +149,16 @@ export type DropdownItemData = NativeDropdownItemData;
 export type DropdownItemProps = NativeDropdownItemProps;
 export type DropdownRootExtensions = NativeDropdownRootExtensions & {
   native?: boolean;
+  accessibilityLabel?: string;
+  herouiNativeProps?: Omit<ComponentProps<typeof Menu>, "children" | "isOpen" | "isDefaultOpen" | "onOpenChange">;
+  herouiWebProps?: Omit<ComponentProps<typeof Dropdown>, "children" | "isOpen" | "defaultOpen" | "onOpenChange">;
+  herouiNativeItemProps?: NativeDropdownItemData["herouiNativeProps"];
+  herouiWebItemProps?: NativeDropdownItemData["herouiWebProps"];
   /** 自定义菜单的勾选标记位置，默认 left；系统原生菜单保持系统布局。 */
   selectionIndicatorPosition?: DropdownSelectionIndicatorPosition;
   /** Props applied to the generated non-native menu content. */
   contentProps?: DropdownContentProps;
-  /** Size of the generated non-native menu content. */
-  contentSize?: DropdownSize;
+
 };
 export type DropdownProps = ComponentProps<typeof Zeego.Root> & DropdownRootExtensions;
 export type NativeDropdownProps = ComponentProps<typeof Zeego.Root> & NativeDropdownRootExtensions;

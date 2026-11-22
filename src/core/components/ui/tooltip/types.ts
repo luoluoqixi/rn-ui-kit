@@ -1,30 +1,21 @@
 import type { ComponentProps, ReactNode } from "react";
-import type * as TooltipPrimitive from "@rn-primitives/tooltip";
-
-import type { RenderProp } from "../utils";
-
-export type TooltipSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
-
-export type TooltipRenderContext = {
-  open?: boolean;
+import type { Tooltip } from "@heroui/react/tooltip";
+import type { RenderProp } from "../utils/render";
+import type { OverlayStateProps } from "../utils/overlay/overlay_state";
+export type TooltipRenderContext = { open: boolean };
+export type TooltipContentProps = {
+  className?: string;
+  side?: "top" | "bottom" | "left" | "right";
+  sideOffset?: number;
+  herouiWebProps?: Omit<ComponentProps<typeof Tooltip.Content>, "children" | "isOpen" | "onOpenChange">;
 };
-
-export type TooltipContentProps = ComponentProps<typeof TooltipPrimitive.Content> & {
-  portalHost?: string;
-  size?: TooltipSize;
-};
-
-export type TooltipRootProps = ComponentProps<typeof TooltipPrimitive.Root> & {
-  /** Allow pressing the trigger to open the tooltip. Disabled by default. */
-  openOnPress?: boolean;
-  /** 是否在聚焦时打开，默认 true；纯 hover 提示可设为 false。 */
-  openOnFocus?: boolean;
-};
-
-export type TooltipProps = TooltipRootProps & {
-  content?: RenderProp<TooltipRenderContext>;
-  contentProps?: Omit<TooltipContentProps, "children">;
-  triggerProps?: Omit<ComponentProps<typeof TooltipPrimitive.Trigger>, "children">;
+export type TooltipProps = OverlayStateProps & {
   children?: ReactNode;
-  size?: TooltipSize;
+  content?: RenderProp<TooltipRenderContext>;
+  contentProps?: TooltipContentProps;
+  delay?: number;
+  closeDelay?: number;
+  isDisabled?: boolean;
+  showArrow?: boolean;
+  herouiWebProps?: Omit<ComponentProps<typeof Tooltip>, "children" | "isOpen" | "defaultOpen" | "onOpenChange">;
 };

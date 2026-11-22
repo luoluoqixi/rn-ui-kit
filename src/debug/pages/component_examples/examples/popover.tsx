@@ -8,6 +8,7 @@ export function PopoverExample() {
     <ExampleStack>
       <ExampleBlock title={`当前名称：${name}`}>
         <Popover
+          contentClassName="w-72 max-w-[90vw]"
           content={
             <>
               <Text className="font-semibold">编辑名称</Text>

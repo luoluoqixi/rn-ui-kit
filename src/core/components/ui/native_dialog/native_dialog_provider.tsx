@@ -1,21 +1,11 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 
 import { AlertDialog } from "../alert_dialog";
+import { Button } from "../button";
 import { Text } from "../text";
-import { triggerNativeHaptics } from "../utils";
 
 import { runNativeDialogButton, setNativeDialogHandler } from "./native_dialog";
 import type { NativeDialogButton, NativeDialogRequest, NativeDialogResult } from "./types";
-
-function getButtonComponent(button: NativeDialogButton) {
-  if (button.style === "cancel") {
-    return AlertDialog.Cancel;
-  }
-  if (button.style === "destructive") {
-    return AlertDialog.Destructive;
-  }
-  return AlertDialog.Action;
-}
 
 export function NativeDialogProvider({ children }: { children: ReactNode }) {
   const [request, setRequest] = useState<NativeDialogRequest | null>(null);
@@ -58,35 +48,25 @@ export function NativeDialogProvider({ children }: { children: ReactNode }) {
 
   const actions =
     request?.buttons.map((button) => {
-      const Action = getButtonComponent(button);
       return (
-        <Action
+        <Button
+          nativeHaptics
           key={button.key}
+          variant={button.style === "cancel" ? "tertiary" : button.style === "destructive" ? "danger" : "primary"}
           onPress={() => {
-            // NativeDialog previously used a haptic-enabled Button for every action.
-            triggerNativeHaptics(true);
             void settle(button.key, button);
           }}
         >
           <Text>{button.text}</Text>
-        </Action>
+        </Button>
       );
     }) ?? null;
 
   return (
     <>
       {children}
-      <AlertDialog onOpenChange={handleOpenChange} open={request != null}>
-        <AlertDialog.Content>
-          <AlertDialog.Header>
-            <AlertDialog.Title>{request?.options.title}</AlertDialog.Title>
-            {request?.options.message == null ? null : (
-              <AlertDialog.Description>{request.options.message}</AlertDialog.Description>
-            )}
-          </AlertDialog.Header>
-          <AlertDialog.Footer>{actions}</AlertDialog.Footer>
-        </AlertDialog.Content>
-      </AlertDialog>
+      <AlertDialog onOpenChange={handleOpenChange} open={request != null}
+        title={request?.options.title} description={request?.options.message} actions={actions} />
     </>
   );
 }

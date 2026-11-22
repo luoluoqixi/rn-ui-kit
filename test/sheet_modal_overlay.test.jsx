@@ -259,7 +259,7 @@ plugin({
 });
 const RNW = await import("react-native-web");
 mock.module("react-native", () => RNW);
-for (const kind of ["dropdown", "context_menu"]) {
+for (const kind of ["context_menu"]) {
   for (const variant of ["array", "callback", "asChild"]) {
     test(`${kind} 二级菜单保留 ${variant} 样式、主题变量和 Radix 样式`, async () => {
       const { ScopedSubContent } = await import(
@@ -338,76 +338,4 @@ for (const kind of ["dropdown", "context_menu"]) {
   }
 }
 
-test("真实 RNW 二级菜单在嵌套 Dialog 中展开后保留焦点", async () => {
-  const { OverlayPortalScope } =
-    await import("../src/core/components/ui/utils/overlay/overlay_portal_scope.web");
-  const { ScopedSubContent } =
-    await import("../src/core/components/ui/dropdown/scoped_sub_content.web");
-  const Menu = await import("@radix-ui/react-dropdown-menu");
-  let showInner;
-  let showMenu;
-  function Inner() {
-    const container = useOverlayPortalContainer();
-    const [open, setOpen] = React.useState(false);
-    const [menu, setMenu] = React.useState(false);
-    showInner = setOpen;
-    showMenu = setMenu;
-    return (
-      <Dialog.Root open={open}>
-        <Dialog.Portal container={container}>
-          <Dialog.Content id="inner-dialog" aria-describedby={undefined}>
-            <Dialog.Title>组件测试</Dialog.Title>
-            <OverlayPortalScope>
-              <Menu.Root open={menu} onOpenChange={setMenu}>
-                <Menu.Trigger>打开</Menu.Trigger>
-                <Menu.Content>
-                  <Menu.Sub>
-                    <Menu.SubTrigger id="rn-sub-trigger">更多</Menu.SubTrigger>
-                    <ScopedSubContent
-                      testID="rn-submenu"
-                      style={[{ width: 321 }]}
-                    >
-                      <Menu.Item id="rn-first-item">第一项</Menu.Item>
-                    </ScopedSubContent>
-                  </Menu.Sub>
-                </Menu.Content>
-              </Menu.Root>
-            </OverlayPortalScope>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
-    );
-  }
-  const mount = document.createElement("div");
-  document.body.append(mount);
-  root = createRoot(mount);
-  await act(() =>
-    root.render(
-      <Dialog.Root open>
-        <Dialog.Content aria-describedby={undefined}>
-          <Dialog.Title>设置</Dialog.Title>
-          <OverlayPortalScope>
-            <Inner />
-          </OverlayPortalScope>
-        </Dialog.Content>
-      </Dialog.Root>,
-    ),
-  );
-  await act(() => showInner(true));
-  await act(() => showMenu(true));
-  await act(() => {
-    const trigger = document.querySelector("#rn-sub-trigger");
-    trigger.focus();
-    trigger.dispatchEvent(
-      new win.KeyboardEvent("keydown", {
-        key: "ArrowRight",
-        bubbles: true,
-        cancelable: true,
-      }),
-    );
-  });
-  await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
-  const submenu = document.querySelector('[data-testid="rn-submenu"]');
-  expect(submenu).not.toBeNull();
-  expect(submenu.contains(document.activeElement)).toBe(true);
-});
+// HeroUI Dropdown 的嵌套焦点覆盖见 overlay_controls.fixture.jsx。

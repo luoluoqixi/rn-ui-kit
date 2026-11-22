@@ -1,18 +1,14 @@
-import type { ReactElement, ReactNode } from "react";
+import type { Toast as WebToast } from "@heroui/react/toast";
+import type { Toast as NativeToast, ToastProvider as NativeToastProvider } from "heroui-native/toast";
+import type { ComponentProps, ReactElement, ReactNode } from "react";
 import type { ViewProps } from "react-native";
 import type {
   AlertOptions as BurntAlertOptions,
   ToastOptions as BurntToastOptions,
   IconParams,
 } from "burnt/build/types";
-import type {
-  ExternalToast as SonnerExternalToast,
-  ToasterProps as SonnerToasterProps,
-} from "sonner";
-import type {
-  ToastProps as SonnerNativeToastProps,
-  ToasterProps as SonnerNativeToasterProps,
-} from "sonner-native";
+import type { SonnerAdvancedOptions, SonnerNativeAdvancedOptions, LegacyWebToasterProps, LegacyNativeToasterProps } from "./types_legacy";
+export type { SonnerAdvancedOptions, SonnerNativeAdvancedOptions } from "./types_legacy";
 import type { RenderProp } from "../utils/render";
 import type { NativeHapticsSetting } from "../utils/haptics";
 import type { IconProps } from "../icon";
@@ -22,10 +18,6 @@ export type ToastCustomViewProps = Omit<ViewProps, "children">;
 export type TitleToast = RenderProp<undefined>;
 export type BurntToastAdvancedOptions = Partial<Omit<BurntToastOptions, "title" | "message">>;
 export type BurntAlertAdvancedOptions = Partial<Omit<BurntAlertOptions, "title" | "message">>;
-export type SonnerAdvancedOptions = Partial<SonnerExternalToast>;
-export type SonnerNativeAdvancedOptions = Partial<
-  Omit<SonnerNativeToastProps, "id" | "title" | "index" | "numberOfToasts" | "orderedToastIds">
->;
 
 /** Shared options. `duration` is milliseconds; the native Burnt adapter converts it to seconds. */
 export type ToastShowOptions = {
@@ -46,7 +38,7 @@ export type ToastShowOptions = {
   icon?: IconParams | RenderProp<undefined>;
   /** Whether a basic loading toast can be dismissed by the user. Defaults to false for loading. */
   dismissible?: boolean;
-  /** Haptic setting for basic Sonner toasts on native platforms. */
+  /** Haptic setting for basic HeroUI toasts on native platforms. */
   basicHaptics?: NativeHapticsSetting;
   /** Unified haptic setting for basic and Burnt native toasts. Defaults to true. */
   haptics?: NativeHapticsSetting;
@@ -58,6 +50,8 @@ export type ToastShowOptions = {
   sonnerOptions?: SonnerAdvancedOptions;
   sonnerNativeOptions?: SonnerNativeAdvancedOptions;
   burntOptions?: BurntToastAdvancedOptions | BurntAlertAdvancedOptions;
+  herouiNativeProps?: Omit<ComponentProps<typeof NativeToast>, "children" | "id" | "index" | "total" | "heights" | "show" | "hide">;
+  herouiWebProps?: Omit<ComponentProps<typeof WebToast>, "children" | "toast">;
 };
 
 export type ToastPromiseContent<ToastData = unknown> =
@@ -124,6 +118,10 @@ export type ToastNativeToasterProps = {
   closeButtonIcon?: ReactNode;
   /** Web only. CSS class applied to the close button. */
   closeButtonClassName?: string;
-  sonnerProps?: Partial<SonnerToasterProps>;
-  sonnerNativeProps?: Partial<SonnerNativeToasterProps>;
+  herouiNativeProps?: Omit<ComponentProps<typeof NativeToastProvider>, "children">;
+  herouiWebProps?: Omit<ComponentProps<typeof WebToast.Provider>, "children" | "queue">;
+  /** @deprecated Legacy adapter defaults; use herouiWebProps for HeroUI presentation. */
+  sonnerProps?: LegacyWebToasterProps;
+  /** @deprecated Legacy mapped defaults; use herouiNativeProps for HeroUI presentation. */
+  sonnerNativeProps?: LegacyNativeToasterProps;
 };

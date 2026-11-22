@@ -1,48 +1,63 @@
 import type { ComponentProps, ReactNode } from "react";
-import type * as DialogPrimitive from "@rn-primitives/dialog";
-import type { ViewProps } from "react-native";
-
+import type { Dialog as NativeDialog } from "heroui-native/dialog";
+import type { Modal } from "@heroui/react/modal";
 import type { ButtonProps } from "../button";
-import type { RenderProp } from "../utils";
+import type { TextProps } from "../text";
+import type { RenderProp } from "../utils/render";
+import type { OverlayPartProps, OverlayStateProps } from "../utils/overlay/overlay_state";
 
-export type DialogRenderContext = {
-  open: boolean;
-};
-
-export type DialogTriggerProps = ComponentProps<typeof DialogPrimitive.Trigger>;
-export type DialogPortalProps = Omit<ComponentProps<typeof DialogPrimitive.Portal>, "children">;
-export type DialogOverlayProps = ComponentProps<typeof DialogPrimitive.Overlay>;
-export type DialogContentProps = ComponentProps<typeof DialogPrimitive.Content> & {
-  portalHost?: string;
-  portalProps?: DialogPortalProps;
+export type DialogRenderContext = { open: boolean; close: () => void };
+export type DialogContentProps = OverlayPartProps<
+  Omit<ComponentProps<typeof NativeDialog.Content>, "children">,
+  Omit<ComponentProps<typeof Modal.Dialog>, "children">
+>;
+export type DialogOverlayProps = OverlayPartProps<
+  Omit<ComponentProps<typeof NativeDialog.Overlay>, "children" | "isCloseOnPress">,
+  Omit<ComponentProps<typeof Modal.Backdrop>, "children" | "isOpen" | "onOpenChange" | "isDismissable" | "isKeyboardDismissDisabled">
+>;
+/** Native Modal owns the presentation order; only the container's layout is configurable. */
+export type DialogPortalProps = Pick<ComponentProps<typeof NativeDialog.Portal>, "className" | "style">;
+export type DialogTitleProps = TextProps;
+export type DialogDescriptionProps = TextProps;
+export type DialogProps = OverlayStateProps & {
+  children?: ReactNode;
+  title?: RenderProp<DialogRenderContext>;
+  description?: RenderProp<DialogRenderContext>;
+  content?: RenderProp<DialogRenderContext>;
+  trigger?: RenderProp<DialogRenderContext>;
+  triggerProps?: Omit<ButtonProps, "children">;
+  triggerClassName?: string;
+  contentProps?: DialogContentProps;
+  contentClassName?: string;
   overlayProps?: DialogOverlayProps;
-};
-export type DialogHeaderProps = ViewProps;
-export type DialogFooterProps = ViewProps;
-export type DialogTitleProps = ComponentProps<typeof DialogPrimitive.Title>;
-export type DialogDescriptionProps = ComponentProps<typeof DialogPrimitive.Description>;
-
-export type DialogProps = ComponentProps<typeof DialogPrimitive.Root> & {
+  portalProps?: DialogPortalProps;
+  titleProps?: DialogTitleProps;
+  descriptionProps?: DialogDescriptionProps;
+  titleClassName?: string;
+  descriptionClassName?: string;
+  headerClassName?: string;
+  footerClassName?: string;
+  actions?: RenderProp<DialogRenderContext>;
   actionLabel?: RenderProp<DialogRenderContext>;
   actionProps?: ButtonProps;
   actionClassName?: string;
-  actions?: RenderProp<DialogRenderContext>;
   cancelLabel?: RenderProp<DialogRenderContext>;
   cancelProps?: ButtonProps;
   cancelClassName?: string;
-  children?: ReactNode;
-  content?: RenderProp<DialogRenderContext>;
-  contentClassName?: string;
-  contentProps?: DialogContentProps;
-  description?: RenderProp<DialogRenderContext>;
-  descriptionClassName?: string;
-  descriptionProps?: DialogDescriptionProps;
-  footerClassName?: string;
-  headerClassName?: string;
-  title?: RenderProp<DialogRenderContext>;
-  titleClassName?: string;
-  titleProps?: DialogTitleProps;
-  trigger?: RenderProp<DialogRenderContext>;
-  triggerClassName?: string;
-  triggerProps?: Omit<DialogTriggerProps, "children" | "asChild">;
+  destructiveLabel?: RenderProp<DialogRenderContext>;
+  destructiveProps?: ButtonProps;
+  destructiveClassName?: string;
+  actionAriaLabel?: string;
+  cancelAriaLabel?: string;
+  destructiveAriaLabel?: string;
+  closeOnAction?: boolean;
+  showCloseButton?: boolean;
+  /** 点击遮罩关闭。Dialog 默认 true；AlertDialog 默认 false。 */
+  dismissOnOverlayPress?: boolean;
+  /** Web Escape / Android 返回键关闭。Dialog 默认 true；AlertDialog 默认 false。 */
+  dismissOnBackPress?: boolean;
+  accessibilityLabel?: string;
+  size?: ComponentProps<typeof Modal.Container>["size"];
+  herouiNativeProps?: Omit<ComponentProps<typeof NativeDialog>, "children" | "isOpen" | "isDefaultOpen" | "onOpenChange">;
+  herouiWebProps?: Omit<ComponentProps<typeof Modal>, "children" | "isOpen" | "defaultOpen" | "onOpenChange" | "state">;
 };

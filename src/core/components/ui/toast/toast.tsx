@@ -99,7 +99,7 @@ export function useToast(): ToastContext {
       data?.loading != null
         ? loading(resolveRenderProp(data.loading, undefined), {
             native: data.native,
-            // Burnt's spinner requires a finite safety timeout; Sonner can stay open
+            // Burnt's spinner requires a finite safety timeout; HeroUI can stay open
             // indefinitely until the promise settles.
             duration: native ? 30_000 : Number.POSITIVE_INFINITY,
           })

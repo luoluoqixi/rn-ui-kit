@@ -26,8 +26,9 @@ export function getComponentExampleRouteName(key: string) {
 }
 
 function getComponentExampleDefinition(key: string) {
-  const definition = componentExampleDefinitions.find((item) => item.key === key);
-  if (definition == null) throw new Error(`Unknown rn-ui-kit component example: ${key}`);
+  const definition = componentExampleDefinitions.find((item) => item !== false && item.key === key);
+  if (definition == null || definition === false)
+    throw new Error(`Unknown rn-ui-kit component example: ${key}`);
   return definition;
 }
 
@@ -70,16 +71,18 @@ export function RnUiKitComponentExamplesDebugPage({
         tracksNavigationBarScrollEdge={tracksScrollEdgeHeader}
       >
         <NativeListSection>
-          {componentExampleDefinitions.map((definition) => (
-            <NativeListNavigationItem
-              key={definition.key}
-              onPress={() => {
-                if (onOpenComponentExample != null) onOpenComponentExample(definition.key);
-                else navigation.navigate(getComponentExampleRouteName(definition.key));
-              }}
-              title={definition.label}
-            />
-          ))}
+          {componentExampleDefinitions
+            .filter((x) => x !== false)
+            .map((definition) => (
+              <NativeListNavigationItem
+                key={definition.key}
+                onPress={() => {
+                  if (onOpenComponentExample != null) onOpenComponentExample(definition.key);
+                  else navigation.navigate(getComponentExampleRouteName(definition.key));
+                }}
+                title={definition.label}
+              />
+            ))}
         </NativeListSection>
       </NativeList>
     </View>
@@ -153,9 +156,7 @@ export function RnUiKitComponentExampleDetailPage({
         { paddingLeft: 16 + insets.left, paddingRight: 16 + insets.right },
       ]}
     >
-      <Text className="text-muted">
-        {definition.description ?? `${definition.label} 示例`}
-      </Text>
+      <Text className="text-muted">{definition.description ?? `${definition.label} 示例`}</Text>
       <ActiveExample />
     </View>
   );

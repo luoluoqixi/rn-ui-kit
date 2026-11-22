@@ -1,48 +1,15 @@
-import { Button, Tooltip } from "rn-ui-kit/core";
+import { Button, Text, Tooltip } from "rn-ui-kit/core";
 import { ExampleBlock, ExampleRow, ExampleStack } from "../shared";
 
 export function TooltipExample() {
-  return (
-    <ExampleStack>
-      <ExampleBlock title="补充说明">
-        <ExampleRow>
-          <Tooltip content="这会把当前版本发布" delayDuration={200}>
-            <Button variant="outline">发布说明</Button>
-          </Tooltip>
-          <Tooltip content="删除后将无法恢复" delayDuration={200}>
-            <Button variant="danger">危险操作</Button>
-          </Tooltip>
-          <Tooltip content="点击后需离开并重新悬浮才显示" delayDuration={700} openOnFocus={false}>
-            <Button variant="outline">仅悬浮显示</Button>
-          </Tooltip>
-          <Tooltip content="触屏设备可按下显示" delayDuration={200} openOnPress>
-            <Button variant="outline">按下显示</Button>
-          </Tooltip>
-        </ExampleRow>
-      </ExampleBlock>
-      <ExampleBlock title="大小">
-        <Tooltip size="2xs" content="最小 Tooltip" delayDuration={200}>
-          <Button variant="outline">最小 Tooltip</Button>
-        </Tooltip>
-        <Tooltip size="xs" content="超小 Tooltip" delayDuration={200}>
-          <Button variant="outline">超小 Tooltip</Button>
-        </Tooltip>
-        <Tooltip size="sm" content="小 Tooltip" delayDuration={200}>
-          <Button variant="outline">小 Tooltip</Button>
-        </Tooltip>
-        <Tooltip size="md" content="正常 Tooltip" delayDuration={200}>
-          <Button variant="outline">正常 Tooltip</Button>
-        </Tooltip>
-        <Tooltip size="lg" content="大 Tooltip" delayDuration={200}>
-          <Button variant="outline">大 Tooltip</Button>
-        </Tooltip>
-        <Tooltip size="xl" content="超大 Tooltip" delayDuration={200}>
-          <Button variant="outline">超大 Tooltip</Button>
-        </Tooltip>
-        <Tooltip size="2xl" content="最大 Tooltip" delayDuration={200}>
-          <Button variant="outline">最大 Tooltip</Button>
-        </Tooltip>
-      </ExampleBlock>
-    </ExampleStack>
-  );
+  return <ExampleStack>
+    <ExampleBlock title="补充说明">
+      <ExampleRow>
+        <Tooltip content="保存当前修改" delay={200}><Button>悬停或聚焦</Button></Tooltip>
+        <Tooltip content="提示显示在下方" contentProps={{ side: "bottom" }} showArrow><Button variant="secondary">带箭头</Button></Tooltip>
+        <Tooltip content="暂时不可用" isDisabled><Button variant="tertiary">禁用提示</Button></Tooltip>
+      </ExampleRow>
+      <Text color="muted">Web 支持悬停与键盘焦点；移动端直接呈现按钮，不拦截触摸。</Text>
+    </ExampleBlock>
+  </ExampleStack>;
 }

@@ -40,7 +40,7 @@ export function ToastExample() {
   const showCustom = () => {
     toast.custom(
       (id) => (
-        <View className="min-w-64 gap-2 rounded-lg border border-border bg-background p-3 shadow-lg">
+        <View className="w-full gap-2">
           <Text className="font-semibold">自定义 Toast</Text>
           <Text color="muted">任意 JSX 内容，支持自己的布局和操作。</Text>
           <Button size="sm" onPress={() => toast.close(id)}>
@@ -55,7 +55,7 @@ export function ToastExample() {
   return (
     <ExampleStack>
       <ExampleBlock
-        description="native=true 在 Android/iOS 使用 Burnt；native=false 使用 Sonner 基础 Toast。Web 始终使用基础 Toast。"
+        description="native=true 在 Android/iOS 使用 Burnt；native=false 使用 HeroUI 基础 Toast。Web 始终使用基础 Toast。"
         title="基础 Toast"
       >
         {!isWeb() && (

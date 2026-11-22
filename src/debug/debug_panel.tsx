@@ -505,26 +505,28 @@ function RnUiKitDebugPanelSheet({
             )}
           </NativeSheetStack.Screen>
         ))}
-        {componentExampleDefinitions.map((definition) => (
-          <NativeSheetStack.Screen
-            key={getComponentExampleRouteName(definition.key)}
-            name={getComponentExampleRouteName(definition.key)}
-            options={{
-              title: definition.label,
-              ...(definition.fullScreenBackGestureEnabled === false
-                ? { fullScreenGestureEnabled: false }
-                : {}),
-            }}
-          >
-            {() => (
-              <RnUiKitComponentExampleDetailPage
-                definition={definition}
-                headerTransparent={headerTransparent}
-                layoutHost="nativeSheet"
-              />
-            )}
-          </NativeSheetStack.Screen>
-        ))}
+        {componentExampleDefinitions
+          .filter((x) => x !== false)
+          .map((definition) => (
+            <NativeSheetStack.Screen
+              key={getComponentExampleRouteName(definition.key)}
+              name={getComponentExampleRouteName(definition.key)}
+              options={{
+                title: definition.label,
+                ...(definition.fullScreenBackGestureEnabled === false
+                  ? { fullScreenGestureEnabled: false }
+                  : {}),
+              }}
+            >
+              {() => (
+                <RnUiKitComponentExampleDetailPage
+                  definition={definition}
+                  headerTransparent={headerTransparent}
+                  layoutHost="nativeSheet"
+                />
+              )}
+            </NativeSheetStack.Screen>
+          ))}
       </NativeSheetStack>
 
       <RnUiKitDebugSectionSheets
@@ -612,25 +614,27 @@ function RnUiKitDebugPanelContent({
               )}
             </Stack.Screen>
           ))}
-          {componentExampleDefinitions.map((definition) => (
-            <Stack.Screen
-              key={getComponentExampleRouteName(definition.key)}
-              name={getComponentExampleRouteName(definition.key)}
-              options={{
-                title: definition.label,
-                ...(definition.fullScreenBackGestureEnabled === false
-                  ? { fullScreenGestureEnabled: false }
-                  : {}),
-              }}
-            >
-              {() => (
-                <RnUiKitComponentExampleDetailPage
-                  definition={definition}
-                  headerTransparent={headerTransparent}
-                />
-              )}
-            </Stack.Screen>
-          ))}
+          {componentExampleDefinitions
+            .filter((x) => x !== false)
+            .map((definition) => (
+              <Stack.Screen
+                key={getComponentExampleRouteName(definition.key)}
+                name={getComponentExampleRouteName(definition.key)}
+                options={{
+                  title: definition.label,
+                  ...(definition.fullScreenBackGestureEnabled === false
+                    ? { fullScreenGestureEnabled: false }
+                    : {}),
+                }}
+              >
+                {() => (
+                  <RnUiKitComponentExampleDetailPage
+                    definition={definition}
+                    headerTransparent={headerTransparent}
+                  />
+                )}
+              </Stack.Screen>
+            ))}
         </Stack.Navigator>
       </NavigationContainer>
 
@@ -742,26 +746,28 @@ function RnUiKitDebugSectionSheets({
           <NativeSheetStack.Screen name="index" options={{ title: definition.label }}>
             {() => <RnUiKitComponentExamplesDebugPage layoutHost="nativeSheet" />}
           </NativeSheetStack.Screen>
-          {componentExampleDefinitions.map((example) => (
-            <NativeSheetStack.Screen
-              key={getComponentExampleRouteName(example.key)}
-              name={getComponentExampleRouteName(example.key)}
-              options={{
-                title: example.label,
-                ...(example.fullScreenBackGestureEnabled === false
-                  ? { fullScreenGestureEnabled: false }
-                  : {}),
-              }}
-            >
-              {() => (
-                <RnUiKitComponentExampleDetailPage
-                  definition={example}
-                  headerTransparent={headerTransparent}
-                  layoutHost="nativeSheet"
-                />
-              )}
-            </NativeSheetStack.Screen>
-          ))}
+          {componentExampleDefinitions
+            .filter((x) => x !== false)
+            .map((example) => (
+              <NativeSheetStack.Screen
+                key={getComponentExampleRouteName(example.key)}
+                name={getComponentExampleRouteName(example.key)}
+                options={{
+                  title: example.label,
+                  ...(example.fullScreenBackGestureEnabled === false
+                    ? { fullScreenGestureEnabled: false }
+                    : {}),
+                }}
+              >
+                {() => (
+                  <RnUiKitComponentExampleDetailPage
+                    definition={example}
+                    headerTransparent={headerTransparent}
+                    layoutHost="nativeSheet"
+                  />
+                )}
+              </NativeSheetStack.Screen>
+            ))}
         </NativeSheetStack>
       );
     }

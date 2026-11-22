@@ -23,9 +23,11 @@ export function RnUiKitUiComponentsDebugPage({ header }: RnUiKitUiComponentsDebu
       <View style={styles.root}>
         {header}
         <ExampleStack>
-          {componentExampleDefinitions.map((definition) => (
-            <ExampleEntry definition={definition} key={definition.key} />
-          ))}
+          {componentExampleDefinitions
+            .filter((x) => x !== false)
+            .map((definition) => (
+              <ExampleEntry definition={definition} key={definition.key} />
+            ))}
         </ExampleStack>
         <Text className="text-muted text-center text-xs">
           组件总览与组件示例使用相同的实现和交互逻辑。

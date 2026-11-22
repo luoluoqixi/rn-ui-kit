@@ -1,3 +1,4 @@
+import { ListGroupExample } from "./examples/list_group";
 import { CloseButtonExample } from "./examples/close_button";
 import { TagGroupExample } from "./examples/tag_group";
 import { SurfaceExample } from "./examples/surface";
@@ -49,8 +50,9 @@ import { MenubarExample } from "./examples/menubar";
 import { ColorPickerExample } from "./examples/color_picker";
 
 import type { ComponentExampleDefinition } from "./types";
+import { isWeb } from "../../../core";
 
-export const componentExampleDefinitions: ComponentExampleDefinition[] = [
+export const componentExampleDefinitions: (ComponentExampleDefinition | false)[] = [
   { Component: AccordionExample, key: "accordion", label: "Accordion" },
   { Component: AlertExample, key: "alert", label: "Alert" },
   { Component: AlertDialogExample, key: "alert-dialog", label: "AlertDialog" },
@@ -81,6 +83,7 @@ export const componentExampleDefinitions: ComponentExampleDefinition[] = [
   { Component: InputOTPExample, key: "input-otp", label: "InputOTP" },
   { Component: TextFieldExample, key: "text-field", label: "TextField" },
   { Component: LabelExample, key: "label", label: "Label" },
+  { Component: ListGroupExample, key: "list-group", label: "ListGroup" },
   { Component: LinkExample, key: "link", label: "Link" },
   {
     Component: MenubarExample,
@@ -126,5 +129,5 @@ export const componentExampleDefinitions: ComponentExampleDefinition[] = [
   { Component: ToastExample, key: "toast", label: "Toast" },
   { Component: ToggleExample, key: "toggle", label: "Toggle" },
   { Component: ToggleGroupExample, key: "toggle-group", label: "ToggleGroup" },
-  { Component: TooltipExample, key: "tooltip", label: "Tooltip" },
+  isWeb() && { Component: TooltipExample, key: "tooltip", label: "Tooltip" },
 ];

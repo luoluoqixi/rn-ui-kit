@@ -57,16 +57,17 @@ export function UIProvider({
             followsSystem={resolvedPreferences.appearance.themeMode === "system"}
             theme={theme}
           >
-            <HeroUIProvider>
-              <AppBackgroundColorsProvider colors={appBackgroundColors}>
-                <TeleportPortalProvider>
-                  <NativeDialogProvider>
-                    <NativeHapticsProvider
-                      enabledByDefault={defaultNativeHapticsEnabled}
-                    >
-                      <ToastDefaultsProvider
-                        defaultNative={toasterProps?.defaultNative}
-                      >
+            <AppBackgroundColorsProvider colors={appBackgroundColors}>
+              <TeleportPortalProvider>
+                <NativeHapticsProvider
+                  enabledByDefault={defaultNativeHapticsEnabled}
+                >
+                  <ToastDefaultsProvider
+                    defaultNative={toasterProps?.defaultNative}
+                  >
+                    {/* HeroUI mounts portal content at its provider's host. */}
+                    <HeroUIProvider>
+                      <NativeDialogProvider>
                         {children}
                         <PortalHost />
                         {CustomToaster ? (
@@ -80,12 +81,12 @@ export function UIProvider({
                             accentThemeName={resolvedAccentThemeName}
                           />
                         )}
-                      </ToastDefaultsProvider>
-                    </NativeHapticsProvider>
-                  </NativeDialogProvider>
-                </TeleportPortalProvider>
-              </AppBackgroundColorsProvider>
-            </HeroUIProvider>
+                      </NativeDialogProvider>
+                    </HeroUIProvider>
+                  </ToastDefaultsProvider>
+                </NativeHapticsProvider>
+              </TeleportPortalProvider>
+            </AppBackgroundColorsProvider>
           </UiThemeProvider>
         </UiPreferencesProvider>
       </KeyboardProvider>

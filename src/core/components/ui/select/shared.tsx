@@ -5,7 +5,7 @@ import { Icon } from "../icon";
 import { Text } from "../text";
 import { cn } from "../utils/cn";
 import { SELECT_TRIGGER_FONT_WEIGHT } from "./constants";
-import { useResolvedNativeHaptics } from "../utils";
+import { useResolvedNativeHaptics } from "../utils/haptics";
 import { resolveRenderProp } from "../utils/render";
 import { useUiTheme } from "../utils/theme";
 import type { SelectItemData, SelectProps } from "./types";
@@ -273,7 +273,7 @@ export const SelectBasicTrigger = React.forwardRef<
         typeof triggerProps.style === "function" ? triggerProps.style(state) : triggerProps.style,
       ]}
       variant={triggerProps.variant ?? configuredTriggerProps?.variant ?? "outline"}
-      size={props.triggerSize ?? triggerProps.size ?? configuredTriggerProps?.size ?? "default"}
+      size={resolveSelectButtonSize(props.triggerSize ?? triggerProps.size ?? configuredTriggerProps?.size)}
     >
       {label ?? (
         <SelectedLabel
@@ -318,4 +318,9 @@ export function renderNativeItemLabel(item: SelectItemData, selectedValue?: stri
   ) : (
     rendered
   );
+}
+
+/** Extended system-trigger sizes remain available; self-drawn buttons use HeroUI sizes. */
+export function resolveSelectButtonSize(size?: string): "sm" | "md" | "lg" {
+  return size === "2xs" || size === "xs" || size === "sm" ? "sm" : size === "lg" || size === "xl" || size === "2xl" ? "lg" : "md";
 }

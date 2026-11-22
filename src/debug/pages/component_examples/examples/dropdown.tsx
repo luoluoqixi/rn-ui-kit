@@ -34,6 +34,34 @@ function DropdownPair({ children, ...props }: ComponentProps<typeof Dropdown>) {
 export function DropdownExample() {
   const [action, setAction] = useState("尚未选择");
   const [sourceMode, setSourceMode] = useState(true);
+  const [alignment, setAlignment] = useState("left");
+  const [styles, setStyles] = useState(["bold", "italic"]);
+  const editorItems: DropdownItemData[] = [
+    { value: "space", label: "新建工作区", shortcut: "⌘ N", onSelect: () => setAction("新建工作区") },
+    { value: "section-space", separator: true, separatorVariant: "thick" },
+    { value: "focus", label: "专注模式", onSelect: () => setAction("专注模式") },
+    { value: "section-format", separator: true, separatorVariant: "thick" },
+    { value: "heading", label: "一级标题", shortcut: "⌘ 1", onSelect: () => setAction("一级标题") },
+    { value: "list", label: "项目列表", shortcut: "⌘ L", onSelect: () => setAction("项目列表") },
+    { value: "tasks", label: "任务列表", onSelect: () => setAction("任务列表") },
+    { value: "divider-tools", separator: true },
+    { value: "link", label: "插入链接", shortcut: "⌘ K", onSelect: () => setAction("插入链接") },
+    { value: "configure", label: "菜单设置", onSelect: () => setAction("菜单设置") },
+  ];
+  const alignmentItems: DropdownItemData[] = [
+    { value: "left", label: "左对齐" },
+    { value: "center", label: "居中对齐" },
+    { value: "right", label: "右对齐" },
+  ].map(item => ({ ...item, selected: alignment === item.value, selectionIndicatorVariant: "dot", shouldCloseOnSelect: false, onSelect: () => setAlignment(item.value) }));
+  const styleItems: DropdownItemData[] = [
+    { value: "bold", label: "粗体", shortcut: "⌘ B" },
+    { value: "italic", label: "斜体", shortcut: "⌘ I" },
+    { value: "underline", label: "下划线", shortcut: "⌘ U" },
+  ].map(item => ({ ...item, checkbox: true, selected: styles.includes(item.value), onSelect: () => setStyles(previous => previous.includes(item.value) ? previous.filter(value => value !== item.value) : [...previous, item.value]) }));
+  const longItems: DropdownItemData[] = Array.from({ length: 40 }, (_, i) => ({
+    value: "document-" + (i + 1), label: "项目文档 " + String(i + 1).padStart(2, "0"),
+    onSelect: () => setAction("项目文档 " + (i + 1)),
+  }));
   const selectionItems: DropdownItemData[] = [
     {
       value: "source-mode",
@@ -146,18 +174,42 @@ export function DropdownExample() {
         <DropdownPair native={false} items={items} triggerLabel="打开 Dropdown" />
         <Text color="muted">最近动作：{action}</Text>
       </ExampleBlock>
+      <ExampleBlock title="分区与快捷键" description="粗分隔线划分功能区，细分隔线分开相关操作；右侧快捷键仅作提示。">
+        <Dropdown native={false} nativeHaptics itemNativeHaptics items={editorItems} triggerLabel="编辑菜单" />
+        <Text color="muted">最近动作：{action}</Text>
+      </ExampleBlock>
+      <ExampleBlock title="单选与多选" description="选择后菜单保持打开；单选使用圆点，多选使用勾号。">
+        <View className="flex-row flex-wrap gap-3">
+          <Dropdown native={false} nativeHaptics itemNativeHaptics items={alignmentItems} triggerLabel="段落对齐" />
+          <Dropdown native={false} nativeHaptics itemNativeHaptics items={styleItems} triggerLabel="文字样式" />
+        </View>
+        <Text color="muted">当前对齐：{alignmentItems.find(item => item.value === alignment)?.label as string}</Text>
+        <Text color="muted">文字样式：{styleItems.filter(item => item.selected).map(item => item.label as string).join("、") || "无"}</Text>
+      </ExampleBlock>
+      <ExampleBlock title="长菜单滚动" description="40 个文档限制在 280 高度内，滚动到底部后仍可选择。">
+        <Dropdown native={false} nativeHaptics itemNativeHaptics contentProps={{ maxHeight: 280 }} items={longItems} triggerLabel="浏览全部文档" />
+        <Text color="muted">最近动作：{action}</Text>
+      </ExampleBlock>
+      <ExampleBlock title="弹出方向" description="从触发器上、下、左、右打开；靠近屏幕边缘时会避让。">
+        <View className="gap-3">
+          <View className="items-center"><Dropdown native={false} items={items.slice(0, 2)} contentProps={{ side: "top", align: "center" }} triggerLabel="向上" /></View>
+          <View className="flex-row justify-between">
+            <Dropdown native={false} items={items.slice(0, 2)} contentProps={{ side: "right", align: "center" }} triggerLabel="向右" />
+            <Dropdown native={false} items={items.slice(0, 2)} contentProps={{ side: "left", align: "center" }} triggerLabel="向左" />
+          </View>
+          <View className="items-center"><Dropdown native={false} items={items.slice(0, 2)} contentProps={{ side: "bottom", align: "center" }} triggerLabel="向下" /></View>
+        </View>
+      </ExampleBlock>
       <ExampleBlock title="勾选标记位置">
         <Dropdown
           native={false}
           nativeTrigger
-          contentSize="sm"
           items={selectionItems}
           triggerLabel="默认左侧"
         />
         <Dropdown
           native={false}
           nativeTrigger
-          contentSize="sm"
           selectionIndicatorPosition="right"
           items={selectionItems}
           triggerLabel="右侧勾选"

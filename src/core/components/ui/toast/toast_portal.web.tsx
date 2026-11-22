@@ -1,4 +1,5 @@
 import { Branch } from "@radix-ui/react-dismissable-layer";
+import { UNSAFE_PortalProvider } from "react-aria/PortalProvider";
 import { useLayoutEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
@@ -26,7 +27,18 @@ export function useToastPortalScope(container: HTMLElement | null | undefined) {
   }, [container]);
 }
 
-/** 移动稳定的 host 而非更换 React Portal target，保留 Sonner 的通知、计时与内部状态。 */
+/** React Aria ToastRegion creates its own portal. Keep that portal inside our
+ * registered interaction branch instead of letting it escape to document.body. */
+export function ToastPortalBoundary({ children }: { children: ReactNode }) {
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
+  // Radix preserves [aria-live], React Aria preserves its top-layer marker. The
+  // boundary itself is quiet; each Toast.Content retains its own alert semantics.
+  return <Branch ref={setContainer} aria-live="off" data-react-aria-top-layer style={{ display: "contents" }}>
+    {container && <UNSAFE_PortalProvider getContainer={() => container}>{children}</UNSAFE_PortalProvider>}
+  </Branch>;
+}
+
+/** 移动稳定的 host 而非更换 React Portal target，保留 Toast 的通知、计时与内部状态。 */
 export function ToastPortal({ children }: { children: ReactNode }) {
   const [host, setHost] = useState<HTMLDivElement>();
   useLayoutEffect(() => {
@@ -51,7 +63,7 @@ export function ToastPortal({ children }: { children: ReactNode }) {
   // 避免关闭按钮、操作和拖动被识别成点击遮罩，同时保留事件与滑动手势。
   return host
     ? createPortal(
-        <Branch style={{ display: "contents" }}>{children}</Branch>,
+        <ToastPortalBoundary>{children}</ToastPortalBoundary>,
         host,
       )
     : null;

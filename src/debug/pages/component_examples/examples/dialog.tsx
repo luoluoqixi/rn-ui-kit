@@ -6,6 +6,7 @@ import {
   Dialog,
   Dropdown,
   Input,
+  isWeb,
   NativeSheet,
   Popover,
   Select,
@@ -27,10 +28,7 @@ export function DialogExample() {
     { label: "第一个选项", value: "first" },
     { label: "第二个选项", value: "second" },
   ];
-  const menuItems = [
-    ...options,
-    { value: "more", label: "更多操作", subMenu: options },
-  ];
+  const menuItems = [...options, { value: "more", label: "更多操作", subMenu: options }];
   return (
     <ExampleStack>
       <ExampleBlock description={`已保存名称：${saved}`} title="编辑工作区">
@@ -46,11 +44,7 @@ export function DialogExample() {
           content={() => (
             <View className="gap-3">
               <Text>新名称</Text>
-              <Input
-                placeholder="新名称"
-                onChangeText={setDraft}
-                value={draft}
-              />
+              <Input placeholder="新名称" onChangeText={setDraft} value={draft} />
             </View>
           )}
           description="示例 description"
@@ -66,19 +60,14 @@ export function DialogExample() {
       >
         <Dialog
           title="嵌套弹层"
+          onOpenChange={(next) => {
+            if (!next) setSheetOpen(false);
+          }}
           trigger={<Button>打开嵌套弹层</Button>}
           content={
             <View className="gap-3">
-              <Select
-                native={false}
-                items={options}
-                value={choice}
-                onValueChange={setChoice}
-              />
-              <Dropdown
-                trigger={<Button variant="outline">打开菜单</Button>}
-                items={menuItems}
-              />
+              <Select native={false} items={options} value={choice} onValueChange={setChoice} />
+              <Dropdown trigger={<Button variant="outline">打开菜单</Button>} items={menuItems} />
               <ContextMenu
                 items={menuItems}
                 trigger={<Button variant="outline">右键检查二级菜单</Button>}
@@ -86,18 +75,16 @@ export function DialogExample() {
               <Popover content={<Input placeholder="Popover 输入焦点" />}>
                 <Button variant="outline">打开 Popover</Button>
               </Popover>
-              <Tooltip content="Dialog 内 Tooltip">
-                <Button variant="outline">悬停查看提示</Button>
-              </Tooltip>
+              {isWeb() && (
+                <Tooltip content="Dialog 内 Tooltip">
+                  <Button variant="outline">悬停查看提示</Button>
+                </Tooltip>
+              )}
               <AlertDialog
                 title="Dialog 内的确认"
                 description="取消后应保留外层 Dialog。"
                 actions={
-                  <Button
-                    onPress={() =>
-                      toast.info("AlertDialog 内提示", { native: false })
-                    }
-                  >
+                  <Button onPress={() => toast.info("AlertDialog 内提示", { native: false })}>
                     显示确认框 Toast
                   </Button>
                 }
@@ -105,9 +92,7 @@ export function DialogExample() {
                 cancelLabel="取消"
                 actionLabel="确认"
               />
-              <Button
-                onPress={() => toast.info("Dialog 内提示", { native: false })}
-              >
+              <Button onPress={() => toast.info("Dialog 内提示", { native: false })}>
                 显示 Toast
               </Button>
               <Button onPress={() => setSheetOpen(true)}>打开子 Sheet</Button>
@@ -119,29 +104,18 @@ export function DialogExample() {
               >
                 <View className="gap-3 p-6">
                   <Text>Dialog 中的 Sheet</Text>
-                  <Button
-                    onPress={() =>
-                      toast.success("Sheet 内提示", { native: false })
-                    }
-                  >
+                  <Button onPress={() => toast.success("Sheet 内提示", { native: false })}>
                     显示 Sheet Toast
                   </Button>
                   <Input placeholder="检查输入焦点" />
-                  <Select
-                    native={false}
-                    items={options}
-                    value={choice}
-                    onValueChange={setChoice}
-                  />
+                  <Select native={false} items={options} value={choice} onValueChange={setChoice} />
                   <Dropdown
                     trigger={<Button variant="outline">Sheet 二级菜单</Button>}
                     items={menuItems}
                   />
                   <Dialog
                     title="Sheet 内的 Dialog"
-                    trigger={
-                      <Button variant="outline">打开 Sheet 内 Dialog</Button>
-                    }
+                    trigger={<Button variant="outline">打开 Sheet 内 Dialog</Button>}
                     content={
                       <View className="gap-3">
                         <Input placeholder="Sheet 内 Dialog 输入" />
@@ -151,11 +125,7 @@ export function DialogExample() {
                           value={choice}
                           onValueChange={setChoice}
                         />
-                        <Popover
-                          content={
-                            <Input placeholder="嵌套 Dialog 的 Popover 输入" />
-                          }
-                        >
+                        <Popover content={<Input placeholder="嵌套 Dialog 的 Popover 输入" />}>
                           <Button variant="outline">内层 Popover</Button>
                         </Popover>
                       </View>
@@ -165,17 +135,11 @@ export function DialogExample() {
                   <AlertDialog
                     title="Sheet 内的确认"
                     description="取消后应保留 Sheet 和外层 Dialog。"
-                    trigger={
-                      <Button variant="outline">
-                        打开 Sheet 内 AlertDialog
-                      </Button>
-                    }
+                    trigger={<Button variant="outline">打开 Sheet 内 AlertDialog</Button>}
                     cancelLabel="取消"
                     actionLabel="确认"
                   />
-                  <Button onPress={() => setSheetOpen(false)}>
-                    关闭子 Sheet
-                  </Button>
+                  <Button onPress={() => setSheetOpen(false)}>关闭子 Sheet</Button>
                 </View>
               </NativeSheet>
             </View>
