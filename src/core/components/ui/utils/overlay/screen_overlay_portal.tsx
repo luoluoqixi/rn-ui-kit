@@ -1,4 +1,4 @@
-import { PortalHost } from "@rn-primitives/portal";
+import { OverlayPortalHost } from "./portal_host";
 import {
   type ReactNode,
   createContext,
@@ -228,7 +228,7 @@ export function ScreenOverlayPortalHost({
         return;
       }
 
-      // Use the same page-coordinate API as @rn-primitives' trigger measurement.
+      // Capture this host's origin in page coordinates.
       hostStackRef.current?.measure((_x, _y, _width, _height, pageX, pageY) => {
         onPortalOffsetChange({ x: pageX, y: pageY });
       });
@@ -260,7 +260,7 @@ export function ScreenOverlayPortalHost({
       style={styles.hostStack}
       onLayout={handleHostStackLayout}
     >
-      <PortalHost name={hostName} />
+      <OverlayPortalHost name={hostName} />
       <OverlayToastLayer hostName={hostName} hostStackHeight={hostStackHeight} />
       {!isWeb() && (
         <OverlayTeleportLayer hostName={hostName} onTeleportHostNode={handleTeleportHostNode} />

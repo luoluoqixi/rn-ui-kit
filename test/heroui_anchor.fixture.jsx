@@ -1,8 +1,6 @@
 import { afterEach, expect, mock, test } from "bun:test";
-import { plugin } from "bun";
 import { Window } from "happy-dom";
 
-plugin({ name: "slot-jsx", setup(build) { build.onLoad({ filter: /@rn-primitives\/slot\/dist\/index\.mjs$/ }, async ({ path }) => ({ contents: await Bun.file(path).text(), loader: "jsx" })); } });
 const win = new Window({ url: "http://localhost/" });
 for (const name of ["window", "document", "navigator", "HTMLElement", "Element", "Node", "Event", "MouseEvent", "MutationObserver"])
   globalThis[name] = name === "window" ? win : win[name];
@@ -63,12 +61,52 @@ mock.module("../src/core/components/ui/utils/overlay/screen_overlay_portal", () 
 }));
 const { TrueSheetOverlayLayoutProvider, useTrueSheetOverlayLayoutSetter } = await import("../src/core/components/ui/sheet/native_sheet/true_sheet/overlay_layout_context");
 const { HeroUIWindowAnchor, HeroUIWindowOverlayScope } = await import("../src/core/components/ui/utils/overlay/heroui_anchor.native");
+const { PressableChild } = await import("../src/core/components/ui/utils/overlay/pressable_child");
 const { createRoot } = await import("react-dom/client");
 let root;
 afterEach(async () => {
   await act(() => root?.unmount()); root = undefined; document.body.replaceChildren(); calls.length = 0;
   windowRect = undefined; measureNativeWindow = undefined;
   nativeTag = 42;
+});
+
+test("local pressable adapter merges events/styles without a layout wrapper and cleans up React 19 refs", async () => {
+  const events = [];
+  const attached = [];
+  const detached = [];
+  const childRef = node => { attached.push(node); return () => detached.push(node); };
+  const firstRef = React.createRef();
+  const secondRef = React.createRef();
+  let received;
+  const Child = React.forwardRef((props, ref) => {
+    received = props;
+    React.useImperativeHandle(ref, () => nativeNode, []);
+    return <button>{props.children}</button>;
+  });
+  const content = (ref, parentStyle, childStyle) => <PressableChild ref={ref} testID="parent" className="parent-class"
+    onPress={() => events.push("parent-press")} onLayout={() => events.push("parent-layout")} style={parentStyle}>
+    <Child ref={childRef} testID="child" className="child-class" style={childStyle}
+      onPress={() => events.push("child-press")} onLayout={() => events.push("child-layout")}>唯一节点</Child>
+  </PressableChild>;
+  root = createRoot(document.body.appendChild(document.createElement("div")));
+  await act(() => root.render(content(firstRef, { opacity: 0.7 }, state => ({ opacity: state.pressed ? 0.4 : 1 }))));
+  expect(firstRef.current).toBe(nativeNode); expect(attached).toEqual([nativeNode]);
+  expect(received.testID).toBe("child"); expect(received.className).toBe("parent-class child-class");
+  received.onPress({}); received.onLayout({});
+  expect(events).toEqual(["child-press", "parent-press", "child-layout", "parent-layout"]);
+  expect(received.style({ pressed: true })).toEqual([{ opacity: 0.7 }, { opacity: 0.4 }]);
+  await act(() => root.render(content(firstRef, state => ({ opacity: state.pressed ? 0.5 : 1 }), { margin: 4 })));
+  expect(received.style({ pressed: true })).toEqual([{ opacity: 0.5 }, { margin: 4 }]);
+  expect(attached).toHaveLength(1); expect(detached).toHaveLength(0);
+  await act(() => root.render(content(secondRef, () => ({ margin: 2 }), () => ({ margin: 6 }))));
+  expect(firstRef.current).toBeNull(); expect(secondRef.current).toBe(nativeNode);
+  expect(received.style({ pressed: false })).toEqual([{ margin: 2 }, { margin: 6 }]);
+  expect(detached).toEqual([nativeNode]); expect(attached).toEqual([nativeNode, nativeNode]);
+  await act(() => root.render(content(secondRef, { margin: 2 }, { margin: 6 })));
+  expect(received.style).toEqual([{ margin: 2 }, { margin: 6 }]);
+  expect(document.querySelectorAll("button")).toHaveLength(1);
+  await act(() => root.unmount()); root = undefined;
+  expect(secondRef.current).toBeNull(); expect(detached).toEqual([nativeNode, nativeNode]);
 });
 
 async function mountSheetProbe(primitive) {

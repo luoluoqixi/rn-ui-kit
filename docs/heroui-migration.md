@@ -1095,15 +1095,15 @@ Native 自绘默认长按打开，底部弹出时相对整个 trigger 居中；`
 | --- | --- |
 | @radix-ui/react-dismissable-layer | HeroUIOverlayLayer 的 Escape 层级桥接，Toast portal 的 Branch；Web TrueSheet 仍使用 Radix Dialog |
 | Zeego 及它的传递 Radix 菜单依赖 | 保留的系统原生菜单；锁文件中出现这些包不代表自绘菜单仍调用它们 |
-| @rn-primitives/portal、UIProvider 与 ScreenOverlayPortalProvider 中的 PortalHost | NativeList 的 basic / iOS ColorPicker 行仍通过 OverlayScopedPortal 挂载颜色选择 Sheet；根宿主与局部宿主承接这些内容 |
-| @rn-primitives/slot | 唯一直接消费者为 Native 的 HeroUIWindowAnchor：透传 child 事件与 ref，不增加原生布局节点，保留已验证的窗口测量适配；Dropdown / Select / Popover / ContextMenu / Menubar 的自绘 trigger 经此路径，包含使用 NativeTrigger 的场景 |
+| heroui-native/portal 与平台隔离的 OverlayPortalHost | 已替代 @rn-primitives/portal；NativeList 的颜色选择 Sheet 继续通过 OverlayScopedPortal 挂到根级 / 当前 Sheet / Modal 的专用命名宿主 |
+| 本地 PressableChild | 已替代 @rn-primitives/slot 的唯一使用路径，为 HeroUIWindowAnchor 合并 child 事件、style 与 ref，不增加原生布局节点 |
 | OverlayPortalWindow、ModalContentScope / OverlayPortalScope、Teleport | Native Dialog 的 Modal 呈现、Web 嵌套作用域、Toast / Floating / Sheet 路由 |
 | UIProvider 的主题、字体、键盘、震动、NativeDialog、Toast 与 HeroUI provider | 各自仍有运行时职责，不随菜单迁移整体删除或重排 |
 
-“仍有消费者”不表示绑定 RNR、无法替换：
+Portal 与 Slot 的替换已完成（实现说明与本轮验证见下文）：
 
-- 颜色选择 Sheet 只需要从 NativeList 布局子树转移到正确的窗口宿主，并不要求使用 `@rn-primitives/portal`。锁定的 HeroUI Native 提供公开 `heroui-native/portal`（Portal / PortalHost），可作为后续替代方案。切换时应保留根级 / 当前 Sheet / Modal 的宿主选择，使用专用命名 host，避免与 HeroUI provider 自带的默认 host 重复渲染；Native 导入还必须留在平台文件中，不能由共享 Provider 给 Web 引入 Native 包。切换 Portal 引擎不需要替换颜色选择 Sheet 或修改 TrueSheet。本轮仅核查，尚未切换宿主。
-- 锁定的 HeroUI Native 源码没有引用上述两个 `@rn-primitives` 包。它内部有自己的 Slot 实现，但当前没有公开 Slot 子路径；不要通过深层导入耦合私有实现。项目里的 `@rn-primitives/slot` 由 HeroUIWindowAnchor 单独引用，用于合并 child 事件、style 和 ref，使窗口测量包装保持无额外布局节点。以后可用经过相同回归的局部适配器替代，但不能直接删掉这层事件 / ref 合并逻辑。本轮保留此轻量依赖。
+- 颜色选择 Sheet 只需要转移到正确的窗口宿主，不绑定特定 Portal 引擎。当前使用公开 `heroui-native/portal`，保留根级 / 当前 Sheet / Modal 的宿主选择；根 host 使用独立名称，不重复挂载 HeroUI Provider 的默认 host。Native 导入留在平台文件内，Web 不加载 Native Portal。
+- HeroUI Native 没有依赖上述两个 `@rn-primitives` 包。它内部的 Slot 未公开导出，本次没有深层导入或复制整套 Slot，而是只为窗口 anchor 实现所需的单子元素合并能力；保留原坐标测量逻辑。两项依赖与锁文件记录已移除。
 
 此次未改 TrueSheet 源码 / 集成 / patch、系统 ContextMenu / Dropdown / Select、NativeTrigger、NativeList，也未全局重构 Provider。
 
@@ -1129,6 +1129,14 @@ Native 自绘默认长按打开，底部弹出时相对整个 trigger 居中；`
 - 共享 Native 菜单继续使用真实 HeroUI SubMenu，在展开时为实际内容高度和顶部内边距预留滚动空间，关闭时释放；预留空间使用与 SubMenu 相同的显式弹簧配置，并遵守禁用动画的设置。滚动内的 SubMenu 不再使用负 margin 向视口外扩张，长内容仍遵守原有 maxHeight。内容 / 字体布局变化会更新所需空间，不给所有菜单写死更大的最小高度。
 - 子菜单打开时把滚动视口与关闭遮罩放到同一层级体系：子菜单位于局部关闭层之上，原生滚动与子菜单点击不被 Menu.Content 的兄弟遮罩挡住；点选子菜单外区域返回上级。此调整共用于 Native Dropdown / ContextMenu / Menubar，不修改 Web 菜单、Select、系统原生菜单或 TrueSheet。
 - 验证：弹层集成入口 9 组通过；iOS / Android 适配 fixture 各 20 项、236 次断言通过，新增覆盖三个共享菜单入口的展开空间、长内容高度上限、布局变化、返回上级和禁用动画。库与示例 typecheck、库 build、Expo 三端带 source map 导出、平台隔离审计与 git diff --check 通过。平台审计各端另一套 HeroUI 模块均为 0。本轮未运行原生构建或真机测试，子菜单实际滚动、触摸命中和动画仍需设备复核。
+
+### Select 按压反馈与 Portal / Slot 替换（2026-11-22）
+
+- 锁定版本的 Native Select.Item 本身只提供选择、关闭和可访问性状态，没有 Menu.Item 的按压动画。自绘 Native Select 现在通过公开 PressableFeedback 的 asChild 组合接入主题 default 背景高亮与 0.98 缩放，时长均为 150ms；背景覆盖层不接收触摸，按压反馈与选中状态分开，禁用项不响应。保留实际 Select.Item 的选择、关闭、事件、字体和单行布局；Web Select、系统原生与 wheel / dialog / dropdown 模式未修改。
+- 新增内部 portal_host 平台适配。Native 只从 heroui-native/portal 公开入口导入，根 host 固定为 rn-ui-kit:scoped-overlay-root，局部 host 沿用原名称，显式 hostName 优先于当前窗口，最后回退根 host。UIProvider 与 ScreenOverlayPortalHost 使用同一适配；Web adapter 不创建 Native host，现有 Web 颜色选择 Sheet 继续直接渲染，由其自身 DOM portal 处理。未改颜色选择 Sheet、TrueSheet、Teleport、Toast 或 Dialog 的呈现实现。
+- PressableChild 仅约 50 行：单个可接收 ref 的子组件通过 cloneElement 透传；普通属性由 child 优先，事件依次执行 child / anchor，style 同时支持静态数组与 Pressable 回调，className 合并。稳定合并对象 ref、普通回调 ref 与 React 19 cleanup ref；不增加布局节点，不改已验证的窗口坐标补偿。删除 @rn-primitives/portal 与 @rn-primitives/slot 直接依赖，锁文件同时移除了已无消费者的 zustand。
+- 验证：主测试 139 项、1942 次断言通过；Native 弹层 fixture 在 iOS / Android 各 21 项通过。新增检查使用真实 PressableFeedback 组件、内部 Slot 与 Select 选择 primitive，仅 mock 原生环境和 worklet，验证按下 / 释放、取消后不误选、禁用项、回调与选择后关闭；不将这些检查当成动画帧验收。真实 HeroUI Portal store 验证默认 host 不重复、root / sheet / dialog 与显式 host 路由、更新 / 注销及相邻子树状态保持。窗口测量回归保留，补充事件 / 两种 style 合并和 React 19 ref cleanup。
+- 库及示例 typecheck、库 build、Expo 三端 source map 生产导出通过。平台隔离审计 Web / iOS / Android 的另一端 HeroUI 模块均为 0。本轮未运行原生构建或真机测试；设备复核重点为自绘 Select 长按 / 滚动取消时的背景与缩放，以及 NativeList 颜色选择 Sheet 在根页面、Sheet、Dialog 内的打开 / 关闭 / 再次打开与层级。
 
 ## 后续批次
 

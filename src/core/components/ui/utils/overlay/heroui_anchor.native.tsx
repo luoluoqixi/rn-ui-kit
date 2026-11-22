@@ -1,5 +1,5 @@
 import { createContext, forwardRef, useContext, useImperativeHandle, useLayoutEffect, useRef, type ReactElement, type ReactNode, type Ref } from "react";
-import { Pressable as PressableSlot } from "@rn-primitives/slot";
+import { PressableChild } from "./pressable_child";
 import { findNodeHandle, Platform, type PressableProps, type View } from "react-native";
 import { KeyboardControllerNative } from "react-native-keyboard-controller";
 import { useTrueSheetOverlaySheetTopPosition } from "../../sheet/native_sheet/true_sheet/overlay_layout_context";
@@ -97,5 +97,5 @@ export const HeroUIWindowAnchor = forwardRef<View, Omit<PressableProps, "childre
     return () => { ++measurementId.current; };
   }, [isOpen, offsetY, hostName, windowHostName]);
 
-  return <PressableSlot {...props} ref={nativeRef}>{children}</PressableSlot>;
+  return <PressableChild {...props} ref={nativeRef}>{children}</PressableChild>;
 });

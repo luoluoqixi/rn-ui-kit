@@ -1,6 +1,4 @@
 import { afterEach, expect, mock, test } from "bun:test";
-import { plugin } from "bun";
-plugin({ name: "slot-jsx", setup(build) { build.onLoad({ filter: /@rn-primitives\/slot\/dist\/index\.mjs$/ }, async ({ path }) => ({ contents: await Bun.file(path).text(), loader: "jsx" })); } });
 import { Window } from "happy-dom";
 const win = new Window({ url: "http://localhost/" });
 for (const key of [
@@ -39,8 +37,14 @@ const RNW = await import("react-native-web");
 
 const platform = process.env.OVERLAY_PLATFORM ?? "ios";
 const nativeWindows = [];
+const optionPressables = new Map();
+const ObservedPressable = React.forwardRef((props, ref) => {
+  if (props.role === "option") optionPressables.set(props["aria-valuetext"], props);
+  return <RNW.Pressable {...props} ref={ref} />;
+});
 const scopeContext = React.createContext(null);
 mock.module("react-native", () => ({ ...RNW, Platform: { ...RNW.Platform, OS: platform },
+  Pressable: ObservedPressable,
   useWindowDimensions: () => ({ width: 390, height: 844, scale: 3, fontScale: 1 }),
   Modal: p => { nativeWindows.push(p); return p.visible ? <div data-native-modal>{p.children}</div> : null; },
 }));
@@ -64,9 +68,35 @@ const latest = {};
 let disableMenuAnimations = false;
 mock.module("heroui-native/contexts", () => ({ useAnimationSettings: () => ({ isAllAnimationsDisabled: disableMenuAnimations }) }));
 mock.module("react-native-reanimated", () => ({
-  default: { View: p => <RNW.View {...p} /> },
+  default: { View: p => <RNW.View {...p} />, createAnimatedComponent: component => component },
   useAnimatedStyle: fn => fn(), withSpring: value => value,
 }));
+const { createContext } = await import("../node_modules/heroui-native/src/helpers/internal/utils/create-context");
+const { useControllableState } = await import("../node_modules/heroui-native/src/helpers/internal/hooks/use-controllable-state");
+mock.module("../node_modules/heroui-native/src/helpers/internal/utils", () => ({ createContext, combineStyles: styles => styles }));
+mock.module("../node_modules/heroui-native/src/helpers/internal/hooks", () => ({ useControllableState, useRelativePosition: () => ({}), useAugmentedRef: () => React.useRef(null) }));
+mock.module("../node_modules/heroui-native/src/helpers/internal/contexts", () => ({ AnimationSettingsProvider: ({ children }) => children }));
+mock.module("heroui-native/hooks", () => ({ useThemeColor: () => "#e8e8ec" }));
+const feedbackContext = React.createContext(null);
+const feedbackStates = [];
+const highlightAnimations = [];
+const sharedValue = value => ({ get: () => value, set(next) { value = next; } });
+// Keep actual feedback components, their Slot, and Select's real selection
+// primitive; mock only worklet execution, measuring its configured targets.
+mock.module("../node_modules/heroui-native/src/components/pressable-feedback/pressable-feedback.animation", () => ({
+  PressableFeedbackRootAnimationProvider: feedbackContext.Provider,
+  usePressableFeedbackRootAnimation: ({ animation }) => {
+    const state = React.useRef({ isPressed: sharedValue(false), containerWidth: sharedValue(0), containerHeight: sharedValue(0) }).current;
+    state.animation = animation;
+    if (!feedbackStates.includes(state)) feedbackStates.push(state);
+    return { ...state, animationOnPressIn() { state.isPressed.set(true); }, animationOnPressOut() { state.isPressed.set(false); } };
+  },
+  usePressableFeedbackHighlightAnimation: ({ animation }) => { highlightAnimations.push({ animation, state: React.useContext(feedbackContext) }); return {}; },
+  usePressableFeedbackScaleAnimation: () => ({}), usePressableFeedbackRippleAnimation: () => ({}),
+}));
+const { default: RealPressableFeedback } = await import("../node_modules/heroui-native/src/components/pressable-feedback/pressable-feedback");
+mock.module("heroui-native/pressable-feedback", () => ({ PressableFeedback: RealPressableFeedback }));
+const SelectPrimitives = await import("../node_modules/heroui-native/src/primitives/select/select");
 const hapticCalls = [];
 mock.module("../src/core/components/ui/utils/haptics", () => ({ useResolvedNativeHaptics: v => v ?? true, triggerNativeHaptics: v => { if (v) hapticCalls.push(v); } }));
 const FakeButton = React.forwardRef(({ children, title, onPress, disabled, isDisabled, accessibilityLabel, ...p }, ref) => <button ref={ref} disabled={disabled || isDisabled} aria-label={accessibilityLabel} onClick={e=>onPress?.(e)}>{title ?? children}</button>);
@@ -88,7 +118,8 @@ function overlay(name) {
     const context = { ...p, triggerPosition, setTriggerPosition, contentLayout, setContentLayout,
       openSubMenuId, isSubMenuOpen: openSubMenuId !== null, openSubMenu, closeSubMenu };
     latest[name] = context;
-    return <Context.Provider value={context}>{p.children}</Context.Provider>;
+    const children = <Context.Provider value={context}>{p.children}</Context.Provider>;
+    return name === "select" ? <SelectPrimitives.Root {...p}>{children}</SelectPrimitives.Root> : children;
   };
   const Trigger = ({ children, isDisabled, variant }) => {
     latest[name + "Trigger"] = { variant };
@@ -99,7 +130,11 @@ function overlay(name) {
   const Content = p => { latest[name + "Content"] = p; return <div data-content={name}>{p.children}</div>; };
   const Overlay = p => { latest[name + "Overlay"] = p; return <button aria-label={name+"遮罩"} onClick={p.onPress}>遮罩</button>; };
   const text = ({children})=><span>{children}</span>;
-  const Item = p => { (latest[name+"Items"] ??= []).push(p); return <OptionContext.Provider value={p}><button disabled={p.disabled || p.isDisabled} data-value={p.value ?? p.id} onClick={()=>{p.onPress?.();}}>{p.children}</button></OptionContext.Provider>; };
+  const Item = React.forwardRef((p, ref) => {
+    (latest[name+"Items"] ??= []).push(p);
+    if (name === "select") return <SelectPrimitives.Item {...p} ref={ref}><OptionContext.Provider value={p}>{p.children}</OptionContext.Provider></SelectPrimitives.Item>;
+    return <OptionContext.Provider value={p}><button ref={ref} disabled={p.disabled || p.isDisabled} data-value={p.value ?? p.id} onClick={()=>{p.onPress?.();}}>{p.children}</button></OptionContext.Provider>;
+  });
   const ItemTitle = ({children}) => {
     if (!React.useContext(OptionContext)) throw new Error("Menu.Item compound components cannot be rendered outside Menu.Item");
     return <span>{children}</span>;
@@ -179,7 +214,7 @@ let root;
 async function render(content) {if(!root){const m=document.createElement("div");document.body.append(m);root=createRoot(m);}await act(()=>root.render(content));}
 async function click(text) {const n=[...document.querySelectorAll("button")].find(n=>n.textContent===text||n.getAttribute("aria-label")===text);expect(!!n).toBe(true);await act(()=>n.click());}
 const pause = ms => act(()=>new Promise(r=>setTimeout(r,ms)));
-afterEach(async()=>{await act(()=>{toastBridge.closeAll();root?.unmount();});root=undefined;document.body.replaceChildren();Object.keys(latest).forEach(k=>delete latest[k]);shown.length=0;hapticCalls.length=0;nativeWindows.length=0;disableMenuAnimations=false;});
+afterEach(async()=>{await act(()=>{toastBridge.closeAll();root?.unmount();});root=undefined;document.body.replaceChildren();Object.keys(latest).forEach(k=>delete latest[k]);shown.length=0;hapticCalls.length=0;nativeWindows.length=0;disableMenuAnimations=false;optionPressables.clear();feedbackStates.length=0;highlightAnimations.length=0;});
 
 test("Native Dialog owns a modal presenter and local overlay scope; reopening does not retain child sheet state", async () => {
   const contexts = [];
@@ -251,6 +286,31 @@ test("Native basic Select maps option objects, disabled rows, null control, refs
   expect(latest.selectTrigger.variant).toBe("unstyled");
   await act(()=>latest.select.onValueChange({value:"a",label:"甲"}));expect(latest.select.value).toBeUndefined();
   await act(()=>ref.current.close());expect(latest.select.isOpen).toBe(false);
+});
+test("Native Select composes real press feedback and selection without extra press targets", async () => {
+  const events = [];
+  const ref = React.createRef();
+  await render(<Select ref={ref} defaultOpen defaultValue="a" onValueChange={value => events.push(value)}
+    itemProps={{ herouiNativeProps: { onPressIn: () => events.push("in"), onPressOut: () => events.push("out") } }}
+    items={[{ value: "a", label: "当前选项" }, { value: "b", label: "新选项" }, { value: "c", label: "不可用", disabled: true }]} />);
+  expect(document.querySelectorAll('[role="option"]')).toHaveLength(3);
+  const feedback = feedbackStates[1];
+  expect(feedback.animation.scale).toEqual({ value: 0.98, ignoreScaleCoefficient: true, timingConfig: { duration: 150 } });
+  expect(highlightAnimations[1].state.isPressed).toBe(feedback.isPressed);
+  expect(highlightAnimations[1].animation).toEqual({ backgroundColor: { value: "#e8e8ec" }, opacity: { value: [0, 1], timingConfig: { duration: 150 } } });
+  expect(optionPressables.get("不可用").disabled).toBe(true);
+  await act(() => optionPressables.get("新选项").onPressIn({ nativeEvent: {} }));
+  expect(feedback.isPressed.get()).toBe(true); expect(events).toEqual(["in"]);
+  // Touch cancellation/scroll release must clear feedback without selecting.
+  await act(() => optionPressables.get("新选项").onPressOut({ nativeEvent: {} }));
+  expect(feedback.isPressed.get()).toBe(false); expect(latest.select.value.value).toBe("a");
+  expect(latest.select.isOpen).toBe(true);
+  await act(() => optionPressables.get("新选项").onPressIn({ nativeEvent: {} }));
+  await act(() => optionPressables.get("新选项").onPressOut({ nativeEvent: {} }));
+  await act(() => optionPressables.get("新选项").onPress({ nativeEvent: {} }));
+  expect(feedback.isPressed.get()).toBe(false);
+  expect(latest.select.value.value).toBe("b"); expect(latest.select.isOpen).toBe(false);
+  expect(events).toEqual(["in", "out", "in", "out", "b"]);
 });
 for (const [name, Component] of [["menu", Dropdown], ["select", Select]]) {
   test(name + ": Native vertical menus default to center and preserve explicit alignment and horizontal defaults", async () => {

@@ -1,4 +1,4 @@
-import { Portal } from "@rn-primitives/portal";
+import { OverlayPortal } from "./portal_host";
 import { type ReactNode, useId } from "react";
 
 import { useScopedOverlayPortalHostName } from "./screen_overlay_portal";
@@ -24,8 +24,8 @@ export function OverlayScopedPortal({
   }
 
   return (
-    <Portal hostName={hostName ?? scopedHostName} name={name ?? generatedName}>
+    <OverlayPortal hostName={hostName ?? scopedHostName} name={name ?? generatedName}>
       {children}
-    </Portal>
+    </OverlayPortal>
   );
 }

@@ -2,7 +2,7 @@ import { useColorScheme } from "react-native";
 
 import { TextFontProvider } from "./font_provider";
 import { HeroUIProvider } from "./heroui_provider";
-import { PortalHost } from "@rn-primitives/portal";
+import { OverlayPortalHost } from "../utils/overlay/portal_host";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { PortalProvider as TeleportPortalProvider } from "react-native-teleport";
 
@@ -69,7 +69,7 @@ export function UIProvider({
                     <HeroUIProvider>
                       <NativeDialogProvider>
                         {children}
-                        <PortalHost />
+                        <OverlayPortalHost />
                         {CustomToaster ? (
                           <CustomToaster
                             {...toasterProps}
