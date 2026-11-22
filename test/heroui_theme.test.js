@@ -43,13 +43,16 @@ for (const platform of ["web", "native"]) {
     const css = await readFile(new URL("../examples/app/global" + (platform === "native" ? ".native" : "") + ".css", import.meta.url), "utf8");
     const compiler = await compile(css, { base: appRoot, onDependency: () => {} });
     const iconColors = ["foreground", "muted", "accent", "success", "warning", "danger"];
-    const result = compiler.build(["size-4", "size-5", "size-6", ...iconColors.map(color => "text-" + color), "bg-accent", "bg-surface", "bg-overlay", "bg-separator", "text-field-foreground", "bg-accent03", "text-primary", "bg-card", "text-muted-foreground"]);
+    const result = compiler.build(["size-4", "size-5", "size-6", ...iconColors.map(color => "text-" + color), "bg-accent", "bg-surface", "bg-overlay", "bg-separator", "text-field-foreground", "accent-field-placeholder", "bg-accent03", "text-primary", "bg-card", "text-muted-foreground"]);
     const colors = generateUiThemeFromPrimaryColor("#2563eb").light;
     expect(result).toContain("--muted: " + colors.muted);
     expect(result).toContain("--accent: " + colors.accent);
     expect(result).toContain("--separator: " + colors.separator);
     expect(result).toContain("--separator: " + generateUiThemeFromPrimaryColor("#2563eb").dark.separator);
     expect(result).toContain(".bg-separator");
+    // NativeList's RN TextInput bridge extracts accentColor for its placeholder.
+    expect(result).toContain(".accent-field-placeholder");
+    expect(result).toContain("accent-color: var(--field-placeholder, var(--muted))");
     expect(result).toContain(".text-muted");
     expect(result).toContain(".bg-accent03");
     expect(result).toContain("var(--muted)");

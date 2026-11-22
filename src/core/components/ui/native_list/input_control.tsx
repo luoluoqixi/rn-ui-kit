@@ -6,7 +6,7 @@ import type {
   NativeListInputSize as InputSize,
 } from "./input_control_types";
 
-const WEB_PLACEHOLDER_TEXT_COLOR_CLASS_NAME = "accent-muted-foreground/50";
+const WEB_PLACEHOLDER_TEXT_COLOR_CLASS_NAME = "accent-field-placeholder";
 
 const inputSizeStyles: Record<InputSize, TextStyle> = {
   default: { fontSize: 16, height: 44, minHeight: 44, paddingHorizontal: 12 },

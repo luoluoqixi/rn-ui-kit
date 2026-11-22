@@ -9,7 +9,7 @@ import { PortalProvider as TeleportPortalProvider } from "react-native-teleport"
 import { NativeDialogProvider } from "../native_dialog";
 import { Toaster } from "../toast/toaster";
 import { ToastDefaultsProvider } from "../toast/toast";
-import { NativeHapticsProvider } from "../utils";
+import { NativeHapticsProvider } from "../utils/haptics";
 import {
   AppBackgroundColorsProvider,
   resolveAccentThemeName,

@@ -4,7 +4,7 @@
 
 [Live demo (web)](https://rn-ui-kit.luoluoqixi.com/) · [Screenshots](./docs/SCREENSHOTS.md)
 
-A cross-platform UI kit for the maintainer's Expo apps. Base components use React Native Reusables source and APIs with Uniwind styling. Components that need system capabilities keep dedicated iOS, Android, and Web implementations in rn-ui-kit.
+A cross-platform UI kit for the maintainer's Expo apps. Custom-drawn components use **HeroUI Native** on iOS and Android and **HeroUI React v3** on Web, wrapped by a single props-based rn-ui-kit API. Existing system-native implementations remain available for controls such as Button, Switch, Slider, Select, and menus. Sheet continues to use TrueSheet.
 
 > [!WARNING]
 > This is a personal UI library. It does not promise the API stability or compatibility range expected from a general-purpose package.
@@ -13,153 +13,130 @@ A cross-platform UI kit for the maintainer's Expo apps. Base components use Reac
 
 | Technology | Version |
 | --- | --- |
-| Expo | 55 |
+| Expo | 55.0.26 |
 | React Native | 0.83.9 |
 | React / React DOM | 19.2.5 |
-| Uniwind | 1.x |
-| Tailwind CSS | 4.x |
-| TypeScript | 5.9.2 |
-| Package manager | Bun |
+| HeroUI Native | 1.1.1 |
+| HeroUI React / Styles | 3.2.7 |
+| Reanimated / Worklets | 4.3.4 / 0.8.1 |
+| TrueSheet | 4.1.2 |
+| Uniwind / Tailwind CSS | 1.x / 4.x |
+| TypeScript / package manager | 5.9.2 / Bun |
 
-Only Expo apps are supported; bare React Native CLI apps are out of scope. React Native and native dependencies are pinned in the root [`package.json`](./package.json). `@rn-primitives/*` packages are internal dependencies and do not need to be declared by consuming apps.
+Only Expo apps are supported; bare React Native CLI apps are out of scope. See the root and example `package.json` files for the complete dependency constraints.
 
-## App setup
+## App Setup
 
-Install a release branch together with Uniwind:
+The library declares both HeroUI packages as dependencies. The host app must provide the Expo, React Native, and native runtime modules listed as peer dependencies so autolinking and patches work. After installation, sync the library patches and rebuild the native app.
 
-```bash
-bun add github:luoluoqixi/rn-ui-kit#rn-ui-kit-<version>
-bun add uniwind tailwindcss
+Create `global.css` for Web:
+
+```css
+@import "tailwindcss";
+@import "@heroui/styles";
+@import "rn-ui-kit/styles.css";
+
+@custom-variant light (&:where(.light, .light *));
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --spacing-hairline: 1px;
+}
+
+@source "./src";
+@source "./node_modules/rn-ui-kit/src";
 ```
 
-Create `global.css` in the app:
+Create `global.native.css` for iOS and Android:
 
 ```css
 @import "tailwindcss";
 @import "uniwind";
+@import "heroui-native/styles";
 @import "rn-ui-kit/styles.css";
 
 @source "./src";
 @source "./node_modules/rn-ui-kit/src";
-@source "./node_modules/rn-ui-kit/dist";
 ```
 
-Adjust the source paths when using a local source dependency. The repository example scans `../../src` and `../../dist`.
-
-Configure Metro:
+Configure Metro with the library helper:
 
 ```js
 const { getDefaultConfig } = require("expo/metro-config");
-const { withUniwindConfig } = require("uniwind/metro");
+const { withHeroUIConfig } = require("rn-ui-kit/metro");
 
-const config = getDefaultConfig(__dirname);
-
-module.exports = withUniwindConfig(config, {
+module.exports = withHeroUIConfig(getDefaultConfig(__dirname), {
   cssEntryFile: "./global.css",
+  nativeCssEntryFile: "./global.native.css",
   dtsFile: "./uniwind-types.d.ts",
 });
 ```
 
-Load initialization and CSS before the UI:
+Also configure PostCSS with `@tailwindcss/postcss`, then load initialization and the shared CSS entry before the app:
 
 ```tsx
 import "rn-ui-kit/initialize";
 import "./global.css";
 ```
 
-See [`examples/app`](./examples/app) for the complete configuration. Apps do not need the RNR CLI, `components.json`, or registry configuration.
+Metro resolves the shared CSS import to the Native entry on iOS and Android. Web does not load HeroUI Native JS or CSS; Native does not load HeroUI React or Styles. Both dependencies may exist in `node_modules`, while the platform module and CSS graphs remain isolated. Web keeps the Uniwind runtime for existing React Native styling. The linked-source path in this repository's example app may differ from the paths above.
 
-## Provider and themes
+## Provider And Themes
 
 ```tsx
-import { RootProvider, Text } from "rn-ui-kit";
+import { RootProvider, Button, Text } from "rn-ui-kit";
 import { View } from "react-native";
 
 export default function App() {
   return (
-    <RootProvider
-      preferences={{
-        appearance: {
-          accentColor: "ocean",
-          themeMode: "system",
-        },
-      }}
-    >
-      <View className="bg-background flex-1 items-center justify-center">
+    <RootProvider preferences={{ appearance: { accentColor: "ocean", themeMode: "system" } }}>
+      <View className="bg-background flex-1 items-center justify-center gap-4">
         <Text>Hello, rn-ui-kit</Text>
+        <Button native={false} title="Continue" onPress={() => {}} />
       </View>
     </RootProvider>
   );
 }
 ```
 
-Toast defaults to Burnt on Android and iOS, and the basic Sonner Toast on web. Override this
-globally with `toasterProps.defaultNative`; a per-call `native` option takes precedence:
+`RootProvider` installs gesture, safe-area, font, keyboard, theme, navigation theme, Sheet, Portal, Toast, native dialog, and haptics contexts. Apps that already configure gesture, safe-area, navigation theme, and Sheet providers can use the lower-level `UIProvider` where appropriate. Preferences are supplied by the app; the provider does not persist them.
 
-```tsx
-<RootProvider toasterProps={{ defaultNative: false }}>{children}</RootProvider>
-```
+Theme tokens follow HeroUI semantics such as `background / foreground`, `surface`, `overlay`, `accent`, `default`, `danger`, and `fieldBackground / fieldForeground / fieldPlaceholder`. TypeScript uses camelCase and generated CSS uses kebab-case. `muted` is secondary text; secondary surfaces use `surfaceSecondary`. Component size and variant values follow each HeroUI component; there is no forced global size scale. System-native controls keep their own APIs.
 
-Themes now use HeroUI semantics: background/foreground, surface, overlay, accent, muted (secondary text), default, danger, and field colors. The old primary/card/popover/mutedForeground/destructive/ring tokens have been removed. Component variant names and system-native implementations are retained. The accent01–accent12 HCT scale remains available; accent itself now means the solid action color.
+Built-in accent seeds are `mono`, `ocean`, `sakura`, `lavender`, `sunset`, `forest`, `ruby`, `golden`, and `aqua`; opaque `#RGB` and `#RRGGBB` colors are also supported. The project's `accent01`–`accent12` extensions remain available. Use `generateUiThemeFromPrimaryColor()` to create a light/dark theme and override selected `SemanticColors` fields.
 
-Generate a complete light/dark theme with generateUiThemeFromPrimaryColor(), then override specific SemanticColors fields. Presets and custom opaque #RGB / #RRGGBB seeds are supported. Neutral container colors stay independent of the seed. HeroUI supplies the radius scale and derived interaction colors.
+Theme seeds do not recolor application container backgrounds. Configure screen, sheet, card, or header backgrounds through `appBackgroundColors.light/dark`; individual containers may still provide their own background props. The old `backgroundFollowsTheme` preference has been removed. One global `RootProvider` is supported per app because Web body portals and Native overlays share global theme variables.
 
-backgroundFollowsTheme has been removed and is discarded when stored example preferences are loaded. Configure application container backgrounds through appBackgroundColors.light/dark with optional screen/sheet/card/header overrides; individual containers keep their own background props. Global source variables are synchronized for Web body portals and Native overlays. Use one global RootProvider per application.
-
-See the [Chinese theme guide](./README.md#3-provider-与主题) and [migration details](./docs/heroui-migration.md) for configuration and migration boundaries.
-
-`RootProvider` installs gesture, safe-area, color scheme, navigation theme, sheet, portal, toast, native dialog, and haptics contexts.
+Toast keeps the existing public call API and Burnt-backed native behavior. HeroUI handles the Web and `native: false` custom path; legacy `sonnerOptions` names remain adapter options and do not mean Sonner is still a runtime dependency.
 
 ## Components
 
 | Category | Components |
 | --- | --- |
-| Actions and feedback | `Button`, `Checkbox`, `Switch`, `Toggle`, `ToggleGroup`, `Slider`, `Spinner`, `Progress`, `Toast`, `NativeDialog` |
-| Forms | `Input`, `InputGroup`, `InputOTP`, `TextField`, `Textarea`, `Select`, `RadioGroup`, `Label` |
-| Layout | `Accordion`, `Tabs`, `SplitView` / `SplitLayout`, `Card`, `Separator` |
-| Overlays | `Dialog`, `AlertDialog`, `ContextMenu`, `Dropdown`, `Menubar`, `Popover`, `Sheet` / `NativeSheet`, `Tooltip` |
-| Lists | `NativeList`, `ScrollView` |
-| Display | `Alert`, `Avatar`, `Badge`, `Chip`, `Skeleton`, `Text`, `Icon`, `Link`, `GlassEffect` |
+| Actions and feedback | `Button`, `CloseButton`, `Switch`, `Slider`, `Toggle`, `ToggleGroup`, `PressableFeedback`, `Spinner`, `Progress`, `Toast` |
+| Forms | `Input`, `InputGroup`, `InputOTP`, `TextField`, `SearchField`, `Textarea`, `Checkbox`, `RadioGroup`, `Select`, `Label` |
+| Layout and navigation | `Accordion`, `Card`, `Surface`, `Separator`, `Tabs`, `SplitView` / `SplitLayout` |
+| Overlays and menus | `Dialog`, `AlertDialog`, `Popover`, `Tooltip`, `Dropdown`, `ContextMenu`, `Menubar`, `Sheet` / `NativeSheet`, `NativeDialog` |
+| Lists and scrolling | `ListGroup`, `NativeList`, `ScrollView`, `ScrollShadow`, `TagGroup` |
+| Display | `Alert`, `Avatar`, `Badge`, `Chip`, `Skeleton`, `Text`, `Icon`, `Link`, `GlassEffect`, `ColorPicker` |
 
-`Form`, `Image`, `ListGroup`, `ListItem`, `FlashList`, `HoverCard`, and the old `Menu` API were removed. `TextArea` is now `Textarea`, and `Menu` is now `Dropdown`.
+Components use a simple props API. `Badge` is an anchored badge or status dot; standalone labels use `Chip`. `TextField` and `SearchField` combine labels, descriptions, validation, and input controls, while `Input` is for the input itself. Native Tooltip renders its children directly. Native Progress and Toggle include project implementations where the official Native package does not provide the same component.
 
-`AspectRatio` was removed; use the container's `aspectRatio` style. `Collapsible` was removed; use a single-item `Accordion` for basic content expansion and collapse.
+System-native paths and project-specific features are retained, including NativeTrigger and NativeList. Select keeps its existing `wheel`, `native`, `dropdown`, `dialog`, and `sheet` modes. Dropdown, ContextMenu, and Menubar share an internal HeroUI menu renderer for custom-drawn paths. Sheet continues to use TrueSheet. `AspectRatio` and `Collapsible` were removed; use an `aspectRatio` style or a single-item Accordion.
 
-The HeroUI migration branch includes `Accordion`, `Card`, `Alert`, `Avatar`, `Badge`, and `Chip`, with a single props-based entry and separate platform implementations. The former label-style Badge is now `Chip`. Use `<Badge content={5}><Avatar /></Badge>` for an anchored indicator, or omit `content` for a status dot. Badge uses HeroUI Badge on Web and a positioned HeroUI Native Chip on iOS/Android; standalone Chip uses HeroUI Chip on both platforms. `Icon` keeps its Lucide + Uniwind wrapper. See [the migration guide](docs/heroui-migration.md) for API details and verification boundaries.
-
-The form batch migrates `Link`, `Input`, `Checkbox`, `RadioGroup`, `Tabs`, and `Textarea`, and adds `InputGroup`, `InputOTP`, and `TextField`, all with one props-based entry. `Progress`, `Spinner`, `Separator`, `Skeleton`, `Text`, and `Label` were migrated earlier. See the [migration guide](docs/heroui-migration.md).
-
-In the first migration baseline, `Select` and `Slider` are compile-safe placeholders. Select and Slider source references live under `legacy/` for later focused migrations. Non-native Toast UI is also a no-op; native Toast continues to use Burnt.
-
-`Dropdown` and `ContextMenu` use RNR primitives on Web and a shared Zeego-backed native data model on iOS and Android. Both compound APIs and rn-ui-kit extensions such as `items`, native icons, haptics, and native triggers are available.
-
-`NativeList` keeps its SwiftUI implementation on iOS. Android and Web use a React Native fallback with sections, input rows, switch rows, menus, context menus, refresh, and edit-mode selection.
-
-## Patch synchronization
-
-Use the existing patch workflow:
+## Patch Sync And Development
 
 ```bash
 bun run sync-patches
-```
-
-The synchronizer copies active patches from `patches/` and updates the app's `patchedDependencies`. Use `rnUiKitSyncPatches.exclude` for app-owned patches. Run `bun run clear-patch-cache --dry-run` before clearing Bun's patched package cache when needed.
-
-## Development
-
-```bash
-bun install
-bun install --cwd examples/app
+bun install --frozen-lockfile
+bun install --cwd examples/app --frozen-lockfile
 bun run typecheck
 bun run build
-bun run test
+bun test test
 ```
 
-The one-time RNR CLI source snapshot lives in the Git-ignored `.temp/rnr-source` directory. Production source has no CLI dependency; future updates should be reviewed against the registry source manually.
+The patch synchronizer copies active patches and updates the host app's `patchedDependencies`; app-owned patches can be excluded with `rnUiKitSyncPatches.exclude`. Read [the Bun patch notes](./docs/patch/bun_same_file_hunk_offset.md) before modifying any patch.
 
-Package entries:
+Start the example app with `cd examples/app && bun run start --clear`. Production export and platform-isolation checks are documented in [development notes](./docs/dev.md). Automated tests and Expo JS/CSS exports do not replace native compilation or real-device verification.
 
-- `rn-ui-kit`: core API
-- `rn-ui-kit/debug`: debug pages
-- `rn-ui-kit/initialize`: platform initialization
-- `rn-ui-kit/styles.css`: semantic variables and RNR style foundation
+Package entries include `rn-ui-kit` / `rn-ui-kit/core`, `rn-ui-kit/debug`, `rn-ui-kit/initialize`, `rn-ui-kit/styles.css`, and `rn-ui-kit/metro`.

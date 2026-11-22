@@ -12,11 +12,13 @@ import { cn } from "../utils/cn";
 import type { ListGroupProps } from "./types";
 export function ListGroupHeroUI(p: ListGroupProps) {
   const font = textWebStyle(useDefaultTextStyle());
+  const style = p.herouiWebProps?.style;
   const sections = p.sections ?? [{ id: "default", items: p.items ?? [] }];
   const all = sections.flatMap(s => [...s.items]);
   const state = useKeySelection({ ...p, selectionMode: p.selectionMode ?? "none" }, all);
   return <ListBox {...p.herouiWebProps} aria-label={p.accessibilityLabel ?? "列表"}
-    style={font} className={cn("rounded-3xl bg-surface p-1", p.className)} selectionMode={p.selectionMode ?? "none"}
+    style={typeof style === "function" ? state => ({ ...font, ...style(state) }) : { ...font, ...style }}
+    className={cn("rounded-3xl bg-surface p-1", p.className)} selectionMode={p.selectionMode ?? "none"}
     selectionBehavior="replace" selectedKeys={state.selected} onSelectionChange={state.change} disallowEmptySelection={p.disallowEmptySelection}
     disabledKeys={p.isDisabled ? all.map(i => i.id) : state.disabled} renderEmptyState={() => p.emptyContent ?? "暂无内容"}>
     {sections.map(section => <ListBox.Section key={section.id} aria-label={typeof section.title === "string" ? section.title : "列表分组"}>

@@ -1,6 +1,5 @@
 import { afterEach, expect, mock, test } from "bun:test";
 import { Window } from "happy-dom";
-import { plugin } from "bun";
 
 // Device hooks are replaced; the actual HeroUI components and primitives run.
 const win = new Window({ url: "http://localhost/" });
@@ -45,14 +44,7 @@ win.Image = class ImageProbe extends win.EventTarget {
     this.dispatchEvent(new win.Event(ok ? "load" : "error"));
   }
 };
-plugin({
-  name: "display-rnw-text",
-  setup(build) {
-    build.onLoad({ filter: /@rn-primitives[\\/].*\.mjs$/ }, async ({ path }) => ({
-      contents: await Bun.file(path).text(), loader: "jsx",
-    }));
-  },
-});
+
 const svgExports = {};
 for (const tag of ["Svg", "Path", "Circle", "Ellipse", "G", "Line", "Polygon", "Polyline", "Rect", "Defs", "ClipPath", "LinearGradient", "Stop", "Text", "TSpan", "Use", "Symbol", "Mask", "Pattern", "Image", "RadialGradient"]) {
   svgExports[tag] = React.forwardRef(({ children, accessibilityElementsHidden, importantForAccessibility, ...props }, ref) =>

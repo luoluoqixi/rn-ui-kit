@@ -6,7 +6,7 @@ import type {
   NativeListTextareaSize as TextareaSize,
 } from "./input_control_types";
 
-const WEB_PLACEHOLDER_TEXT_COLOR_CLASS_NAME = "accent-muted-foreground/50";
+const WEB_PLACEHOLDER_TEXT_COLOR_CLASS_NAME = "accent-field-placeholder";
 
 const textareaTextStyles: Record<TextareaSize, TextStyle> = {
   default: { fontSize: 16 },

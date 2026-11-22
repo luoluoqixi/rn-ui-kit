@@ -4,26 +4,26 @@
 
 [在线示例 (web)](https://rn-ui-kit.luoluoqixi.com/) · [截图 / Screenshots](./docs/SCREENSHOTS.md)
 
-> `dev-heroui` 分支正在迁移 HeroUI。该分支的双平台样式/Metro 接入、验证入口及迁移边界见 [HeroUI 迁移说明](./docs/heroui-migration.md)；下方原有 Uniwind 接入片段尚未覆盖新的双入口配置。
-
-面向个人 Expo 项目的跨平台 UI 组件库。基础组件源自 React Native Reusables，当前在 dev-heroui 分支逐步迁移到 HeroUI，样式由 Uniwind 驱动；需要系统能力的组件继续由 rn-ui-kit 提供 iOS、Android 与 Web 平台实现。
+面向个人 Expo 项目的跨平台 UI 组件库。自绘 UI 在 iOS / Android 使用 **HeroUI Native**，Web 使用 **HeroUI React v3**，由 rn-ui-kit 提供简单的单入口 props API。Button、Switch、Slider、Select、菜单等已有的系统原生实现继续保留，Sheet 继续使用 TrueSheet。
 
 > [!WARNING]
 > 此库只服务于维护者自己的 App，不承诺通用组件库所需的 API 稳定性或版本兼容范围。
 
 ## 运行环境
 
-| 技术 | 版本 |
+| 技术 | 当前版本 |
 | --- | --- |
-| Expo | 55 |
+| Expo | 55.0.26 |
 | React Native | 0.83.9 |
 | React / React DOM | 19.2.5 |
-| Uniwind | 1.x |
-| Tailwind CSS | 4.x |
-| TypeScript | 5.9.2 |
-| 包管理器 | Bun |
+| HeroUI Native | 1.1.1 |
+| HeroUI React / Styles | 3.2.7 |
+| Reanimated / Worklets | 4.3.4 / 0.8.1 |
+| TrueSheet | 4.1.2 |
+| Uniwind / Tailwind CSS | 1.x / 4.x |
+| TypeScript / 包管理器 | 5.9.2 / Bun |
 
-当前仅支持 Expo App，不支持裸 React Native CLI。React Native 及强相关原生依赖固定在根目录 [`package.json`](./package.json)；`@rn-primitives/*` 是 rn-ui-kit 的内部依赖，App 不需要直接声明。
+当前仅支持 Expo App，不支持裸 React Native CLI。完整依赖和版本约束以根目录 [package.json](./package.json) 与示例 [package.json](./examples/app/package.json) 为准。
 
 ## 接入 App
 
@@ -33,116 +33,118 @@
 
 ```bash
 bun add github:luoluoqixi/rn-ui-kit#rn-ui-kit-<version>
-bun add uniwind tailwindcss
+bun add uniwind@^1.11.0 tailwindcss@^4.3.2
+bun add -d @tailwindcss/postcss@4.3.2 postcss@8.5.23
 ```
 
-源码开发时可使用目录依赖：
+两套 HeroUI 已由库声明为 dependencies。App 仍需安装 [peerDependencies](./package.json) 中列出的 Expo、React Native 和原生模块，以便 autolinking 与原生 patch 正常工作。安装后按下文同步补丁，并重新构建原生 App。
 
-```json
-{
-  "dependencies": {
-    "rn-ui-kit": "link:../..",
-    "tailwindcss": "^4.3.2",
-    "uniwind": "^1.11.0"
-  }
+源码开发可使用 `rn-ui-kit` 的目录依赖 `link:../..`；链接工程的 Metro watchFolders / nodeModulesPaths 配置见 [examples/app/metro.config.js](./examples/app/metro.config.js)。
+
+### 2. 配置双平台样式
+
+App 根目录的 `global.css` 只加载 Web 样式：
+
+```css
+@import "tailwindcss";
+@import "@heroui/styles";
+@import "rn-ui-kit/styles.css";
+
+@custom-variant light (&:where(.light, .light *));
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --spacing-hairline: 1px;
 }
+
+@source "./src";
+@source "./node_modules/rn-ui-kit/src";
 ```
 
-App 仍需安装 [`peerDependencies`](./package.json) 中列出的 Expo、React Native 和原生模块，以便 Expo autolinking 与原生 patch 正常工作。
-
-### 2. 配置 Uniwind
-
-在 App 根目录创建 `global.css`：
+另建 `global.native.css`：
 
 ```css
 @import "tailwindcss";
 @import "uniwind";
+@import "heroui-native/styles";
 @import "rn-ui-kit/styles.css";
 
 @source "./src";
 @source "./node_modules/rn-ui-kit/src";
-@source "./node_modules/rn-ui-kit/dist";
 ```
 
-源码目录依赖需要把后两条路径调整到实际位置。仓库示例使用：
+链接源码时把库的 `@source` 路径调整到真实位置；本仓库示例使用 `../../src`。Native 入口中的前三个包导入必须放在同一个文件中，以满足 Uniwind 的主题扫描约束。
 
-```css
-@source "../../src";
-@source "../../dist";
-```
-
-Metro 配置：
+配置 `metro.config.js`：
 
 ```js
 const { getDefaultConfig } = require("expo/metro-config");
-const { withUniwindConfig } = require("uniwind/metro");
+const { withHeroUIConfig } = require("rn-ui-kit/metro");
 
-const config = getDefaultConfig(__dirname);
-
-module.exports = withUniwindConfig(config, {
+module.exports = withHeroUIConfig(getDefaultConfig(__dirname), {
   cssEntryFile: "./global.css",
+  nativeCssEntryFile: "./global.native.css",
   dtsFile: "./uniwind-types.d.ts",
 });
 ```
 
-在 App 入口最先加载初始化模块和 CSS：
+配置 `postcss.config.js`：
+
+```js
+module.exports = { plugins: { "@tailwindcss/postcss": {} } };
+```
+
+入口最先加载初始化模块和 CSS：
 
 ```tsx
 import "rn-ui-kit/initialize";
 import "./global.css";
 ```
 
-完整配置见 [`examples/app`](./examples/app)。项目不需要 RNR CLI、`components.json` 或其他 registry 配置。
+App 始终导入同一 `global.css`，Metro 助手在 iOS / Android 将其解析到 Native 文件。Web 不加载 HeroUI Native 的 JS 或 CSS；Native 不加载 HeroUI React / Styles。两套依赖仍安装在 node_modules 中，隔离在模块解析和样式编译阶段完成。Web 保留 Uniwind 的 RN Web 适配运行时。
 
 ### 3. Provider 与主题
 
 ```tsx
-import { RootProvider, Text } from "rn-ui-kit";
+import { RootProvider, Button, Text } from "rn-ui-kit";
 import { View } from "react-native";
 
 export default function App() {
   return (
     <RootProvider
-      preferences={{
-        appearance: {
-          accentColor: "ocean",
-          themeMode: "system",
-        },
-      }}
+      preferences={{ appearance: { accentColor: "ocean", themeMode: "system" } }}
     >
-      <View className="bg-background flex-1 items-center justify-center">
+      <View className="bg-background flex-1 items-center justify-center gap-4">
         <Text>你好，rn-ui-kit</Text>
+        <Button native={false} title="继续" onPress={() => {}} />
       </View>
     </RootProvider>
   );
 }
 ```
 
-Toast 默认在 Android/iOS 使用 Burnt，Web 使用基础 Sonner Toast。可通过
-`toasterProps.defaultNative` 统一覆盖；单次调用传入的 `native` 优先级更高：
+`RootProvider` 安装手势根节点、安全区、字体、键盘、主题、导航主题、Sheet、Portal、Toast、原生对话框与触觉反馈上下文。通常只需挂载一个。已自行配置手势、安全区、导航主题和 SheetProvider 的宿主可按需使用较低层的 `UIProvider`；它本身不替代这四项。`preferences` 由 App 管理并传入，Provider 不负责持久化。
+
+主题使用 HeroUI 语义：`background / foreground`、`surface / surfaceForeground`、`overlay / overlayForeground`、`accent / accentForeground`、`default / defaultForeground`、`danger / dangerForeground`、`fieldBackground / fieldForeground / fieldPlaceholder` 等。JS 字段为 camelCase，CSS 源变量为 kebab-case，例如 `fieldPlaceholder` 对应 `--field-placeholder` 与 `text-field-placeholder`。`muted` 表示弱文字色；次级背景使用 `surfaceSecondary` / `bg-surface-secondary`。
+
+组件 variant、尺寸、圆角和交互反馈遵循对应 HeroUI 组件，Button 使用 `primary / secondary / tertiary / outline / ghost / danger / danger-soft`、`sm / md / lg`。不存在强制所有组件共用的全局 size 表。系统原生控件、NativeTrigger 等保留自己的布局和尺寸能力。
+
+内置强调色：`mono`、`ocean`、`sakura`、`lavender`、`sunset`、`forest`、`ruby`、`golden`、`aqua`，也接受不透明的 `#RGB / #RRGGBB`。项目扩展 `accent01`～`accent12` 继续可用，light 逐渐加深、dark 逐渐提亮；它们不是 HeroUI 标准 token。
+
+完整自定义主题推荐基于生成器扩展：
 
 ```tsx
-<RootProvider toasterProps={{ defaultNative: false }}>{children}</RootProvider>
-```
+import { generateUiThemeFromPrimaryColor, type UiThemeConfig } from "rn-ui-kit";
 
-主题采用 HeroUI 语义：背景与正文为 `background / foreground`，普通容器为 `surface`，弹层为 `overlay`，主操作色为 `accent`，弱文字为 `muted`，危险状态为 `danger`。不要将 `muted` 用作背景色；次级背景使用 `surfaceSecondary` / `bg-surface-secondary`。配对文字色使用 `accentForeground`、`surfaceForeground` 等。旧的 `primary / card / popover / mutedForeground / destructive / ring` token 已移除，组件的 variant 名称没有因此改变。
-
-`accent01`～`accent12` 作为主色色阶保留，light 逐渐加深、dark 逐渐提亮；可通过 `useUiTheme().accent03` 或 `bg-accent03` 使用。`accent` 本身现在表示实色主操作色；轻染交互背景使用 HeroUI 的 `bg-accent-soft`。圆角沿用对应 HeroUI 平台的默认比例。
-
-内置强调色：`mono`、`ocean`、`sakura`、`lavender`、`sunset`、`forest`、`ruby`、`golden`、`aqua`。`accentColor` 也接受不透明的 `#RGB / #RRGGBB` 自定义颜色。
-
-完整自定义主题推荐从 `generateUiThemeFromPrimaryColor()` 扩展，light/dark 均提供 `SemanticColors`：
-
-```tsx
 const generated = generateUiThemeFromPrimaryColor("#7c3aed");
 const theme: UiThemeConfig = {
   light: { ...generated.light, surface: "#ffffff" },
   dark: { ...generated.dark, surface: "#18181b" },
 };
-<RootProvider theme={theme}>{children}</RootProvider>;
+// <RootProvider theme={theme}>{children}</RootProvider>
 ```
 
-`backgroundFollowsTheme` 已删除，旧偏好读取时丢弃这个字段。主题 seed 不会再染色屏幕/Sheet 背景。应用容器背景由 `appBackgroundColors` 按明暗模式覆盖，单个 Sheet 或页面也可以传自己的背景属性；默认保持中性背景及 iOS 原有玻璃行为：
+主题 seed 不染色应用容器背景。使用 `appBackgroundColors` 按明暗模式覆盖容器层级，单个 Sheet 或页面也可传自己的背景属性：
 
 ```tsx
 <RootProvider appBackgroundColors={{
@@ -151,78 +153,58 @@ const theme: UiThemeConfig = {
 }}>{children}</RootProvider>
 ```
 
-这里只需配置要覆盖的层级，其余 `screen / sheet / card / header` 使用默认值。全局主题变量会同步到 Web 根节点与 Native Uniwind，保证 body portal 与 HeroUI 原生弹层使用相同语义色。一个应用保持一个全局 RootProvider；这里不提供多个根主题相互隔离的保证。
+只需配置要覆盖的 `screen / sheet / card / header`，其余使用默认值。旧 `backgroundFollowsTheme` 已移除。全局语义变量同步到 Web 根节点和 Native Uniwind，使 body portal 与 Native 弹层使用同一配色；不提供多个全局主题根相互隔离的保证。
 
-非原生 `Button` 的 `default` / `destructive` 基于各自背景计算不透明的交互背景：light/dark 下均在 hover 混入 6% 白色，按下混入 12% 白色，让按下比 hover 更浅；文字保留配对色。按下优先于 hover，禁用和 loading 时不产生交互变色；显式 `style` 可覆盖这些背景。计算支持不透明 hex、RGB/HSL 颜色，透明色或无法解析的动态颜色保留原背景。
-
-`dangerForeground` 是 `danger` 的配对文字色，由主题生成器的 Material `onError` 提供，并可通过 `text-danger-foreground` 使用。完整自定义主题需在 light/dark 中提供该字段，或基于 `generateUiThemeFromPrimaryColor()` 的结果扩展。原生 Button 继续使用系统反馈。
-
-`RootProvider` 负责手势根节点、安全区、颜色模式、语义颜色、导航主题、Sheet、Portal、Toast、原生对话框和触觉反馈上下文。
+Toast 在 iOS / Android 默认使用 Burnt；Web 与 `native: false` 的自绘路径均使用 HeroUI。可通过 `toasterProps={{ defaultNative: false }}` 修改默认值，单次调用的 `native` 优先。既有调用 API 与 `sonnerOptions / sonnerNativeOptions` 等兼容参数仍由本库适配，运行时已无 Sonner 依赖。
 
 ## 组件
 
 | 分类 | 组件 |
 | --- | --- |
-| 操作与反馈 | `Button`、`Checkbox`、`Switch`、`Toggle`、`ToggleGroup`、`Slider`、`Spinner`、`Progress`、`Toast`、`NativeDialog` |
-| 表单 | `Input`、`InputGroup`、`InputOTP`、`TextField`、`Textarea`、`Select`、`RadioGroup`、`Label` |
-| 布局与组合 | `Accordion`、`Tabs`、`SplitView` / `SplitLayout`、`Card`、`Separator` |
-| 弹层 | `Dialog`、`AlertDialog`、`ContextMenu`、`Dropdown`、`Menubar`、`Popover`、`Sheet` / `NativeSheet`、`Tooltip` |
-| 列表与滚动 | `NativeList`、`ScrollView` |
-| 展示 | `Alert`、`Avatar`、`Badge`、`Chip`、`Skeleton`、`Text`、`Icon`、`Link`、`GlassEffect` |
-| 基础设施 | `RootProvider`、`UIProvider`、主题工具、导航工具、Portal 与平台工具 |
+| 操作与反馈 | `Button`、`CloseButton`、`Switch`、`Slider`、`Toggle`、`ToggleGroup`、`PressableFeedback`、`Spinner`、`Progress`、`Toast` |
+| 表单 | `Input`、`InputGroup`、`InputOTP`、`TextField`、`SearchField`、`Textarea`、`Checkbox`、`RadioGroup`、`Select`、`Label` |
+| 布局与导航 | `Accordion`、`Card`、`Surface`、`Separator`、`Tabs`、`SplitView` / `SplitLayout` |
+| 弹层与菜单 | `Dialog`、`AlertDialog`、`Popover`、`Tooltip`、`Dropdown`、`ContextMenu`、`Menubar`、`Sheet` / `NativeSheet`、`NativeDialog` |
+| 列表与滚动 | `ListGroup`、`NativeList`、`ScrollView`、`ScrollShadow`、`TagGroup` |
+| 展示 | `Alert`、`Avatar`、`Badge`、`Chip`、`Skeleton`、`Text`、`Icon`、`Link`、`GlassEffect`、`ColorPicker` |
 
-`Form`、`Image`、旧 `ListItem`、`FlashList`、`HoverCard` 和旧 `Menu` API 已删除。`TextArea` 已更名为 `Textarea`，`Menu` 已更名为 `Dropdown`；新的 `ListGroup` 使用 HeroUI 单入口封装。
+- 组件默认采用单入口 props API；平台专用类型和能力放在 `herouiNativeProps / herouiWebProps` 等对应入口。旧 RNR 专属参数不作为兼容目标。
+- `Badge` 是依附内容的角标或状态点，例如 `<Badge content={5}><Avatar alt="用户" /></Badge>`；独立标签使用 `Chip`。
+- `TextField` / `SearchField` 组合标签、说明、校验与输入控件；`Input` 适合只需要输入本身的场景。
+- Dropdown、ContextMenu、Menubar 的自绘路径共享内部 HeroUI 菜单渲染层。Native ContextMenu 默认长按并相对 trigger 居中，`anchor="touch"` 显式启用触点定位。Web 使用右键 / 键盘触发。
+- `native` 表示系统原生实现，不表示所有 Native 平台上的 HeroUI 实现。Button、Switch、Slider、Select、Dropdown、ContextMenu 等已有系统原生路径及 NativeTrigger 均保留；各组件的默认值与可用模式以自身类型为准。
+- Select 保留 `wheel / native / dropdown / dialog / sheet` 等已有模式；Sheet 继续使用 TrueSheet。弹层在根页面、Sheet、Dialog 中沿用窗口定位与分层宿主。
+- Native Tooltip 直接渲染 children；Native Progress、Toggle、ContextMenu / Menubar 等在官方组件之外补齐所需能力。Icon 保留 Lucide + Uniwind，ColorPicker 保留 reanimated-color-picker。
+- NativeList 在 iOS 使用 `@luoluoqixi/expo-ui-55` 的 SwiftUI 实现；Android / Web 使用自定义 React Native basic 布局，未替换为 ListGroup。保留 Section、输入项、开关项、菜单、刷新和编辑模式。
 
-HeroUI 迁移分支已接入 `Accordion`、`Card`、`Alert`、`Avatar`、`Badge`、`Chip`。这些组件使用单入口 props API，Native / Web 分别采用各自的 HeroUI 实现；旧 RNR 专属参数不再保留。独立标签使用 `Chip`（原标签型 Badge 已更名）；数量角标或状态点使用 `<Badge content={5}><Avatar /></Badge>`，Web 使用 HeroUI Badge，Native 使用 Chip 补齐定位。`Icon` 保留 Lucide + Uniwind 封装。`AspectRatio` 已删除，固定比例布局直接使用容器的 `aspectRatio` 样式；`Collapsible` 已删除，基础内容展开/收起使用单项 `Accordion`。具体 API 与验证记录见 [HeroUI 迁移文档](docs/heroui-migration.md)。
-
-表单批次已迁移 `Link`、`Input`、`Checkbox`、`RadioGroup`、`Tabs`、`Textarea`，新增 `InputGroup`、`InputOTP` 与 `TextField`，全部采用单入口 props API；此前的 `Progress`、`Spinner`、`Separator`、`Skeleton`、`Text` 和 `Label` 也已完成迁移。详见 [HeroUI 迁移文档](docs/heroui-migration.md)。
-
-`Select`、`Slider` 与自绘 `Toast` 也已完成 HeroUI 接入，各自保留已有系统原生路径；原生 Toast 继续使用 Burnt。
-
-`Dropdown`、`ContextMenu` 与 `Menubar` 共用内部 HeroUI 菜单内核，自绘路径通过单入口 `items` / `contentProps` 调用；Web 使用 HeroUI Dropdown，Native 使用 HeroUI Menu。ContextMenu 在 Native 默认长按并相对 trigger 居中，显式 `anchor="touch"` 可改为触点定位；Web 使用 React Aria 的右键触发。Dropdown / ContextMenu 的 Zeego 系统原生实现、原生扩展和宿主菜单能力继续保留，旧 compound helpers 仅用于系统原生路径。
-
-## NativeList
-
-`NativeList` 在 iOS 保留基于 `@expo/ui/swift-ui` 的系统列表实现；Android 和 Web 使用去框架化的 React Native fallback。列表仍支持 Section、输入项、开关项、菜单项、上下文菜单、下拉刷新和编辑模式多选。
-
-`NativeListSelectItem` 与菜单项继续使用 Select / Dropdown 的现有模式和 NativeTrigger；此次菜单迁移未重写 NativeList 的 basic / iOS 布局。
+`AspectRatio`、`Collapsible` 已删除，分别使用容器 `aspectRatio` 样式和单项 Accordion。旧 `Form`、`Image`、`ListItem`、`FlashList`、`HoverCard` 与旧 `Menu` API 不再导出；`TextArea` 更名为 `Textarea`，菜单入口使用 `Dropdown`。新 `ListGroup` 是独立的 HeroUI 封装。
 
 ## 补丁同步
-
-保留的原生 patch 通过现有命令同步到 App：
 
 ```bash
 bun run sync-patches
 ```
 
-App 可注册脚本：
+在宿主 App 可使用 `rn-ui-sync-patches` / `rn-ui-clear-patch-cache` 命令。同步器从库的 `patches/` 复制补丁并更新 App 的 `patchedDependencies`；通过 `rnUiKitSyncPatches.exclude` 排除由 App 自己维护的同名 patch。TrueSheet 与 HeroUI Native 等补丁仍是接入的一部分，不应随迁移完成删除。
 
-```json
-{
-  "scripts": {
-    "clear-patch-cache": "rn-ui-clear-patch-cache",
-    "sync-patches": "rn-ui-sync-patches"
-  }
-}
-```
+清除 Bun patch 缓存前可运行 `bun run clear-patch-cache --dry-run` 查看目标。修改补丁前阅读 [Bun patch 注意事项](./docs/patch/bun_same_file_hunk_offset.md)。
 
-同步器读取 rn-ui-kit 的 `patches/`，复制补丁并更新 App 的 `patchedDependencies`。可通过 `rnUiKitSyncPatches.exclude` 排除由 App 自己维护的同名 patch。清除 Bun patch 缓存前可运行 `bun run clear-patch-cache --dry-run` 查看目标。
-
-## 开发
+## 开发与验证
 
 ```bash
-bun install
-bun install --cwd examples/app
+bun install --frozen-lockfile
+bun install --cwd examples/app --frozen-lockfile
 bun run typecheck
 bun run build
-bun run test
+bun test test
 ```
 
-RNR CLI 的一次性源码快照位于被 Git 忽略的 `.temp/rnr-source`。正式源码不依赖 CLI；后续组件升级应从快照或 registry 源码人工对照。
+示例启动：`cd examples/app && bun run start --clear`。生产导出及三端模块隔离检查命令见 [开发说明](./docs/dev.md)。自动化测试和 Expo JS / CSS 导出不替代原生编译或真机交互验收。
 
 主要入口：
 
-- `rn-ui-kit`：core API
-- `rn-ui-kit/debug`：调试页面
+- `rn-ui-kit` / `rn-ui-kit/core`：组件、主题与工具
+- `rn-ui-kit/debug`：调试与组件示例页面
 - `rn-ui-kit/initialize`：平台初始化
-- `rn-ui-kit/styles.css`：共用语义主题变量与 portal / scrollbar 辅助样式；各平台 HeroUI 样式由宿主对应 CSS 入口加载
+- `rn-ui-kit/styles.css`：共用语义变量与 Portal / scrollbar 辅助样式
+- `rn-ui-kit/metro`：双平台 CSS 与 HeroUI 模块隔离配置

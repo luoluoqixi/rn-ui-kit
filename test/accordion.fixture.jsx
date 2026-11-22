@@ -1,6 +1,5 @@
 import { afterEach, expect, mock, test } from "bun:test";
 import { Window } from "happy-dom";
-import { plugin } from "bun";
 
 // A subprocess isolates RN/animation mocks from the rest of the library tests.
 const win = new Window({ url: "http://localhost/" });
@@ -30,14 +29,7 @@ const NativeView = interop(RNW.View);
 mock.module("react-native", () => ({
   ...RNW, View: NativeView, Text: interop(RNW.Text), Pressable: interop(RNW.Pressable),
 }));
-plugin({
-  name: "accordion-rnw-text",
-  setup(build) {
-    build.onLoad({ filter: /@rn-primitives[\\/].*\.mjs$/ }, async ({ path }) => ({
-      contents: await Bun.file(path).text(), loader: "jsx",
-    }));
-  },
-});
+
 const native = process.env.ACCORDION_TEST_PLATFORM === "native";
 const feedback = [];
 const pressFeedbackEvents = [];

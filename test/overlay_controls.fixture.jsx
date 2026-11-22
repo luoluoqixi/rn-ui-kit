@@ -320,6 +320,17 @@ test("ListGroup supports sections, action, selection and disabled rows", async (
   expect(selection).toEqual([["b"]]); await key(byText("列表乙"), "Enter"); expect(actions).toBe(1); await click(byText("列表禁用")); expect(selection).toHaveLength(1);
 });
 
+test("ListGroup preserves platform styles and React Aria style callbacks", async () => {
+  const items = [{ id: "styled", title: "样式条目" }];
+  await render(<ListGroup items={items} herouiWebProps={{ style: { paddingTop: 17, fontFamily: "Explicit" } }} />);
+  expect(byRole("listbox").style.paddingTop).toBe("17px");
+  expect(byRole("listbox").style.fontFamily).toBe("Explicit");
+  await render(<ListGroup items={items} herouiWebProps={{ style: ({ isEmpty }) => ({ paddingTop: isEmpty ? 5 : 11 }) }} />);
+  expect(byRole("listbox").style.paddingTop).toBe("11px");
+  await render(<ListGroup items={[]} herouiWebProps={{ style: ({ isEmpty }) => ({ paddingTop: isEmpty ? 5 : 11 }) }} />);
+  expect(byRole("listbox").style.paddingTop).toBe("5px");
+});
+
 test("Tooltip Web uses real accessible HeroUI hint and disabled state", async () => {
   await render(<Tooltip open content="补充提示"><Button>操作</Button></Tooltip>); expect(byRole("tooltip")).toBeTruthy();
   await render(<Tooltip isDisabled content="不会显示"><Button>禁用提示</Button></Tooltip>); expect(byRole("tooltip")).toBeNull();

@@ -167,7 +167,7 @@ function OverlayToastLayer({
   const bottom = Math.max(bottomInset, detentVisibleOffset);
   const layerStyle: ViewStyle[] | ViewStyle = [
     styles.toastLayer,
-    // Sonner's scoped Web toaster is absolutely positioned against this
+    // HeroUI's scoped Web toaster is absolutely positioned against this
     // layer. Explicitly filling the layer gives it the sheet's visible
     // viewport instead of the content's intrinsic height.
     ...(isWeb() ? [styles.webToastLayer] : []),

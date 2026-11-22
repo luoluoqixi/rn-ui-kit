@@ -1,6 +1,5 @@
 import { afterEach, expect, mock, test } from "bun:test";
 import { Window } from "happy-dom";
-import { plugin } from "bun";
 
 // Device mocks stay in a subprocess; both paths exercise real HeroUI Cards.
 const win = new Window({ url: "http://localhost/" });
@@ -25,14 +24,7 @@ function interop(Component) {
 }
 const NativeView = interop(RNW.View);
 mock.module("react-native", () => ({ ...RNW, View: NativeView, Text: interop(RNW.Text) }));
-plugin({
-  name: "card-rnw-text",
-  setup(build) {
-    build.onLoad({ filter: /@rn-primitives[\\/].*\.mjs$/ }, async ({ path }) => ({
-      contents: await Bun.file(path).text(), loader: "jsx",
-    }));
-  },
-});
+
 const native = process.env.CARD_TEST_PLATFORM === "native";
 let SurfaceProbe;
 if (native) {

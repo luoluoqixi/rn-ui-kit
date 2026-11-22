@@ -2,6 +2,14 @@
 
 更新日期：2026-11-22。工作分支：`dev-heroui`。
 
+## 当前状态：迁移完成
+
+HeroUI Native / HeroUI React 接入、主题与 Provider 收敛、公开组件迁移、共享菜单内核及旧迁移依赖清理均已完成。本文下方按时间保留方案与迭代记录，历史段落中出现的“未迁移”“后续批次”等表述描述的是当时状态，不代表当前待办。当前组件入口与双端隔离以源码和三端 bundle 检查为准。
+
+当前边界：Web 使用 HeroUI React，iOS / Android 使用 HeroUI Native；已存在的系统原生组件、NativeTrigger、NativeList、TrueSheet 与 Burnt Toast 路径保留。通用 API 不承诺 RNR 专属参数兼容。
+
+本轮收尾审计确认 Web bundle 不含 HeroUI Native，iOS / Android bundle 不含 HeroUI React；自动化测试、类型检查、构建、三端 Expo 导出和真机验收的具体边界见文末。
+
 ## 第一阶段：底座接入
 
 TrueSheet 已完成 4.1.2 升级，用户已在 iOS / Android 真机验证大部分场景。本批在此基础上接入两套 HeroUI 底座，保留 rn-ui-kit 的对外组件 API、现有系统原生实现及 TrueSheet 补丁。
@@ -1138,13 +1146,16 @@ Portal 与 Slot 的替换已完成（实现说明与本轮验证见下文）：
 - 验证：主测试 139 项、1942 次断言通过；Native 弹层 fixture 在 iOS / Android 各 21 项通过。新增检查使用真实 PressableFeedback 组件、内部 Slot 与 Select 选择 primitive，仅 mock 原生环境和 worklet，验证按下 / 释放、取消后不误选、禁用项、回调与选择后关闭；不将这些检查当成动画帧验收。真实 HeroUI Portal store 验证默认 host 不重复、root / sheet / dialog 与显式 host 路由、更新 / 注销及相邻子树状态保持。窗口测量回归保留，补充事件 / 两种 style 合并和 React 19 ref cleanup。
 - 库及示例 typecheck、库 build、Expo 三端 source map 生产导出通过。平台隔离审计 Web / iOS / Android 的另一端 HeroUI 模块均为 0。本轮未运行原生构建或真机测试；设备复核重点为自绘 Select 长按 / 滚动取消时的背景与缩放，以及 NativeList 颜色选择 Sheet 在根页面、Sheet、Dialog 内的打开 / 关闭 / 再次打开与层级。
 
-## 后续批次
+## 最终收尾审计（2026-11-22）
 
-1. **主题重构（已实现）**：见上文第二阶段。真机重新观察配色后进入简单组件迁移。
-2. **简单自绘组件**：优先 Button、Accordion 等，不保留 RNR 特有 API，保留项目自定义的单入口封装习惯及所有系统原生分支，逐一设计新 API。尺寸、disabled/loading、ref、事件及可访问性需要逐项适配，不能简单按同名属性透传。
-3. **弹层**：Dialog、AlertDialog、Popover 等；先验证根页面、TrueSheet、嵌套 Sheet、导航和键盘，再替换现有实现，重点是两端原生层级和 Android 返回行为。
-4. **复杂组件**：Select、Dropdown、Menu 等，仅替换自绘分支。逐一盘点所有组件现有 native 功能，不能仅按少数几个组件名单保护。
-5. **独立组件与收尾**：SplitLayout、NativeList、ScrollView、NativeDialog、NativeTrigger、GlassEffect、ColorPicker 等以主题引用调整和组合回归为主。已无消费者且替代实现验证完成的 RNR 依赖、样式和兼容代码可随对应批次清理。
+- Provider 按平台结构统一为共享 `RootProvider`，平台差异留在主题、Portal 与 HeroUI 适配边界内。RootProvider 测试覆盖系统明暗变化、显式 scheme、导航颜色和应用背景同步；保留 `UIProvider`、字体、键盘、震动、Portal、Toast、NativeDialog 与 TrueSheet 所需上下文。
+- 清理无消费者的旧 AlertDialog/Button 交互颜色辅助、旧 ContextMenu Web pointer 辅助、Radix Select scrollbar CSS、RNR 测试 loader 与直接依赖。Toast 的 `sonnerOptions` 是兼容适配 API，运行时已无 Sonner 包。保留仍有真实消费者的 `@radix-ui/react-dismissable-layer`、TrueSheet Web 的 Radix Dialog，以及 Zeego 的系统原生菜单依赖。
+- 修复 NativeList 文本输入框 Web placeholder 的 HeroUI token 引用；修复 Web ListGroup 将调用方 style 与 HeroUI style 合并的问题。保留系统原生 NativeList 与 TrueSheet 实现。
+- README 已更新为当前 HeroUI 接入和安装说明；开发规范使用组件自身 size 语义，不再要求跨组件统一尺寸等级。组件迁移历史保留供追踪。
+
+最终自动化验证：`bun test test` 130 项、0 失败；`bun run typecheck`、`bun run build`、三端 Expo 带 source map 导出、三端 HeroUI 模块隔离检查与 `git diff --check` 均通过。最近一次隔离检查：Web 4636 个 source-map 模块、117 个 HeroUI 模块、0 个禁用的 Native 模块；iOS 4512 个模块、361 个 HeroUI Native 模块、0 个 Web 模块；Android 4451 个模块、361 个 HeroUI Native 模块、0 个 Web 模块。
+
+本轮未运行 iOS / Android 原生 Release 编译，也未操作真机。既有设备反馈只覆盖用户明确验证过的场景；不能将本次 JS/CSS 导出或 mock 测试视为所有组件和交互均已在设备验收。
 
 ## 参考资料
 
