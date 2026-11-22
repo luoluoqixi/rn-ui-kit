@@ -8,6 +8,10 @@ import {
   type GlassEffectSearchBarCancelButtonProps,
   type GlassEffectSearchBarTrailingContext,
   Dropdown,
+  ContextMenu,
+  Menubar,
+  type ContextMenuProps,
+  type MenubarProps,
   type DropdownProps,
   type DropdownSelectionIndicatorPosition,
   type NativeListContextMenuProps,
@@ -52,6 +56,26 @@ void Button;
 void GlassEffect;
 void GlassEffectSearchBar;
 void Dropdown;
+void ContextMenu;
+void Menubar;
+const contextMenuProps = {
+  native: false,
+  anchor: "touch",
+  triggerProps: { asChild: false, delayLongPress: 400 },
+  contentProps: { align: "center", side: "bottom", maxHeight: 240 },
+  items: [{ value: "details", label: "显示详情", checked: true, onCheckedChange: (_checked: boolean) => {} }],
+} satisfies ContextMenuProps;
+const menubarProps = {
+  size: "md",
+  value: undefined,
+  onValueChange: (_value: string | undefined) => {},
+  items: [{ value: "file", title: "文件", items: [
+    { value: "new", label: "新建", shortcut: "⌘N", onSelect: () => {} },
+    { value: "view", label: "显示详情", selected: true, shouldCloseOnSelect: false },
+  ] }],
+} satisfies MenubarProps;
+void contextMenuProps;
+void menubarProps;
 const dropdownIndicatorPosition: DropdownSelectionIndicatorPosition = "right";
 const dropdownIndicatorProps = {
   selectionIndicatorPosition: dropdownIndicatorPosition,

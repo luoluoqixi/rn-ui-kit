@@ -5,6 +5,7 @@ import { resolveRenderProp } from "../utils/render";
 import { triggerNativeHaptics, useResolvedNativeHaptics } from "../utils/haptics";
 import { useOverlayState } from "../utils/overlay/overlay_state";
 import type { DropdownItemData, DropdownProps } from "./types";
+import type { MenuEntry } from "../menu/types";
 
 export function useDropdownModel(p: DropdownProps) {
   const disabled = p.disabled ?? p.triggerProps?.isDisabled ?? p.triggerProps?.disabled ?? false;
@@ -43,4 +44,20 @@ export function useDropdownModel(p: DropdownProps) {
 export function dropdownText(item: DropdownItemData) {
   const label = resolveRenderProp(item.label, item);
   return item.textValue ?? item["aria-label"] ?? (typeof label === "string" || typeof label === "number" ? String(label) : item.value);
+}
+
+export function dropdownEntries(items: DropdownItemData[], p: DropdownProps, activate: (item: DropdownItemData) => void): MenuEntry[] {
+  return items.map(item => ({
+    ...item,
+    label: resolveRenderProp(item.label, item),
+    icon: resolveRenderProp(item.icon, item),
+    indicator: resolveRenderProp(item.indicator, item),
+    textValue: dropdownText(item),
+    selectionIndicatorPosition: item.selectionIndicatorPosition ?? p.selectionIndicatorPosition,
+    subMenuTitle: item.subMenuTitle === false ? false : resolveRenderProp(item.subMenuTitle, item),
+    subMenu: item.subMenu ? dropdownEntries(item.subMenu, p, activate) : undefined,
+    herouiNativeProps: { ...p.herouiNativeItemProps, ...item.herouiNativeProps },
+    herouiWebProps: { ...p.herouiWebItemProps, ...item.herouiWebProps },
+    onAction: () => activate(item),
+  }));
 }

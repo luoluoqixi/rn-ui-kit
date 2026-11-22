@@ -12,6 +12,7 @@ import type { NativeHapticsDelay, NativeHapticsSetting, RenderProp } from "../ut
 import type * as Zeego from "zeego/dropdown-menu";
 import type { Menu } from "heroui-native/menu";
 import type { Dropdown } from "@heroui/react/dropdown";
+import type { MenuContentProps } from "../menu/types";
 
 export type DropdownSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
 export type DropdownSelectionIndicatorPosition = "left" | "right";
@@ -128,18 +129,7 @@ export type NativeDropdownRootExtensions = {
 };
 
 /** Props applied to the generated non-native menu content. */
-export type DropdownContentProps = {
-  className?: string;
-  side?: "top" | "bottom" | "left" | "right";
-  /** 相对 trigger 的次轴对齐；上下弹出默认 Native center、Web start。
-   * 左右弹出默认保持 Native start、Web center，此时 start / end 对应上 / 下沿。 */
-  align?: "start" | "center" | "end";
-  sideOffset?: number;
-  /** 自绘菜单滚动区域的高度上限（逻辑像素），默认 320。 */
-  maxHeight?: number;
-  herouiNativeProps?: Omit<Extract<ComponentProps<typeof Menu.Content>, { presentation: "popover" }>, "children" | "presentation">;
-  herouiWebProps?: Omit<ComponentProps<typeof Dropdown.Popover>, "children">;
-};
+export type DropdownContentProps = MenuContentProps;
 
 /** Props applied to the generated Zeego menu content on native platforms. */
 export type NativeDropdownContentProps = Omit<ComponentProps<typeof Zeego.Content>, "children"> &

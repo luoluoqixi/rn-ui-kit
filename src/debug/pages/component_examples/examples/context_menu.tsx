@@ -1,3 +1,4 @@
+import { View } from "react-native";
 import { useMemo, useState } from "react";
 import { FolderOpen, Pencil, Settings } from "lucide-react-native";
 
@@ -105,7 +106,7 @@ export function ContextMenuExample() {
         </ExampleBlock>
       )}
 
-      <ExampleBlock title="ContextMenu 菜单">
+      <ExampleBlock title="以触发器为锚点">
         <ContextMenu
           items={items}
           itemNativeHaptics
@@ -115,6 +116,14 @@ export function ContextMenuExample() {
             <Button variant="secondary">{isWeb() ? "右键打开项目菜单" : "长按打开项目菜单"}</Button>
           }
         />
+        <Text color="muted">移动端长按后默认以按钮中心对齐；Web 保留右键菜单的触点定位。</Text>
+      </ExampleBlock>
+      <ExampleBlock title="区域内的触点定位">
+        <ContextMenu native={false} anchor="touch" items={items} nativeHaptics itemNativeHaptics
+          trigger={<View className="min-h-40 w-full items-center justify-center rounded-lg bg-surface-secondary p-6">
+            <Text>在区域内任意位置{isWeb() ? "右键" : "长按"}</Text>
+          </View>} />
+        <Text color="muted">显式设置 anchor="touch"，菜单跟随按下的位置。</Text>
       </ExampleBlock>
     </ExampleStack>
   );

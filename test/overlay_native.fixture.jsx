@@ -61,6 +61,12 @@ for(const name of ["Svg","Path","Circle","G","Defs","Rect","Line","Polyline","Po
   svg[name]=React.forwardRef(({children,...p},ref)=>React.createElement(name==="Svg"?"svg":name.toLowerCase(),{...p,ref},children));
 mock.module("react-native-svg",()=>({default:svg.Svg,...svg}));
 const latest = {};
+let disableMenuAnimations = false;
+mock.module("heroui-native/contexts", () => ({ useAnimationSettings: () => ({ isAllAnimationsDisabled: disableMenuAnimations }) }));
+mock.module("react-native-reanimated", () => ({
+  default: { View: p => <RNW.View {...p} /> },
+  useAnimatedStyle: fn => fn(), withSpring: value => value,
+}));
 const hapticCalls = [];
 mock.module("../src/core/components/ui/utils/haptics", () => ({ useResolvedNativeHaptics: v => v ?? true, triggerNativeHaptics: v => { if (v) hapticCalls.push(v); } }));
 const FakeButton = React.forwardRef(({ children, title, onPress, disabled, isDisabled, accessibilityLabel, ...p }, ref) => <button ref={ref} disabled={disabled || isDisabled} aria-label={accessibilityLabel} onClick={e=>onPress?.(e)}>{title ?? children}</button>);
@@ -73,7 +79,17 @@ mock.module("../src/core/components/ui/separator", () => ({ Separator: ({ varian
 const OptionContext = React.createContext(null);
 function overlay(name) {
   const Context = React.createContext(null);
-  const Root = p => { latest[name] = p; return <Context.Provider value={p}>{p.children}</Context.Provider>; };
+  const Root = p => {
+    const [triggerPosition, setTriggerPosition] = React.useState(null);
+    const [contentLayout, setContentLayout] = React.useState(null);
+    const [openSubMenuId, setOpenSubMenuId] = React.useState(null);
+    const openSubMenu = React.useCallback(id => setOpenSubMenuId(id), []);
+    const closeSubMenu = React.useCallback(id => setOpenSubMenuId(current => current === id ? null : current), []);
+    const context = { ...p, triggerPosition, setTriggerPosition, contentLayout, setContentLayout,
+      openSubMenuId, isSubMenuOpen: openSubMenuId !== null, openSubMenu, closeSubMenu };
+    latest[name] = context;
+    return <Context.Provider value={context}>{p.children}</Context.Provider>;
+  };
   const Trigger = ({ children, isDisabled, variant }) => {
     latest[name + "Trigger"] = { variant };
     const ctx=React.useContext(Context);
@@ -89,16 +105,34 @@ function overlay(name) {
     return <span>{children}</span>;
   };
   return Object.assign(Root, { Trigger, Portal, Overlay, Content, Title:text, Description:text, Arrow:()=>null,
+    useMenu: () => React.useContext(Context),
     Item, ItemTitle, ItemDescription:text, ItemIndicator:()=>null, Label:text, ListLabel:text,
     ItemLabel:()=> <span>{React.useContext(OptionContext)?.label}</span> });
 }
 const HeroDialog=overlay("dialog"), HeroPopover=overlay("popover"), HeroMenu=overlay("menu"), HeroSelect=overlay("select");
 mock.module("heroui-native/dialog",()=>({Dialog:HeroDialog}));
 mock.module("heroui-native/popover",()=>({Popover:HeroPopover}));
-mock.module("heroui-native/menu",()=>({Menu:HeroMenu}));
+mock.module("heroui-native/menu",()=>({Menu:HeroMenu,useMenu:HeroMenu.useMenu}));
 mock.module("heroui-native/select",()=>({Select:HeroSelect}));
 const Part=({children})=><div>{children}</div>;
-const SubMenu=Object.assign(Part,{Trigger:Part,Content:Part,TriggerIndicator:()=>null});
+const SubMenuContext = React.createContext(null);
+function SubMenuRoot(p) {
+  const menu = HeroMenu.useMenu();
+  const id = React.useId();
+  latest.subMenu = p;
+  React.useEffect(() => {
+    if (p.isOpen) menu.openSubMenu(id);
+    else menu.closeSubMenu(id);
+    return () => menu.closeSubMenu(id);
+  }, [p.isOpen, id, menu.openSubMenu, menu.closeSubMenu]);
+  React.useEffect(() => { if (menu.openSubMenuId !== id && p.isOpen) p.onOpenChange(false); }, [menu.openSubMenuId]);
+  return <SubMenuContext.Provider value={p}><div data-submenu-root>{p.children}</div></SubMenuContext.Provider>;
+}
+const SubMenu=Object.assign(SubMenuRoot,{
+  Trigger: ({ children }) => { const p = React.useContext(SubMenuContext); return <button disabled={p.isDisabled} onClick={() => p.onOpenChange(!p.isOpen)}>{children}</button>; },
+  Content: p => { latest.subMenuContent = p; return <div data-submenu-content>{p.children}</div>; },
+  TriggerIndicator:()=>null,
+});
 mock.module("heroui-native/sub-menu",()=>({SubMenu}));
 const Group=Object.assign(Part,{Item:FakeButton,ItemPrefix:Part,ItemContent:Part,ItemTitle:Part,ItemDescription:Part,ItemSuffix:Part});
 mock.module("heroui-native/list-group",()=>({ListGroup:Group}));
@@ -115,6 +149,22 @@ function HeroToastProvider(p) {
 }
 const HeroToast=Object.assign(p=>{ latest.toast=p;return <div data-native-toast>{p.children}</div>; },{Title:Part,Description:Part,Close:FakeButton});
 mock.module("heroui-native/toast",()=>({Toast:HeroToast,ToastProvider:HeroToastProvider,useToast:()=>React.useContext(ToastContext)}));
+const anchorEvents = new Map();
+const delayedMeasures = [];
+let delayAnchorMeasurement = false;
+mock.module("../src/core/components/ui/utils/overlay/heroui_anchor.native", () => ({
+  HeroUIWindowOverlayScope: ({ children }) => children,
+  HeroUIWindowAnchor: React.forwardRef(({ children, ...props }, ref) => {
+    React.useImperativeHandle(ref, () => ({ measure(callback) {
+      if (delayAnchorMeasurement) delayedMeasures.push(callback);
+      else callback(0, 0, 120, 44, 100, 200);
+    } }), []);
+    anchorEvents.set(children.props.testID ?? children.props.children, children.props);
+    return React.cloneElement(children, { ...props, onPress: event => { children.props.onPress?.(event); props.onPress?.(event); } });
+  }),
+}));
+const {ContextMenuHeroUI:ContextMenu}=await import("../src/core/components/ui/context_menu/context_menu_heroui.native");
+const {MenubarHeroUI:Menubar}=await import("../src/core/components/ui/menubar/menubar_heroui.native");
 const {DialogHeroUI:Dialog}=await import("../src/core/components/ui/dialog/dialog_heroui.native");
 const {AlertDialogHeroUI:AlertDialog}=await import("../src/core/components/ui/alert_dialog/alert_dialog_heroui.native");
 const {PopoverHeroUI:Popover}=await import("../src/core/components/ui/popover/popover_heroui.native");
@@ -129,7 +179,7 @@ let root;
 async function render(content) {if(!root){const m=document.createElement("div");document.body.append(m);root=createRoot(m);}await act(()=>root.render(content));}
 async function click(text) {const n=[...document.querySelectorAll("button")].find(n=>n.textContent===text||n.getAttribute("aria-label")===text);expect(!!n).toBe(true);await act(()=>n.click());}
 const pause = ms => act(()=>new Promise(r=>setTimeout(r,ms)));
-afterEach(async()=>{await act(()=>{toastBridge.closeAll();root?.unmount();});root=undefined;document.body.replaceChildren();Object.keys(latest).forEach(k=>delete latest[k]);shown.length=0;hapticCalls.length=0;nativeWindows.length=0;});
+afterEach(async()=>{await act(()=>{toastBridge.closeAll();root?.unmount();});root=undefined;document.body.replaceChildren();Object.keys(latest).forEach(k=>delete latest[k]);shown.length=0;hapticCalls.length=0;nativeWindows.length=0;disableMenuAnimations=false;});
 
 test("Native Dialog owns a modal presenter and local overlay scope; reopening does not retain child sheet state", async () => {
   const contexts = [];
@@ -256,6 +306,51 @@ test("Native Menu exposes thick/thin separators, shortcuts, bounded scrolling an
   await click("右对齐");
   expect(alignment).toBe("right");
 });
+test("Native shared menus reserve expanded submenu height within the bounded scroll viewport", async () => {
+  const items = [{ value: "share", label: "展开分享", subMenu: [
+    { value: "copy", label: "复制分享链接" },
+    ...Array.from({ length: 30 }, (_, i) => ({ value: "target-" + i, label: "分享目标 " + i })),
+  ] }];
+  for (const [index, component] of [
+    <Dropdown defaultOpen contentProps={{ maxHeight: 144 }} items={items} />,
+    <Menubar defaultValue="file" contentProps={{ maxHeight: 144 }} items={[{ value: "file", title: "文件", items }]} />,
+    <ContextMenu defaultOpen trigger={<FakeButton>长按区域</FakeButton>} contentProps={{ maxHeight: 144 }} items={items} />,
+  ].entries()) {
+    await render(<React.Fragment key={index}>{component}</React.Fragment>);
+    const reserved = document.querySelector('[data-submenu-root]').parentElement;
+    const viewport = [...document.querySelectorAll('div')].find(node => node.style.maxHeight === "144px");
+    expect(reserved.style.paddingBottom).toBe("0px");
+    expect(latest.subMenu.animation.rootContent.marginHorizontal).toBe(0);
+    expect(latest.subMenu.animation.rootContent.marginVertical).toBe(0);
+    await act(() => latest.subMenuContent.onLayout({ nativeEvent: { layout: { height: 560 } } }));
+    expect(reserved.style.paddingBottom).toBe("0px");
+    await click("展开分享");
+    expect(reserved.style.paddingBottom).toBe("572px");
+    expect(reserved.style.zIndex).toBe("50");
+    expect(viewport.style.maxHeight).toBe("144px");
+    expect(viewport.style.zIndex).toBe("50");
+    expect(viewport.contains(document.querySelector('[aria-label="返回上级菜单"]'))).toBe(true);
+    expect(document.body.textContent).toContain("分享目标 29");
+    // Large text / content updates must expand the scroll extent while open.
+    await act(() => latest.subMenuContent.onLayout({ nativeEvent: { layout: { height: 720 } } }));
+    expect(reserved.style.paddingBottom).toBe("732px");
+    await click("返回上级菜单");
+    expect(reserved.style.paddingBottom).toBe("0px");
+    expect(viewport.style.zIndex).toBe("0");
+    expect(document.querySelector('[aria-label="返回上级菜单"]')).toBeNull();
+  }
+});
+
+test("Native submenu height reservation also respects disabled animations", async () => {
+  disableMenuAnimations = true;
+  await render(<Dropdown defaultOpen items={[{ value: "share", label: "静态分享", subMenu: [{ value: "copy", label: "复制" }] }]} />);
+  await act(() => latest.subMenuContent.onLayout({ nativeEvent: { layout: { height: 100 } } }));
+  await click("静态分享");
+  expect(document.querySelector('[data-submenu-root]').parentElement.style.paddingBottom).toBe("112px");
+  await click("返回上级菜单");
+  expect(document.querySelector('[data-submenu-root]').parentElement.style.paddingBottom).toBe("0px");
+});
+
 test("Native Tooltip renders children directly and ListGroup selection respects disabled",async()=>{
   let pressed=0;await render(<Tooltip content="提示"><FakeButton onPress={()=>pressed++}>子元素</FakeButton></Tooltip>);expect(document.querySelectorAll("button").length).toBe(1);await click("子元素");expect(pressed).toBe(1);
   const selected=[];await render(<ListGroup selectionMode="single" defaultSelectedKeys={["a"]} onSelectionChange={v=>selected.push([...v])} items={[{id:"a",title:"甲"},{id:"b",title:"乙"},{id:"c",title:"禁用",isDisabled:true}]} />);
@@ -271,4 +366,110 @@ test("Native HeroUI Toast updates same ID without reentering, keeps numeric cust
   await act(()=>toast.dismissBasicToast(42));expect(document.body.textContent).not.toContain("已完成");
   await act(()=>toast.showBasicToast("自动关闭","info",{id:"auto",duration:20}));await pause(40);expect(toastBridge.get("auto")).toBeUndefined();
   await act(()=>toast.dismissAllBasicToasts());expect(document.querySelectorAll("[data-native-toast]").length).toBe(0);
+});
+
+
+test("Native ContextMenu opens on long press at trigger center and preserves short press", async () => {
+  let short = 0, chosen = 0;
+  const changes = [];
+  await render(<ContextMenu trigger={<FakeButton testID="context-anchor" onPress={() => short++}>长按锚点</FakeButton>}
+    onOpenChange={next => changes.push(next)} items={[{ value: "open", label: "菜单操作", onSelect: () => chosen++ }]} />);
+  const event = { nativeEvent: { locationX: 18, locationY: 12 }, defaultPrevented: false };
+  let handlers = anchorEvents.get("context-anchor");
+  await act(() => { handlers.onPressIn(event); handlers.onPress(event); });
+  expect(short).toBe(1); expect(latest.menu.isOpen).toBe(false);
+  await act(() => { handlers.onPressIn(event); handlers.onLongPress(event); });
+  expect(latest.menu.isOpen).toBe(true);
+  expect(latest.menu.triggerPosition).toEqual({ width: 120, height: 44, pageX: 100, pageY: 200 });
+  expect(latest.menuContent.placement).toBe("bottom"); expect(latest.menuContent.align).toBe("center");
+  handlers = anchorEvents.get("context-anchor");
+  await act(() => { handlers.onPressOut(event); handlers.onPress(event); }); expect(short).toBe(1);
+  await click("菜单操作"); expect(chosen).toBe(1); expect(changes).toEqual([true]);
+  await act(() => latest.menu.onOpenChange(false)); expect(changes).toEqual([true, false]);
+  expect(latest.menu.triggerPosition).toBeNull();
+});
+
+test("Native ContextMenu touch anchoring scales local coordinates and supports imperative opening", async () => {
+  const handle = { current: null };
+  await render(<ContextMenu anchor="touch" __menuRef={handle} trigger={<FakeButton testID="touch-anchor">触点区域</FakeButton>} items={[]} />);
+  let handlers = anchorEvents.get("touch-anchor");
+  const event = { nativeEvent: { locationX: 60, locationY: 44 }, defaultPrevented: false };
+  await act(() => {
+    handlers.onLayout({ nativeEvent: { layout: { width: 240, height: 88, x: 0, y: 0 } } });
+    handlers.onPressIn(event); handlers.onLongPress(event);
+  });
+  expect(latest.menu.triggerPosition).toEqual({ width: 0, height: 0, pageX: 130, pageY: 222 });
+  await act(() => latest.menu.onOpenChange(false));
+  await act(() => handle.current.presentMenu());
+  expect(latest.menu.triggerPosition).toEqual({ width: 120, height: 44, pageX: 100, pageY: 200 });
+  await act(() => root.unmount()); root = undefined; expect(handle.current).toBeNull();
+});
+
+test("Native ContextMenu ignores disabled presses, cancelled gestures and stale measurement after unmount", async () => {
+  const changes = [];
+  await render(<ContextMenu disabled trigger={<FakeButton testID="disabled-anchor">禁用长按</FakeButton>} items={[]} onOpenChange={next => changes.push(next)} />);
+  const event = { nativeEvent: { locationX: 1, locationY: 1 }, defaultPrevented: false };
+  await act(() => anchorEvents.get("disabled-anchor").onLongPress(event)); expect(changes).toEqual([]);
+  await render(<ContextMenu key="pending" trigger={<FakeButton testID="pending-anchor">延迟测量</FakeButton>} items={[]} onOpenChange={next => changes.push(next)} />);
+  delayAnchorMeasurement = true;
+  const handlers = anchorEvents.get("pending-anchor");
+  await act(() => { handlers.onPressIn(event); handlers.onPressOut(event); }); expect(changes).toEqual([]);
+  await act(() => handlers.onLongPress(event)); expect(delayedMeasures.length).toBeGreaterThan(0);
+  await act(() => root.unmount()); root = undefined;
+  await act(() => delayedMeasures.splice(0).forEach(callback => callback(0, 0, 120, 44, 100, 200)));
+  delayAnchorMeasurement = false; expect(changes).toEqual([]);
+});
+
+test("Native Menubar aligns menus to the trigger start and preserves bar, item and platform overrides", async () => {
+  const cases = [
+    [undefined, undefined, "bottom", "start"],
+    [{ side: "top" }, undefined, "top", "start"],
+    [{ align: "center" }, undefined, "bottom", "center"],
+    [{ align: "center" }, { align: "end" }, "bottom", "end"],
+    [{ side: "right" }, undefined, "right", "start"],
+    [{ align: "end", herouiNativeProps: { align: "center", placement: "left" } }, undefined, "left", "center"],
+    [undefined, { herouiNativeProps: { align: "end", placement: "top" } }, "top", "end"],
+  ];
+  for (const [index, [contentProps, itemContentProps, placement, align]] of cases.entries()) {
+    await render(<Menubar key={index} defaultValue="file" contentProps={contentProps} items={[{
+      value: "file", title: "对齐菜单", contentProps: itemContentProps, items: [{ value: "new", label: "对齐操作" }],
+    }]} />);
+    expect(document.body.textContent).toContain("对齐操作");
+    expect(latest.menuContent.placement).toBe(placement);
+    expect(latest.menuContent.align).toBe(align);
+  }
+});
+
+test("Native Menubar coordinates one open menu, choices, disabled and controlled closing", async () => {
+  let chosen = 0;
+  const changes = [];
+  function Example() {
+    const [value, setValue] = React.useState(undefined);
+    return <Menubar value={value} onValueChange={value => { changes.push(value); setValue(value); }} items={[
+      { value: "file", title: "文件菜单", items: [{ value: "new", label: "文件操作", onSelect: () => chosen++ }] },
+      { value: "edit", title: "编辑菜单", items: [{ value: "edit", label: "编辑操作" }] },
+      { value: "disabled", title: "禁用菜单", disabled: true, items: [] },
+    ]} />;
+  }
+  await render(<Example />);
+  await click("文件菜单"); expect(document.body.textContent).toContain("文件操作");
+  await click("文件操作"); expect(chosen).toBe(1);
+  await click("编辑菜单"); expect(document.body.textContent).not.toContain("文件操作"); expect(document.body.textContent).toContain("编辑操作");
+  await click("禁用菜单"); expect(changes).toEqual(["file", "edit"]);
+  await click("编辑菜单"); expect(document.body.textContent).not.toContain("编辑操作"); expect(changes.at(-1)).toBeUndefined();
+});
+
+
+test("Native ContextMenu gives a plain View region a Pressable responder and allows explicit custom wrappers", async () => {
+  await render(<ContextMenu anchor="touch" trigger={<RNW.View><RNW.Text>普通区域</RNW.Text></RNW.View>} triggerProps={{ testID: "region-anchor" }} items={[]} />);
+  const handlers = anchorEvents.get("region-anchor");
+  expect(typeof handlers.onLongPress).toBe("function");
+  await act(() => handlers.onLongPress({ nativeEvent: { locationX: 30, locationY: 12 }, defaultPrevented: false }));
+  expect(latest.menu.isOpen).toBe(true);
+  expect(latest.menu.triggerPosition).toEqual({ width: 0, height: 0, pageX: 130, pageY: 212 });
+  function CustomRegion() { return <RNW.View><RNW.Text>自定义区域</RNW.Text></RNW.View>; }
+  await render(<ContextMenu key="custom-region" trigger={<CustomRegion />} triggerProps={{ asChild: false, testID: "custom-anchor" }} items={[]} />);
+  await act(() => anchorEvents.get("custom-anchor").onLongPress({ nativeEvent: { locationX: 30, locationY: 12 }, defaultPrevented: false }));
+  expect(latest.menu.isOpen).toBe(true);
+  expect(latest.menu.triggerPosition).toEqual({ width: 120, height: 44, pageX: 100, pageY: 200 });
 });

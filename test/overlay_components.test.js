@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 const cases = [
   ["web", "overlay_controls.fixture.jsx"],
+  ["web-menus", "menu_web.fixture.jsx", "web"],
   ["ios", "overlay_native.fixture.jsx"],
   ["android", "overlay_native.fixture.jsx"],
   ["web-portal", "toast_portal.fixture.jsx"],

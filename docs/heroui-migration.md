@@ -1,6 +1,6 @@
 # HeroUI 迁移：底座、主题与组件
 
-日期：2026-11-21。工作分支：`dev-heroui`。
+更新日期：2026-11-22。工作分支：`dev-heroui`。
 
 ## 第一阶段：底座接入
 
@@ -955,7 +955,7 @@ ListGroup 提供 items / sections、标题、说明、前后内容、选中 / �
 - Web 保留 ModalContentScope / OverlayPortalScope，确保子弹层留在当前 Dialog / Sheet 的交互和焦点范围。Dropdown 根菜单挂入该作用域，子菜单由 React Aria 自己的 popover group 承载；把每级子菜单强行移到外部 scope 会导致 inert 和焦点丢失。
 - Web 适配器通过透明的 HeroUIOverlayLayer 加入 Radix 的 layer 顺序。它阻止外层 Drawer 在 document capture 阶段提前响应 Escape，再由 React Aria 按原逻辑关闭当前弹层、恢复焦点或保护 AlertDialog；不代管指针关闭和原生行为。真实 Drawer 的回归覆盖逐级 Escape，防止一次按键连带关闭 Sheet 和外层 Dialog。
 - HeroUI Web Dropdown 的 100% 宽度上限在零尺寸局部宿主中会压缩菜单；适配器沿用其 55-spacing 默认宽度下限与视口上限，移除对宿主百分比宽度的依赖。公共 host 与 TrueSheet patch 无需调整。
-- ContextMenu 按要求暂不迁移。后续可以共用菜单数据模型、项内容及选中 / 禁用 / 危险样式，但右键 / 长按触发、坐标锚点和关闭 / 焦点策略需要单独适配；不能只给 Dropdown 设置 open 就视为完整右键菜单。系统原生 ContextMenu 保持现状。
+- 此批次暂缓的 ContextMenu 已在后续菜单迁移中完成，详见下文“共享菜单内核、ContextMenu 与 Menubar”。系统原生 ContextMenu 保持现状。
 - 删除旧 Dialog / AlertDialog / Popover / Dropdown / Select / Tooltip 的直接 RNR 依赖和专属 helper。ContextMenu、Menubar、Floating、Toast / Sheet 的作用域与窗口路由仍有消费者，不能整体删除所有旧 host。保留相应 Portal、Radix 与 native 分支依赖。
 
 ### 本批验证与设备回归
@@ -1027,6 +1027,108 @@ ListGroup 提供 items / sections、标题、说明、前后内容、选中 / �
 ~~~
 
 本轮 Web 真实 HeroUI / React Aria fixture 17 项、iOS 和 Android 适配 fixture 各 12 项通过；新增覆盖两组件的平台默认值、四向弹出、显式对齐与平台参数覆盖。库与示例 typecheck、库 build 及 git diff --check 通过。本轮未重新运行生产导出或操作真机。
+
+## 共享菜单内核、ContextMenu 与 Menubar（2026-11-22）
+
+### 实现边界与公共 API
+
+- 新增内部 `menu/` 内核：`types.ts` 保存已解析的 MenuEntry / MenuContentProps，`menu_heroui.tsx` 和 `menu_heroui.native.tsx` 分别使用真正的 HeroUI Dropdown / Menu / SubMenu 渲染。Dropdown、ContextMenu、Menubar 共用其菜单内容、滚动上限、图标、快捷键提示、粗细分隔线、选中 / 禁用 / 危险状态和作用域 portal；各自控制触发方式与打开状态。此内核不新增公开的组合式 Menu API。
+- ContextMenu 与 Menubar 均沿用唯一 index.ts、types.ts、薄包装和两端 `*_heroui` 文件结构。公共类型使用 import type 引用两端 HeroUI；不在共享运行时模块中导入两套库。
+- ContextMenu 的系统原生文件 `context_menu_native.native.tsx`、Zeego 行为、原生专用参数及 NativeList 的命令式菜单路径保留。Web 原生 stub 只用 import type 引用原生实现，保留 MenuProvider 的宿主注入能力。
+- 不保留旧 RNR 的 compound 自绘 API 与 contentSize 八档尺寸；ContextMenu 的静态 helpers 仅属于保留的系统原生实现。自绘菜单通过 items / contentProps 使用，菜单密度遵循 HeroUI 主题。Menubar 顶部按钮仅保留 sm / md / lg 尺寸。
+
+### ContextMenu：默认触发器居中，触点定位显式开启
+
+Native 自绘默认长按打开，底部弹出时相对整个 trigger 居中；`contentProps.align / side / sideOffset` 可继续覆盖。设置 `anchor="touch"` 才使用触点位置；该参数仅影响自绘 Native，不改系统菜单或 Web 右键菜单的定位。
+
+~~~tsx
+<ContextMenu
+  native={false}
+  trigger={<Button>长按查看操作</Button>}
+  items={[{ value: "rename", label: "重命名", onSelect: rename }]}
+/>
+
+<ContextMenu
+  native={false}
+  anchor="touch"
+  trigger={<View className="min-h-40 w-full"><Text>长按区域</Text></View>}
+  items={items}
+/>
+~~~
+
+- Native 的 View / Text / Image / ScrollView 区域自动获得 Pressable 响应器；自定义布局组件可设 `triggerProps={{ asChild: false }}`。自定义按钮默认 asChild，需要转发 ref 与 Pressable 事件。短按保持原来的动作，长按成功后抑制本轮短按。
+- 定位复用已有 HeroUIWindowAnchor 窗口矩形适配；触点从本地 layout 换算到实际窗口矩形，包含 iOS Sheet 的缩放。关闭、卸载或新一轮测量使旧回调失效。未修改 TrueSheet、公共坐标补偿或任何 patch。
+- Web 使用锁定 React Aria 已支持的 `trigger="contextMenu"`，保留右键、平台键盘触发、关闭与焦点恢复。普通区域使用可聚焦的 div 包装，避免 RN Web 将 role=button 的 View 转成实际 button 后造成按钮嵌套。每个菜单根隔离 PressResponder，嵌套区域只打开内层菜单。
+- 嵌套隔离使用锁定 react-aria 3.53.1 导出的 `react-aria/private/interactions/PressResponder` 中的 ClearPressResponder。它不是稳定公共 API；将来升级 React Aria 时，必须重新验证区域嵌套、触发器 ref、短按与焦点恢复，不能只通过类型检查判断兼容。
+- ContextMenu 示例保留原生菜单、子菜单、checkbox、长内容，新增默认按钮锚点与区域触点演示；文案区分 Native 长按与 Web 右键。
+
+### Menubar：单入口模型与键盘行为
+
+~~~tsx
+<Menubar
+  size="sm"
+  items={[
+    { value: "file", title: "文件", items: [
+      { value: "new", label: "新建文件", shortcut: "⌘N", onSelect: createFile },
+      { value: "separator", separator: true },
+      { value: "share", label: "分享", subMenu: shareItems },
+    ] },
+  ]}
+/>
+~~~
+
+- 每个顶级菜单的 value 必须非空且唯一；items 复用 DropdownItemData。支持 value / defaultValue / onValueChange；显式传入 `value={undefined}` 表示受控关闭。只允许一个菜单打开，旧菜单延迟回传的关闭事件不会关闭新菜单。
+- 顶级触发器使用项目的 HeroUI Button 自绘路径；Native 支持触摸、震动与 HeroUI 的菜单关闭行为。未为菜单栏新增系统原生替代实现。
+- 两端菜单默认 `contentProps.align="start"`，上下弹出时对齐 trigger 起始边（LTR 为左沿），左右弹出时为上沿；碰撞避让仍交给 HeroUI。根级 contentProps、条目 contentProps 和对应平台的 placement / align 可依次覆盖，不改变 Dropdown / ContextMenu / Select 的默认策略。
+- 默认菜单栏参考 HeroUI Tabs 的容器层次：整条使用 `bg-default`、主题 `rounded-4xl`、`p-1 / gap-1`，与外层 Card 的 surface 区分；触发器沿用 Button 的主题圆角和按压反馈，关闭时透明，打开时使用 `bg-segment / text-segment-foreground`。默认按钮保持同一 ghost variant，仅切换打开态的主题色；显式 triggerProps.variant 使用调用方指定的视觉，className / textClassName 可继续覆盖。Menubar 是项目自定义组件，此处不是引入一个官方 Menubar 组件。
+- Web 使用 menubar / menuitem 语义及 roving tabIndex；左右键、Home / End 切换标题，上下键进入首 / 末项，打开后 hover 切换，Escape 返回触发器，Tab / Shift+Tab 离开菜单栏。子菜单保留 React Aria 自己的方向键与焦点策略。菜单内容使用 nonmodal popover，允许访问兄弟触发器。
+- 方向以 React Aria 的 useLocale 为来源，与子菜单保持一致；RTL 宿主通过 I18nProvider 配置，避免仅改 CSS direction 却让子菜单按另一方向响应。不另造 dir 参数或语言映射。
+- 示例以“文件与编辑”“按钮尺寸与菜单方向”两组展示单入口 API，包含快捷键提示、分隔线、子菜单、选择与禁用。shortcut 只负责显示，不自动注册全局快捷键。
+
+### 依赖和 Provider 审计
+
+已移除四个零直接消费者的依赖：@radix-ui/react-dropdown-menu、@radix-ui/react-context-menu、@rn-primitives/context-menu、@rn-primitives/menubar，同时删除旧 ScopedSubContent、submenu_portal、menu_size、menu_item_icon 与未使用的 useOverlayPortalContentStyle。
+
+以下依赖与宿主仍有用途：
+
+| 保留项 | 当前消费者 / 原因 |
+| --- | --- |
+| @radix-ui/react-dismissable-layer | HeroUIOverlayLayer 的 Escape 层级桥接，Toast portal 的 Branch；Web TrueSheet 仍使用 Radix Dialog |
+| Zeego 及它的传递 Radix 菜单依赖 | 保留的系统原生菜单；锁文件中出现这些包不代表自绘菜单仍调用它们 |
+| @rn-primitives/portal、UIProvider 与 ScreenOverlayPortalProvider 中的 PortalHost | NativeList 的 basic / iOS ColorPicker 行仍通过 OverlayScopedPortal 挂载颜色选择 Sheet；根宿主与局部宿主承接这些内容 |
+| @rn-primitives/slot | 唯一直接消费者为 Native 的 HeroUIWindowAnchor：透传 child 事件与 ref，不增加原生布局节点，保留已验证的窗口测量适配；Dropdown / Select / Popover / ContextMenu / Menubar 的自绘 trigger 经此路径，包含使用 NativeTrigger 的场景 |
+| OverlayPortalWindow、ModalContentScope / OverlayPortalScope、Teleport | Native Dialog 的 Modal 呈现、Web 嵌套作用域、Toast / Floating / Sheet 路由 |
+| UIProvider 的主题、字体、键盘、震动、NativeDialog、Toast 与 HeroUI provider | 各自仍有运行时职责，不随菜单迁移整体删除或重排 |
+
+“仍有消费者”不表示绑定 RNR、无法替换：
+
+- 颜色选择 Sheet 只需要从 NativeList 布局子树转移到正确的窗口宿主，并不要求使用 `@rn-primitives/portal`。锁定的 HeroUI Native 提供公开 `heroui-native/portal`（Portal / PortalHost），可作为后续替代方案。切换时应保留根级 / 当前 Sheet / Modal 的宿主选择，使用专用命名 host，避免与 HeroUI provider 自带的默认 host 重复渲染；Native 导入还必须留在平台文件中，不能由共享 Provider 给 Web 引入 Native 包。切换 Portal 引擎不需要替换颜色选择 Sheet 或修改 TrueSheet。本轮仅核查，尚未切换宿主。
+- 锁定的 HeroUI Native 源码没有引用上述两个 `@rn-primitives` 包。它内部有自己的 Slot 实现，但当前没有公开 Slot 子路径；不要通过深层导入耦合私有实现。项目里的 `@rn-primitives/slot` 由 HeroUIWindowAnchor 单独引用，用于合并 child 事件、style 和 ref，使窗口测量包装保持无额外布局节点。以后可用经过相同回归的局部适配器替代，但不能直接删掉这层事件 / ref 合并逻辑。本轮保留此轻量依赖。
+
+此次未改 TrueSheet 源码 / 集成 / patch、系统 ContextMenu / Dropdown / Select、NativeTrigger、NativeList，也未全局重构 Provider。
+
+### 验证与设备边界
+
+- 库与示例 typecheck、库 build 通过。主测试 139 项通过、0 失败；旧 RNR 专属测试随已删除实现移除，以真正 HeroUI 的 Web 菜单、Native 适配与窗口测量回归替代。直接运行 Web 菜单 fixture 为 8 项通过，Native 弹层 fixture 在 iOS / Android 均通过；补充覆盖自定义布局显式包装。
+- Web 回归覆盖右键 / 短按、checkbox、键盘打开 / 关闭 / 焦点恢复、Dialog → 真实 Drawer → ContextMenu 子菜单逐层 Escape，以及 Menubar 的键盘、hover、受控关闭、RTL、子菜单与 Tab 离开。Native fixture 覆盖长按默认锚点、显式触点换算、命令式打开、短按抑制、禁用、异步测量失效、区域响应器与菜单栏协调。
+- Expo 三端带 source map 的生产导出通过。Web 4639 个模块、117 个 HeroUI Web 模块，iOS 4515 / Android 4454 个模块且各有 361 个 HeroUI Native 模块；另一端 HeroUI 模块均为 0。三端 source map 均无已移除的四类 RNR / Radix 菜单运行时模块。
+- 生产 Chromium 实测 ContextMenu 的短按、右键、平台键盘触发、checkbox、长内容滚动、区域定位、子菜单与焦点恢复；Menubar 的标题导航、首末项进入、子菜单方向键、hover 切换、单 / 多选、Escape 与 Shift+Tab 离开通过。浅 / 深色截图已检查，未记录浏览器错误或警告。视觉检查修正了旧自绘圆点在未选中项仍显示的问题：改用 HeroUI 官方 dot 指示器，自定义指示器也按选中状态显隐；浏览器检查了实际 opacity，避免仅依赖 aria-checked。
+- 最终 git diff --check 通过，原生菜单、NativeTrigger / NativeList / TrueSheet 与 patch 均未改变。Native 适配和窗口测量测试使用边界 mock；Expo JS / CSS 导出不等同于原生构建或真机验收。
+
+设备验收重点：Native 默认按钮中心与显式区域触点；TrueSheet / Dialog 内的菜单位置、长内容拖动、子菜单与 Android 返回键；NativeList 内原生菜单及 NativeTrigger 回归；Menubar 的触摸、关闭、震动和主题。所有系统原生功能继续按原有分支验证。
+
+### Menubar 默认视觉与对齐调整验证（2026-11-22）
+
+- 弹层集成入口 9 组回归通过，包含真实 HeroUI Web 菜单、iOS / Android 适配、Portal 和窗口 anchor。新增两端菜单默认 start 对齐、上下 / 侧向弹出及根级、条目级、平台专用参数覆盖用例；原有键盘、hover、子菜单与受控关闭回归继续通过。
+- 库与示例 typecheck、库 build、Expo Web 带 source map 生产导出与 git diff --check 通过。生产 Chromium 验证浅 / 深色实际 CSS：菜单栏分别使用主题 default，打开项使用 segment，与 Card 背景区分；文件 / 编辑菜单及向上弹出示例的左沿对齐正常。键盘切换、子菜单、hover、选择、Escape、Shift+Tab 以及 ContextMenu 回归正常，无浏览器错误或警告。
+- 本轮没有重跑原生构建或真机测试；Native 适配测试不能替代设备上的触摸、动画与 TrueSheet 定位验收。Portal 与 Slot 保留现有消费者，不改动 TrueSheet 或系统原生实现。
+
+### Native 子菜单与滚动视口适配（2026-11-22）
+
+- Menubar 的“分享”子菜单出现截断，并非简单的菜单 maxHeight 太小：HeroUI SubMenu 只给触发行预留普通布局高度，展开面板通过绝对定位向外延伸；共享菜单统一增加的 ScrollView 因而裁掉超出滚动内容的部分。
+- 共享 Native 菜单继续使用真实 HeroUI SubMenu，在展开时为实际内容高度和顶部内边距预留滚动空间，关闭时释放；预留空间使用与 SubMenu 相同的显式弹簧配置，并遵守禁用动画的设置。滚动内的 SubMenu 不再使用负 margin 向视口外扩张，长内容仍遵守原有 maxHeight。内容 / 字体布局变化会更新所需空间，不给所有菜单写死更大的最小高度。
+- 子菜单打开时把滚动视口与关闭遮罩放到同一层级体系：子菜单位于局部关闭层之上，原生滚动与子菜单点击不被 Menu.Content 的兄弟遮罩挡住；点选子菜单外区域返回上级。此调整共用于 Native Dropdown / ContextMenu / Menubar，不修改 Web 菜单、Select、系统原生菜单或 TrueSheet。
+- 验证：弹层集成入口 9 组通过；iOS / Android 适配 fixture 各 20 项、236 次断言通过，新增覆盖三个共享菜单入口的展开空间、长内容高度上限、布局变化、返回上级和禁用动画。库与示例 typecheck、库 build、Expo 三端带 source map 导出、平台隔离审计与 git diff --check 通过。平台审计各端另一套 HeroUI 模块均为 0。本轮未运行原生构建或真机测试，子菜单实际滚动、触摸命中和动画仍需设备复核。
 
 ## 后续批次
 

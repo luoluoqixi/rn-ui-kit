@@ -1,80 +1,35 @@
-import type { ComponentProps, ReactNode } from "react";
-import type * as MenubarPrimitive from "@rn-primitives/menubar";
+import type { ViewProps } from "react-native";
+import type { ButtonProps, ButtonSizeVariant } from "../button";
+import type { NativeHapticsDelay, NativeHapticsSetting, RenderProp } from "../utils";
+import type { DropdownItemData } from "../dropdown/types";
+import type { MenuContentProps } from "../menu/types";
 
-import type { NativeHapticsSetting, RenderProp } from "../utils";
-
-export type MenubarSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
-
-export type MenubarItemRenderContext = {
-  checked?: boolean;
-  disabled?: boolean;
-  open?: boolean;
-  value?: string;
-};
-
-export type MenubarTriggerProps = ComponentProps<typeof MenubarPrimitive.Trigger> & {
-  size?: MenubarSize;
-  /** Keep the default cursor on web. Set false to manage the cursor yourself. */
-  cursorDefault?: boolean;
-  nativeHaptics?: NativeHapticsSetting;
-};
-
-export type MenubarContentProps = ComponentProps<typeof MenubarPrimitive.Content> & {
-  size?: MenubarSize;
-};
-
-export type MenubarSubContentProps = ComponentProps<typeof MenubarPrimitive.SubContent> & {
-  size?: MenubarSize;
-};
-
-export type MenubarItemData = {
-  type?: "item" | "separator" | "submenu" | "checkbox" | "radio-group" | "radio" | "label";
-  title?: RenderProp<MenubarItemRenderContext>;
-  children?: RenderProp<MenubarItemRenderContext>;
-  /** Leading icon for items and submenu triggers. */
-  icon?: RenderProp<MenubarItemRenderContext>;
-  /** Set false to omit this item's empty icon slot. Defaults to true; supplied icons remain visible. */
-  reserveIconSpace?: boolean;
-  shortcut?: RenderProp<MenubarItemRenderContext>;
-  disabled?: boolean;
-  inset?: boolean;
-  value?: string;
-  checked?: boolean;
-  defaultChecked?: boolean;
-  onCheckedChange?: (checked: boolean) => void;
-  items?: MenubarItemData[];
-  nativeHaptics?: NativeHapticsSetting;
-  itemProps?: Omit<ComponentProps<typeof MenubarPrimitive.Item>, "children">;
-  checkboxProps?: Omit<
-    ComponentProps<typeof MenubarPrimitive.CheckboxItem>,
-    "children" | "checked" | "onCheckedChange"
-  >;
-  radioGroupProps?: Omit<ComponentProps<typeof MenubarPrimitive.RadioGroup>, "children">;
-  radioItemProps?: Omit<ComponentProps<typeof MenubarPrimitive.RadioItem>, "children" | "value">;
-  submenuProps?: Omit<ComponentProps<typeof MenubarPrimitive.Sub>, "children">;
-  contentProps?: Omit<MenubarContentProps, "children">;
-  labelProps?: Omit<ComponentProps<typeof MenubarPrimitive.Label>, "children">;
-  separatorProps?: ComponentProps<typeof MenubarPrimitive.Separator>;
-};
-
+export type MenubarSize = ButtonSizeVariant;
+export type MenubarItemData = DropdownItemData;
+export type MenubarItemRenderContext = { open: boolean; disabled: boolean; value: string };
+export type MenubarTriggerProps = Omit<ButtonProps, "children" | "title" | "native" | "onPress">;
+export type MenubarContentProps = MenuContentProps;
 export type MenubarMenuData = {
   value: string;
   title: RenderProp<MenubarItemRenderContext>;
   items: MenubarItemData[];
+  disabled?: boolean;
   nativeHaptics?: NativeHapticsSetting;
-  triggerProps?: Omit<MenubarTriggerProps, "children" | "nativeHaptics">;
-  contentProps?: Omit<MenubarContentProps, "children">;
+  triggerProps?: MenubarTriggerProps;
+  /** Menu placement defaults to start alignment; overrides the bar's contentProps. */
+  contentProps?: MenubarContentProps;
 };
-
-export type MenubarProps = Omit<ComponentProps<typeof MenubarPrimitive.Root>, "children"> & {
-  children?: ReactNode;
-  items?: MenubarMenuData[];
-  /** Size of the top-level menu bar. */
+export type MenubarProps = Omit<ViewProps, "children"> & {
+  items: MenubarMenuData[];
+  /** Controlled open menu. Explicit undefined means all menus are closed. */
+  value?: string;
+  defaultValue?: string;
+  onValueChange?: (value: string | undefined) => void;
   size?: MenubarSize;
-  /** Size of the generated popup menu content. */
-  contentSize?: MenubarSize;
-  /** Haptics for top-level menu triggers. */
+  disabled?: boolean;
   nativeHaptics?: NativeHapticsSetting;
-  /** Default haptics for menu items; an item's nativeHaptics can override it. */
   itemNativeHaptics?: NativeHapticsSetting;
+  itemNativeHapticsDelay?: NativeHapticsDelay;
+  /** Menus align to the trigger's start edge by default (left in LTR). */
+  contentProps?: MenubarContentProps;
 };

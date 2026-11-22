@@ -171,21 +171,21 @@ const theme: UiThemeConfig = {
 | 展示 | `Alert`、`Avatar`、`Badge`、`Chip`、`Skeleton`、`Text`、`Icon`、`Link`、`GlassEffect` |
 | 基础设施 | `RootProvider`、`UIProvider`、主题工具、导航工具、Portal 与平台工具 |
 
-`Form`、`Image`、`ListGroup`、`ListItem`、`FlashList`、`HoverCard` 和旧 `Menu` API 已删除。`TextArea` 已更名为 `Textarea`，`Menu` 已更名为 `Dropdown`。
+`Form`、`Image`、旧 `ListItem`、`FlashList`、`HoverCard` 和旧 `Menu` API 已删除。`TextArea` 已更名为 `Textarea`，`Menu` 已更名为 `Dropdown`；新的 `ListGroup` 使用 HeroUI 单入口封装。
 
 HeroUI 迁移分支已接入 `Accordion`、`Card`、`Alert`、`Avatar`、`Badge`、`Chip`。这些组件使用单入口 props API，Native / Web 分别采用各自的 HeroUI 实现；旧 RNR 专属参数不再保留。独立标签使用 `Chip`（原标签型 Badge 已更名）；数量角标或状态点使用 `<Badge content={5}><Avatar /></Badge>`，Web 使用 HeroUI Badge，Native 使用 Chip 补齐定位。`Icon` 保留 Lucide + Uniwind 封装。`AspectRatio` 已删除，固定比例布局直接使用容器的 `aspectRatio` 样式；`Collapsible` 已删除，基础内容展开/收起使用单项 `Accordion`。具体 API 与验证记录见 [HeroUI 迁移文档](docs/heroui-migration.md)。
 
 表单批次已迁移 `Link`、`Input`、`Checkbox`、`RadioGroup`、`Tabs`、`Textarea`，新增 `InputGroup`、`InputOTP` 与 `TextField`，全部采用单入口 props API；此前的 `Progress`、`Spinner`、`Separator`、`Skeleton`、`Text` 和 `Label` 也已完成迁移。详见 [HeroUI 迁移文档](docs/heroui-migration.md)。
 
-第一版迁移中，`Select` 与 `Slider` 是保证公开类型和编译稳定的占位实现；Select/Slider 的旧源码保留在 `legacy/`，后续单独重构。非原生 Toast UI 同样暂不渲染，native Toast 继续使用 Burnt。
+`Select`、`Slider` 与自绘 `Toast` 也已完成 HeroUI 接入，各自保留已有系统原生路径；原生 Toast 继续使用 Burnt。
 
-`Dropdown` 和 `ContextMenu` 在 Web 使用 RNR primitives，在 iOS/Android 使用共享的 Zeego 数据模型与原生实现。两者支持 compound API，也支持 rn-ui-kit 的 `items`、原生图标、haptics 与 native trigger 扩展。
+`Dropdown`、`ContextMenu` 与 `Menubar` 共用内部 HeroUI 菜单内核，自绘路径通过单入口 `items` / `contentProps` 调用；Web 使用 HeroUI Dropdown，Native 使用 HeroUI Menu。ContextMenu 在 Native 默认长按并相对 trigger 居中，显式 `anchor="touch"` 可改为触点定位；Web 使用 React Aria 的右键触发。Dropdown / ContextMenu 的 Zeego 系统原生实现、原生扩展和宿主菜单能力继续保留，旧 compound helpers 仅用于系统原生路径。
 
 ## NativeList
 
 `NativeList` 在 iOS 保留基于 `@expo/ui/swift-ui` 的系统列表实现；Android 和 Web 使用去框架化的 React Native fallback。列表仍支持 Section、输入项、开关项、菜单项、上下文菜单、下拉刷新和编辑模式多选。
 
-Select 第一版为空实现，因此 `NativeListSelectItem` 只保留当前值展示和既有 iOS 系统菜单可覆盖的路径；完整 Select 行为会随 Select 独立重构补齐。
+`NativeListSelectItem` 与菜单项继续使用 Select / Dropdown 的现有模式和 NativeTrigger；此次菜单迁移未重写 NativeList 的 basic / iOS 布局。
 
 ## 补丁同步
 
@@ -225,4 +225,4 @@ RNR CLI 的一次性源码快照位于被 Git 忽略的 `.temp/rnr-source`。正
 - `rn-ui-kit`：core API
 - `rn-ui-kit/debug`：调试页面
 - `rn-ui-kit/initialize`：平台初始化
-- `rn-ui-kit/styles.css`：语义变量与 RNR 样式基础
+- `rn-ui-kit/styles.css`：共用语义主题变量与 portal / scrollbar 辅助样式；各平台 HeroUI 样式由宿主对应 CSS 入口加载
