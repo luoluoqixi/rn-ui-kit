@@ -17,6 +17,10 @@ cd /path/to/rn_ui_kit/examples/app
 bun link @luoluoqixi/expo-ui-55
 ```
 
+## NativeList iOS 导航选中态
+
+关于首次点击松手后选中消失、TrueSheet 返回残留及 cell 复用串行的根因、修复过程、失败尝试和验证边界，见 [NativeList：iOS 导航行选中态问题与修复记录](./native_list_ios_selection.md)。修复位于本地 `expo-ui-55` 原生包；通过 `bun link` 测试 Swift 修改时仍需重新编译开发包。
+
 ## 组件尺寸与样式
 
 HeroUI 没有跨组件的全局 `size` 设置。封装组件时沿用对应 HeroUI 组件自身的 size 取值和默认值；组件没有 size 能力时，不额外发明统一尺寸枚举。系统原生实现、NativeTrigger 等项目专属交互可保留自己的尺寸 API。

@@ -22,7 +22,7 @@
       },
       "devDependencies": {
         "@lodev09/react-native-true-sheet": "=4.1.2",
-        "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_11_21",
+        "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_11_26",
         "@react-native-picker/picker": "=2.11.4",
         "@react-navigation/elements": "^2.9.38",
         "@react-navigation/native": "=7.3.16",
@@ -57,7 +57,7 @@
       },
       "peerDependencies": {
         "@lodev09/react-native-true-sheet": "=4.1.2",
-        "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_11_21",
+        "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_11_26",
         "@react-native-picker/picker": "^2.11.4",
         "@react-navigation/elements": "^2.9.38",
         "@react-navigation/native": "=7.3.16",
@@ -405,7 +405,7 @@
 
     "@lodev09/react-native-true-sheet": ["@lodev09/react-native-true-sheet@4.1.2", "", { "peerDependencies": { "@radix-ui/react-dialog": ">=1", "@radix-ui/react-presence": ">=1", "@react-navigation/native": ">=7.3.0", "expo-router": ">=57.0.0", "react": "*", "react-dom": "*", "react-native": ">=0.82.0", "react-native-reanimated": ">=4.1.0", "react-native-worklets": ">=0.5.0", "standard-navigation": ">=0.0.9" }, "optionalPeers": ["@radix-ui/react-dialog", "@radix-ui/react-presence", "@react-navigation/native", "expo-router", "react-dom", "react-native-reanimated", "react-native-worklets", "standard-navigation"] }, "sha512-YaKgXCgeP+BkgOkYoaDRJLn5a3/i88oa+uND0BR2p00zXVDSifx30FxsCrNQrCyijmRwpyH9iaFg3+v5/YhJag=="],
 
-    "@luoluoqixi/expo-ui-55": ["@luoluoqixi/expo-ui-55@github:luoluoqixi/expo-ui-55#1449315", { "dependencies": { "sf-symbols-typescript": "^2.1.0" }, "peerDependencies": { "expo": "*", "react": "*", "react-native": "*" } }, "luoluoqixi-expo-ui-55-1449315", "sha512-Z7GBzSc5keE0WRBk3b8ZS8sO8fF3OLblPnTLJjBbXVabSXzhmSImQv2TMcGvxKEMsztWcyxwJtNhJ1mYumHdhQ=="],
+    "@luoluoqixi/expo-ui-55": ["@luoluoqixi/expo-ui-55@github:luoluoqixi/expo-ui-55#b36cbc0", { "dependencies": { "sf-symbols-typescript": "^2.1.0" }, "peerDependencies": { "expo": "*", "react": "*", "react-native": "*" } }, "luoluoqixi-expo-ui-55-b36cbc0", "sha512-UKkxx9u/H6SZAX+73kRWeER46VWrvZmrwdXzGpAE8np0iX6yc9bqWVqoumBSSqwvF8oWhd48aG7T7W54OKYTZQ=="],
 
     "@material/material-color-utilities": ["@material/material-color-utilities@0.4.0", "", {}, "sha512-dlq6VExJReb8dhjj3a/yTigr3ncNwoFmL5Iy2ENtbDX03EmNeOEdZ+vsaGrj7RTuO+mB7L58II4LCsl4NpM8uw=="],
 
