@@ -14,6 +14,7 @@ import {
   useAppBackgroundColors,
 } from "../../core/components/ui";
 import type { RnUiKitDebugRouteDefinition, RnUiKitDebugRouteKey } from "../types";
+import { useDebugNativeListSettings } from "../native_list_settings";
 
 export function RnUiKitDebugHomePage({
   openSectionsInSheet,
@@ -38,6 +39,7 @@ export function RnUiKitDebugHomePage({
   onOpenSectionsInSheetChange?: (openInSheet: boolean) => void;
 }) {
   const isNativeIosPage = Platform.OS === "ios";
+  const { iosPressFeedback, setIosPressFeedback } = useDebugNativeListSettings();
   const appBackgroundColors = useAppBackgroundColors();
   const insets = useSafeAreaInsets();
   const tracksScrollEdgeHeader =
@@ -56,6 +58,7 @@ export function RnUiKitDebugHomePage({
 
   return (
     <NativeList
+      iosPressFeedback={iosPressFeedback}
       backgroundColor={appBackgroundColors.screen}
       onRefresh={onRefresh}
       automaticallyAdjustsScrollIndicatorInsets={isNativeIosPage ? true : undefined}
@@ -77,6 +80,19 @@ export function RnUiKitDebugHomePage({
             ))}
         </NativeListSection>
       ))}
+
+      {isNativeIosPage ? (
+        <NativeListSection title="列表交互">
+          <NativeListSwitchItem
+            switchProps={{
+              isSelected: iosPressFeedback === "immediate",
+              onSelectedChange: (enabled) =>
+                setIosPressFeedback(enabled ? "immediate" : "automatic"),
+            }}
+            title="iOS 列表立即按压反馈"
+          />
+        </NativeListSection>
+      ) : null}
 
       <NativeListSection title="分区行为">
         <NativeListSwitchItem

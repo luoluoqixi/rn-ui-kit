@@ -16,6 +16,7 @@ import {
   useAppBackgroundColors,
 } from "../../../core/components/ui";
 import type { RnUiKitDebugSectionContentProps } from "../../types";
+import { useDebugNativeListSettings } from "../../native_list_settings";
 import { componentExampleDefinitions } from "./catalog";
 import type { ComponentExampleDefinition } from "./types";
 
@@ -41,6 +42,7 @@ export function RnUiKitComponentExamplesDebugPage({
   onOpenComponentExample,
 }: RnUiKitDebugSectionContentProps) {
   const navigation = useNavigation<NavigationProp<DebugPanelNavigationParamList>>();
+  const { iosPressFeedback } = useDebugNativeListSettings();
   const isNativeIosPage = Platform.OS === "ios";
   const appBackgroundColors = useAppBackgroundColors();
   const insets = useSafeAreaInsets();
@@ -64,6 +66,7 @@ export function RnUiKitComponentExamplesDebugPage({
         </View>
       ) : null}
       <NativeList
+        iosPressFeedback={iosPressFeedback}
         backgroundColor={appBackgroundColors.screen}
         automaticallyAdjustsScrollIndicatorInsets={isNativeIosPage ? true : undefined}
         contentInsetAdjustmentBehavior={isNativeIosPage ? "automatic" : undefined}

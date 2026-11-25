@@ -1,6 +1,7 @@
 import { type ReactNode } from "react";
 import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 import { ExampleSectionView } from "./example_section_view";
+import { useDebugNativeListSettings } from "../../native_list_settings";
 
 import {
   Card,
@@ -51,8 +52,9 @@ export function InputExampleContent() {
 }
 
 export function NativeListExampleContent() {
+  const { iosPressFeedback } = useDebugNativeListSettings();
   return (
-    <NativeList>
+    <NativeList iosPressFeedback={iosPressFeedback}>
       <NativeListSection title="NativeList">
         <NativeListNavigationItem
           title="Navigation item"

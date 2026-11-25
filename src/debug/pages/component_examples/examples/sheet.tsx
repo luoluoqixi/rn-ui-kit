@@ -17,6 +17,7 @@ import {
 } from "rn-ui-kit/core";
 
 import { ExampleBlock, ExampleRow, ExampleStack } from "../shared";
+import { useDebugNativeListSettings } from "../../../native_list_settings";
 
 type SheetStackParamList = {
   index: undefined;
@@ -26,10 +27,15 @@ type SheetStackParamList = {
 };
 
 function SheetStackIndexScreen() {
+  const { iosPressFeedback } = useDebugNativeListSettings();
   const navigation = useNavigation<NavigationProp<SheetStackParamList>>();
 
   return (
-    <NativeList style={styles.stackList} tracksNavigationBarScrollEdge>
+    <NativeList
+      iosPressFeedback={iosPressFeedback}
+      style={styles.stackList}
+      tracksNavigationBarScrollEdge
+    >
       <NativeListSection footer="点击后会在当前 Sheet 内推入新的 Stack 页面。" title="导航">
         <NativeListNavigationItem
           onPress={() => navigation.navigate("details")}
@@ -47,8 +53,13 @@ function SheetStackIndexScreen() {
 }
 
 function SheetStackDetailsScreen({ onClose }: { onClose: () => void }) {
+  const { iosPressFeedback } = useDebugNativeListSettings();
   return (
-    <NativeList style={styles.stackList} tracksNavigationBarScrollEdge>
+    <NativeList
+      iosPressFeedback={iosPressFeedback}
+      style={styles.stackList}
+      tracksNavigationBarScrollEdge
+    >
       <NativeListSection footer="可使用导航栏返回按钮回到上一页。" title="详情">
         <NativeListButtonItem onPress={onClose} title="关闭 Stack Sheet" />
       </NativeListSection>

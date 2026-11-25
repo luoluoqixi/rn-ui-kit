@@ -8,11 +8,13 @@ import {
   useAppBackgroundColors,
 } from "../../../core/components/ui";
 import debugPackage from "../../../../package.json";
+import { useDebugNativeListSettings } from "../../native_list_settings";
 
 const GITHUB_URL = "https://github.com/luoluoqixi/rn-ui-kit";
 const platformNames: Record<string, string> = { android: "Android", ios: "iOS", web: "Web" };
 
 export function RnUiKitAboutDebugPage() {
+  const { iosPressFeedback } = useDebugNativeListSettings();
   const usesNativeIosScrollEdgeHeader = Platform.OS === "ios";
   const appBackgroundColors = useAppBackgroundColors();
   const insets = useSafeAreaInsets();
@@ -24,6 +26,7 @@ export function RnUiKitAboutDebugPage() {
   return (
     <View style={styles.nativeListHost}>
       <NativeList
+        iosPressFeedback={iosPressFeedback}
         backgroundColor={appBackgroundColors.screen}
         automaticallyAdjustsScrollIndicatorInsets={usesNativeIosScrollEdgeHeader ? true : undefined}
         contentInsetAdjustmentBehavior={usesNativeIosScrollEdgeHeader ? "automatic" : undefined}

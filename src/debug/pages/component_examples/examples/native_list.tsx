@@ -44,6 +44,8 @@ import {
   isAndroid,
 } from "rn-ui-kit/core";
 
+import { useDebugNativeListSettings } from "../../../native_list_settings";
+
 const NATIVE_LIST_ICON_COLOR = "#7c3aed";
 
 const NATIVE_LIST_ICON_SIZE = 20;
@@ -133,6 +135,7 @@ const styles = StyleSheet.create({
 });
 
 export function NativeListExample() {
+  const { iosPressFeedback } = useDebugNativeListSettings();
   const uiTheme = useUiTheme();
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
   const [customEditModeIcon, setCustomEditModeIcon] = useState(false);
@@ -268,6 +271,7 @@ export function NativeListExample() {
       <View style={styles.nativeListFrame}>
         {native || fallbackMounted ? (
           <NativeList
+            iosPressFeedback={iosPressFeedback}
             disabled={rowsDisabled}
             nativeHaptics
             dismissKeyboardOnTap
@@ -360,6 +364,28 @@ export function NativeListExample() {
               titleColor="#7c3aed"
               trailing={testSectionTrailing}
             >
+              <NativeListNavigationItem
+                chevronColor={NATIVE_LIST_ICON_COLOR}
+                contextMenuProps={{
+                  items: [
+                    {
+                      label: "导航专属菜单",
+                      onSelect: () => setLastAction("Item 菜单：导航"),
+                      value: "navigation-menu",
+                    },
+                  ],
+                }}
+                icon={<Info color={NATIVE_LIST_ICON_COLOR} size={NATIVE_LIST_ICON_SIZE} />}
+                sfSymbol="info.circle"
+                onPress={() => setLastAction("打开导航")}
+                selectionId="workspace-navigation"
+                subtitle="带有 chevron 的导航行"
+                subtitleColor="#64748b"
+                subtitleFontSize={12}
+                title="导航"
+                titleColor="#7c3aed"
+                titleFontSize={18}
+              />
               <NativeListNavigationItem
                 chevronColor={NATIVE_LIST_ICON_COLOR}
                 contextMenuProps={{

@@ -46,6 +46,7 @@ import {
 } from "rn-ui-kit/core";
 
 import { useIsComponentExampleEmbedded } from "../presentation_context";
+import { useDebugNativeListSettings } from "../../../native_list_settings";
 
 type GlassExampleMode =
   | "floating-buttons"
@@ -533,6 +534,7 @@ function GlassEffectPreview({
 }
 
 export function GlassEffectExample() {
+  const { iosPressFeedback } = useDebugNativeListSettings();
   const embeddedInOverview = useIsComponentExampleEmbedded();
   const appBackgroundColors = useAppBackgroundColors();
   const colorSchemeName = useUiColorScheme();
@@ -568,6 +570,7 @@ export function GlassEffectExample() {
   return (
     <>
       <NativeList
+        iosPressFeedback={iosPressFeedback}
         dismissKeyboardOnTap
         automaticallyAdjustsScrollIndicatorInsets={Platform.OS === "ios" ? true : undefined}
         backgroundColor={appBackgroundColors.screen}
