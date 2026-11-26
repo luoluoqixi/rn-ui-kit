@@ -13,6 +13,7 @@ import type * as Zeego from "zeego/dropdown-menu";
 import type { Menu } from "heroui-native/menu";
 import type { Dropdown } from "@heroui/react/dropdown";
 import type { MenuContentProps } from "../menu/types";
+import type { MenuAdapterProps } from "../menu/menu_adapter_types";
 
 export type DropdownSize = "default" | "2xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
 export type DropdownSelectionIndicatorPosition = "left" | "right";
@@ -58,6 +59,8 @@ export interface NativeDropdownItemData {
   /** Custom menus: set false to omit this item's empty icon slot. Defaults to false; supplied icons remain visible. */
   reserveIconSpace?: boolean;
   "iconProps"?: NativeDropdownItemIconProps;
+  /** 外部菜单适配器的附加数据。 */
+  hostData?: Readonly<Record<string, unknown>>;
   "indicator"?: RenderProp<NativeDropdownItemData>;
   "itemProps"?: Record<string, unknown>;
   "label"?: RenderProp<NativeDropdownItemData>;
@@ -137,7 +140,7 @@ export type NativeDropdownContentProps = Omit<ComponentProps<typeof Zeego.Conten
 
 export type DropdownItemData = NativeDropdownItemData;
 export type DropdownItemProps = NativeDropdownItemProps;
-export type DropdownRootExtensions = NativeDropdownRootExtensions & {
+export type DropdownRootExtensions = NativeDropdownRootExtensions & MenuAdapterProps & {
   native?: boolean;
   accessibilityLabel?: string;
   herouiNativeProps?: Omit<ComponentProps<typeof Menu>, "children" | "isOpen" | "isDefaultOpen" | "onOpenChange">;

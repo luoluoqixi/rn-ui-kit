@@ -1,93 +1,46 @@
 import { useEffect, useRef, type MouseEvent, type KeyboardEvent } from "react";
 import { View } from "react-native";
 import { resolveRenderProp } from "../utils/render";
-import { createNativeMenuItems } from "./native_menu_items";
-import { useMenuConfig } from "./menu_provider";
+import { elementMenuRect, useHostMenu } from "../menu/use_host_menu.web";
 import type { ContextMenuProps } from "./types";
 
-/** 宿主原生菜单保留与自定义菜单相同的触发和生命周期回调。 */
-export function ContextMenuHost({
-  items,
-  itemProps,
-  trigger,
-  triggerProps,
-  children,
-  onOpenChange,
-  onOpenWillChange,
-  ...props
-}: ContextMenuProps) {
-  const config = useMenuConfig();
-  const sequence = useRef(0);
-  useEffect(
-    () => () => {
-      sequence.current += 1;
-    },
-    [],
-  );
-  const show = async (x: number, y: number) => {
-    const current = ++sequence.current;
-    const isCurrent = () => sequence.current === current;
-    const focusedElement = document.activeElement;
-    onOpenWillChange?.(true);
-    onOpenChange?.(true);
-    try {
-      await config.showNativeMenu?.({
-        items: createNativeMenuItems(items ?? [], itemProps),
-        x,
-        y,
-        isCurrent,
-      });
-    } catch (error) {
-      if (isCurrent()) config.onNativeMenuError?.(error);
-    } finally {
-      if (isCurrent()) {
-        onOpenWillChange?.(false);
-        onOpenChange?.(false);
-        // 系统菜单没有 DOM 锚点；仅在原焦点仍存在时归还焦点。
-        if (
-          focusedElement instanceof HTMLElement &&
-          focusedElement.isConnected &&
-          (document.activeElement === focusedElement ||
-            document.activeElement === document.body)
-        )
-          focusedElement.focus({ preventScroll: true });
-      }
-    }
-  };
-  return (
-    <View
-      {...props}
-      {...triggerProps}
-      style={[
-        props.style,
-        typeof triggerProps?.style === "function"
-          ? triggerProps.style({ pressed: false, hovered: false })
-          : triggerProps?.style,
-      ]}
-      {...{
-        onContextMenu: (event: MouseEvent) => {
-          if (event.defaultPrevented || triggerProps?.disabled) return;
-          event.preventDefault();
-          event.stopPropagation();
-          void show(event.clientX, event.clientY);
-        },
-        onKeyDown: (event: KeyboardEvent) => {
-          if (
-            event.defaultPrevented ||
-            triggerProps?.disabled ||
-            (event.key !== "ContextMenu" &&
-              !(event.shiftKey && event.key === "F10"))
-          )
-            return;
-          event.preventDefault();
-          event.stopPropagation();
-          const rect = (event.target as HTMLElement).getBoundingClientRect();
-          void show(rect.left, rect.bottom);
-        },
-      }}
-    >
-      {resolveRenderProp(trigger, { native: true, open: false })}
-      {children}
-    </View>
-  );
+export function ContextMenuHost(p: ContextMenuProps) {
+  // 仅将 View 属性交给包装层，不把菜单配置泄漏到 DOM。
+  const { items, itemProps, trigger, triggerProps, children, onOpenChange, onOpenWillChange,
+    open, defaultOpen, disabled, native, nativeHaptics, nativeHapticsDelay, itemNativeHaptics,
+    itemNativeHapticsDelay, contentProps, anchor, herouiNativeProps, herouiWebProps,
+    menuAdapter, menuAdapterOptions, __menuRef, __unsafeIosProps,
+    nativeShouldWaitForMenuToHideBeforeFiringOnPressMenuItem, ...viewProps } = p;
+  const ref = useRef<View>(null);
+  const unavailable = !!(disabled || triggerProps?.disabled);
+  const element = () => ref.current as unknown as HTMLElement | null;
+  const model = useHostMenu(p, "context-menu", unavailable, () => elementMenuRect(element()), () => element()?.ownerDocument ?? document);
+  useEffect(() => {
+    if (!__menuRef) return;
+    __menuRef.current = { presentMenu: () => model.present() };
+    return () => { __menuRef.current = null; };
+  }, [__menuRef, model.present]);
+  const { asChild, disabled: triggerDisabled, style, ...restTriggerProps } = triggerProps ?? {};
+  return <View {...viewProps} {...restTriggerProps} ref={ref}
+    style={[viewProps.style, typeof style === "function" ? style({ pressed: false, hovered: false }) : style]}
+    {...{
+      onContextMenu: (event: MouseEvent<HTMLElement>) => {
+        triggerProps?.onContextMenu?.(event);
+        if (event.defaultPrevented || unavailable) return;
+        event.preventDefault();
+        event.stopPropagation();
+        model.present({ rect: elementMenuRect(event.currentTarget), point: { x: event.clientX, y: event.clientY } }, "pointer");
+      },
+      onKeyDown: (event: KeyboardEvent<HTMLElement>) => {
+        triggerProps?.onKeyDown?.(event);
+        if (event.defaultPrevented || unavailable ||
+          (event.key !== "ContextMenu" && !(event.shiftKey && event.key === "F10"))) return;
+        event.preventDefault();
+        event.stopPropagation();
+        model.present({ rect: elementMenuRect(event.target as HTMLElement) }, "keyboard");
+      },
+    }}>
+    {resolveRenderProp(trigger, { native: true, open: model.open })}
+    {children}
+  </View>;
 }

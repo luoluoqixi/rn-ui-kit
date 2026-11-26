@@ -8,6 +8,7 @@
 - `Badge` 是依附内容的角标或状态点，例如 `<Badge content={5}><Avatar alt="用户" /></Badge>`；独立标签使用 `Chip`。
 - `TextField` / `SearchField` 组合标签、说明、校验与输入控件；`Input` 适合只需要输入本身的场景。
 - Dropdown、ContextMenu、Menubar 的自绘路径共享内部 HeroUI 菜单渲染层。Native ContextMenu 默认长按并相对 trigger 居中，`anchor="touch"` 显式启用触点定位。Web 使用右键 / 键盘触发。
+  ContextMenu / Dropdown 的 Web 呈现可通过 MenuProvider 或组件的 `menuAdapter` 替换；通用宿主契约、NativeList 继承与关闭通知约定见 [外部菜单适配器](./menu_adapter.md)。
 - `native` 表示系统原生实现，不表示所有 Native 平台上的 HeroUI 实现。Button、Switch、Slider、Select、Dropdown、ContextMenu 等已有系统原生路径及 NativeTrigger 均保留；各组件的默认值与可用模式以自身类型为准。
 - Select 保留 `wheel / native / dropdown / dialog / sheet` 等已有模式；Sheet 继续使用 TrueSheet。弹层在根页面、Sheet、Dialog 中沿用窗口定位与分层宿主。
 - Native Tooltip 直接渲染 children；Native Progress、Toggle、ContextMenu / Menubar 等在官方组件之外补齐所需能力。Icon 保留 Lucide + Uniwind，ColorPicker 保留 reanimated-color-picker。

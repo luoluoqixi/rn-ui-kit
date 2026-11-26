@@ -1,4 +1,4 @@
-import type { ComponentProps, ReactNode, RefObject } from "react";
+import type { ComponentProps, KeyboardEventHandler, MouseEventHandler, ReactNode, RefObject } from "react";
 import type { Menu } from "heroui-native/menu";
 import type { Dropdown } from "@heroui/react/dropdown";
 import type { MenuContentProps, MenuEntry } from "../menu/types";
@@ -6,6 +6,7 @@ import type { PressableProps, ViewProps } from "react-native";
 
 import type { NativeHapticsDelay, NativeHapticsSetting } from "../utils";
 import type { RenderProp } from "../utils/render";
+import type { MenuAdapterProps } from "../menu/menu_adapter_types";
 
 export type ContextMenuRenderContext = {
   native: boolean;
@@ -21,6 +22,8 @@ export type ContextMenuItemData = {
   /** Custom menus: set false to omit this item's empty icon slot. Defaults to false; supplied icons remain visible. */
   reserveIconSpace?: boolean;
   "iconProps"?: Record<string, unknown>;
+  /** 外部菜单适配器的附加数据；不会从 React 图标或文案中猜测宿主配置。 */
+  hostData?: Readonly<Record<string, unknown>>;
   "indicator"?: RenderProp<ContextMenuItemData>;
   "itemProps"?: Record<string, unknown>;
   "label"?: RenderProp<ContextMenuItemData>;
@@ -58,7 +61,7 @@ export type ContextMenuNativeIosProps = {
 export type ContextMenuContentProps = MenuContentProps;
 export type ContextMenuProps = ViewProps & ContextMenuRootExtensions;
 
-export type ContextMenuRootExtensions = {
+export type ContextMenuRootExtensions = MenuAdapterProps & {
   /** Internal handle used by NativeList's Android programmatic anchor. */
   __menuRef?: RefObject<{ presentMenu: () => void } | null>;
   __unsafeIosProps?: ContextMenuNativeIosProps;
@@ -77,7 +80,11 @@ export type ContextMenuRootExtensions = {
   trigger?: RenderProp<ContextMenuRenderContext>;
   /** Native 非交互 View/Text/Image 区域自动包装 Pressable；自定义布局组件可设 asChild=false。
    * 自定义按钮默认直接接收按压 props，需要转发 ref 和 Pressable 事件。 */
-  triggerProps?: Omit<PressableProps, "children"> & { asChild?: boolean };
+  triggerProps?: Omit<PressableProps, "children"> & {
+    asChild?: boolean;
+    onContextMenu?: MouseEventHandler<HTMLElement>;
+    onKeyDown?: KeyboardEventHandler<HTMLElement>;
+  };
   open?: boolean;
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;

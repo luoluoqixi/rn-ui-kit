@@ -133,6 +133,12 @@ for (const [name, path, exported] of [["dropdown", "@heroui/react/dropdown", "Dr
   mock.module(path, () => ({ ...source, [exported]: Root }));
 }
 const { Button } = await import("../src/core/components/ui/button");
+const dropdownHost = await import("../src/core/components/ui/dropdown/dropdown_host.web");
+mock.module("../src/core/components/ui/dropdown/dropdown_host", () => dropdownHost);
+const contextHost = await import("../src/core/components/ui/context_menu/context_menu_host.web");
+mock.module("../src/core/components/ui/context_menu/context_menu_host", () => contextHost);
+const { MenuProvider } = await import("../src/core/components/ui/context_menu/menu_provider");
+const { ContextMenu } = await import("../src/core/components/ui/context_menu");
 const { Dialog } = await import("../src/core/components/ui/dialog");
 const { AlertDialog } = await import("../src/core/components/ui/alert_dialog");
 const { Popover } = await import("../src/core/components/ui/popover");
@@ -148,13 +154,13 @@ const byText = text => [...document.querySelectorAll("button,[role=menuitem],[ro
 async function settle() { await act(async () => { await new Promise(r => setTimeout(r, 40)); }); }
 async function render(content) {
   if (!root) { const mount = document.createElement("div"); document.body.append(mount); root = createRoot(mount); }
-  await act(() => root.render(content)); await settle();
+  await act(async () => root.render(content)); await settle();
 }
-async function click(node) { expect(node).toBeTruthy(); await act(() => node.click()); await settle(); }
+async function click(node) { expect(node).toBeTruthy(); await act(async () => node.click()); await settle(); }
 async function pressOverlay() {
   const node = document.querySelector(".test-backdrop");
   expect(node).toBeTruthy();
-  await act(() => {
+  await act(async () => {
     node.dispatchEvent(new win.PointerEvent("pointerdown", { bubbles: true, button: 0, pointerId: 1, pointerType: "mouse" }));
     node.dispatchEvent(new win.PointerEvent("pointerup", { bubbles: true, button: 0, pointerId: 1, pointerType: "mouse" }));
     node.click();
@@ -163,17 +169,17 @@ async function pressOverlay() {
 }
 async function key(node, key) {
   expect(node).toBeTruthy();
-  await act(() => node.dispatchEvent(new win.KeyboardEvent("keydown", { key, bubbles: true, cancelable: true })));
-  await act(() => node.dispatchEvent(new win.KeyboardEvent("keyup", { key, bubbles: true, cancelable: true })));
+  await act(async () => node.dispatchEvent(new win.KeyboardEvent("keydown", { key, bubbles: true, cancelable: true })));
+  await act(async () => node.dispatchEvent(new win.KeyboardEvent("keyup", { key, bubbles: true, cancelable: true })));
   await settle();
 }
-afterEach(async () => { await act(() => { toastBridge.closeAll(); root?.unmount(); }); root = undefined; await settle(); document.body.replaceChildren(); });
+afterEach(async () => { await act(async () => { toastBridge.closeAll(); root?.unmount(); }); root = undefined; await settle(); document.body.replaceChildren(); });
 
 test("Dialog trigger, title, actions, Escape, controlled open and focus return", async () => {
   const changes=[]; let saved=0;
   await render(<Dialog trigger="编辑资料" title="资料" description="编辑说明" content={<input aria-label="姓名" />}
     actionLabel="保存" actionProps={{ onPress: () => saved++ }} cancelLabel="取消" onOpenChange={v => changes.push(v)} />);
-  const trigger=byText("编辑资料"); await act(() => trigger.focus()); await click(trigger);
+  const trigger=byText("编辑资料"); await act(async () => trigger.focus()); await click(trigger);
   expect(byRole("dialog")).toBeTruthy(); expect(document.body.textContent).toContain("编辑说明");
   await click(byText("保存")); expect(saved).toBe(1); expect(byRole("dialog")).toBeTruthy();
   await key(document.activeElement, "Escape"); expect(byRole("dialog")).toBeNull(); expect(changes).toEqual([true,false]);
@@ -355,7 +361,7 @@ test("HeroUI nested submenu remains inside its Dialog and keeps keyboard focus",
   await click(byText("编辑窗口"));
   const inner = byText("内层操作").closest('[role="dialog"]');
   await click(byText("内层操作"));
-  await act(() => byText("更多选项").focus());
+  await act(async () => byText("更多选项").focus());
   await key(byText("更多选项"), "ArrowRight");
   const menus = document.querySelectorAll('[role="menu"]');
   expect(menus.length).toBe(2); expect(inner.contains(menus[1])).toBe(true);
@@ -415,9 +421,9 @@ function expectSheetStillOpen() {
 test("actual TrueSheet Drawer: submenu and root menu Escape preserve Sheet and outer HeroUI Dialog", async () => {
   await renderRealSheet();
   await click(byText("Sheet 菜单"));
-  await act(() => byText("Sheet 更多").focus()); await key(byText("Sheet 更多"), "ArrowRight");
+  await act(async () => byText("Sheet 更多").focus()); await key(byText("Sheet 更多"), "ArrowRight");
   expect(document.querySelectorAll('[role="menu"]').length).toBe(2);
-  await act(() => byText("Sheet 子项").focus());
+  await act(async () => byText("Sheet 子项").focus());
   await key(document.activeElement, "Escape"); expectSheetStillOpen();
   expect(document.querySelectorAll('[role="menu"]').length).toBe(1);
   await key(document.activeElement, "Escape"); expectSheetStillOpen();
@@ -429,7 +435,7 @@ test("actual TrueSheet Drawer: Select, Popover, Dialog and protected AlertDialog
   await key(document.activeElement, "Escape"); expectSheetStillOpen();
   await click(byText("Sheet Popover"));
   const input = document.querySelector('[placeholder="Sheet Popover 输入"]');
-  await act(() => input.focus()); await key(input, "Escape"); expectSheetStillOpen();
+  await act(async () => input.focus()); await key(input, "Escape"); expectSheetStillOpen();
   await click(byText("Sheet 内窗口"));
   const dialog = [...document.querySelectorAll('[data-slot="modal-dialog"]')].at(-1);
   await key(dialog, "Escape"); expectSheetStillOpen();
@@ -437,4 +443,74 @@ test("actual TrueSheet Drawer: Select, Popover, Dialog and protected AlertDialog
   const alert = document.querySelector('[role="alertdialog"]');
   await key(alert, "Escape"); expectSheetStillOpen(); expect(alert.isConnected).toBe(true);
   await click(byText("返回 Sheet")); expectSheetStillOpen();
+});
+
+const menuDeferred = () => { let resolve; const promise = new Promise(yes => { resolve = yes; }); return { promise, resolve }; };
+test("external Dropdown uses the real generated Button and NativeTrigger, keyboard and imperative row handle", async () => {
+  const requests = [], changes = []; let pressed = 0, selected = 0; const ref = { current: null }; const sessions = [];
+  const adapter = { open: request => { requests.push(request); const closed = menuDeferred(); sessions.push(closed); return { closed: closed.promise }; } };
+  await render(<MenuProvider value={{ menuAdapter: adapter }}><Dropdown __menuRef={ref} triggerLabel="宿主下拉"
+    onOpenChange={next => changes.push(next)} triggerProps={{ onPress: () => pressed++ }}
+    contentProps={{ side: "top", align: "center", sideOffset: 6 }} menuAdapterOptions={{ theme: "test" }}
+    items={[{ value: "copy", label: "复制", onSelect: () => selected++ }]} /></MenuProvider>);
+  const trigger = byText("宿主下拉"); trigger.getBoundingClientRect = () => ({ left: 10, top: 40, width: 120, height: 44 });
+  await click(trigger); expect(pressed).toBe(1); expect(requests).toHaveLength(1); expect(byRole("menu")).toBeNull();
+  expect(requests[0]).toMatchObject({ kind: "dropdown", x: 70, y: 34, options: { theme: "test" }, placement: { side: "top", align: "center", sideOffset: 6 }, anchor: { rect: { x: 10, y: 40, width: 120, height: 44 } } });
+  expect(changes).toEqual([true]); await act(async () => requests[0].select(requests[0].items[0].id)); expect(selected).toBe(1);
+  await act(async () => sessions[0].resolve()); await settle(); expect(changes).toEqual([true, false]);
+  await key(trigger, "ArrowDown"); expect(requests[1].source).toBe("keyboard");
+  await act(async () => sessions[1].resolve()); await settle();
+  await act(async () => ref.current.presentMenu()); await settle(); expect(requests[2].source).toBe("programmatic");
+  await act(async () => sessions[2].resolve()); await settle();
+  await render(<MenuProvider value={{ menuAdapter: adapter }}><Dropdown key="native-face" nativeTrigger nativeTriggerIcon="none" triggerLabel="系统风格触发器"
+    onOpenChange={next => changes.push(next)} items={[{ value: "copy" }]} /></MenuProvider>);
+  await click(byText("系统风格触发器")); expect(requests).toHaveLength(4); expect(changes.at(-1)).toBe(true);
+  await act(async () => sessions[3].resolve()); await settle(); expect(changes.at(-1)).toBe(false);
+});
+
+test("external menu dispatch honors per-component adapters, native=false, local opt-out and legacy provider behavior", async () => {
+  const calls = []; const globalAdapter = { open: () => { calls.push("global"); return {}; } };
+  const localAdapter = { open: () => { calls.push("local"); return {}; } };
+  const items = [{ value: "action", label: "操作" }];
+  for (const [index, props, expected] of [[0, {}, "global"], [1, { menuAdapter: localAdapter }, "local"],
+    [2, { native: false }, null], [3, { menuAdapter: false }, null]]) {
+    await render(<MenuProvider value={{ menuAdapter: globalAdapter }}><Dropdown key={index} {...props} triggerLabel="渲染入口" items={items} /></MenuProvider>);
+    const count = calls.length; await click(byText("渲染入口"));
+    if (expected) { expect(calls.at(-1)).toBe(expected); expect(byRole("menu")).toBeNull(); }
+    else { expect(calls).toHaveLength(count); expect(byRole("menu")).not.toBeNull(); await key(document.activeElement, "Escape"); }
+  }
+  // 旧 native/showNativeMenu 配置不会突然改变原有 Web Dropdown。
+  await render(<MenuProvider value={{ native: true, showNativeMenu: async () => calls.push("legacy") }}><Dropdown key="legacy" triggerLabel="旧配置" items={items} /></MenuProvider>);
+  await click(byText("旧配置")); expect(byRole("menu")).not.toBeNull(); expect(calls).not.toContain("legacy");
+  await key(document.activeElement, "Escape");
+  await render(<MenuProvider value={{ menuAdapter: globalAdapter, native: false }}><Dropdown key="local-overrides-default" native menuAdapter={localAdapter} triggerLabel="局部启用" items={items} /></MenuProvider>);
+  await click(byText("局部启用")); expect(calls.at(-1)).toBe("local");
+});
+
+test("external Dropdown preserves user cancellation and disabled props; controlled false closes host resources", async () => {
+  const requests = [], changes = []; let closed = 0;
+  const adapter = { open: request => { requests.push(request); return { closed: new Promise(() => {}), close: () => closed++ }; } };
+  for (const [index, props] of [[0, { disabled: true }], [1, { triggerProps: { isDisabled: true } }],
+    [2, { triggerProps: { onPress: e => e.preventDefault() } }],
+    [3, { trigger: <button onClick={e => e.preventDefault()}>禁止打开</button> }]]) {
+    await render(<Dropdown key={index} menuAdapter={adapter} triggerLabel="禁止打开" items={[]} {...props} />);
+    await click(byText("禁止打开")); expect(requests).toHaveLength(0);
+  }
+  const renderControlled = open => render(<Dropdown key="controlled" open={open} onOpenChange={next => changes.push(next)}
+    menuAdapter={adapter} triggerLabel="受控宿主" items={[]} />);
+  await renderControlled(false); await click(byText("受控宿主")); expect(changes).toEqual([true]); expect(requests).toHaveLength(0);
+  await renderControlled(true); expect(requests).toHaveLength(1); await renderControlled(false);
+  expect(requests[0].signal.aborted).toBe(true); expect(closed).toBe(1);
+});
+
+test("public ContextMenu inherits or overrides provider adapters and explicit native=false keeps HeroUI", async () => {
+  const requests = []; const adapter = { open: request => { requests.push(request); return {}; } };
+  const target = <Button>区域入口</Button>;
+  for (const [index, props, external] of [[0, {}, true], [1, { native: false }, false], [2, { menuAdapter: false }, false]]) {
+    await render(<MenuProvider value={{ menuAdapter: adapter }}><ContextMenu key={index} {...props} trigger={target} items={[{ value: "copy", label: "复制" }]} /></MenuProvider>);
+    const count = requests.length;
+    await act(async () => byText("区域入口").dispatchEvent(new win.MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 15, clientY: 25 }))); await settle();
+    expect(requests.length - count).toBe(external ? 1 : 0); expect(byRole("menu") !== null).toBe(!external);
+    if (!external) await key(document.activeElement, "Escape");
+  }
 });
