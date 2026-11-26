@@ -22,6 +22,7 @@
 # - Web 无退出动画时 Drawer 可先卸载：缺失节点视为 dismissal 已结束，保证事件和 Promise 完成。
 # - Web auto 测量克隆额外 opacity:0，防止导航子节点 visibility:visible 把测量副本绘制出来。
 # 完整逐项依据及验证：docs/patch/true_sheet_4.1.2_migration.md。
+# - Android：Pointer Events 跟随 React Native dispatchPointerEvents，避免 Toast 拖拽取消命中原生 root 后循环转发崩溃。
 diff --git a/android/src/main/java/com/lodev09/truesheet/TrueSheetContentView.kt b/android/src/main/java/com/lodev09/truesheet/TrueSheetContentView.kt
 index 592db8d..586af68 100644
 --- a/android/src/main/java/com/lodev09/truesheet/TrueSheetContentView.kt
@@ -151,10 +152,29 @@ index a09051b..d9d59e6 100644
  
    /**
 diff --git a/android/src/main/java/com/lodev09/truesheet/TrueSheetViewController.kt b/android/src/main/java/com/lodev09/truesheet/TrueSheetViewController.kt
-index a114410..0909d6a 100644
+index a114410..faadadd 100644
 --- a/android/src/main/java/com/lodev09/truesheet/TrueSheetViewController.kt
 +++ b/android/src/main/java/com/lodev09/truesheet/TrueSheetViewController.kt
-@@ -285,6 +285,20 @@ class TrueSheetViewController(private val reactContext: ThemedReactContext) :
+@@ -17,6 +17,7 @@ import androidx.core.graphics.ColorUtils
+ import androidx.core.graphics.createBitmap
+ import androidx.core.view.isNotEmpty
+ import com.facebook.react.R
++import com.facebook.react.config.ReactFeatureFlags
+ import com.facebook.react.uimanager.JSPointerDispatcher
+ import com.facebook.react.uimanager.JSTouchDispatcher
+ import com.facebook.react.uimanager.PixelUtil.dpToPx
+@@ -233,7 +234,9 @@ class TrueSheetViewController(private val reactContext: ThemedReactContext) :
+ 
+   // Touch Dispatchers
+   private val jsTouchDispatcher = JSTouchDispatcher(this)
+-  private val jsPointerDispatcher = JSPointerDispatcher(this)
++  // Keep the sheet root consistent with ReactSurfaceView and the overlay root.
++  private val jsPointerDispatcher =
++    if (ReactFeatureFlags.dispatchPointerEvents) JSPointerDispatcher(this) else null
+   private val touchDeduper = TouchEventDeduper()
+ 
+   private val eventDispatcher
+@@ -285,6 +288,20 @@ class TrueSheetViewController(private val reactContext: ThemedReactContext) :
      }
  
    // React tag of the user-provided scrollable within the content (see the scrollableRef prop)
@@ -175,7 +195,7 @@ index a114410..0909d6a 100644
    var scrollableHandle: Int = -1
  
    override var sheetCornerRadius: Float = DEFAULT_CORNER_RADIUS.dpToPx()
-@@ -381,7 +395,7 @@ class TrueSheetViewController(private val reactContext: ThemedReactContext) :
+@@ -381,7 +398,7 @@ class TrueSheetViewController(private val reactContext: ThemedReactContext) :
    override var absoluteFooter: Boolean = false
  
    override val footerInsetAdjustment: Boolean
@@ -184,7 +204,7 @@ index a114410..0909d6a 100644
  
    override val peekContentHeight: Int
      get() = containerView?.peekContentHeight ?: cachedPeekContentHeight
-@@ -1000,6 +1014,8 @@ class TrueSheetViewController(private val reactContext: ThemedReactContext) :
+@@ -1000,6 +1017,8 @@ class TrueSheetViewController(private val reactContext: ThemedReactContext) :
      // Configure behavior
      behavior.isHideable = true
      behavior.isDraggable = draggable
@@ -193,7 +213,7 @@ index a114410..0909d6a 100644
      behavior.scrollingExpandsSheet = scrollableOptions?.scrollingExpandsSheet ?: true
      behavior.dismissThreshold = dismissThreshold
      behavior.lowestSheetTop = { detentCalculator.getLowestSheetTop() }
-@@ -1824,6 +1840,7 @@ class TrueSheetViewController(private val reactContext: ThemedReactContext) :
+@@ -1824,6 +1843,7 @@ class TrueSheetViewController(private val reactContext: ThemedReactContext) :
     * driven by onSlide so the parent tracks this sheet's actual position.
     */
    private fun syncParentTranslation(sheetTop: Int) {
@@ -201,6 +221,54 @@ index a114410..0909d6a 100644
      val parent = parentSheetView ?: return
      val minSheetTop = detentCalculator.getSheetTopForDetentIndex(0)
      parent.syncTranslationForChild(sheetTop, minSheetTop)
+@@ -1891,7 +1911,7 @@ class TrueSheetViewController(private val reactContext: ThemedReactContext) :
+       if (touchDeduper.shouldDispatch(event)) {
+         jsTouchDispatcher.handleTouchEvent(event, it, reactContext)
+       }
+-      jsPointerDispatcher.handleMotionEvent(event, it, true)
++      jsPointerDispatcher?.handleMotionEvent(event, it, true)
+     }
+     return super.onInterceptTouchEvent(event)
+   }
+@@ -1907,19 +1927,19 @@ class TrueSheetViewController(private val reactContext: ThemedReactContext) :
+       if (touchDeduper.shouldDispatch(event)) {
+         jsTouchDispatcher.handleTouchEvent(event, it, reactContext)
+       }
+-      jsPointerDispatcher.handleMotionEvent(event, it, false)
++      jsPointerDispatcher?.handleMotionEvent(event, it, false)
+     }
+     super.onTouchEvent(event)
+     return true
+   }
+ 
+   override fun onInterceptHoverEvent(event: MotionEvent): Boolean {
+-    eventDispatcher?.let { jsPointerDispatcher.handleMotionEvent(event, it, true) }
++    eventDispatcher?.let { jsPointerDispatcher?.handleMotionEvent(event, it, true) }
+     return super.onHoverEvent(event)
+   }
+ 
+   override fun onHoverEvent(event: MotionEvent): Boolean {
+-    eventDispatcher?.let { jsPointerDispatcher.handleMotionEvent(event, it, false) }
++    eventDispatcher?.let { jsPointerDispatcher?.handleMotionEvent(event, it, false) }
+     return super.onHoverEvent(event)
+   }
+ 
+@@ -1927,13 +1947,13 @@ class TrueSheetViewController(private val reactContext: ThemedReactContext) :
+     coordinatorLayout?.childDidClaimNativeGesture()
+     eventDispatcher?.let {
+       jsTouchDispatcher.onChildStartedNativeGesture(ev, it)
+-      jsPointerDispatcher.onChildStartedNativeGesture(childView, ev, it)
++      jsPointerDispatcher?.onChildStartedNativeGesture(childView, ev, it)
+     }
+   }
+ 
+   override fun onChildEndedNativeGesture(childView: View, ev: MotionEvent) {
+     eventDispatcher?.let { jsTouchDispatcher.onChildEndedNativeGesture(ev, it) }
+-    jsPointerDispatcher.onChildEndedNativeGesture()
++    jsPointerDispatcher?.onChildEndedNativeGesture()
+   }
+ 
+   override fun handleException(t: Throwable) {
 diff --git a/android/src/main/java/com/lodev09/truesheet/TrueSheetViewManager.kt b/android/src/main/java/com/lodev09/truesheet/TrueSheetViewManager.kt
 index d3b9927..8d85a83 100644
 --- a/android/src/main/java/com/lodev09/truesheet/TrueSheetViewManager.kt
@@ -1280,3 +1348,75 @@ index 5be61e3..e9fc08a 100644
        pointerEvents: 'none',
      });
      measurement.style.setProperty(FOOTER_INSET, '0px');
+diff --git a/android/src/main/java/com/lodev09/truesheet/core/TrueSheetOverlayRootView.kt b/android/src/main/java/com/lodev09/truesheet/core/TrueSheetOverlayRootView.kt
+index 873ce64..e563b8c 100644
+--- a/android/src/main/java/com/lodev09/truesheet/core/TrueSheetOverlayRootView.kt
++++ b/android/src/main/java/com/lodev09/truesheet/core/TrueSheetOverlayRootView.kt
+@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
+ import android.view.MotionEvent
+ import android.view.View
+ import android.widget.FrameLayout
++import com.facebook.react.config.ReactFeatureFlags
+ import com.facebook.react.uimanager.JSPointerDispatcher
+ import com.facebook.react.uimanager.JSTouchDispatcher
+ import com.facebook.react.uimanager.RootView
+@@ -35,7 +36,11 @@ class TrueSheetOverlayRootView(private val reactContext: ThemedReactContext) :
+     get() = delegate?.eventDispatcher
+ 
+   private val jsTouchDispatcher = JSTouchDispatcher(this)
+-  private val jsPointerDispatcher = JSPointerDispatcher(this)
++  // Match ReactSurfaceView: W3C pointer dispatch is opt-in, independently of
++  // the touch events used by Pressability and Gesture Handler. In particular,
++  // RNGH cancels from (0, 0), which can hit this unregistered native root.
++  private val jsPointerDispatcher =
++    if (ReactFeatureFlags.dispatchPointerEvents) JSPointerDispatcher(this) else null
+   private val touchDeduper = TouchEventDeduper()
+ 
+   // Whether the current touch stream landed on a child
+@@ -93,7 +98,7 @@ class TrueSheetOverlayRootView(private val reactContext: ThemedReactContext) :
+       if (touchDeduper.shouldDispatch(event)) {
+         jsTouchDispatcher.handleTouchEvent(event, dispatcher, reactContext)
+       }
+-      jsPointerDispatcher.handleMotionEvent(event, dispatcher, true)
++      jsPointerDispatcher?.handleMotionEvent(event, dispatcher, true)
+     }
+     return super.onInterceptTouchEvent(event)
+   }
+@@ -110,32 +115,32 @@ class TrueSheetOverlayRootView(private val reactContext: ThemedReactContext) :
+       if (touchDeduper.shouldDispatch(event)) {
+         jsTouchDispatcher.handleTouchEvent(event, dispatcher, reactContext)
+       }
+-      jsPointerDispatcher.handleMotionEvent(event, dispatcher, false)
++      jsPointerDispatcher?.handleMotionEvent(event, dispatcher, false)
+     }
+     super.onTouchEvent(event)
+     return true
+   }
+ 
+   override fun onInterceptHoverEvent(event: MotionEvent): Boolean {
+-    eventDispatcher?.let { jsPointerDispatcher.handleMotionEvent(event, it, true) }
++    eventDispatcher?.let { jsPointerDispatcher?.handleMotionEvent(event, it, true) }
+     return super.onHoverEvent(event)
+   }
+ 
+   override fun onHoverEvent(event: MotionEvent): Boolean {
+-    eventDispatcher?.let { jsPointerDispatcher.handleMotionEvent(event, it, false) }
++    eventDispatcher?.let { jsPointerDispatcher?.handleMotionEvent(event, it, false) }
+     return super.onHoverEvent(event)
+   }
+ 
+   override fun onChildStartedNativeGesture(childView: View?, ev: MotionEvent) {
+     eventDispatcher?.let { dispatcher ->
+       jsTouchDispatcher.onChildStartedNativeGesture(ev, dispatcher)
+-      jsPointerDispatcher.onChildStartedNativeGesture(childView, ev, dispatcher)
++      jsPointerDispatcher?.onChildStartedNativeGesture(childView, ev, dispatcher)
+     }
+   }
+ 
+   override fun onChildEndedNativeGesture(childView: View, ev: MotionEvent) {
+     eventDispatcher?.let { jsTouchDispatcher.onChildEndedNativeGesture(ev, it) }
+-    jsPointerDispatcher.onChildEndedNativeGesture()
++    jsPointerDispatcher?.onChildEndedNativeGesture()
+   }
+ 
+   override fun handleException(t: Throwable) {

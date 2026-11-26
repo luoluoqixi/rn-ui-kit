@@ -280,7 +280,13 @@ test("Native Dialog and AlertDialog explicitly control overlay and back dismissa
 });
 test("Native Popover uses HeroUI popover presentation and render close",async()=>{
   await render(<Popover defaultOpen title="说明" content={({close})=><FakeButton onPress={close}>收起</FakeButton>}><FakeButton>打开</FakeButton></Popover>);
-  expect(latest.popoverContent.presentation).toBe("popover");await click("收起");expect(latest.popover.isOpen).toBe(false);
+  expect(latest.popoverContent.presentation).toBe("popover");
+  expect(latest.popoverContent.needsOffscreenAlphaCompositing).toBe(platform === "android");
+  expect(latest.popoverContent.renderToHardwareTextureAndroid).toBeUndefined();
+  await click("收起");expect(latest.popover.isOpen).toBe(false);
+  await render(<Popover key="override-compositing" defaultOpen contentProps={{ herouiNativeProps: { needsOffscreenAlphaCompositing: false, renderToHardwareTextureAndroid: true } }} content="自定义"><FakeButton>打开</FakeButton></Popover>);
+  expect(latest.popoverContent.needsOffscreenAlphaCompositing).toBe(false);
+  expect(latest.popoverContent.renderToHardwareTextureAndroid).toBe(true);
 });
 test("Native Menu preserves NativeTrigger, selected/disabled data, callbacks and imperative anchor",async()=>{
   const ref={current:null};let presses=0;const fn=()=>presses++;

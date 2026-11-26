@@ -7,6 +7,7 @@ const cases = [
   ["web-portal", "toast_portal.fixture.jsx"],
   ["native-provider", "overlay_provider.fixture.jsx"],
   ["native-toast-stack", "toast_stack_animation.fixture.jsx"],
+  ["native-popover-compositing", "popover_compositing.fixture.jsx"],
   ["native-window-anchor", "heroui_anchor.fixture.jsx"],
   ["native-window-anchor-android", "heroui_anchor.fixture.jsx", "android"],
 ];

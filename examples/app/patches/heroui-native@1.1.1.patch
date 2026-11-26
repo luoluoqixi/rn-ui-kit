@@ -1,6 +1,7 @@
 # HeroUI Native 1.1.1: reveal complete stacked Toast content while the front Toast is dragged.
 # Restore each Toast natural height and remove both covers during the drag; keep normal stacking and cancellation.
 # Update both source (Metro source condition) and published ESM entry points.
+# Android Popover: composite exit opacity on its wrapper without caching and clipping the surface shadow.
 diff --git a/src/components/toast/toast.animation.ts b/src/components/toast/toast.animation.ts
 --- a/src/components/toast/toast.animation.ts
 +++ b/src/components/toast/toast.animation.ts
@@ -75,3 +76,44 @@ diff --git a/lib/module/components/toast/toast.animation.js b/lib/module/compone
      return {
        opacity: isAnimationDisabledValue ? edgeOpacity : withTiming(edgeOpacity, COVER_TIMING_CONFIG)
      };
+diff --git a/src/components/popover/popover.tsx b/src/components/popover/popover.tsx
+index 95caeac..af2242e 100644
+--- a/src/components/popover/popover.tsx
++++ b/src/components/popover/popover.tsx
+@@ -1,6 +1,6 @@
+ import { createContext, forwardRef, use, useMemo } from 'react';
+ import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
+-import { StyleSheet, useWindowDimensions, View } from 'react-native';
++import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
+ import Animated from 'react-native-reanimated';
+ import { useSafeAreaInsets } from 'react-native-safe-area-context';
+ import { useThemeColor } from '../../helpers/external/hooks';
+@@ -330,6 +330,7 @@ const PopoverContentPopover = forwardRef<
+               zero-height wrapper breaks native scrolling in the content. */}
+           <Animated.View
+             exiting={exiting}
++            needsOffscreenAlphaCompositing={Platform.OS === 'android'}
+             collapsable={false}
+             style={popoverStyleSheet.contentWrapper}
+             pointerEvents="box-none"
+diff --git a/lib/module/components/popover/popover.js b/lib/module/components/popover/popover.js
+index 87b9c3f..c6a4af5 100644
+--- a/lib/module/components/popover/popover.js
++++ b/lib/module/components/popover/popover.js
+@@ -1,7 +1,7 @@
+ "use strict";
+ 
+ import { createContext, forwardRef, use, useMemo } from 'react';
+-import { StyleSheet, useWindowDimensions, View } from 'react-native';
++import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
+ import Animated from 'react-native-reanimated';
+ import { useSafeAreaInsets } from 'react-native-safe-area-context';
+ import { useThemeColor } from "../../helpers/external/hooks/index.js";
+@@ -250,6 +250,7 @@ const PopoverContentPopover = /*#__PURE__*/forwardRef(({
+       },
+       children: /*#__PURE__*/_jsx(Animated.View, {
+         exiting: exiting,
++        needsOffscreenAlphaCompositing: Platform.OS === 'android',
+         collapsable: false,
+         style: popoverStyleSheet.contentWrapper,
+         pointerEvents: "box-none",

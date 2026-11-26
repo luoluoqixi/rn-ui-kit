@@ -1,6 +1,7 @@
 import { useDefaultTextStyle } from "../provider/font_provider";
 import { Popover as HeroPopover } from "heroui-native/popover";
 import { isValidElement } from "react";
+import { Platform } from "react-native";
 import { Button } from "../button";
 import { Text } from "../text";
 import { cn } from "../utils/cn";
@@ -19,7 +20,12 @@ export function PopoverHeroUI(p: PopoverProps) {
     <HeroPopover.Trigger asChild isDisabled={p.isDisabled}><HeroUIWindowAnchor isOpen={s.open}>{isValidElement(trigger) ? trigger : <Button isDisabled={p.isDisabled}>{trigger}</Button>}</HeroUIWindowAnchor></HeroPopover.Trigger>
     <HeroPopover.Portal hostName={portalHostName}><HeroUIWindowOverlayScope>
       <HeroPopover.Overlay />
-      <HeroPopover.Content {...c?.herouiNativeProps} presentation="popover"
+      <HeroPopover.Content
+        // Composite Android entering opacity here; the HeroUI patch does the
+        // same on its exit wrapper. Keep hardware texture caching off so the
+        // surface's outer box-shadow is not clipped to rectangular bounds.
+        needsOffscreenAlphaCompositing={Platform.OS === "android"}
+        {...c?.herouiNativeProps} presentation="popover"
         placement={c?.herouiNativeProps?.placement ?? c?.side ?? "bottom"} align={c?.herouiNativeProps?.align ?? c?.align ?? "center"}
         offset={c?.herouiNativeProps?.offset ?? c?.sideOffset ?? 8} className={cn("gap-3", p.contentClassName, c?.className)}>
         {p.showArrow && <HeroPopover.Arrow />}
