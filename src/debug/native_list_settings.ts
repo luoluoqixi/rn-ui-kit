@@ -1,11 +1,15 @@
 import { useSyncExternalStore } from "react";
 
-import type { NativeListIosPressFeedback } from "../core/components/ui/native_list";
+import type { NativeListBasicPressFeedback, NativeListIosPressFeedback } from "../core/components/ui/native_list";
 
 // Host navigation mounts each debug route separately, so a provider inside a
 // route cannot share this setting with pushed routes. Keep it debug-only and
 // in memory: normal pages and their sheets share it; app restarts reset it.
-let iosPressFeedback: NativeListIosPressFeedback = "automatic";
+const defaults: {
+  iosPressFeedback: NativeListIosPressFeedback;
+  basicPressFeedback: NativeListBasicPressFeedback;
+} = { iosPressFeedback: "automatic", basicPressFeedback: "automatic" };
+let settings = defaults;
 const listeners = new Set<() => void>();
 
 function subscribe(listener: () => void) {
@@ -16,22 +20,29 @@ function subscribe(listener: () => void) {
 }
 
 function getSnapshot() {
-  return iosPressFeedback;
+  return settings;
 }
 
-function getServerSnapshot(): NativeListIosPressFeedback {
-  return "automatic";
+function getServerSnapshot() {
+  return defaults;
 }
 
 function setIosPressFeedback(next: NativeListIosPressFeedback) {
-  if (iosPressFeedback === next) return;
-  iosPressFeedback = next;
+  if (settings.iosPressFeedback === next) return;
+  settings = { ...settings, iosPressFeedback: next };
+  listeners.forEach((listener) => listener());
+}
+
+function setBasicPressFeedback(next: NativeListBasicPressFeedback) {
+  if (settings.basicPressFeedback === next) return;
+  settings = { ...settings, basicPressFeedback: next };
   listeners.forEach((listener) => listener());
 }
 
 export function useDebugNativeListSettings() {
   return {
-    iosPressFeedback: useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot),
+    ...useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot),
+    setBasicPressFeedback,
     setIosPressFeedback,
   };
 }

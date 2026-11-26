@@ -42,7 +42,7 @@ export function RnUiKitComponentExamplesDebugPage({
   onOpenComponentExample,
 }: RnUiKitDebugSectionContentProps) {
   const navigation = useNavigation<NavigationProp<DebugPanelNavigationParamList>>();
-  const { iosPressFeedback } = useDebugNativeListSettings();
+  const { basicPressFeedback, iosPressFeedback } = useDebugNativeListSettings();
   const isNativeIosPage = Platform.OS === "ios";
   const appBackgroundColors = useAppBackgroundColors();
   const insets = useSafeAreaInsets();
@@ -66,6 +66,7 @@ export function RnUiKitComponentExamplesDebugPage({
         </View>
       ) : null}
       <NativeList
+        basicPressFeedback={basicPressFeedback}
         iosPressFeedback={iosPressFeedback}
         backgroundColor={appBackgroundColors.screen}
         automaticallyAdjustsScrollIndicatorInsets={isNativeIosPage ? true : undefined}

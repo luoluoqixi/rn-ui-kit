@@ -27,11 +27,12 @@ type SheetStackParamList = {
 };
 
 function SheetStackIndexScreen() {
-  const { iosPressFeedback } = useDebugNativeListSettings();
+  const { basicPressFeedback, iosPressFeedback } = useDebugNativeListSettings();
   const navigation = useNavigation<NavigationProp<SheetStackParamList>>();
 
   return (
     <NativeList
+      basicPressFeedback={basicPressFeedback}
       iosPressFeedback={iosPressFeedback}
       style={styles.stackList}
       tracksNavigationBarScrollEdge
@@ -53,9 +54,10 @@ function SheetStackIndexScreen() {
 }
 
 function SheetStackDetailsScreen({ onClose }: { onClose: () => void }) {
-  const { iosPressFeedback } = useDebugNativeListSettings();
+  const { basicPressFeedback, iosPressFeedback } = useDebugNativeListSettings();
   return (
     <NativeList
+      basicPressFeedback={basicPressFeedback}
       iosPressFeedback={iosPressFeedback}
       style={styles.stackList}
       tracksNavigationBarScrollEdge

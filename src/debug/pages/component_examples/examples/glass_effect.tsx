@@ -534,7 +534,7 @@ function GlassEffectPreview({
 }
 
 export function GlassEffectExample() {
-  const { iosPressFeedback } = useDebugNativeListSettings();
+  const { basicPressFeedback, iosPressFeedback } = useDebugNativeListSettings();
   const embeddedInOverview = useIsComponentExampleEmbedded();
   const appBackgroundColors = useAppBackgroundColors();
   const colorSchemeName = useUiColorScheme();
@@ -570,6 +570,7 @@ export function GlassEffectExample() {
   return (
     <>
       <NativeList
+        basicPressFeedback={basicPressFeedback}
         iosPressFeedback={iosPressFeedback}
         dismissKeyboardOnTap
         automaticallyAdjustsScrollIndicatorInsets={Platform.OS === "ios" ? true : undefined}

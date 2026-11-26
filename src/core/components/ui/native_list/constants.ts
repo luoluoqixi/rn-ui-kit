@@ -5,14 +5,18 @@ export const NATIVE_LIST_BASIC_DEFAULT_STYLE = "rounded" as const;
 
 /** Basic NativeList 样式相关默认配置；主题颜色仍由运行时主题决定。 */
 export const NATIVE_LIST_BASIC_STYLE_DEFAULTS = {
-  borderRadius: 15,
+  /** HeroUI 默认 rounded-3xl 的参考值；组件实际随主题圆角变化。 */
+  borderRadius: 24,
   borderWidth: StyleSheet.hairlineWidth,
   dividerPaddingLeft: 16,
   dividerPaddingRight: 0,
   dividerWidth: StyleSheet.hairlineWidth,
-  sectionShadow: false,
+  sectionShadow: true,
   showDivider: true,
 } as const;
+
+/** Basic 行交由 Pressable 管理的按压反馈延迟；不设置长按超时清理。 */
+export const NATIVE_LIST_BASIC_PRESS_DELAY = 130;
 
 /** Basic NativeList 主题分割线的默认透明度。 */
 export const NATIVE_LIST_BASIC_DIVIDER_OPACITY = 0.3;

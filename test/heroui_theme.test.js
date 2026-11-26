@@ -43,7 +43,8 @@ for (const platform of ["web", "native"]) {
     const css = await readFile(new URL("../examples/app/global" + (platform === "native" ? ".native" : "") + ".css", import.meta.url), "utf8");
     const compiler = await compile(css, { base: appRoot, onDependency: () => {} });
     const iconColors = ["foreground", "muted", "accent", "success", "warning", "danger"];
-    const result = compiler.build(["size-4", "size-5", "size-6", ...iconColors.map(color => "text-" + color), "bg-accent", "bg-surface", "bg-overlay", "bg-separator", "text-field-foreground", "accent-field-placeholder", "bg-accent03", "text-primary", "bg-card", "text-muted-foreground"]);
+    const listSurfaceClasses = ["rounded-3xl", "rounded-none", "shadow-surface", "shadow-none"];
+    const result = compiler.build(["size-4", "size-5", "size-6", ...iconColors.map(color => "text-" + color), ...listSurfaceClasses, "bg-accent", "bg-surface", "bg-overlay", "bg-separator", "text-field-foreground", "accent-field-placeholder", "bg-accent03", "text-primary", "bg-card", "text-muted-foreground"]);
     const colors = generateUiThemeFromPrimaryColor("#2563eb").light;
     expect(result).toContain("--muted: " + colors.muted);
     expect(result).toContain("--accent: " + colors.accent);
@@ -58,6 +59,11 @@ for (const platform of ["web", "native"]) {
     expect(result).toContain("var(--muted)");
     for (const color of iconColors) expect(result).toContain(".text-" + color + " {");
     for (const size of [4, 5, 6]) expect(result).toContain(".size-" + size + " {");
+    // NativeList shares HeroUI's themed Surface radius and shadow on both graphs.
+    for (const className of listSurfaceClasses) expect(result).toContain("." + className + " {");
+    expect(result).toContain("--radius-3xl: calc(var(--radius) * 3)");
+    expect(result.match(/\.shadow-surface \{[^}]+\}/)?.[0]).toMatch(/var\(--(?:shadow-surface|surface-shadow)\)/);
+    expect(result).toContain("--surface-shadow:");
     // Uniwind's generated local CSS may reserve removed variable names as unset
     // until the next Native bundle. The source and Web graph have no aliases.
     if (platform === "web") {

@@ -52,9 +52,9 @@ export function InputExampleContent() {
 }
 
 export function NativeListExampleContent() {
-  const { iosPressFeedback } = useDebugNativeListSettings();
+  const { basicPressFeedback, iosPressFeedback } = useDebugNativeListSettings();
   return (
-    <NativeList iosPressFeedback={iosPressFeedback}>
+    <NativeList basicPressFeedback={basicPressFeedback} iosPressFeedback={iosPressFeedback}>
       <NativeListSection title="NativeList">
         <NativeListNavigationItem
           title="Navigation item"

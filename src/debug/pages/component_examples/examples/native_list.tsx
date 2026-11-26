@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
 });
 
 export function NativeListExample() {
-  const { iosPressFeedback } = useDebugNativeListSettings();
+  const { basicPressFeedback, setBasicPressFeedback, iosPressFeedback } = useDebugNativeListSettings();
   const uiTheme = useUiTheme();
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
   const [customEditModeIcon, setCustomEditModeIcon] = useState(false);
@@ -213,6 +213,16 @@ export function NativeListExample() {
         ) : null}
         {!(isIos() && native) && (
           <Switch
+            isSelected={basicPressFeedback === "immediate"}
+            label="Basic 列表立即按压反馈"
+            labelPosition="right"
+            onSelectedChange={(enabled) =>
+              setBasicPressFeedback(enabled ? "immediate" : "automatic")
+            }
+          />
+        )}
+        {!(isIos() && native) && (
+          <Switch
             isSelected={customEditModeIcon}
             isDisabled={isIos() && native}
             label="自定义编辑模式图标"
@@ -271,6 +281,7 @@ export function NativeListExample() {
       <View style={styles.nativeListFrame}>
         {native || fallbackMounted ? (
           <NativeList
+            basicPressFeedback={basicPressFeedback}
             iosPressFeedback={iosPressFeedback}
             disabled={rowsDisabled}
             nativeHaptics

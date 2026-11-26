@@ -27,6 +27,9 @@ export type NativeListNavigationSelectionControls = {
 /** iOS 26 原生列表行按下反馈策略。 */
 export type NativeListIosPressFeedback = "automatic" | "immediate";
 
+/** Basic 列表行按压反馈策略；与 iOS 原生 List 的设置独立。 */
+export type NativeListBasicPressFeedback = "automatic" | "immediate";
+
 /** iOS 原生 SwiftUI List 支持的系统列表样式。 */
 export type NativeListIosStyle =
   | "automatic"
@@ -41,7 +44,7 @@ export type NativeListBasicStyle = "rounded" | "plain" | "plainFullWidth";
 
 /** Basic NativeList 样式的可选覆盖配置。 */
 export type NativeListBasicStyleOptions = {
-  /** Section 容器圆角；传入后优先于 listStyle 的圆角规则。 */
+  /** Section 容器圆角；rounded 样式默认使用 HeroUI rounded-3xl，传入数值可覆盖。 */
   borderRadius?: number;
   /** Section 外框颜色；仅在 showBorder 生效时使用。 */
   borderColor?: ViewStyle["borderColor"];
@@ -55,7 +58,7 @@ export type NativeListBasicStyleOptions = {
   dividerPaddingRight?: number;
   /** 行分割线粗细；默认 1。 */
   dividerWidth?: number;
-  /** Section 阴影；传 `false` 关闭，传 `true` 使用默认阴影，也可传 ViewStyle 自定义。 */
+  /** Section 阴影；默认 true 使用 HeroUI shadow-surface，false 关闭，也可传 ViewStyle 替换。 */
   sectionShadow?: boolean | ViewStyle;
   /** 所有 Basic 行的默认背景色；单行 backgroundColor 优先级更高。 */
   rowBackgroundColor?: ViewStyle["backgroundColor"];
@@ -341,6 +344,11 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
   NavigationBarScrollEdgeTrackingProps & {
     /** Basic List 内部 ScrollView 的配置；iOS 原生 List 会忽略此项。 */
     basicScrollViewProps?: BasicScrollViewProps;
+    /**
+     * Basic 列表行按压反馈：automatic（默认）延迟约 130ms，期间被滚动取消时不高亮；
+     * immediate 立即反馈。仅延迟行的视觉反馈，不延迟 onPress；iOS 原生 List 忽略。
+     */
+    basicPressFeedback?: NativeListBasicPressFeedback;
     /** 列表宿主背景色：iOS 原生 List 直接作用于 List，自定义 fallback 作用于根容器。 */
     backgroundColor?: ViewStyle["backgroundColor"];
     children?: ReactNode;

@@ -12,6 +12,7 @@
 - Select 保留 `wheel / native / dropdown / dialog / sheet` 等已有模式；Sheet 继续使用 TrueSheet。弹层在根页面、Sheet、Dialog 中沿用窗口定位与分层宿主。
 - Native Tooltip 直接渲染 children；Native Progress、Toggle、ContextMenu / Menubar 等在官方组件之外补齐所需能力。Icon 保留 Lucide + Uniwind，ColorPicker 保留 reanimated-color-picker。
 - NativeList 在 iOS 使用 `@luoluoqixi/expo-ui-55` 的 SwiftUI 实现；Android / Web 使用自定义 React Native basic 布局，未替换为 ListGroup。保留 Section、输入项、开关项、菜单、刷新和编辑模式。
+  Basic 分区的主题圆角、阴影及 `basicPressFeedback` 延迟反馈配置见 [NativeList basic](./native_list_basic.md)。
 
 ## Toast
 

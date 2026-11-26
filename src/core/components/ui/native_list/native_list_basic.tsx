@@ -23,6 +23,7 @@ import {
 } from "./context_menu";
 import { NativeListHapticsProvider, useResolvedNativeListHaptics } from "./haptics";
 import { useResolvedNativeListTriggerFontWeight } from "./native_trigger";
+import { BasicPressFeedbackContext, useBasicPressFeedbackProps } from "./basic_press_feedback";
 import {
   NATIVE_LIST_BASIC_DIVIDER_OPACITY,
   NATIVE_LIST_BASIC_DEFAULT_STYLE,
@@ -84,7 +85,7 @@ const NativeListBasicDividerColorContext =
 const NativeListBasicRowBackgroundColorContext =
   React.createContext<NativeListBasicStyleOptions["rowBackgroundColor"]>(undefined);
 const NativeListBasicSectionShadowContext =
-  React.createContext<NativeListBasicStyleOptions["sectionShadow"]>(undefined);
+  React.createContext<NativeListBasicStyleOptions["sectionShadow"]>(NATIVE_LIST_BASIC_STYLE_DEFAULTS.sectionShadow);
 const NativeListBasicShowDividerContext = React.createContext<boolean>(
   NATIVE_LIST_BASIC_STYLE_DEFAULTS.showDivider,
 );
@@ -292,6 +293,7 @@ export function NativeListRow({
   const contextMenuRef = React.useRef<{ presentMenu: () => void } | null>(null);
   const resolvedDisabledStyle = useResolvedNativeListDisabledStyle(disabledStyle);
   const [hovered, setHovered] = useState(false);
+  const pressFeedbackProps = useBasicPressFeedbackProps();
   const edit = useNativeListEditRow({
     disabled,
     nativeScrollId,
@@ -314,6 +316,7 @@ export function NativeListRow({
 
   const row = (
     <Pressable
+      {...pressFeedbackProps}
       disabled={disabled || (edit.onPress == null && !androidContextMenuEnabled)}
       className={Platform.OS === "web" && cursorDefault ? "cursor-default" : undefined}
       onHoverIn={() => setHovered(true)}
@@ -845,6 +848,7 @@ export function NativeListCustomItem({
   const contextMenuRef = React.useRef<{ presentMenu: () => void } | null>(null);
   const resolvedDisabledStyle = useResolvedNativeListDisabledStyle(disabledStyle);
   const [hovered, setHovered] = useState(false);
+  const pressFeedbackProps = useBasicPressFeedbackProps();
   const edit = useNativeListEditRow({
     disabled,
     nativeScrollId,
@@ -861,6 +865,7 @@ export function NativeListCustomItem({
     !resolvedContextMenuProps.triggerProps?.disabled;
   const row = (
     <Pressable
+      {...pressFeedbackProps}
       disabled={disabled || (edit.onPress == null && !androidContextMenuEnabled)}
       onHoverIn={() => setHovered(true)}
       onHoverOut={() => setHovered(false)}
@@ -948,20 +953,17 @@ export function NativeListSection({
   const theme = useUiTheme();
   const listStyle = React.useContext(NativeListBasicStyleContext);
   const borderRadius = React.useContext(NativeListBasicBorderRadiusContext);
+  const rowBackgroundColor = React.useContext(NativeListBasicRowBackgroundColorContext);
   const sectionShadow = React.useContext(NativeListBasicSectionShadowContext);
   const showBorder = React.useContext(NativeListBasicShowBorderContext) ?? false;
   const borderColor = React.useContext(NativeListBasicBorderColorContext) ?? theme.border;
   const borderWidth =
     React.useContext(NativeListBasicBorderWidthContext) ??
     NATIVE_LIST_BASIC_STYLE_DEFAULTS.borderWidth;
-  const sectionRadius =
-    borderRadius ?? (listStyle === "rounded" ? NATIVE_LIST_BASIC_STYLE_DEFAULTS.borderRadius : 0);
+  const sectionRadiusStyle = borderRadius == null ? undefined : { borderRadius };
+  const sectionRadiusClass = listStyle === "rounded" ? "rounded-3xl" : "rounded-none";
   const sectionShadowStyle =
-    sectionShadow === true
-      ? styles.sectionShadowDefault
-      : sectionShadow === false || sectionShadow == null
-        ? undefined
-        : sectionShadow;
+    typeof sectionShadow === "object" ? sectionShadow : undefined;
   const editMode = useNativeListEditMode();
   const editContext = useNativeListEditContext();
   const resolvedDisabled = useResolvedNativeListDisabled();
@@ -995,12 +997,16 @@ export function NativeListSection({
         disabledStyle={disabledStyle}
       >
         <NativeListHapticsProvider nativeHaptics={nativeHaptics}>
-          <View style={[styles.sectionShadow, { borderRadius: sectionRadius }, sectionShadowStyle]}>
+          <View
+            className={`${sectionRadiusClass} ${sectionShadow === true ? "shadow-surface" : "shadow-none"}`}
+            style={[{ backgroundColor: rowBackgroundColor ?? theme.surface }, sectionRadiusStyle, sectionShadowStyle]}
+          >
             <View
+              className={sectionRadiusClass}
               style={[
                 styles.sectionBody,
                 listStyle !== "rounded" && styles.sectionBodyPlain,
-                { borderRadius: sectionRadius },
+                sectionRadiusStyle,
                 showBorder && { borderWidth },
                 showBorder && { borderColor },
               ]}
@@ -1029,6 +1035,7 @@ export function NativeListSection({
 }
 
 export function NativeListRoot({
+  basicPressFeedback = "automatic",
   basicScrollViewProps,
   children,
   contextMenuProps,
@@ -1129,7 +1136,9 @@ export function NativeListRoot({
                                   selectedIds={selectedIds}
                                 >
                                   <BasicNavigationSelectionContext.Provider value={navigationSelection}>
-                                    {children}
+                                    <BasicPressFeedbackContext.Provider value={basicPressFeedback}>
+                                      {children}
+                                    </BasicPressFeedbackContext.Provider>
                                   </BasicNavigationSelectionContext.Provider>
                                 </NativeListEditModeProvider>
                               </NativeListHapticsProvider>
@@ -1252,24 +1261,12 @@ const styles = StyleSheet.create({
   selectSwatch: { borderRadius: 7, height: 14, width: 14 },
   section: { gap: 6, marginBottom: 18, paddingHorizontal: 16 },
   sectionBody: {
-    borderRadius: NATIVE_LIST_BASIC_STYLE_DEFAULTS.borderRadius,
     overflow: "hidden",
   },
   // Android's native ContextMenu/MenuView can be measured outside an
   // unbordered plain section. Clipping that section hides the whole row;
   // plain lists do not need clipping because they have no rounded corners.
   sectionBodyPlain: { borderRadius: 0, overflow: "visible" },
-  sectionShadow: {},
-  sectionShadowDefault: Platform.select({
-    web: { boxShadow: "0 2px 4px rgb(0 0 0 / 12%)" },
-    default: {
-      elevation: 3,
-      shadowColor: "#000000",
-      shadowOffset: { height: 2, width: 0 },
-      shadowOpacity: 0.12,
-      shadowRadius: 4,
-    },
-  }),
   sectionFullWidth: { paddingHorizontal: 0 },
   sectionFooter: { paddingHorizontal: 12 },
   sectionHeader: {

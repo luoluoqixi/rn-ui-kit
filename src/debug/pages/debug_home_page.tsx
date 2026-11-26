@@ -39,7 +39,7 @@ export function RnUiKitDebugHomePage({
   onOpenSectionsInSheetChange?: (openInSheet: boolean) => void;
 }) {
   const isNativeIosPage = Platform.OS === "ios";
-  const { iosPressFeedback, setIosPressFeedback } = useDebugNativeListSettings();
+  const { basicPressFeedback, setBasicPressFeedback, iosPressFeedback, setIosPressFeedback } = useDebugNativeListSettings();
   const appBackgroundColors = useAppBackgroundColors();
   const insets = useSafeAreaInsets();
   const tracksScrollEdgeHeader =
@@ -58,6 +58,7 @@ export function RnUiKitDebugHomePage({
 
   return (
     <NativeList
+      basicPressFeedback={basicPressFeedback}
       iosPressFeedback={iosPressFeedback}
       backgroundColor={appBackgroundColors.screen}
       onRefresh={onRefresh}
@@ -81,8 +82,8 @@ export function RnUiKitDebugHomePage({
         </NativeListSection>
       ))}
 
-      {isNativeIosPage ? (
-        <NativeListSection title="列表交互">
+      <NativeListSection title="列表交互">
+        {isNativeIosPage ? (
           <NativeListSwitchItem
             switchProps={{
               isSelected: iosPressFeedback === "immediate",
@@ -91,8 +92,17 @@ export function RnUiKitDebugHomePage({
             }}
             title="iOS 列表立即按压反馈"
           />
-        </NativeListSection>
-      ) : null}
+        ) : (
+          <NativeListSwitchItem
+            switchProps={{
+              isSelected: basicPressFeedback === "immediate",
+              onSelectedChange: (enabled) =>
+                setBasicPressFeedback(enabled ? "immediate" : "automatic"),
+            }}
+            title="Basic 列表立即按压反馈"
+          />
+        )}
+      </NativeListSection>
 
       <NativeListSection title="分区行为">
         <NativeListSwitchItem
