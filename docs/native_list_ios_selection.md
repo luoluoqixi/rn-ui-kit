@@ -11,16 +11,16 @@
 - `expo-ui-55/ios/Button/Button.swift`：触摸观察、Button action 确认、逻辑行与 cell 的绑定和解绑。
 - `expo-ui-55/ios/ListView.swift`：导航选中 session、选中背景、返回转场协调、cell 重新托管。
 
-本机源码仓库为 `/Users/luoqixi/luoqixi/project/luoluoqixi/expo-ui-55`，示例应用通过 `bun link` 引用。修复后的 Swift 代码必须重新编译 iOS 开发包；只刷新 Metro 无法更新原生二进制。
+本机源码仓库为 `/Users/luoqixi/luoqixi/project/luoluoqixi/expo-ui-55`。测试时需确认示例应用实际消费这份本地源码，例如通过 `bun link`；不能只依据配置推断 node_modules 一定是链接。第 11 节验证时示例依赖实际为物理副本，已将修改的 `ios/ListView.swift` 同步到示例消费的副本再编译。修复后的 Swift 代码必须重新编译 iOS 开发包；只刷新 Metro 无法更新原生二进制。
 
 本文对应源码的 SHA-256：
 
 ```text
 ios/ListView.swift
-f766671be4e73ab4df2833fe5d978662975233522f64acc398b451a1053276e3
+443d8b5a01d794e566a99722d8c2cac1512ed29d0a3a420730de24f8c56f658f
 
 ios/Button/Button.swift
-ab9448f6ae2a3441e5075482e5b23c541cc5276101ea0d53536c84badf275f7f
+3ecfa5b428b375e4a5513f5cf7c534b821eb34d60fa499dd7b175b7f1db80b5d
 ```
 
 这是当前工作区实现的记录，不代表已经发布的包版本或所有历史提交都包含此方案。后续代码变化时，应重新核对本文中的实现和验证结论。
@@ -235,7 +235,7 @@ table 分支继续使用原生 table selection / deselection；不能笼统描�
 
 ## 7. 已完成的验证与未覆盖范围
 
-以下来自上述修复版本的历史验证记录；本次补文档没有再次运行设备或扩大验收范围。
+以下来自前几轮修复的历史验证记录；第 11 节另记此次 iOS 18 取消返回问题的复现与修复验证。历史的 iOS 18 通过结论没有覆盖“列表自身取消返回 → 下一次导航 → 返回列表”这条连续路径。
 
 环境：Debug + Metro 开发包；bundle 为 `com.luoluoqixi.rnuikitexample.release`，虽然名称包含 release，但当时构建配置确认为 Debug。模拟器为 iPhone 17 Pro / iOS 26.4.1、iPhone 16 Pro / iOS 18.1；WDA 为 16.15.3。
 
@@ -334,3 +334,68 @@ Debug 构建可在启动环境中设置 `EXPO_UI_LIST_TOUCH_DEBUG=1`，输出 `[
 - 普通页和 TrueSheet 中首次点击保留导航选中，返回随转场淡出，取消返回恢复选中；快速连续导航不串行。
 
 此节记录的是实现与待验收范围，不宣称上述真机边界已经修复成功。
+
+## 11. 2026-11-26：iOS 18 取消返回后闪选、污染下一次导航
+
+### 复现与直接证据
+
+用户在 iOS 18 报告：拖拽返回但未达到返回阈值，松手取消；反复尝试时隔次闪出行选中背景，随后进入任意详情再返回，该行会一直选中，直到下一次返回手势。
+
+使用 iPhone 16 Pro / iOS 18.1 模拟器、Debug + Metro，修改前录到完整路径：
+
+1. 重启应用，从调试首页进入组件示例列表。
+2. 从列表行内部水平右拖后松手，取消本次全屏返回，不离开列表。
+3. 点击 Button，进入详情，再完成返回。
+4. Button 背景持续残留。原录像还记录到取消结束后、列表已归位时重新闪出背景。
+
+一次取消即可污染下一次导航；只做四次取消再导航的早期测试录到了闪选，却没有录到最终残留。因此奇偶次数和完整操作链必须保留，不能仅以最后一张截图判断。
+
+原生诊断显示：取消列表自身向首页的 pop 时，iOS 18 又调用了列表宿主的 `viewWillAppear`。此刻列表仍是该转场的 source，真正的 `.to` 是首页；旧的外观入口没有核对这一点，将列表上被返回手势取消的行触摸，当成了返回列表时需要恢复 / 消退的导航选中。
+
+其后产生两层污染：
+
+- 错误的取消完成分支尝试恢复该行，并设置 `skipsNextNavigationSelectionFinalization`，形成取消后的闪选。
+- 捕获的 session / target 原本依赖后续 appearance 收尾释放；取消转场不保证提供所期待的回调。下一次点击已经取得 session 2，缓存却仍为 session 1，skip 标记也未释放。真正返回时，动画因旧 session 被拒绝，收尾又被 skip，形成持久残留。交替消费 / 重建旧状态解释了隔次出现的表现。
+
+这些证据指向转场来源识别及缓存生命周期，而非 HeroUI 颜色、TrueSheet 安全区或 `delaysContentTouches`。普通页面即可复现。
+
+### 当前修复
+
+修改仅在 `expo-ui-55/ios/ListView.swift`：
+
+1. 在 iOS 16–18 的外观入口，捕获 session 前确认当前列表确实属于 coordinator 的 `.to` 页面。复用已有的 controller 层级 / 导航栈位置判断，兼容 react-native-screens 的额外包装。取消自身离场时重放的 `viewWillAppear` 不再触发返回取消选中。
+2. 旧系统的 session / target 快照按实际 transition coordinator 对象归属。同一转场保持同一份快照，包括有意捕获的 nil；新转场重新捕获当前 session / target，并清除上一转场遗留的 skip。缓存不再依赖一次未必会到来的 `viewDidAppear` 才换代。
+3. 使用 weak coordinator 比较身份，避免仅缓存 `ObjectIdentifier` 时对象释放、地址复用造成误判。没有 coordinator 时沿用当前状态的兜底读取。
+
+iOS 16 的既有入口限制与 iOS 19 以上的既有分流共同限定了此次修复范围：不为 iOS 15 开启这套逻辑，不修改 iOS 26+ / tvOS 的原有执行分支。没有增加定时清色、手势拦截、强制立即反馈或列表外观修改。`Button.swift` 本轮未修改。
+
+### 验证结果与边界
+
+新增 `expo-ui-55/tests/native_list_transition.test.cjs` 与 Swift fixture，提取生产代码中的转场快照函数及外观入口判断执行；macOS harness 替换 iOS availability 判断及最小 UIKit 类型，分别测试旧 / 新分支。覆盖同转场保持归属、新转场刷新、旧 skip 不污染后续、nil 快照、无 coordinator 兜底、source 拒绝 / destination 放行及较新系统原分支。新增回归对修复前源码会失败：`next transition must not reuse a cancelled session`。
+
+```sh
+node --test tests/native_list_transition.test.cjs \
+  tests/native_list_selection.test.cjs \
+  tests/native_list_touch.test.cjs
+```
+
+合计 22 / 22 通过，示例 iOS Simulator Debug 构建通过。WDA 16.15.3 使用真实 W3C touch 和 simctl 录屏：
+
+| 环境 / 路径 | 此次观察 |
+| --- | --- |
+| iOS 18.1，普通页，默认延迟，连续取消四次；详情再取消一次后完成返回 | 未见取消后的二次闪选；Button / Card 依次导航返回后无残留。 |
+| iOS 18.1，普通页，立即反馈，一次列表取消及一次详情取消 | 正常按下反馈保留；后续两次详情返回无残留。 |
+| iOS 18.1，TrueSheet，默认延迟，同样取消并继续导航 | 未见闪选或残留；列表分组底色、圆角保留。 |
+| iOS 26.4.1，普通页及 TrueSheet，取消后继续导航返回 | 背景随返回转场淡出；Button / Card 依次返回后无残留，既有分组外观保留。 |
+
+原版与修正版使用 AVFoundation 对取消阶段逐帧抽取：原版页面归位后出现额外的行高亮，修正版没有该次重选，最初合法的触摸反馈仍在。模拟器录像与 XML 一并保留；RNS 全屏返回取消后 XML 有时仍报告离屏坐标，不能据此推断画面或颜色，后续触摸使用同轮初始可见行的已核对坐标。
+
+本机证据目录：
+
+```text
+/Users/luoqixi/.codex/visualizations/2026/11/26/01a21783-5615-7442-8c9b-9829c279c581/ios18-pop-cancel
+```
+
+`diagnostic-one.mp4` 是修改前完整失败路径；`final-automatic.mp4`、`final-immediate.mp4`、`final-sheet.mp4` 是 iOS 18 对照；`final-ios26-normal.mp4` / `final-ios26-sheet.mp4` 为较新系统回归。源码 hash、实际构建、每条路径及其差异记在该目录的 `verification.md`。素材不随文档提交。
+
+尚未运行 iOS 16 / 17 或真机验证，不能以版本分支覆盖代替实际验收。风险主要仍在 SwiftUI / react-native-screens 的 controller 层级与转场时序依赖；若无法取得 controller、navigationController 或 `.to`，外观入口继续原有兜底，而非直接禁用动画。需要特殊导航容器、多层跳回等路径时，仍应按 session 与实际 destination 检查。

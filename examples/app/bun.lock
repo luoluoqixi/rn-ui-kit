@@ -7,7 +7,7 @@
       "dependencies": {
         "@expo/metro-runtime": "=6.1.2",
         "@lodev09/react-native-true-sheet": "=4.1.2",
-        "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_11_26_v2",
+        "@luoluoqixi/expo-ui-55": "github:luoluoqixi/expo-ui-55#2026_11_26_v3",
         "@react-native-async-storage/async-storage": "=2.2.0",
         "@react-native-menu/menu": "=2.0.0",
         "@react-native-picker/picker": "^2.11.4",
@@ -386,7 +386,7 @@
 
     "@lodev09/react-native-true-sheet": ["@lodev09/react-native-true-sheet@4.1.2", "", { "peerDependencies": { "@radix-ui/react-dialog": ">=1", "@radix-ui/react-presence": ">=1", "@react-navigation/native": ">=7.3.0", "expo-router": ">=57.0.0", "react": "*", "react-dom": "*", "react-native": ">=0.82.0", "react-native-reanimated": ">=4.1.0", "react-native-worklets": ">=0.5.0", "standard-navigation": ">=0.0.9" }, "optionalPeers": ["@radix-ui/react-dialog", "@radix-ui/react-presence", "@react-navigation/native", "expo-router", "react-dom", "react-native-reanimated", "react-native-worklets", "standard-navigation"] }, "sha512-YaKgXCgeP+BkgOkYoaDRJLn5a3/i88oa+uND0BR2p00zXVDSifx30FxsCrNQrCyijmRwpyH9iaFg3+v5/YhJag=="],
 
-    "@luoluoqixi/expo-ui-55": ["@luoluoqixi/expo-ui-55@github:luoluoqixi/expo-ui-55#d04cca8", { "dependencies": { "sf-symbols-typescript": "^2.1.0" }, "peerDependencies": { "expo": "*", "react": "*", "react-native": "*" } }, "luoluoqixi-expo-ui-55-d04cca8", "sha512-p8LIlD+VT/lzoBuqY1PW2oiMWv54EpNDC4wjLAEZnQS/HWn/AJjY/iA6UTDNLwOCSccSC9fvg2lcNnBtI8rfLw=="],
+    "@luoluoqixi/expo-ui-55": ["@luoluoqixi/expo-ui-55@github:luoluoqixi/expo-ui-55#27b9708", { "dependencies": { "sf-symbols-typescript": "^2.1.0" }, "peerDependencies": { "expo": "*", "react": "*", "react-native": "*" } }, "luoluoqixi-expo-ui-55-27b9708", "sha512-9PSOKLWJ7WE6lg9EiPKI5LL4j5thG3vnK5YoRrw1Xh0+owsuR7kpYfnE+MwL6uTcn6oK3BcG+0IDGZMAn8urXQ=="],
 
     "@radix-ui/primitive": ["@radix-ui/primitive@1.1.7", "", {}, "sha512-rqWnm76nYT8HoNNqEjpgJ7Pw/DrBj5iBTrmEPo6HTX5+VJyBNOqTdv4g89G63HuR5g0AaENoAcH7Is5fF2kZ8Q=="],
 
