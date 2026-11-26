@@ -2,7 +2,7 @@
 
 [中文](./README.md) · [English](./README_EN.md)
 
-[Live demo (web)](https://rn-ui-kit.luoluoqixi.com/) · [Screenshots](./docs/SCREENSHOTS.md)
+[Live demo (web)](https://rn-ui-kit.luoluoqixi.com/) · [2.0.0 cross-platform screenshots](./docs/SCREENSHOTS.md)
 
 A cross-platform UI kit for the maintainer's Expo apps. Custom-drawn components use **HeroUI Native** on iOS and Android and **HeroUI React v3** on Web, wrapped by a single props-based rn-ui-kit API. Existing system-native implementations remain available for controls such as Button, Switch, Slider, Select, and menus. Sheet continues to use TrueSheet.
 

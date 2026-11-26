@@ -2,7 +2,7 @@
 
 [中文](./README.md) · [English](./README_EN.md)
 
-[在线示例 (web)](https://rn-ui-kit.luoluoqixi.com/) · [截图 / Screenshots](./docs/SCREENSHOTS.md)
+[在线示例 (web)](https://rn-ui-kit.luoluoqixi.com/) · [2.0.0 跨平台截图 / Screenshots](./docs/SCREENSHOTS.md)
 
 面向个人 Expo 项目的跨平台 UI 组件库。自绘 UI 在 iOS / Android 使用 **HeroUI Native**，Web 使用 **HeroUI React v3**，由 rn-ui-kit 提供简单的单入口 props API。Button、Switch、Slider、Select、菜单等已有的系统原生实现继续保留，Sheet 继续使用 TrueSheet。
 
