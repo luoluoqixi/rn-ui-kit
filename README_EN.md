@@ -99,15 +99,7 @@ export default function App() {
 }
 ```
 
-`RootProvider` installs gesture, safe-area, font, keyboard, theme, navigation theme, Sheet, Portal, Toast, native dialog, and haptics contexts. Apps that already configure gesture, safe-area, navigation theme, and Sheet providers can use the lower-level `UIProvider` where appropriate. Preferences are supplied by the app; the provider does not persist them.
-
-Theme tokens follow HeroUI semantics such as `background / foreground`, `surface`, `overlay`, `accent`, `default`, `danger`, and `fieldBackground / fieldForeground / fieldPlaceholder`. TypeScript uses camelCase and generated CSS uses kebab-case. `muted` is secondary text; secondary surfaces use `surfaceSecondary`. Component size and variant values follow each HeroUI component; there is no forced global size scale. System-native controls keep their own APIs.
-
-Built-in accent seeds are `mono`, `ocean`, `sakura`, `lavender`, `sunset`, `forest`, `ruby`, `golden`, and `aqua`; opaque `#RGB` and `#RRGGBB` colors are also supported. The project's `accent01`–`accent12` extensions remain available. Use `generateUiThemeFromPrimaryColor()` to create a light/dark theme and override selected `SemanticColors` fields.
-
-Theme seeds do not recolor application container backgrounds. Configure screen, sheet, card, or header backgrounds through `appBackgroundColors.light/dark`; individual containers may still provide their own background props. The old `backgroundFollowsTheme` preference has been removed. One global `RootProvider` is supported per app because Web body portals and Native overlays share global theme variables.
-
-Toast keeps the existing public call API and Burnt-backed native behavior. HeroUI handles the Web and `native: false` custom path; legacy `sonnerOptions` names remain adapter options and do not mean Sonner is still a runtime dependency.
+Mount one `RootProvider` and manage `preferences` in the app. Themes use HeroUI semantic tokens and support built-in accent colors and custom light/dark palettes. See [Provider and themes](./docs/provider_and_theme.md) for provider boundaries, theme generation, and container background configuration.
 
 ## Components
 
@@ -120,9 +112,7 @@ Toast keeps the existing public call API and Burnt-backed native behavior. HeroU
 | Lists and scrolling | `ListGroup`, `NativeList`, `ScrollView`, `ScrollShadow`, `TagGroup` |
 | Display | `Alert`, `Avatar`, `Badge`, `Chip`, `Skeleton`, `Text`, `Icon`, `Link`, `GlassEffect`, `ColorPicker` |
 
-Components use a simple props API. `Badge` is an anchored badge or status dot; standalone labels use `Chip`. `TextField` and `SearchField` combine labels, descriptions, validation, and input controls, while `Input` is for the input itself. Native Tooltip renders its children directly. Native Progress and Toggle include project implementations where the official Native package does not provide the same component.
-
-System-native paths and project-specific features are retained, including NativeTrigger and NativeList. Select keeps its existing `wheel`, `native`, `dropdown`, `dialog`, and `sheet` modes. Dropdown, ContextMenu, and Menubar share an internal HeroUI menu renderer for custom-drawn paths. Sheet continues to use TrueSheet. `AspectRatio` and `Collapsible` were removed; use an `aspectRatio` style or a single-item Accordion.
+Components use a single props-based API. `native` refers to system-native implementations; consult the exported TypeScript types for defaults, supported modes, and platform-specific props. See [component usage notes](./docs/components.md) for detailed behavior and configuration.
 
 ## Patch Sync And Development
 
@@ -140,3 +130,10 @@ The patch synchronizer copies active patches and updates the host app's `patched
 Start the example app with `cd examples/app && bun run start --clear`. Production export and platform-isolation checks are documented in [development notes](./docs/dev.md). Automated tests and Expo JS/CSS exports do not replace native compilation or real-device verification.
 
 Package entries include `rn-ui-kit` / `rn-ui-kit/core`, `rn-ui-kit/debug`, `rn-ui-kit/initialize`, `rn-ui-kit/styles.css`, and `rn-ui-kit/metro`.
+
+## Further Reading
+
+- [Provider and themes](./docs/provider_and_theme.md)
+- [Component usage notes](./docs/components.md)
+- [Development notes](./docs/dev.md)
+- [HeroUI migration history](./docs/heroui-migration.md)

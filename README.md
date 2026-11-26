@@ -123,39 +123,7 @@ export default function App() {
 }
 ```
 
-`RootProvider` 安装手势根节点、安全区、字体、键盘、主题、导航主题、Sheet、Portal、Toast、原生对话框与触觉反馈上下文。通常只需挂载一个。已自行配置手势、安全区、导航主题和 SheetProvider 的宿主可按需使用较低层的 `UIProvider`；它本身不替代这四项。`preferences` 由 App 管理并传入，Provider 不负责持久化。
-
-主题使用 HeroUI 语义：`background / foreground`、`surface / surfaceForeground`、`overlay / overlayForeground`、`accent / accentForeground`、`default / defaultForeground`、`danger / dangerForeground`、`fieldBackground / fieldForeground / fieldPlaceholder` 等。JS 字段为 camelCase，CSS 源变量为 kebab-case，例如 `fieldPlaceholder` 对应 `--field-placeholder` 与 `text-field-placeholder`。`muted` 表示弱文字色；次级背景使用 `surfaceSecondary` / `bg-surface-secondary`。
-
-组件 variant、尺寸、圆角和交互反馈遵循对应 HeroUI 组件，Button 使用 `primary / secondary / tertiary / outline / ghost / danger / danger-soft`、`sm / md / lg`。不存在强制所有组件共用的全局 size 表。系统原生控件、NativeTrigger 等保留自己的布局和尺寸能力。
-
-内置强调色：`mono`、`ocean`、`sakura`、`lavender`、`sunset`、`forest`、`ruby`、`golden`、`aqua`，也接受不透明的 `#RGB / #RRGGBB`。项目扩展 `accent01`～`accent12` 继续可用，light 逐渐加深、dark 逐渐提亮；它们不是 HeroUI 标准 token。
-
-完整自定义主题推荐基于生成器扩展：
-
-```tsx
-import { generateUiThemeFromPrimaryColor, type UiThemeConfig } from "rn-ui-kit";
-
-const generated = generateUiThemeFromPrimaryColor("#7c3aed");
-const theme: UiThemeConfig = {
-  light: { ...generated.light, surface: "#ffffff" },
-  dark: { ...generated.dark, surface: "#18181b" },
-};
-// <RootProvider theme={theme}>{children}</RootProvider>
-```
-
-主题 seed 不染色应用容器背景。使用 `appBackgroundColors` 按明暗模式覆盖容器层级，单个 Sheet 或页面也可传自己的背景属性：
-
-```tsx
-<RootProvider appBackgroundColors={{
-  light: { screen: "#f2f2f7", sheet: "#f2f2f7" },
-  dark: { screen: "#0e0e0e", header: "#1c1c1e" },
-}}>{children}</RootProvider>
-```
-
-只需配置要覆盖的 `screen / sheet / card / header`，其余使用默认值。旧 `backgroundFollowsTheme` 已移除。全局语义变量同步到 Web 根节点和 Native Uniwind，使 body portal 与 Native 弹层使用同一配色；不提供多个全局主题根相互隔离的保证。
-
-Toast 在 iOS / Android 默认使用 Burnt；Web 与 `native: false` 的自绘路径均使用 HeroUI。可通过 `toasterProps={{ defaultNative: false }}` 修改默认值，单次调用的 `native` 优先。既有调用 API 与 `sonnerOptions / sonnerNativeOptions` 等兼容参数仍由本库适配，运行时已无 Sonner 依赖。
+通常只需挂载一个 `RootProvider`，`preferences` 由 App 管理并传入。主题沿用 HeroUI 语义变量，支持内置强调色和自定义明暗主题。Provider 边界、主题生成与容器背景配置见 [Provider 与主题](./docs/provider_and_theme.md)。
 
 ## 组件
 
@@ -168,16 +136,7 @@ Toast 在 iOS / Android 默认使用 Burnt；Web 与 `native: false` 的自绘�
 | 列表与滚动 | `ListGroup`、`NativeList`、`ScrollView`、`ScrollShadow`、`TagGroup` |
 | 展示 | `Alert`、`Avatar`、`Badge`、`Chip`、`Skeleton`、`Text`、`Icon`、`Link`、`GlassEffect`、`ColorPicker` |
 
-- 组件默认采用单入口 props API；平台专用类型和能力放在 `herouiNativeProps / herouiWebProps` 等对应入口。旧 RNR 专属参数不作为兼容目标。
-- `Badge` 是依附内容的角标或状态点，例如 `<Badge content={5}><Avatar alt="用户" /></Badge>`；独立标签使用 `Chip`。
-- `TextField` / `SearchField` 组合标签、说明、校验与输入控件；`Input` 适合只需要输入本身的场景。
-- Dropdown、ContextMenu、Menubar 的自绘路径共享内部 HeroUI 菜单渲染层。Native ContextMenu 默认长按并相对 trigger 居中，`anchor="touch"` 显式启用触点定位。Web 使用右键 / 键盘触发。
-- `native` 表示系统原生实现，不表示所有 Native 平台上的 HeroUI 实现。Button、Switch、Slider、Select、Dropdown、ContextMenu 等已有系统原生路径及 NativeTrigger 均保留；各组件的默认值与可用模式以自身类型为准。
-- Select 保留 `wheel / native / dropdown / dialog / sheet` 等已有模式；Sheet 继续使用 TrueSheet。弹层在根页面、Sheet、Dialog 中沿用窗口定位与分层宿主。
-- Native Tooltip 直接渲染 children；Native Progress、Toggle、ContextMenu / Menubar 等在官方组件之外补齐所需能力。Icon 保留 Lucide + Uniwind，ColorPicker 保留 reanimated-color-picker。
-- NativeList 在 iOS 使用 `@luoluoqixi/expo-ui-55` 的 SwiftUI 实现；Android / Web 使用自定义 React Native basic 布局，未替换为 ListGroup。保留 Section、输入项、开关项、菜单、刷新和编辑模式。
-
-`AspectRatio`、`Collapsible` 已删除，分别使用容器 `aspectRatio` 样式和单项 Accordion。旧 `Form`、`Image`、`ListItem`、`FlashList`、`HoverCard` 与旧 `Menu` API 不再导出；`TextArea` 更名为 `Textarea`，菜单入口使用 `Dropdown`。新 `ListGroup` 是独立的 HeroUI 封装。
+组件采用单入口 props API。`native` 表示系统原生实现；各组件的默认值、可用模式与平台属性以导出的 TypeScript 类型为准。使用差异与专项配置见 [组件使用说明](./docs/components.md)。
 
 ## 补丁同步
 
@@ -208,3 +167,10 @@ bun test test
 - `rn-ui-kit/initialize`：平台初始化
 - `rn-ui-kit/styles.css`：共用语义变量与 Portal / scrollbar 辅助样式
 - `rn-ui-kit/metro`：双平台 CSS 与 HeroUI 模块隔离配置
+
+## 更多文档
+
+- [Provider 与主题](./docs/provider_and_theme.md)
+- [组件使用说明](./docs/components.md)
+- [开发说明](./docs/dev.md)
+- [HeroUI 迁移记录](./docs/heroui-migration.md)
