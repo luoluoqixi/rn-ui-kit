@@ -345,8 +345,9 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
     /** Basic List 内部 ScrollView 的配置；iOS 原生 List 会忽略此项。 */
     basicScrollViewProps?: BasicScrollViewProps;
     /**
-     * Basic 列表行按压反馈：automatic（默认）延迟约 130ms，期间被滚动取消时不高亮；
-     * immediate 立即反馈。仅延迟行的视觉反馈，不延迟 onPress；iOS 原生 List 忽略。
+     * Basic 列表行按压反馈：automatic 延迟约 130ms，期间被滚动取消时不高亮；
+     * immediate 立即反馈。Web 默认 immediate，Android / iOS basic 默认 automatic。
+     * 仅延迟行的视觉反馈，不延迟 onPress；iOS 原生 List 忽略。
      */
     basicPressFeedback?: NativeListBasicPressFeedback;
     /** 列表宿主背景色：iOS 原生 List 直接作用于 List，自定义 fallback 作用于根容器。 */

@@ -10,7 +10,7 @@ export type PressableFeedbackProps = FieldSlotProps<ComponentProps<typeof Native
   isDisabled?: boolean;
   accessibilityLabel?: string;
   onPress?: () => void;
-  /** Native uses the real overlay. Web ripple is a simple centered radial highlight. */
+  /** Native uses HeroUI feedback. Web ripple expands from the pointer (keyboard: center). */
   feedback?: "none" | "highlight" | "ripple";
   isAnimationDisabled?: boolean;
   nativeHaptics?: NativeHapticsSetting;

@@ -8,6 +8,7 @@ import { useOverlayState } from "../utils/overlay/overlay_state";
 import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
 import { HeroUIOverlayLayer } from "../utils/overlay/heroui_layer.web";
 import { resolveRenderProp } from "../utils/render";
+import { cn } from "../utils/cn";
 import type { TooltipProps } from "./types";
 export function TooltipHeroUI(p: TooltipProps) {
   const font = textWebStyle(useDefaultTextStyle());
@@ -18,7 +19,7 @@ export function TooltipHeroUI(p: TooltipProps) {
     delay={p.delay ?? 400} closeDelay={p.closeDelay ?? 0} isDisabled={p.isDisabled}>
     <Pressable>{isValidElement(p.children) ? p.children : <Button>{p.children}</Button>}</Pressable>
     <HeroUIOverlayLayer><HeroTooltip.Content {...p.contentProps?.herouiWebProps} UNSTABLE_portalContainer={container ?? undefined}
-      className={p.contentProps?.className} placement={p.contentProps?.herouiWebProps?.placement ?? p.contentProps?.side ?? "top"}
+      className={cn("w-max max-w-[min(20rem,calc(100svw-2rem))]", p.contentProps?.className)} placement={p.contentProps?.herouiWebProps?.placement ?? p.contentProps?.side ?? "top"}
       style={state => ({ ...font, ...(typeof contentStyle === "function" ? contentStyle(state) : contentStyle) })}
       offset={p.contentProps?.herouiWebProps?.offset ?? p.contentProps?.sideOffset ?? 8} showArrow={p.showArrow}>
       {p.showArrow && <HeroTooltip.Arrow />}

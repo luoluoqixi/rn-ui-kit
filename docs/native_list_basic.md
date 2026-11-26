@@ -38,16 +38,18 @@ NativeList 继续使用现有自定义布局，不将 Section、Item 替换为 L
 ## 延迟按压反馈
 
 ```tsx
-// 默认：按住约 130ms 后才显示行的按压反馈
+// 显式延迟反馈：按住约 130ms 后显示；Android / iOS basic 默认此模式
 <NativeList native={false} basicPressFeedback="automatic">
   {/* sections / items */}
 </NativeList>
 
-// 恢复此前按下就反馈的行为
+// 立即反馈：Web 默认此模式
 <NativeList native={false} basicPressFeedback="immediate">
   {/* sections / items */}
 </NativeList>
 ```
+
+未传 `basicPressFeedback` 时，Web 默认 `immediate`，Android / iOS basic 默认 `automatic`。显式传入任一模式始终优先于平台默认值。
 
 - `automatic`：将行 Pressable 的反馈激活延迟设为 130ms。若滚动或其他 responder 在激活前接管触摸并取消按压，就不显示按压背景；取消后也不会补亮。
 - `immediate`：激活延迟为零，保留此前的即时反馈。
@@ -72,13 +74,13 @@ NativeList 继续使用现有自定义布局，不将 Section、Item 替换为 L
 
 延迟直接交给当前安装版本的 RN Pressable（`unstable_pressDelay`）或 RN Web Pressable（`delayPressIn`）。没有新增自定义 timer、手势识别器、全局触摸监听或导航兜底状态机。卸载和滚动取消也由原 Pressability / PressResponder 清理。因此它不涉及此前 iOS 原生列表的可复用 cell、SwiftUI Button action 与 UIKit 返回转场之间的同步问题。
 
-主要行为变化是默认按压反馈晚一些，以及默认分区圆角和阴影变化；依赖旧即时触感的调用方可使用 `immediate`，要求无阴影的页面可设 `sectionShadow: false`。本功能依赖 RN 当前标记为 unstable 的延迟属性，后续升级 RN 时需要重跑取消和长按用例。
+Android / iOS basic 默认延迟按压反馈，Web 默认保留即时反馈；调用方可显式使用 `immediate` / `automatic` 覆盖。要求无阴影的页面可设 `sectionShadow: false`。本功能依赖 RN 当前标记为 unstable 的延迟属性，后续升级 RN 时需要重跑取消和长按用例。
 
 第三方手势若拦截触摸却未正常通知 Pressable 取消，仍可能有原有 responder 的边界问题；本次未增加额外补偿逻辑。系统原生 ContextMenu 的预览与高亮仍由系统管理，不保证受 basic 的 130ms 延迟控制。
 
 ## 调试与验证
 
-调试首页在 Android / Web 显示“Basic 列表立即按压反馈”开关，默认关闭。NativeList 示例在 basic 模式也提供同一开关；设置在当前调试会话内共享，应用重启恢复默认。iOS 首页保留原有 iOS 原生开关，查看 basic 开关需在 NativeList 示例切到非原生模式。示例原有三种 Basic List 样式选择保留。
+调试首页在 Android / Web 显示“Basic 列表立即按压反馈”开关，Web 默认开启，Android 默认关闭。NativeList 示例在 basic 模式也提供同一开关，iOS basic 默认关闭；设置在当前调试会话内共享，应用重启恢复平台默认值。iOS 首页保留原有 iOS 原生开关，查看 basic 开关需在 NativeList 示例切到非原生模式。示例原有三种 Basic List 样式选择保留。
 
 自动化验证包含：
 

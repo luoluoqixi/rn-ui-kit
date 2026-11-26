@@ -82,10 +82,11 @@ test("局部 portal host 脱离内容布局，弹层不会成为 Dialog 的 flex
   expect(host?.style.position).toBe("absolute");
   expect(host?.style.width).toBe("0px");
   expect(host?.style.height).toBe("0px");
+  expect(host?.style.pointerEvents).toBe("auto");
   expect(popup?.parentElement).toBe(host);
 });
 
-test("Sheet 子弹层留在当前 modal 内，并避开 Drawer 的 transform 和裁切", async () => {
+test("Sheet 子弹层在零宽 anchor 下使用 viewport 坐标，并保留 modal 归属", async () => {
   const mount = document.createElement("div");
   document.body.append(mount);
   const root = createRoot(mount);
@@ -93,11 +94,13 @@ test("Sheet 子弹层留在当前 modal 内，并避开 Drawer 的 transform 和
   await act(() =>
     root.render(
       <section id="dialog">
-        <div data-vaul-detached-wrapper="" style={{ contain: "paint", overflow: "hidden" }}>
-          <div style={{ transform: "translateY(100px)" }}>
-            <SheetContentScope>
-              <Popup label="Sheet 选项" />
-            </SheetContentScope>
+        <div id="sheet-anchor" style={{ position: "absolute", width: 0, left: 500, top: 40 }}>
+          <div data-vaul-detached-wrapper="" style={{ contain: "paint", overflow: "hidden" }}>
+            <div style={{ transform: "translateY(100px)" }}>
+              <SheetContentScope>
+                <Popup label="Sheet 选项" />
+              </SheetContentScope>
+            </div>
           </div>
         </div>
       </section>,
@@ -105,8 +108,14 @@ test("Sheet 子弹层留在当前 modal 内，并避开 Drawer 的 transform 和
   );
   const popup = document.querySelector("button");
   expect(popup?.closest("section")?.id).toBe("dialog");
+  expect(popup?.closest("#sheet-anchor")).not.toBeNull();
   expect(popup?.closest("[data-vaul-detached-wrapper]")).toBeNull();
   expect(popup?.parentElement?.dataset.uiSheetOverlayScope).toBe("");
+  expect(popup?.parentElement?.style.position).toBe("fixed");
+  expect(popup?.parentElement?.style.top).toBe("0px");
+  expect(popup?.parentElement?.style.left).toBe("0px");
+  expect(popup?.parentElement?.style.width).toBe("100%");
+  expect(popup?.parentElement?.style.height).toBe("0px");
   await act(() => root.render(null));
   expect(document.querySelector("[data-ui-sheet-overlay-scope]")).toBeNull();
   expect(document.querySelector("button")).toBeNull();

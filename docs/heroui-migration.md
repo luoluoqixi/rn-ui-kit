@@ -1160,6 +1160,9 @@ Portal 与 Slot 的替换已完成（实现说明与本轮验证见下文）：
 Android 迁移后的普通页面定位、Dialog 子弹层窗口路由与 TrueSheet 初始化 detent 警告，
 见 [Android 弹层窗口修复](android_overlay_windows.md)。
 
+Web 嵌套弹层、菜单交互与表单视觉收尾（2026-11-27），
+见 [Web 组件修复记录](web_component_fixes.md)。
+
 ## 参考资料
 
 - HeroUI Native quick start: https://heroui.com/cn/docs/native/getting-started/quick-start

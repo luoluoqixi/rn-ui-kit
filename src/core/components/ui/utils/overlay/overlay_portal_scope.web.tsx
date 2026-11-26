@@ -12,7 +12,7 @@ export function OverlayPortalScope({ children }: { children?: ReactNode }) {
       <div
         data-ui-overlay-scope=""
         ref={setContainer}
-        style={{ height: 0, left: 0, position: "absolute", top: 0, width: 0 }}
+        style={{ height: 0, left: 0, position: "absolute", top: 0, width: 0, pointerEvents: "auto" }}
       />
     </OverlayPortalContainerContext.Provider>
   );

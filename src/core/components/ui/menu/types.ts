@@ -46,5 +46,7 @@ export type MenuSurfaceProps = {
   accessibilityLabel?: string;
   /** Menubar owns top-level focus and keeps sibling triggers interactive. */
   isNonModal?: boolean;
+  /** Internal ownership marker for Menubar's non-modal outside dismissal. */
+  menubarOwner?: string;
   onKeyDownCapture?: KeyboardEventHandler<HTMLDivElement>;
 };

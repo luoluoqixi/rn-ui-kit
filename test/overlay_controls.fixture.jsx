@@ -295,7 +295,9 @@ test("Dropdown editor menu renders separators/shortcuts and persistent radio/che
   await click(byText("粗体"));
   expect(byText("粗体").getAttribute("aria-checked")).toBe("true");
   expect(byRole("menu")).not.toBeNull();
-  expect(document.querySelector('[data-slot="dropdown-popover"]')?.style.maxHeight).toBe("280px");
+  expect(byRole("menu").style.maxHeight).toBe("280px");
+  expect(menuPopoverProps.dropdown.maxHeight).toBeUndefined();
+  expect(menuPopoverProps.dropdown.shouldFlip).toBe(true);
 });
 
 test("Select updates uncontrolled value, handles controlled null and imperative open/close", async () => {
@@ -339,6 +341,11 @@ test("ListGroup preserves platform styles and React Aria style callbacks", async
 
 test("Tooltip Web uses real accessible HeroUI hint and disabled state", async () => {
   await render(<Tooltip open content="补充提示"><Button>操作</Button></Tooltip>); expect(byRole("tooltip")).toBeTruthy();
+  expect(byRole("tooltip").className).toContain("w-max");
+  expect(byRole("tooltip").className).toContain("100svw-2rem");
+  await render(<Tooltip open content="自定义宽度" contentProps={{className: "w-64 max-w-sm"}}><Button>操作</Button></Tooltip>);
+  expect(byRole("tooltip").className).toContain("w-64");
+  expect(byRole("tooltip").className).not.toContain("w-max");
   await render(<Tooltip isDisabled content="不会显示"><Button>禁用提示</Button></Tooltip>); expect(byRole("tooltip")).toBeNull();
 });
 
@@ -354,7 +361,7 @@ test("HeroUI Toast keeps rich content, same ID update, numeric custom IDs and cl
 });
 
 
-test("HeroUI nested submenu remains inside its Dialog and keeps keyboard focus", async () => {
+test("HeroUI nested submenu escapes Dialog clipping within its modal and keeps keyboard focus", async () => {
   await render(<Dialog defaultOpen title="外层窗口" content={<Dialog trigger="编辑窗口" title="内层窗口" content={
     <Dropdown native={false} triggerLabel="内层操作" items={[{value:"sub",label:"更多选项",subMenu:[{value:"child",label:"执行子操作"}]}]} />
   } />} />);
@@ -364,7 +371,10 @@ test("HeroUI nested submenu remains inside its Dialog and keeps keyboard focus",
   await act(async () => byText("更多选项").focus());
   await key(byText("更多选项"), "ArrowRight");
   const menus = document.querySelectorAll('[role="menu"]');
-  expect(menus.length).toBe(2); expect(inner.contains(menus[1])).toBe(true);
+  expect(menus.length).toBe(2);
+  expect(inner.contains(menus[1])).toBe(false);
+  expect(inner.closest('[data-slot="modal-container"]').contains(menus[1])).toBe(true);
+  expect(menus[1].closest('[data-slot="modal-dialog"]')).toBeNull();
   expect(menus[0].parentElement.parentElement.contains(menus[1])).toBe(true);
   expect(menus[1].closest('[inert]') === null).toBe(true);
   expect(menus[1].parentElement.contains(document.activeElement)).toBe(true);

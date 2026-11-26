@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 
 import type { NativeListBasicPressFeedback, NativeListIosPressFeedback } from "../core/components/ui/native_list";
+import { NATIVE_LIST_BASIC_DEFAULT_PRESS_FEEDBACK } from "../core/components/ui/native_list/constants";
 
 // Host navigation mounts each debug route separately, so a provider inside a
 // route cannot share this setting with pushed routes. Keep it debug-only and
@@ -8,7 +9,7 @@ import type { NativeListBasicPressFeedback, NativeListIosPressFeedback } from ".
 const defaults: {
   iosPressFeedback: NativeListIosPressFeedback;
   basicPressFeedback: NativeListBasicPressFeedback;
-} = { iosPressFeedback: "automatic", basicPressFeedback: "automatic" };
+} = { iosPressFeedback: "automatic", basicPressFeedback: NATIVE_LIST_BASIC_DEFAULT_PRESS_FEEDBACK };
 let settings = defaults;
 const listeners = new Set<() => void>();
 

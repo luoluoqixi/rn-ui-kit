@@ -8,6 +8,7 @@ import {
   Input,
   isWeb,
   NativeSheet,
+  NativeSheetScrollContent,
   Popover,
   Select,
   Text,
@@ -102,7 +103,7 @@ export function DialogExample() {
                 onOpenChange={setSheetOpen}
                 snapPoints={["60%"]}
               >
-                <View className="gap-3 p-6">
+                <NativeSheetScrollContent contentContainerStyle={{ gap: 12, padding: 24 }}>
                   <Text>Dialog 中的 Sheet</Text>
                   <Button onPress={() => toast.success("Sheet 内提示", { native: false })}>
                     显示 Sheet Toast
@@ -140,7 +141,7 @@ export function DialogExample() {
                     actionLabel="确认"
                   />
                   <Button onPress={() => setSheetOpen(false)}>关闭子 Sheet</Button>
-                </View>
+                </NativeSheetScrollContent>
               </NativeSheet>
             </View>
           }

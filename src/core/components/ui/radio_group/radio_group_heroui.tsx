@@ -89,13 +89,13 @@ export function RadioGroupHeroUI({
               key={item.value}
               value={item.value}
               isDisabled={context.isDisabled}
-              className={item.className}
+              className={cn((item.labelPosition ?? labelPosition) === "left" && "w-full [&>[data-slot=description]]:ps-0", item.className)}
             >
               <Radio.Content
                 aria-label={item.accessibilityLabel}
                 className={cn(
                   (item.labelPosition ?? labelPosition) === "left" &&
-                    "flex-row-reverse justify-between",
+                    "w-full flex-row-reverse justify-between",
                 )}
               >
                 <Radio.Control

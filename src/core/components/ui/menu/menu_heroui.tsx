@@ -16,7 +16,7 @@ const menuViewportStyle: CSSProperties = {
   maxWidth: "calc(100svw - 2rem)",
 };
 
-function MenuItems({ items }: { items: MenuEntry[] }) {
+function MenuItems({ items, menubarOwner }: { items: MenuEntry[]; menubarOwner?: string }) {
   const font = textWebStyle(useDefaultTextStyle());
   return <>{items.map(item => {
     if (item.separator) return <Separator key={item.value} variant={item.separatorVariant}
@@ -38,9 +38,9 @@ function MenuItems({ items }: { items: MenuEntry[] }) {
     if (item.subMenu) return <Menu.SubmenuTrigger key={item.value}>
       <Menu.Item {...item.herouiWebProps} id={item.value} textValue={item.textValue} isDisabled={item.disabled}>{content}</Menu.Item>
       {/* Keep nested popovers in React Aria's own group, inside the root portal. */}
-      <Menu.Popover style={menuViewportStyle}>
+      <Menu.Popover style={menuViewportStyle} data-ui-menubar-owner={menubarOwner}>
         <HeroUIOverlayLayer><Menu.Menu aria-label={item.textValue} style={font} data-ui-submenu="">
-          <MenuItems items={item.subMenu} />
+          <MenuItems items={item.subMenu} menubarOwner={menubarOwner} />
         </Menu.Menu></HeroUIOverlayLayer>
       </Menu.Popover>
     </Menu.SubmenuTrigger>;
@@ -55,25 +55,31 @@ function MenuItems({ items }: { items: MenuEntry[] }) {
   })}</>;
 }
 
-export function MenuSurface({ items, contentProps: c, accessibilityLabel, isNonModal, onKeyDownCapture }: MenuSurfaceProps) {
+export function MenuSurface({ items, contentProps: c, accessibilityLabel, isNonModal, menubarOwner, onKeyDownCapture }: MenuSurfaceProps) {
   const font = textWebStyle(useDefaultTextStyle());
   const container = useOverlayPortalContainer();
   const config = useMenuConfig();
+  const { maxHeight, ...webProps } = c?.herouiWebProps ?? {};
+  // RAC builds its collection after the first position pass. A maxHeight on
+  // Popover prevents that pass from resetting the initial (empty) height, so
+  // a bottom menu stays squeezed instead of flipping. Bound the menu instead.
+  const contentMaxHeight = c?.maxHeight ?? maxHeight ?? config.webContentMaxHeight ?? 320;
   const side = c?.side ?? "bottom";
   const horizontal = side === "left" || side === "right";
   const align = c?.align ?? (horizontal ? "center" : "start");
   const edge = align === "center" ? "" : horizontal ? (align === "start" ? "top" : "bottom") : align;
   const placement = side + (edge ? " " + edge : "");
   const menu = <Menu.Menu aria-label={accessibilityLabel ?? "菜单"}
-    style={{ ...font, ...(config.webContentMaxHeight != null && c?.maxHeight == null ? { maxHeight: config.webContentMaxHeight, overflowY: "auto" } : {}) }}>
-    <MenuItems items={items} />
+    style={{ ...font, maxHeight: contentMaxHeight, overflowY: "auto" }}>
+    <MenuItems items={items} menubarOwner={menubarOwner} />
   </Menu.Menu>;
-  return <Menu.Popover {...c?.herouiWebProps} UNSTABLE_portalContainer={container ?? undefined}
+  return <Menu.Popover {...webProps} UNSTABLE_portalContainer={container ?? undefined}
+    data-ui-menubar-owner={menubarOwner}
     isNonModal={isNonModal ?? c?.herouiWebProps?.isNonModal}
-    maxHeight={c?.maxHeight ?? c?.herouiWebProps?.maxHeight ?? (config.webContentMaxHeight == null ? 320 : undefined)}
+    shouldFlip={c?.herouiWebProps?.shouldFlip ?? true}
     className={c?.className} placement={c?.herouiWebProps?.placement ?? placement as ComponentProps<typeof Menu.Popover>["placement"]}
     offset={c?.sideOffset ?? c?.herouiWebProps?.offset ?? 8}
-    style={{ ...menuViewportStyle, maxHeight: c?.maxHeight ?? config.webContentMaxHeight ?? 320, overflowY: "auto", ...c?.herouiWebProps?.style }}>
+    style={{ ...menuViewportStyle, ...c?.herouiWebProps?.style }}>
     <HeroUIOverlayLayer>{onKeyDownCapture ? <div onKeyDownCapture={onKeyDownCapture}>{menu}</div> : menu}</HeroUIOverlayLayer>
   </Menu.Popover>;
 }

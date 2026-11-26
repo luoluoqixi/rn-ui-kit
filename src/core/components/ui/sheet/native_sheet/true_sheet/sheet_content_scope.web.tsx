@@ -38,9 +38,11 @@ export function SheetContentScope({
     overlay?.addEventListener("pointerdown", handleOverlayPointerDown);
     const host = document.createElement("div");
     host.dataset.uiSheetOverlayScope = "";
-    // 不创建 fixed containing block；菜单坐标仍以 viewport 为基准。
-    // 该层仅高于同级 Drawer，不越过外层 Dialog 或标题栏的层叠边界。
-    Object.assign(host.style, { position: "relative", zIndex: "1" });
+    // Dialog 的 TrueSheetProvider anchor 是零宽节点，absolute 会继承它的
+    // 偏移和宽度，React Aria 随后把菜单错误地向右钳制。fixed 让宿主始终
+    // 使用 viewport 原点与宽度，同时保留当前 modal 的 DOM / 焦点归属。
+    // 零高度不形成整屏点击层；该层仅高于同级 Drawer，不越过外层 modal。
+    Object.assign(host.style, { position: "fixed", top: "0", left: "0", width: "100%", height: "0", zIndex: "1", pointerEvents: "auto" });
     parent.appendChild(host);
     setContainer(host);
     return () => {

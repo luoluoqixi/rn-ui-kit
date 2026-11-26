@@ -22,10 +22,10 @@ import { SELECT_TRIGGER_FONT_WEIGHT } from "./constants";
 const nativeSelectSizeClasses: Record<string, string> = {
   "2xs": "h-8 px-2 pr-8 py-1 text-xs",
   "xs": "h-9 px-3 pr-10 py-1.5 text-xs",
-  "sm": "h-10 px-4 pr-10 py-2 text-sm",
-  "md": "h-11 px-5 pr-12 py-2.5 text-base",
-  "default": "h-11 px-5 pr-12 py-2.5 text-base",
-  "lg": "h-12 px-6 pr-12 py-2.5 text-base",
+  "sm": "min-h-8 px-2.5 pr-9 py-1.5 text-sm",
+  "md": "min-h-9 px-3 pr-9 py-2 text-sm",
+  "default": "min-h-9 px-3 pr-9 py-2 text-sm",
+  "lg": "min-h-10 px-4 pr-10 py-2.5 text-base",
   "xl": "h-14 px-8 pr-14 py-3 text-lg",
   "2xl": "h-16 px-10 pr-16 py-4 text-xl",
 };
@@ -124,7 +124,7 @@ export const SelectNative = React.forwardRef<SelectHandle, SelectProps>(function
     >
       {React.cloneElement(nativeSelect, {
         className: cn(
-          "border-border bg-background text-foreground w-fit cursor-default appearance-none rounded-md border font-medium shadow-sm shadow-black/5 transition-colors hover:bg-accent-soft hover:text-accent-soft-foreground active:bg-accent-soft dark:bg-field-border/30 dark:border-field-border dark:active:bg-field-border/50 dark:hover:bg-field-border/50 focus:border-focus focus:ring-focus/50 focus:outline-none focus:ring-[3px] disabled:opacity-50",
+          "select__trigger w-fit cursor-default appearance-none",
           nativeSelectSizeClasses[selectSize] ?? nativeSelectSizeClasses.default,
           props.nativeSelectProps?.className,
           props.className,
@@ -132,7 +132,7 @@ export const SelectNative = React.forwardRef<SelectHandle, SelectProps>(function
         style: {
           WebkitAppearance: "none",
           ...(hasCursorOverride ? {} : { cursor: "default" }),
-          fontWeight: props.triggerFontWeight ?? SELECT_TRIGGER_FONT_WEIGHT,
+          fontWeight: props.triggerFontWeight,
           ...flattenedNativeSelectStyle,
           ...(StyleSheet.flatten(props.style) as object | undefined),
         } as any,
@@ -140,7 +140,7 @@ export const SelectNative = React.forwardRef<SelectHandle, SelectProps>(function
       <ChevronDown
         aria-hidden
         className={cn(
-          "text-muted pointer-events-none absolute top-1/2 -translate-y-1/2 group-hover:text-accent-soft-foreground group-active:text-accent-soft-foreground",
+          "text-field-placeholder pointer-events-none absolute top-1/2 -translate-y-1/2",
           nativeSelectChevronClasses[selectSize] ?? nativeSelectChevronClasses.default,
         )}
       />

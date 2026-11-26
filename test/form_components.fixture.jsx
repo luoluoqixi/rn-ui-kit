@@ -363,6 +363,23 @@ afterEach(async () => {
   openedURLs.length = 0;
 });
 
+if (!native) test("Textarea root owns uncontrolled and controlled values without duplicate child state", async () => {
+  const errors = [];
+  const originalError = console.error;
+  console.error = (...args) => errors.push(args.map(String).join(" "));
+  try {
+    const changes = [];
+    await render(<TextField multiline key="uncontrolled" nativeID="area" label="简介" defaultValue="初始简介" onChangeText={value => changes.push(value)} />);
+    expect(node("area").value).toBe("初始简介");
+    await input(node("area"), "修改简介");
+    expect(changes).toEqual(["修改简介"]);
+    expect(node("area").value).toBe("修改简介");
+    await render(<TextField multiline key="controlled" nativeID="area" label="简介" value="受控简介" defaultValue="忽略默认值" />);
+    expect(node("area").value).toBe("受控简介");
+    expect(errors.filter(message => message.includes("both value and defaultValue"))).toEqual([]);
+  } finally { console.error = originalError; }
+});
+
 test("Input and Textarea preserve real controls, fonts, text state, platform refs and focus handles", async () => {
   const ref = React.createRef(),
     handle = React.createRef();
@@ -599,6 +616,20 @@ test("RadioGroup maps simple items with descriptions, selected state and disable
   );
   expect(changed).toBeUndefined();
   expect(document.body.textContent).toContain("Choose one");
+});
+
+test("RadioGroup horizontal labels retain intrinsic width and right indicators align descriptions", async () => {
+  await render(<RadioGroup label="更新频率" orientation="horizontal" items={[{ value: "day", label: "每天" }, { value: "week", label: "每周" }]} />);
+  expect(document.body.textContent).toContain("每天");
+  expect(document.body.textContent).toContain("每周");
+  if (native) {
+    const label = [...document.querySelectorAll("div")].find(node => node.textContent === "每天" && node.className.includes("gap-1"));
+    expect(label?.className).toContain("shrink");
+    expect(label?.className).not.toContain("flex-1");
+  } else {
+    await render(<RadioGroup label="右侧指示器" labelPosition="left" items={[{ value: "day", label: "每天", description: "每日检查更新" }]} />);
+    expect(document.querySelector('[data-slot="radio"]').className).toContain("[&>[data-slot=description]]:ps-0");
+  }
 });
 
 test("Tabs use real triggers/panels, select first enabled tab and preserve controlled state", async () => {

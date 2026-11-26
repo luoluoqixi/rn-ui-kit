@@ -25,6 +25,7 @@ import { NativeListHapticsProvider, useResolvedNativeListHaptics } from "./hapti
 import { useResolvedNativeListTriggerFontWeight } from "./native_trigger";
 import { BasicPressFeedbackContext, useBasicPressFeedbackProps } from "./basic_press_feedback";
 import {
+  NATIVE_LIST_BASIC_DEFAULT_PRESS_FEEDBACK,
   NATIVE_LIST_BASIC_DIVIDER_OPACITY,
   NATIVE_LIST_BASIC_DEFAULT_STYLE,
   NATIVE_LIST_BASIC_STYLE_DEFAULTS,
@@ -1035,7 +1036,7 @@ export function NativeListSection({
 }
 
 export function NativeListRoot({
-  basicPressFeedback = "automatic",
+  basicPressFeedback = NATIVE_LIST_BASIC_DEFAULT_PRESS_FEEDBACK,
   basicScrollViewProps,
   children,
   contextMenuProps,

@@ -19,9 +19,8 @@ export function DialogHeroUI(p: DialogAdapterProps) {
   const container = useOverlayPortalContainer();
   const C = p.isAlert ? AlertDialog : Modal;
   const dialog = (
-        <HeroUIOverlayLayer><C.Dialog {...p.contentProps?.herouiWebProps} aria-label={p.accessibilityLabel ?? (m.title == null ? "对话框" : undefined)}
+        <ModalContentScope><HeroUIOverlayLayer><C.Dialog {...p.contentProps?.herouiWebProps} aria-label={p.accessibilityLabel ?? (m.title == null ? "对话框" : undefined)}
           className={cn(p.contentClassName, p.contentProps?.className)}>
-          <ModalContentScope>
             {(p.showCloseButton ?? !p.isAlert) && <C.CloseTrigger aria-label="关闭" />}
             {(m.title != null || m.description != null) && <C.Header className={p.headerClassName}>
               {m.title != null && <C.Heading className={cn(p.titleProps?.className, p.titleClassName)} style={titleStyle}>{m.title}</C.Heading>}
@@ -30,8 +29,7 @@ export function DialogHeroUI(p: DialogAdapterProps) {
             {m.content != null && <C.Body>{typeof m.content === "string" || typeof m.content === "number" ? <Text>{m.content}</Text> : m.content}</C.Body>}
             {(p.actions != null || p.cancelLabel != null || p.actionLabel != null || p.destructiveLabel != null) &&
               <C.Footer className={p.footerClassName}><DialogActions props={p} model={m} /></C.Footer>}
-          </ModalContentScope>
-        </C.Dialog></HeroUIOverlayLayer>
+        </C.Dialog></HeroUIOverlayLayer></ModalContentScope>
   );
   return <C {...p.herouiWebProps} isOpen={m.open} onOpenChange={m.setOpen}>
     {m.trigger ? <Pressable>{m.trigger}</Pressable> : <AriaButton aria-hidden style={{ display: "none" }} aria-label="对话框触发器" />}

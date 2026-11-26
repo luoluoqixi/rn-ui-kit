@@ -261,6 +261,24 @@ test("Menubar aligns menus to the trigger start and preserves bar, item and plat
   }
 });
 
+test("Menubar dismisses on outside pointer and second mouse press, keeping submenu pointers inside", async () => {
+  await render(<><Menubar items={menuBarItems()} /><button>外部目标</button></>);
+  const file = byText("测试文件");
+  await click(file);
+  const pointer = async node => {
+    await act(() => node.dispatchEvent(new win.PointerEvent("pointerdown", { bubbles: true, pointerType: "mouse", pointerId: 1, button: 0 })));
+    await settle();
+  };
+  await pointer(byText("测试新建"));
+  expect(byRole("menu")).toBeTruthy();
+  await pointer(byText("外部目标"));
+  expect(byRole("menu")).toBeNull();
+  await click(file);
+  await pointer(file);
+  await click(file);
+  expect(byRole("menu")).toBeNull();
+});
+
 test("Menubar roves triggers, enters first/last, switches menus and preserves submenu keys", async () => {
   const changes = []; let chosen = 0;
   await render(<><button>之前</button><Menubar items={menuBarItems(() => chosen++)} onValueChange={v => changes.push(v)} /><button>之后</button></>);

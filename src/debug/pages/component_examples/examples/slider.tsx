@@ -30,10 +30,13 @@ export function SliderExample() {
     </ExampleSection>
     <ExampleSection title="自定义轨道" description="按场景调整轨道颜色和粗细。">
       <Slider native={false} nativeHaptics label="电量目标" defaultValue={65}
+        className="[--accent:var(--success)] [--accent-foreground:var(--success-foreground)]"
         trackProps={{ className: "h-3 bg-success/10" }} fillProps={{ className: "bg-success" }}
-        thumbProps={{ className: "bg-success", herouiNativeProps: { classNames: { thumbKnob: "bg-success-foreground" } } }} />
+        thumbProps={{ className: "bg-success", herouiWebProps: { style: { backgroundColor: "transparent" } }, herouiNativeProps: { classNames: { thumbKnob: "bg-success-foreground" } } }} />
       <Slider native={false} nativeHaptics label="提醒强度" defaultValue={40}
-        trackProps={{ className: "h-1 bg-warning/15" }} fillProps={{ className: "bg-warning" }} thumbProps={{ className: "bg-warning" }} />
+        className="[--accent:var(--warning)] [--accent-foreground:var(--warning-foreground)]"
+        trackProps={{ className: "h-1 bg-warning/15" }} fillProps={{ className: "bg-warning" }}
+        thumbProps={{ className: "bg-warning", herouiWebProps: { style: { backgroundColor: "transparent" } } }} />
     </ExampleSection>
     <ExampleSection title="禁用状态" description="暂时不可调整的设置保留当前值。">
       <Slider native={false} nativeHaptics label="锁定音量" defaultValue={40} isDisabled />

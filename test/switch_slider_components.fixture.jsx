@@ -256,6 +256,13 @@ test("Slider: bounds normalization and decimal precision", async()=>{
   expect(normalizeSliderValues([],0,100,1)).toEqual([0]);
 });
 
+if (!native) test("Slider custom active color also controls the filled end cap theme token", async () => {
+  await render(<Slider native={false} label="绿色轨道" defaultValue={40} colors={{activeTrackColor: "#00aa44"}} />);
+  expect(document.querySelector('[data-slot="slider"]').style.getPropertyValue("--accent").toLowerCase()).toBe("#00aa44");
+  await render(<Slider native={false} label="覆盖主题" defaultValue={40} colors={{activeTrackColor: "#00aa44"}} herouiWebProps={{style: {"--accent": "#ff8800"}}} />);
+  expect(document.querySelector('[data-slot="slider"]').style.getPropertyValue("--accent")).toBe("#ff8800");
+});
+
 test("Slider: custom value label and root/slot refs remain usable", async()=>{
   const ref=React.createRef(),track=React.createRef(),thumb=React.createRef();
   const ext=ref=>native?{herouiNativeProps:{ref}}:{herouiWebProps:{ref}};

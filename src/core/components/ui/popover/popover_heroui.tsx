@@ -23,7 +23,7 @@ export function PopoverHeroUI(p: PopoverProps) {
     <HeroPopover.Content {...c?.herouiWebProps} UNSTABLE_portalContainer={container ?? undefined}
       placement={(c?.herouiWebProps?.placement ?? `${c?.side ?? "bottom"}${c?.align && c.align !== "center" ? ` ${c.align}` : ""}`) as ComponentProps<typeof HeroPopover.Content>["placement"]}
       offset={c?.herouiWebProps?.offset ?? c?.sideOffset ?? 8}
-      className={cn(p.contentClassName, c?.className)}>
+      className={cn("w-72 max-w-[calc(100svw-2rem)]", p.contentClassName, c?.className)}>
       {p.showArrow && <HeroPopover.Arrow />}
       <HeroUIOverlayLayer><HeroPopover.Dialog aria-label={p.accessibilityLabel ?? (typeof p.title === "string" ? p.title : "详细信息")} className="gap-3" style={font}>
         {p.title != null && <HeroPopover.Heading>{p.title}</HeroPopover.Heading>}

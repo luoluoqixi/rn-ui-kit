@@ -131,7 +131,7 @@ export function RadioGroupHeroUI({
                   ) : undefined}
                 </Radio>
               </View>
-              <View className="min-w-0 flex-1 gap-1">
+              <View className={cn("min-w-0 gap-1", orientation === "horizontal" ? "shrink" : "flex-1")}>
                 <Text className={item.labelClassName}>
                   {resolveRenderProp(item.label, context)}
                 </Text>

@@ -1,4 +1,4 @@
-import { StyleSheet, type TextStyle } from "react-native";
+import { Platform, StyleSheet, type TextStyle } from "react-native";
 
 /** Basic NativeList 默认列表样式。 */
 export const NATIVE_LIST_BASIC_DEFAULT_STYLE = "rounded" as const;
@@ -17,6 +17,10 @@ export const NATIVE_LIST_BASIC_STYLE_DEFAULTS = {
 
 /** Basic 行交由 Pressable 管理的按压反馈延迟；不设置长按超时清理。 */
 export const NATIVE_LIST_BASIC_PRESS_DELAY = 130;
+
+/** Web 默认立即反馈；Android / iOS basic 默认延迟反馈。 */
+export const NATIVE_LIST_BASIC_DEFAULT_PRESS_FEEDBACK =
+  Platform.OS === "web" ? "immediate" : "automatic";
 
 /** Basic NativeList 主题分割线的默认透明度。 */
 export const NATIVE_LIST_BASIC_DIVIDER_OPACITY = 0.3;

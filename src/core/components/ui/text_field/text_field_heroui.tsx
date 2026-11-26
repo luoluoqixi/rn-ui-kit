@@ -36,8 +36,11 @@ export function TextFieldHeroUI({
   const errorID = id + "-error";
   const control = useRef<TextInputHandle>(null);
   const controlRef = useMergedRefs(control, props.controlRef);
+  // React Aria's TextField context owns these. Passing defaultValue again to
+  // Textarea would combine the child's defaultValue with the context value.
+  const { value, defaultValue, onChangeText, ...inputOptions } = props;
   const input = {
-    ...props,
+    ...inputOptions,
     // React Aria owns the Web field value and invokes the public callback once.
     onChangeText: undefined,
     controlRef,
@@ -64,9 +67,9 @@ export function TextFieldHeroUI({
       isInvalid={props.isInvalid}
       isRequired={props.isRequired}
       isReadOnly={props.isReadOnly}
-      value={props.value}
-      defaultValue={props.defaultValue}
-      onChange={props.onChangeText}
+      value={value}
+      defaultValue={value === undefined ? defaultValue : undefined}
+      onChange={onChangeText}
       validationBehavior={herouiWebProps?.validationBehavior ?? "aria"}
       variant={props.variant}
     >

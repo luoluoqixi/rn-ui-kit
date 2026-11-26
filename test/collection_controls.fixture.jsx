@@ -665,6 +665,22 @@ test("TagGroup none/disabled modes suppress selection and removal", async () => 
   await click(native ? byLabel("第一项") : document.querySelector('[data-slot="tag"]')); const remove=byLabel(native ? "移除第一项" : "移除"); if(remove) await click(remove); expect(changes).toEqual([]);
 });
 
+if (!native) test("Web feedback ripple starts on keyboard press, cleans up, and respects disabled motion", async () => {
+  await render(<PressableFeedback accessibilityLabel="涟漪卡片" feedback="ripple">内容</PressableFeedback>);
+  const button = byLabel("涟漪卡片");
+  await act(() => button.focus());
+  await key(button, "Enter");
+  expect(document.querySelectorAll(".ui-pressable-ripple")).toHaveLength(1);
+  await act(() => document.querySelector(".ui-pressable-ripple").dispatchEvent(new win.Event("animationend", { bubbles: true })));
+  expect(document.querySelector(".ui-pressable-ripple")).toBeNull();
+  await render(<PressableFeedback accessibilityLabel="涟漪卡片" feedback="ripple" isAnimationDisabled>内容</PressableFeedback>);
+  await key(byLabel("涟漪卡片"), "Enter");
+  expect(document.querySelector(".ui-pressable-ripple")).toBeNull();
+  await render(<PressableFeedback accessibilityLabel="涟漪卡片" feedback="ripple" isDisabled>内容</PressableFeedback>);
+  await click(byLabel("涟漪卡片"));
+  expect(document.querySelector(".ui-pressable-ripple")).toBeNull();
+});
+
 test("Surface variants, project fonts and feedback activation", async () => {
   const ref=React.createRef(); let count=0;
   await render(<TextFontProvider family="BatchFont"><PressableFeedback {...ext({ ref })} accessibilityLabel="卡片" feedback="highlight" onPress={()=>count++}><Surface variant="secondary"><Text>内容</Text></Surface></PressableFeedback></TextFontProvider>);

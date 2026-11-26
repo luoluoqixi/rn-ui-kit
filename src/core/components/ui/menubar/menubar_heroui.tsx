@@ -1,4 +1,4 @@
-import { useContext, useLayoutEffect, useRef, type KeyboardEvent } from "react";
+import { useContext, useEffect, useId, useLayoutEffect, useRef, type KeyboardEvent } from "react";
 import { Dropdown as Menu } from "@heroui/react/dropdown";
 import { Pressable } from "react-aria-components/Pressable";
 import { RootMenuTriggerStateContext } from "react-aria-components/Menu";
@@ -12,6 +12,7 @@ import { useMenubarModel, type MenubarModel } from "./menubar_heroui_shared";
 import type { MenubarMenuData, MenubarProps } from "./types";
 
 type Navigation = {
+  owner: string;
   refs: Map<string, HTMLButtonElement>;
   openers: Map<string, () => void>;
   direction(): "ltr" | "rtl";
@@ -26,11 +27,13 @@ function TopMenu({ item, p, m, navigation: nav }: {
   const open = m.value === item.value;
   const disabled = !m.enabled.includes(item);
   const platform = item.triggerProps?.herouiWebProps;
+  const closeOnPress = useRef(false);
   useLayoutEffect(() => {
     nav.openers.set(item.value, () => state?.open("first"));
     return () => { nav.openers.delete(item.value); };
   }, [item.value, state, nav.openers]);
   function key(event: KeyboardEvent) {
+    closeOnPress.current = false;
     if (event.defaultPrevented || disabled) return;
     const forward = nav.direction() === "rtl" ? "ArrowLeft" : "ArrowRight";
     if (event.key === "ArrowLeft" || event.key === "ArrowRight" || event.key === "Home" || event.key === "End") {
@@ -39,6 +42,8 @@ function TopMenu({ item, p, m, navigation: nav }: {
     } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault(); event.stopPropagation();
       state?.open(event.key === "ArrowUp" ? "last" : "first");
+    } else if (event.key === "Escape" && open) {
+      event.preventDefault(); event.stopPropagation(); m.select(undefined);
     } else if (event.key === "Tab" && open) nav.tab(event, item.value);
   }
   function menuKey(event: KeyboardEvent<HTMLDivElement>) {
@@ -46,6 +51,9 @@ function TopMenu({ item, p, m, navigation: nav }: {
     if (event.key === "Tab") { nav.tab(event, item.value); return; }
     // Submenus keep React Aria's own directional navigation and focus return.
     if (target.closest("[data-ui-submenu]")) return;
+    if (event.key === "Escape") {
+      event.preventDefault(); event.stopPropagation(); m.select(undefined); return;
+    }
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
     const forward = nav.direction() === "rtl" ? "ArrowLeft" : "ArrowRight";
     if (event.key === forward && target.closest('[role="menuitem"][aria-haspopup="menu"]')) return;
@@ -54,6 +62,7 @@ function TopMenu({ item, p, m, navigation: nav }: {
   }
   return <>
     <div role="presentation" className="contents" onKeyDownCapture={key}
+      onPointerDownCapture={() => { closeOnPress.current = open; }}
       onPointerEnter={event => {
         if (event.pointerType !== "mouse" || disabled || m.value === undefined || open) return;
         nav.refs.get(item.value)?.focus({ preventScroll: true });
@@ -74,12 +83,18 @@ function TopMenu({ item, p, m, navigation: nav }: {
             else if (platform?.ref) platform.ref.current = node;
           },
           onFocus: event => { m.setActive(item.value); platform?.onFocus?.(event); },
+          onPress: event => {
+            // RAC's mouse trigger opens on down; unlike touch/keyboard, it
+            // doesn't toggle an already open non-modal menu. Close on release.
+            if (closeOnPress.current) { closeOnPress.current = false; m.select(undefined); }
+            platform?.onPress?.(event);
+          },
         }}>
         {resolveRenderProp(item.title, { value: item.value, open, disabled })}
       </Button></Pressable>
     </div>
     <MenuSurface items={m.entries(item)} contentProps={{ align: "start", ...p.contentProps, ...item.contentProps }}
-      accessibilityLabel={typeof item.title === "string" ? item.title : item.value} isNonModal onKeyDownCapture={menuKey} />
+      accessibilityLabel={typeof item.title === "string" ? item.title : item.value} isNonModal menubarOwner={nav.owner} onKeyDownCapture={menuKey} />
   </>;
 }
 
@@ -87,10 +102,22 @@ export function MenubarHeroUI(p: MenubarProps) {
   const m = useMenubarModel(p);
   const { direction } = useLocale();
   const bar = useRef<HTMLDivElement>(null);
+  const owner = useId();
+  useEffect(() => {
+    if (m.value === undefined) return;
+    const dismissOutside = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element) || bar.current?.contains(target)
+        || target.closest("[data-ui-menubar-owner]")?.getAttribute("data-ui-menubar-owner") === owner) return;
+      m.select(undefined);
+    };
+    document.addEventListener("pointerdown", dismissOutside, true);
+    return () => document.removeEventListener("pointerdown", dismissOutside, true);
+  }, [m.value, m.select, owner]);
   const refs = useRef(new Map<string, HTMLButtonElement>()).current;
   const openers = useRef(new Map<string, () => void>()).current;
   const nav: Navigation = {
-    refs, openers,
+    refs, openers, owner,
     direction: () => direction,
     move(value, delta, open) {
       const length = m.enabled.length;

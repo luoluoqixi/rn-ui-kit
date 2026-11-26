@@ -61,7 +61,7 @@ async function render(props = {}, children = [
   await act(() => root.render(<NativeList scrollable={false} {...props}><NativeListSection title="分区">{children}</NativeListSection></NativeList>));
 }
 test("standard and custom rows inherit automatic/immediate feedback without adding long-press handlers", async () => {
-  for (const [mode, expected] of [[undefined, NATIVE_LIST_BASIC_PRESS_DELAY], ["immediate", 0], ["automatic", NATIVE_LIST_BASIC_PRESS_DELAY]]) {
+  for (const [mode, expected] of [[undefined, platform === "web" ? 0 : NATIVE_LIST_BASIC_PRESS_DELAY], ["immediate", 0], ["automatic", NATIVE_LIST_BASIC_PRESS_DELAY]]) {
     await render({ basicPressFeedback: mode });
     expect(pressables).toHaveLength(2);
     for (const props of pressables) {
