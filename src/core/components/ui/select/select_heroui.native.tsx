@@ -6,12 +6,13 @@ import { PressableFeedback } from "heroui-native/pressable-feedback";
 import { useThemeColor } from "heroui-native/hooks";
 import { Text } from "../text";
 import { resolveRenderProp } from "../utils/render";
-import { HeroUIWindowAnchor, HeroUIWindowOverlayScope } from "../utils/overlay/heroui_anchor.native";
+import { HeroUIWindowAnchor, HeroUIWindowOverlayScope, useHeroUIOverlayPortalHostName } from "../utils/overlay/heroui_anchor.native";
 import { itemLabel, SelectNativeTrigger, SelectBasicTrigger } from "./shared";
 import { useHeroSelect } from "./select_heroui_shared";
 import type { SelectHandle, SelectProps } from "./types";
 
 export const SelectHeroUI = forwardRef<SelectHandle, SelectProps>(function SelectHeroUI(p, ref) {
+  const portalHostName = useHeroUIOverlayPortalHostName();
   const m = useHeroSelect(p, ref);
   const font = useDefaultTextStyle();
   const pressedColor = useThemeColor("default");
@@ -25,7 +26,7 @@ export const SelectHeroUI = forwardRef<SelectHandle, SelectProps>(function Selec
       <HeroUIWindowAnchor isOpen={m.open}>{p.nativeTrigger ? <SelectNativeTrigger props={p} value={m.value} active={m.open} />
         : <SelectBasicTrigger props={p} value={m.value} disabled={m.disabled} />}</HeroUIWindowAnchor>
     </HeroSelect.Trigger>
-    <HeroSelect.Portal><HeroUIWindowOverlayScope><HeroSelect.Overlay /><HeroSelect.Content {...c?.herouiNativeProps} presentation="popover"
+    <HeroSelect.Portal hostName={portalHostName}><HeroUIWindowOverlayScope><HeroSelect.Overlay /><HeroSelect.Content {...c?.herouiNativeProps} presentation="popover"
       placement={placement} align={align} offset={c?.herouiNativeProps?.offset ?? c?.sideOffset ?? 8} className={c?.className}>
       <ScrollView {...p.viewportProps} style={[{ maxHeight: 320 }, p.viewportProps?.style]} keyboardShouldPersistTaps="handled">
         {m.groups.map(group => <View key={group.key}>

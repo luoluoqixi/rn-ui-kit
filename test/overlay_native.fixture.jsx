@@ -126,7 +126,7 @@ function overlay(name) {
     const ctx=React.useContext(Context);
     return React.cloneElement(children, { onPress:e=>{children.props.onPress?.(e); if (!isDisabled && !ctx.isDisabled) ctx.onOpenChange(!ctx.isOpen);} });
   };
-  const Portal = ({children}) => React.useContext(Context).isOpen ? children : null;
+  const Portal = props => { latest[name + "Portal"] = props; return React.useContext(Context).isOpen ? props.children : null; };
   const Content = p => { latest[name + "Content"] = p; return <div data-content={name}>{p.children}</div>; };
   const Overlay = p => { latest[name + "Overlay"] = p; return <button aria-label={name+"遮罩"} onClick={p.onPress}>遮罩</button>; };
   const text = ({children})=><span>{children}</span>;
@@ -188,6 +188,7 @@ const anchorEvents = new Map();
 const delayedMeasures = [];
 let delayAnchorMeasurement = false;
 mock.module("../src/core/components/ui/utils/overlay/heroui_anchor.native", () => ({
+  useHeroUIOverlayPortalHostName: () => { const host = React.useContext(scopeContext); return platform === "android" ? host ?? undefined : undefined; },
   HeroUIWindowOverlayScope: ({ children }) => children,
   HeroUIWindowAnchor: React.forwardRef(({ children, ...props }, ref) => {
     React.useImperativeHandle(ref, () => ({ measure(callback) {
@@ -238,6 +239,23 @@ test("Native Dialog owns a modal presenter and local overlay scope; reopening do
   expect(document.querySelector("[data-native-modal]")).toBeNull();
   await click("父 Dialog");
   expect(document.querySelector("[data-sheet]")).toBeNull();
+});
+
+test("Native Select, Menu and Popover pass the enclosing Dialog host to their HeroUI portals on Android", async () => {
+  let host;
+  function Nested() {
+    host = React.useContext(scopeContext);
+    return <>
+      <Select defaultOpen items={[{ value: "a", label: "选项" }]} />
+      <Dropdown defaultOpen items={[{ value: "a", label: "动作" }]} />
+      <Popover defaultOpen trigger="提示" content="嵌套内容" />
+    </>;
+  }
+  await render(<scopeContext.Provider value="rn-ui-kit:true-sheet:outer"><Dialog defaultOpen content={<Nested />} /></scopeContext.Provider>);
+  expect(host).toStartWith("ui-modal-");
+  for (const kind of ["select", "menu", "popover"]) {
+    expect(latest[kind + "Portal"].hostName).toBe(platform === "android" ? host : undefined);
+  }
 });
 
 test("Native dialog adapts back/overlay independently and alert actions protect dismissal", async()=>{

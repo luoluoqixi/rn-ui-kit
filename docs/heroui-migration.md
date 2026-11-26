@@ -1157,6 +1157,9 @@ Portal 与 Slot 的替换已完成（实现说明与本轮验证见下文）：
 
 本轮未运行 iOS / Android 原生 Release 编译，也未操作真机。既有设备反馈只覆盖用户明确验证过的场景；不能将本次 JS/CSS 导出或 mock 测试视为所有组件和交互均已在设备验收。
 
+Android 迁移后的普通页面定位、Dialog 子弹层窗口路由与 TrueSheet 初始化 detent 警告，
+见 [Android 弹层窗口修复](android_overlay_windows.md)。
+
 ## 参考资料
 
 - HeroUI Native quick start: https://heroui.com/cn/docs/native/getting-started/quick-start

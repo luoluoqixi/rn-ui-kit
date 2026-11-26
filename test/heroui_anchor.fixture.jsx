@@ -20,7 +20,7 @@ const nativeNode = {
   measure(callback) { calls.push("root"); callback(0, 0, position.width, position.height, position.x, position.y - position.rootY); },
   // Fabric stops at TrueSheet's RootNodeKind for BOTH measurements. The
   // native sheet's presentation offset is not part of the shadow layout.
-  measureInWindow(callback) { calls.push("window"); callback(position.x, position.y - position.rootY, position.width, position.height); },
+  measureInWindow(callback) { calls.push("window"); callback(position.x, position.y - position.rootY - (position.viewportY ?? 0), position.width, position.height); },
   focus() { calls.push(this === nativeNode ? "focus" : "wrong-this"); },
 };
 const NativeTrigger = React.forwardRef(({ onPress, onLayout, children, ...props }, ref) => {
@@ -60,9 +60,10 @@ mock.module("../src/core/components/ui/utils/overlay/screen_overlay_portal", () 
   useScopedOverlayPortalHostName: () => React.useContext(HostContext),
 }));
 const { TrueSheetOverlayLayoutProvider, useTrueSheetOverlayLayoutSetter } = await import("../src/core/components/ui/sheet/native_sheet/true_sheet/overlay_layout_context");
-const { HeroUIWindowAnchor, HeroUIWindowOverlayScope } = await import("../src/core/components/ui/utils/overlay/heroui_anchor.native");
+const { HeroUIWindowAnchor, HeroUIWindowOverlayScope, useHeroUIOverlayPortalHostName } = await import("../src/core/components/ui/utils/overlay/heroui_anchor.native");
 const { PressableChild } = await import("../src/core/components/ui/utils/overlay/pressable_child");
 const { createRoot } = await import("react-dom/client");
+const { PortalHost } = await import("../node_modules/heroui-native/src/primitives/portal/portal");
 let root;
 afterEach(async () => {
   await act(() => root?.unmount()); root = undefined; document.body.replaceChildren(); calls.length = 0;
@@ -134,6 +135,54 @@ async function mountSheetProbe(primitive) {
 }
 
 for (const [name, primitive] of Object.entries(primitives)) {
+  test.skipIf(platform !== "android")(name + ": Android app and Modal use root coordinates instead of subtracting the visible viewport origin", async () => {
+    let state;
+    let placement;
+    function Trigger() {
+      state = primitive.useRootContext();
+      placement = useRelativePosition({ triggerPosition: state.triggerPosition, contentLayout: { x: 0, y: 0, width: 180, height: 150 },
+        placement: "bottom", align: "start", alignOffset: 0, offset: 8, avoidCollisions: true });
+      return <primitive.Trigger asChild><HeroUIWindowAnchor isOpen={state.isOpen}><NativeTrigger>窗口坐标</NativeTrigger></HeroUIWindowAnchor></primitive.Trigger>;
+    }
+    root = createRoot(document.body.appendChild(document.createElement("div")));
+    for (const host of [undefined, "ui-modal-dialog"]) {
+      // On the device, measure() returns 204dp while measureInWindow()
+      // returns 164dp: Android's visible viewport begins 40dp below the root.
+      position = { x: 32, y: 204, rootY: 0, viewportY: 40, width: 132, height: 48 };
+      await act(() => root.render(<HostContext.Provider value={host}><primitive.Root key={host ?? "app"}><Trigger /></primitive.Root></HostContext.Provider>));
+      await act(() => document.querySelector("button").click());
+      expect(state.triggerPosition).toEqual({ pageX: 32, pageY: 204, width: 132, height: 48 });
+      expect(placement.top).toBe(260);
+      expect(placement.left).toBe(32);
+    }
+    expect(calls).toContain("root");
+    expect(calls).not.toContain("window");
+    expect(calls.filter(Array.isArray)).toEqual([]);
+  });
+
+  test(name + ": actual HeroUI Portal follows Android's nearest native window while iOS retains its full-window host", async () => {
+    function Popup() {
+      const hostName = useHeroUIOverlayPortalHostName();
+      return <primitive.Root isDefaultOpen><Trigger /><primitive.Portal hostName={hostName}><span data-popup={name} /></primitive.Portal></primitive.Root>;
+    }
+    function Trigger() {
+      const state = primitive.useRootContext();
+      return <primitive.Trigger asChild><HeroUIWindowAnchor isOpen={state.isOpen}><NativeTrigger>Portal</NativeTrigger></HeroUIWindowAnchor></primitive.Trigger>;
+    }
+    root = createRoot(document.body.appendChild(document.createElement("div")));
+    for (const host of [undefined, "rn-ui-kit:true-sheet:parent", "ui-modal-dialog"]) {
+      position = { x: 24, y: 420, rootY: 0, width: 120, height: 44 };
+      await act(() => root.render(<><div data-host="app"><PortalHost /></div>
+        <HostContext.Provider value={host}><Popup />
+          {host && <div data-host={host}><PortalHost name={host} /></div>}
+        </HostContext.Provider></>));
+      await act(() => new Promise(resolve => setTimeout(resolve, 10)));
+      const popup = document.querySelector("[data-popup]");
+      expect(document.querySelectorAll("[data-popup]")).toHaveLength(1);
+      expect(popup.closest("[data-host]").dataset.host).toBe(platform === "android" ? host ?? "app" : "app");
+    }
+  });
+
   test.skipIf(platform !== "ios")(name + ": floating iOS sheet uses the actual native window rectangle, including scale and horizontal inset", async () => {
     let state;
     let snapshot;
@@ -280,7 +329,8 @@ for (const [name, primitive] of Object.entries(primitives)) {
     expect(state.triggerPosition.pageY).toBe(550);
     expect(snapshot.top).toBe(602);
     expect(presses).toBe(3);
-    expect(calls).not.toContain("root");
+    if (platform === "ios") expect(calls).not.toContain("root");
+    else expect(calls).toContain("root");
     expect(calls).not.toContain("wrong-this");
     expect(calls).toContain("window");
     expect(document.querySelectorAll("button")).toHaveLength(1);

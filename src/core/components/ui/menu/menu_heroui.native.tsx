@@ -8,7 +8,7 @@ import { useAnimationSettings } from "heroui-native/contexts";
 import { Separator } from "../separator";
 import { Text } from "../text";
 import { useDefaultTextStyle } from "../provider/font_provider";
-import { HeroUIWindowOverlayScope } from "../utils/overlay/heroui_anchor.native";
+import { HeroUIWindowOverlayScope, useHeroUIOverlayPortalHostName } from "../utils/overlay/heroui_anchor.native";
 import type { MenuEntry, MenuSurfaceProps } from "./types";
 
 // HeroUI reserves only the trigger row for its floating SubMenu. Inside a
@@ -163,6 +163,7 @@ function MenuItems({ items }: { items: MenuEntry[] }) {
 }
 
 export function MenuSurface({ items, contentProps: c, accessibilityLabel }: MenuSurfaceProps) {
+  const portalHostName = useHeroUIOverlayPortalHostName();
   const placement = c?.herouiNativeProps?.placement ?? c?.side ?? "bottom";
   const align =
     c?.herouiNativeProps?.align ??
@@ -175,7 +176,7 @@ export function MenuSurface({ items, contentProps: c, accessibilityLabel }: Menu
     Math.min(c?.maxHeight ?? 320, height - insets.top - insets.bottom - 32),
   );
   return (
-    <Menu.Portal>
+    <Menu.Portal hostName={portalHostName}>
       <HeroUIWindowOverlayScope>
         <Menu.Overlay />
         <Menu.Content

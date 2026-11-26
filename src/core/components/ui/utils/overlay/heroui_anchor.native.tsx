@@ -8,6 +8,14 @@ import { useScopedOverlayPortalHostName } from "./screen_overlay_portal";
 
 const WindowOverlayHostContext = createContext<string | undefined>(undefined);
 
+/** Android Modal owns a separate native window. Mount HeroUI in the nearest
+ * scoped host so TrueSheetOverlay can find that window's content container.
+ * iOS keeps HeroUI's existing full-window host and presentation behavior. */
+export function useHeroUIOverlayPortalHostName() {
+  const hostName = useScopedOverlayPortalHostName();
+  return Platform.OS === "android" ? hostName : undefined;
+}
+
 /** Descendants of a HeroUI full-window portal already use window coordinates.
  * A new child sheet still needs its own offset, identified by its new host. */
 export function HeroUIWindowOverlayScope({ children }: { children: ReactNode }) {
@@ -50,13 +58,21 @@ export const HeroUIWindowAnchor = forwardRef<View, Omit<PressableProps, "childre
             const isCurrent = () => id === measurementId.current && nativeRef.current === node;
             const fallback = () => {
               if (!isCurrent()) return;
+              // In the app window, Android measureInWindow subtracts the
+              // viewport/system-bar origin. TrueSheetOverlay fills the native
+              // content root, which uses measure()'s root coordinates instead.
+              // A sheet has a separate Fabric root: retain its local measurement
+              // plus the native sheet position, without adding status-bar guesses.
+              if (Platform.OS === "android" && !inSheet) {
+                node.measure((...args) => { if (isCurrent()) callback(...args); });
+                return;
+              }
               node.measureInWindow((x, y, width, height) => {
                 if (isCurrent()) callback(0, 0, width, height, x, y + sheetOffset);
               });
             };
             // iOS convertRect includes the floating sheet's outer scale/inset.
-            // Android's API uses screen coordinates; keep its proven window
-            // measurement path to avoid introducing system-bar offsets.
+            // Android keeps its sheet-local measurement path below.
             if (Platform.OS === "ios" && inSheet) {
               try {
                 const tag = findNodeHandle(node);

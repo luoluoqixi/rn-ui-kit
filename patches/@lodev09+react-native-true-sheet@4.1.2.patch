@@ -81,7 +81,7 @@ index 592db8d..586af68 100644
  
    fun setupKeyboardHandler() {
 diff --git a/android/src/main/java/com/lodev09/truesheet/TrueSheetView.kt b/android/src/main/java/com/lodev09/truesheet/TrueSheetView.kt
-index a09051b..587621f 100644
+index a09051b..d9d59e6 100644
 --- a/android/src/main/java/com/lodev09/truesheet/TrueSheetView.kt
 +++ b/android/src/main/java/com/lodev09/truesheet/TrueSheetView.kt
 @@ -44,6 +44,25 @@ class TrueSheetView(private val reactContext: ThemedReactContext) :
@@ -134,13 +134,18 @@ index a09051b..587621f 100644
      if (viewController.isExpanded) return
  
      viewController.translateSheet(viewController.currentTranslationY + amount, animated)
-@@ -698,7 +720,9 @@ class TrueSheetView(private val reactContext: ThemedReactContext) :
+@@ -697,8 +719,13 @@ class TrueSheetView(private val reactContext: ThemedReactContext) :
+     viewController.translateSheet(0, onEnd = onTranslateEnd)
  
      // Parent should recalculate its translation based on this sheet's position
-     val mySheetTop = viewController.detentCalculator.getSheetTopForDetentIndex(viewController.currentDetentIndex)
+-    val mySheetTop = viewController.detentCalculator.getSheetTopForDetentIndex(viewController.currentDetentIndex)
 -    viewController.parentSheetView?.updateTranslationForChild(mySheetTop)
-+    if (!disableStackingTranslation) {
-+      viewController.parentSheetView?.updateTranslationForChild(mySheetTop)
++    // Initial prop application can reset a sheet before it has a detent (-1).
++    // Only measure when a presented child actually needs to update its parent.
++    val parentSheet = viewController.parentSheetView
++    if (!disableStackingTranslation && parentSheet != null && viewController.currentDetentIndex >= 0) {
++      val mySheetTop = viewController.detentCalculator.getSheetTopForDetentIndex(viewController.currentDetentIndex)
++      parentSheet.updateTranslationForChild(mySheetTop)
 +    }
    }
  
