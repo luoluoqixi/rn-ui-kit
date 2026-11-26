@@ -1043,6 +1043,7 @@ export function NativeListRoot({
   editModeSelectedIcon,
   editModeSelectedSfSymbol,
   editModeSfSymbol,
+  iosIgnoreBottomSafeArea: _iosIgnoreBottomSafeArea,
   iosListStyle: _iosListStyle,
   iosPressFeedback: _iosPressFeedback,
   listStyle = NATIVE_LIST_BASIC_DEFAULT_STYLE,

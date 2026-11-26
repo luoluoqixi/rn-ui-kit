@@ -346,6 +346,12 @@ export type NativeListRootProps = Omit<ScrollViewProps, "children"> &
     children?: ReactNode;
     /** 原生列表是否在触点按下时立即显示行反馈； */
     iosPressFeedback?: NativeListIosPressFeedback;
+    /**
+     * iOS 原生列表是否延伸到底部容器安全区，保留顶部和键盘安全区处理。
+     * TrueSheet 中可滚动、非嵌套的根列表默认开启；其他场景默认关闭。
+     * 传 `false` 可恢复系统的底部避让；Android、Web 和 basic 实现忽略。
+     */
+    iosIgnoreBottomSafeArea?: boolean;
     /** 所有行默认使用的菜单；Section 或 item 可逐级覆盖。 */
     contextMenuProps?: NativeListContextMenuProps;
     /** 禁用列表中的所有行。 */

@@ -27,6 +27,7 @@ import {
   font,
   foregroundStyle,
   frame,
+  ignoreSafeArea,
   ios15ListRowTopRoundedBackground,
   ios15ListRowSeparatorHidden,
   layoutPriority,
@@ -1203,6 +1204,7 @@ function NativeListRoot({
   editModeSfSymbol,
   fixesIOS26NestedScrollIndicatorSafeArea,
   initialScrollTarget,
+  iosIgnoreBottomSafeArea,
   iosListStyle = "insetGrouped",
   nestedScrollEnabled,
   navigationBarScrollEdgeOptions,
@@ -1244,12 +1246,15 @@ function NativeListRoot({
     active: insideTrueSheet,
     automaticContentInsetAdjustment,
     insetAdjustment,
-    nativeScrollInsetsApplied,
     presentationActive: trueSheetPresentationActive,
   } = useTrueSheetScrollLayout();
   const resolvedBackgroundColor =
     backgroundColor != null ? (toSwiftUIHexColor(backgroundColor) ?? undefined) : undefined;
   const isNestedNativeList = nestedScrollEnabled === true;
+  // TrueSheet v4 已将 Yoga 高度约束为 Sheet 容器高度，不再启用基于 window 的
+  // viewport clipping（缩放的 Sheet 会混用坐标系并缩短视口）。只延伸底边，保留顶部和键盘。
+  const ignoresBottomSafeArea =
+    iosIgnoreBottomSafeArea ?? (insideTrueSheet && scrollable && !isNestedNativeList);
   const usesNativeEditMode = editMode === true;
   const usesImmediatePressFeedback = iosPressFeedback === "immediate";
 
@@ -1378,11 +1383,6 @@ function NativeListRoot({
   // 定高内嵌列表的安全区由外层滚动视图处理，不能再按页面级根列表自动调整。
   const manuallyAdjustNormalPageIndicator =
     (!insideTrueSheet || isNestedNativeList) && automaticallyAdjustsScrollIndicatorInsets == null;
-  const compensatesForTrueSheetViewportClipping =
-    insideTrueSheet &&
-    scrollable &&
-    !isNestedNativeList &&
-    automaticallyAdjustsScrollIndicatorInsets !== false;
   const resolvedContentInsetAdjustmentBehavior =
     contentInsetAdjustmentBehavior ??
     (isNestedNativeList
@@ -1424,9 +1424,6 @@ function NativeListRoot({
               (tracksNavigationBarScrollEdge ??
                 (!insideTrueSheet && resolvedContentInsetAdjustmentBehavior === "automatic"))
             }
-            // 只有页面级根列表才需要按 TrueSheet 的可见 viewport 裁剪；
-            // 内嵌列表保留自身完整高度，由外层 ScrollView 决定何时进入可见区域。
-            compensatesForViewportClipping={compensatesForTrueSheetViewportClipping}
             correctsNestedScrollIndicatorFrame={
               isIos26Plus() && fixesIOS26NestedScrollIndicatorSafeArea === true
             }
@@ -1450,6 +1447,9 @@ function NativeListRoot({
             refreshTint={refreshTint}
             refreshing={refreshControlEnabled && nativeRefreshing}
             modifiers={[
+              ...(ignoresBottomSafeArea
+                ? [ignoreSafeArea({ regions: "container", edges: "bottom" })]
+                : []),
               listStyle(iosListStyle),
               listSectionSpacing("compact"),
               /**
