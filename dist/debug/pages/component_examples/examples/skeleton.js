@@ -1,0 +1,9 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useState } from "react";
+import { View } from "react-native";
+import { Avatar, Button, Skeleton, Text } from "rn-ui-kit/core";
+import { ExampleBlock, ExampleRow, ExampleStack } from "../shared";
+export function SkeletonExample() {
+    const [loading, setLoading] = useState(true);
+    return _jsxs(ExampleStack, { children: [_jsxs(ExampleBlock, { title: "\u6210\u5458\u4FE1\u606F", description: "\u5360\u4F4D\u7ED3\u675F\u540E\u663E\u793A\u5B9E\u9645\u5185\u5BB9\uFF0C\u5185\u5BB9\u81EA\u8EAB\u63A7\u5236\u5C3A\u5BF8\u548C\u5E03\u5C40\u3002", children: [_jsxs(View, { className: "flex-row items-center gap-3", children: [_jsx(Skeleton, { isLoading: loading, className: "size-12 rounded-full", children: _jsx(Avatar, { fallback: "UI", size: "lg" }) }), _jsxs(View, { className: "flex-1 gap-2", children: [_jsx(Skeleton, { isLoading: loading, className: "h-5 w-32 rounded-md", children: _jsx(Text, { weight: "semibold", children: "\u8BBE\u8BA1\u56E2\u961F" }) }), _jsx(Skeleton, { isLoading: loading, className: "h-4 w-48 rounded-md", children: _jsx(Text, { type: "body-sm", color: "muted", children: "\u5171\u4EAB\u7EC4\u4EF6\u4E0E\u8BBE\u8BA1\u8D44\u6E90" }) })] })] }), _jsx(Button, { title: loading ? "显示内容" : "重新加载", variant: "outline", onPress: () => setLoading(v => !v) })] }), _jsx(ExampleBlock, { title: "\u52A8\u753B\u7C7B\u578B", children: ["shimmer", "pulse", "none"].map(variant => _jsxs(View, { className: "gap-2", children: [_jsx(Text, { type: "body-sm", children: variant }), _jsx(Skeleton, { variant: variant, className: "h-10 w-full rounded-lg" })] }, variant)) }), _jsx(ExampleBlock, { title: "\u5F62\u72B6", children: _jsxs(ExampleRow, { children: [_jsx(Skeleton, { className: "size-12 rounded-full" }), _jsxs(View, { className: "flex-1 gap-2", children: [_jsx(Skeleton, { className: "h-4 w-full rounded-md" }), _jsx(Skeleton, { className: "h-4 w-2/3 rounded-md" })] })] }) })] });
+}

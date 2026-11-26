@@ -1,0 +1,2 @@
+import type { CheckboxProps } from "./types";
+export declare function CheckboxHeroUI({ isSelected, defaultSelected, onSelectedChange, isDisabled, isInvalid, isRequired, variant, accessibilityLabel, label, description, labelClassName, labelPosition, controlProps, indicatorProps, indicator, className, herouiNativeProps, herouiWebProps: _, nativeHaptics, labelProps, name: _name, value: _value, ...messages }: CheckboxProps): import("react").JSX.Element;

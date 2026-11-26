@@ -1,0 +1,130 @@
+import { View } from "react-native";
+import { useMemo, useState } from "react";
+import { FolderOpen, Pencil, Settings } from "lucide-react-native";
+
+import { Button, ContextMenu, Icon, isWeb, Text, type ContextMenuItemData } from "rn-ui-kit/core";
+import { ExampleBlock, ExampleStack } from "../shared";
+
+export function ContextMenuExample() {
+  const [action, setAction] = useState("尚未选择");
+  const [showDetails, setShowDetails] = useState(false);
+  const items = useMemo<ContextMenuItemData[]>(
+    () => [
+      {
+        label: "打开",
+        icon: <Icon as={FolderOpen} className="size-4" />,
+        onSelect: () => setAction("打开"),
+        value: "open",
+      },
+      {
+        label: "重命名",
+        icon: <Icon as={Pencil} className="size-4" />,
+        onSelect: () => setAction("重命名"),
+        value: "rename",
+      },
+      { separator: true, value: "separator-actions" },
+      {
+        label: "更多操作",
+        icon: <Icon as={Settings} className="size-4" />,
+        subMenu: [
+          {
+            label: "复制链接",
+            onSelect: () => setAction("复制链接"),
+            value: "copy-link",
+          },
+          {
+            label: "移动到归档",
+            onSelect: () => setAction("移动到归档"),
+            value: "archive",
+          },
+          {
+            label: "设置",
+            onSelect: () => setAction("设置"),
+            subtitle: "嵌套 ContextMenu",
+            value: "nested-settings",
+          },
+        ],
+        subMenuTitle: false,
+        value: "more",
+      },
+      {
+        checked: showDetails,
+        reserveIconSpace: false,
+        label: "显示详细信息",
+        onCheckedChange: setShowDetails,
+        value: "details",
+      },
+      { disabled: true, label: "暂不可用", value: "disabled" },
+      { separator: true, value: "separator-danger" },
+      {
+        destructive: true,
+        label: "删除项目",
+        onSelect: () => setAction("删除项目"),
+        value: "delete",
+      },
+      {
+        label: "测试项目1",
+        onSelect: () => setAction("测试项目1"),
+        value: "test1",
+      },
+      {
+        label: "测试项目2",
+        onSelect: () => setAction("测试项目2"),
+        value: "test2",
+      },
+      {
+        label: "测试项目3",
+        onSelect: () => setAction("测试项目3"),
+        value: "test3",
+      },
+      {
+        label: "测试项目4",
+        onSelect: () => setAction("测试项目4"),
+        value: "test4",
+      },
+      {
+        label: "测试项目5",
+        onSelect: () => setAction("测试项目5"),
+        value: "test5",
+      },
+    ],
+    [showDetails],
+  );
+
+  return (
+    <ExampleStack>
+      {!isWeb() && (
+        <ExampleBlock title="ContextMenu 原生菜单">
+          <ContextMenu
+            items={items}
+            native
+            nativeHaptics
+            trigger={<Button variant="secondary">长按打开原生菜单</Button>}
+          />
+          <Text color="muted">最近动作：{action}</Text>
+          <Text color="muted">详细信息：{showDetails ? "显示" : "隐藏"}</Text>
+        </ExampleBlock>
+      )}
+
+      <ExampleBlock title="以触发器为锚点">
+        <ContextMenu
+          items={items}
+          itemNativeHaptics
+          native={false}
+          nativeHaptics
+          trigger={
+            <Button variant="secondary">{isWeb() ? "右键打开项目菜单" : "长按打开项目菜单"}</Button>
+          }
+        />
+        <Text color="muted">移动端长按后默认以按钮中心对齐；Web 保留右键菜单的触点定位。</Text>
+      </ExampleBlock>
+      <ExampleBlock title="区域内的触点定位">
+        <ContextMenu native={false} anchor="touch" items={items} nativeHaptics itemNativeHaptics
+          trigger={<View className="min-h-40 w-full items-center justify-center rounded-lg bg-surface-secondary p-6">
+            <Text>在区域内任意位置{isWeb() ? "右键" : "长按"}</Text>
+          </View>} />
+        <Text color="muted">显式设置 anchor="touch"，菜单跟随按下的位置。</Text>
+      </ExampleBlock>
+    </ExampleStack>
+  );
+}

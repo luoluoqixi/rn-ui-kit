@@ -1,0 +1,30 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { ArrowUpRight, ShoppingBasket } from "lucide-react-native";
+import { useState } from "react";
+import { Image, ImageBackground, View } from "react-native";
+import { withUniwind } from "uniwind";
+import { Button, Card, Icon, Text } from "rn-ui-kit/core";
+import { ExampleRow, ExampleSection, ExampleStack } from "../shared";
+const StyledImage = withUniwind(Image);
+const assets = "https://heroui-assets.nyc3.cdn.digitaloceanspaces.com/docs/";
+const communities = [
+    { title: "图片头部", description: "图片放在 header，正文放在 content。", footer: "自定义页脚", image: "demo1.jpg", dot: "bg-rose-400" },
+    { title: "并排布局", description: "两张卡片平分宽度，文字自动换行。", footer: "状态与文字", image: "demo2.jpg", dot: "bg-emerald-400" },
+];
+const events = [
+    { title: "横向排列", description: "左侧图片固定大小，右侧内容自适应。", image: "avocado.jpeg" },
+    { title: "较长的标题也会自动换行", description: "正文与按钮在剩余宽度内排列。", image: "oranges.jpeg" },
+];
+const variants = [
+    { variant: "default", title: "Default", description: "默认卡片，适合大多数内容。" },
+    { variant: "secondary", title: "Secondary", description: "使用第二层 surface 区分内容。" },
+    { variant: "tertiary", title: "Tertiary", description: "使用第三层 surface 增加层次。" },
+    { variant: "transparent", title: "Transparent", description: "透明背景，适合低强调或嵌套内容。" },
+];
+export function CardExample() {
+    const [primaryActionDone, setPrimaryActionDone] = useState(false);
+    const [secondarySelected, setSecondarySelected] = useState(false);
+    const [selectedEvent, setSelectedEvent] = useState();
+    const [notify, setNotify] = useState(false);
+    return (_jsxs(ExampleStack, { children: [_jsx(ExampleSection, { title: "\u57FA\u7840\u5361\u7247", withCard: false, children: _jsx(Card, { header: _jsxs(View, { className: "gap-1", children: [_jsx(Text, { className: "text-lg font-medium text-pink-400", children: "HEADER" }), _jsx(Text, { className: "text-lg font-medium", children: "\u6807\u9898\u4E0E\u6B63\u6587" })] }), content: "\u901A\u8FC7 header\u3001content \u548C footer \u7EC4\u7EC7\u5185\u5BB9\uFF0C\u5E95\u90E8\u53EF\u76F4\u63A5\u4F20\u5165\u64CD\u4F5C\u6309\u94AE\u3002", footer: _jsxs(ExampleRow, { children: [_jsx(Button, { native: false, title: primaryActionDone ? "已执行" : "主要操作", onPress: () => setPrimaryActionDone(true) }), _jsxs(Button, { native: false, variant: "ghost", onPress: () => setSecondarySelected(!secondarySelected), children: [_jsx(Text, { children: secondarySelected ? "已切换" : "图标操作" }), _jsx(Icon, { as: ShoppingBasket, size: 16, className: "text-muted" })] })] }) }) }), _jsx(ExampleSection, { title: "\u56FE\u7247\u5361\u7247", withCard: false, children: _jsx(View, { className: "flex-row gap-4", children: communities.map(community => (_jsx(Card, { className: "min-w-0 flex-1", header: _jsx(StyledImage, { source: { uri: assets + community.image }, accessibilityLabel: community.title, className: "size-16 rounded-xl" }), content: _jsxs(View, { className: "gap-1", children: [_jsx(Text, { className: "text-sm font-medium", children: community.title }), _jsx(Text, { className: "text-sm text-muted", children: community.description })] }), footer: _jsxs(View, { className: "min-w-0 flex-1 flex-row items-center gap-2", children: [_jsx(View, { className: "size-2 shrink-0 rounded-full " + community.dot }), _jsx(Text, { className: "min-w-0 flex-1 text-xs font-medium", children: community.footer })] }) }, community.title))) }) }), _jsx(ExampleSection, { title: "\u6A2A\u5411\u56FE\u7247\u5361\u7247", withCard: false, children: events.map(event => (_jsx(Card, { variant: "tertiary", content: _jsxs(View, { className: "flex-row items-center gap-4", children: [_jsx(StyledImage, { source: { uri: assets + event.image }, accessibilityLabel: event.title, resizeMode: "cover", className: "size-24 rounded-2xl" }), _jsxs(View, { className: "min-w-0 flex-1 gap-2", children: [_jsx(Text, { className: "text-sm font-medium", children: event.title }), _jsx(Text, { className: "text-sm text-muted", children: event.description }), _jsxs(Button, { native: false, variant: "ghost", textClassName: "text-accent underline underline-offset-4", className: "h-auto min-w-0 justify-start p-0", onPress: () => setSelectedEvent(event.title), children: [_jsx(Text, { className: "text-sm text-accent", children: selectedEvent === event.title ? "已选择" : "点按操作" }), _jsx(Icon, { as: ArrowUpRight, size: 14, className: "text-accent" })] })] })] }) }, event.title))) }), _jsx(ExampleSection, { title: "\u80CC\u666F\u56FE\u7247\u5361\u7247", withCard: false, children: _jsx(Card, { className: "overflow-hidden p-0", content: _jsxs(ImageBackground, { source: { uri: assets + "neo2.jpeg" }, accessibilityLabel: "Neo \u5BB6\u7528\u673A\u5668\u4EBA", resizeMode: "cover", style: { minHeight: 300, padding: 20 }, children: [_jsx(View, { pointerEvents: "none", className: "absolute inset-0 bg-black/40" }), _jsxs(View, { className: "flex-1 justify-between gap-6", children: [_jsxs(View, { className: "gap-1", children: [_jsx(Text, { className: "text-base font-medium text-white", children: "\u80CC\u666F\u4E0A\u7684\u6587\u5B57" }), _jsx(Text, { className: "text-base text-white", children: "\u7528\u906E\u7F69\u4FDD\u6301\u6587\u5B57\u6E05\u6670" })] }), _jsxs(View, { className: "flex-row items-center justify-between gap-3", children: [_jsxs(View, { className: "min-w-0 flex-1", children: [_jsx(Text, { className: "text-white", children: "\u5E95\u90E8\u64CD\u4F5C\u533A" }), _jsx(Text, { className: "text-sm text-zinc-300", children: "\u6309\u94AE\u53EF\u72EC\u7ACB\u4EA4\u4E92" })] }), _jsx(Button, { native: false, size: "sm", className: "bg-white", textClassName: "text-black", title: notify ? "已开启" : "切换状态", onPress: () => setNotify(!notify) })] })] })] }) }) }), _jsx(ExampleSection, { title: "Variants", withCard: false, children: variants.map(({ variant, title, description }) => (_jsx(Card, { variant: variant, title: title, description: description, className: variant === "transparent" ? "border border-border shadow-none" : undefined }, variant))) })] }));
+}

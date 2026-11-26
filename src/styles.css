@@ -1,0 +1,53 @@
+@import "tw-animate-css";
+@import "./theme.css";
+
+@theme {
+  --spacing-hairline: hairlineWidth();
+}
+
+@layer utilities {
+  @keyframes ui-pressable-ripple {
+    from { transform: scale(0); opacity: 0.16; }
+    to { transform: scale(1); opacity: 0; }
+  }
+
+  .ui-pressable-ripple {
+    position: absolute;
+    z-index: 10;
+    border-radius: 50%;
+    pointer-events: none;
+    background: currentColor;
+    animation: ui-pressable-ripple 600ms ease-out forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ui-pressable-ripple { animation: none; opacity: 0; }
+  }
+
+  /* TrueSheetProvider 的 portal anchor 留在当前 modal 内，但不参与 Dialog 的 flex/gap 排版。 */
+  .ui-modal-content-scope > div:last-child {
+    height: 0;
+    position: absolute;
+    width: 0;
+    pointer-events: auto;
+  }
+
+  .ui-menu-scrollbar {
+    scrollbar-color: color-mix(in srgb, var(--muted) 45%, transparent) transparent;
+    /* Reserve space only when a classic scrollbar is actually visible. */
+    scrollbar-gutter: auto;
+    scrollbar-width: thin;
+  }
+
+  .ui-menu-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .ui-menu-scrollbar::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--muted) 45%, transparent);
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background-clip: content-box;
+  }
+
+}

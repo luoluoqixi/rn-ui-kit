@@ -1,0 +1,2 @@
+import type { TextFieldProps } from "./types";
+export declare function TextFieldHeroUI({ label, description, errorMessage, labelProps, labelClassName, descriptionProps, descriptionClassName, errorMessageProps, errorMessageClassName, inputProps, textareaProps, inputGroupProps, multiline, rows, className, herouiWebProps, herouiNativeProps: _, ...props }: TextFieldProps): import("react").JSX.Element;

@@ -1,0 +1,7 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { View } from "react-native";
+import { Separator, Text } from "rn-ui-kit/core";
+import { ExampleBlock, ExampleStack } from "../shared";
+export function SeparatorExample() {
+    return _jsxs(ExampleStack, { children: [_jsxs(ExampleBlock, { title: "\u5185\u5BB9\u5206\u9694", children: [_jsx(Text, { weight: "semibold", children: "\u5DE5\u4F5C\u533A" }), _jsx(Text, { color: "muted", type: "body-sm", children: "\u7BA1\u7406\u6210\u5458\u3001\u9879\u76EE\u4E0E\u901A\u77E5\u504F\u597D\u3002" }), _jsx(Separator, {}), _jsxs(View, { className: "h-5 flex-row items-center gap-3", children: [_jsx(Text, { type: "body-sm", children: "\u6982\u89C8" }), _jsx(Separator, { orientation: "vertical" }), _jsx(Text, { type: "body-sm", children: "\u6210\u5458" }), _jsx(Separator, { orientation: "vertical" }), _jsx(Text, { type: "body-sm", children: "\u8BBE\u7F6E" })] })] }), _jsxs(ExampleBlock, { title: "\u7C97\u7EC6", children: [_jsx(Text, { type: "body-sm", children: "\u7EC6\u5206\u9694\u7EBF" }), _jsx(Separator, {}), _jsx(Text, { type: "body-sm", children: "\u7C97\u5206\u9694\u7EBF" }), _jsx(Separator, { variant: "thick" })] }), _jsxs(ExampleBlock, { title: "\u81EA\u5B9A\u4E49\u539A\u5EA6\u4E0E\u989C\u8272", children: [_jsx(Separator, { thickness: 4, className: "bg-accent rounded-full", isDecorative: true }), _jsx(Separator, { thickness: 2, className: "bg-success", isDecorative: true })] })] });
+}

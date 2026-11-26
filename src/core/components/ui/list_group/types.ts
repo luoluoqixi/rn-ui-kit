@@ -1,0 +1,33 @@
+import type { ComponentProps, ReactNode } from "react";
+import type { ListGroup as NativeGroup } from "heroui-native/list-group";
+import type { ListBox as WebGroup } from "@heroui/react/list-box";
+import type { KeySelectionOptions } from "../utils/key_selection";
+import type { NativeHapticsSetting } from "../utils/haptics";
+import type { RenderProp } from "../utils/render";
+export type ListGroupItemContext = { id: string; isSelected: boolean; isDisabled: boolean };
+export type ListGroupItem = {
+  id: string;
+  title: RenderProp<ListGroupItemContext>;
+  textValue?: string;
+  description?: RenderProp<ListGroupItemContext>;
+  startContent?: RenderProp<ListGroupItemContext>;
+  endContent?: RenderProp<ListGroupItemContext>;
+  isDisabled?: boolean;
+  onPress?: () => void;
+  className?: string;
+  herouiNativeProps?: Omit<ComponentProps<typeof NativeGroup.Item>, "children" | "onPress" | "disabled">;
+  herouiWebProps?: Omit<ComponentProps<typeof WebGroup.Item>, "children" | "id" | "onAction" | "isDisabled">;
+};
+export type ListGroupSection = { id: string; title?: ReactNode; items: readonly ListGroupItem[] };
+export type ListGroupProps = KeySelectionOptions & {
+  items?: readonly ListGroupItem[];
+  sections?: readonly ListGroupSection[];
+  accessibilityLabel?: string;
+  className?: string;
+  showSeparators?: boolean;
+  showChevron?: boolean;
+  emptyContent?: ReactNode;
+  nativeHaptics?: NativeHapticsSetting;
+  herouiNativeProps?: Omit<ComponentProps<typeof NativeGroup>, "children">;
+  herouiWebProps?: Omit<ComponentProps<typeof WebGroup>, "children" | keyof KeySelectionOptions | "onAction">;
+};

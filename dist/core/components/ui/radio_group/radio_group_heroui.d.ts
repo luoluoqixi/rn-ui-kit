@@ -1,0 +1,2 @@
+import type { RadioGroupProps } from "./types";
+export declare function RadioGroupHeroUI({ items, itemProps, value, defaultValue, onValueChange, isDisabled, isInvalid, isRequired, variant, orientation, labelPosition, name, accessibilityLabel, nativeHaptics: _, label, labelProps, labelClassName, className, herouiWebProps, herouiNativeProps: _native, ...messages }: RadioGroupProps): import("react").JSX.Element;

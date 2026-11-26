@@ -1,0 +1,34 @@
+import type { ProgressBar } from "@heroui/react/progress-bar";
+import type { Label } from "@heroui/react/label";
+import type { ComponentProps, ComponentPropsWithRef, ReactNode } from "react";
+import type { ViewProps, View } from "react-native";
+import type { TextProps } from "../text";
+export type ProgressSize = "sm" | "md" | "lg";
+export type ProgressColor = "default" | "accent" | "success" | "warning" | "danger";
+type Slot<N, W> = {
+    className?: string;
+    herouiNativeProps?: N;
+    herouiWebProps?: W;
+};
+type ViewSlot = Omit<ComponentPropsWithRef<typeof View>, "children" | "className">;
+export type ProgressProps = {
+    value?: number;
+    minValue?: number;
+    maxValue?: number;
+    isIndeterminate?: boolean;
+    size?: ProgressSize;
+    color?: ProgressColor;
+    label?: ReactNode;
+    showValueLabel?: boolean;
+    valueLabel?: string;
+    formatOptions?: Intl.NumberFormatOptions;
+    accessibilityLabel?: string;
+    className?: string;
+    labelProps?: Slot<NonNullable<TextProps["herouiNativeProps"]>, Omit<ComponentProps<typeof Label>, "children" | "className">>;
+    valueLabelProps?: Slot<NonNullable<TextProps["herouiNativeProps"]>, Omit<ComponentProps<typeof ProgressBar.Output>, "children" | "className">>;
+    trackProps?: Slot<ViewSlot, Omit<ComponentProps<typeof ProgressBar.Track>, "children" | "className">>;
+    indicatorProps?: Slot<ViewSlot, Omit<ComponentProps<typeof ProgressBar.Fill>, "children" | "className">>;
+    herouiNativeProps?: Omit<ViewProps & React.RefAttributes<View>, "children" | "className" | "accessibilityValue">;
+    herouiWebProps?: Omit<ComponentProps<typeof ProgressBar>, "children" | "className" | "value" | "minValue" | "maxValue" | "isIndeterminate" | "size" | "color" | "valueLabel" | "formatOptions">;
+};
+export {};

@@ -1,0 +1,15 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useState } from "react";
+import { Globe, Newspaper, Rocket } from "lucide-react-native";
+import { Button, Icon, TagGroup } from "rn-ui-kit/core";
+import { ExampleSection, ExampleStack } from "../shared";
+const categories = [
+    { id: "news", title: "资讯", startContent: _jsx(Icon, { as: Newspaper, size: 14 }) },
+    { id: "travel", title: "旅行", startContent: _jsx(Icon, { as: Globe, size: 14 }) },
+    { id: "games", title: "游戏", startContent: _jsx(Icon, { as: Rocket, size: 14 }) },
+];
+export function TagGroupExample() {
+    const [tags, setTags] = useState(categories);
+    const [selected, setSelected] = useState(new Set(["news"]));
+    return _jsxs(ExampleStack, { children: [_jsx(ExampleSection, { title: "\u5206\u7C7B\u9009\u62E9", description: "\u9009\u62E9\u4E00\u4E2A\u611F\u5174\u8DA3\u7684\u5206\u7C7B\uFF0C\u518D\u6B21\u70B9\u51FB\u53EF\u53D6\u6D88\u3002", children: _jsx(TagGroup, { nativeHaptics: true, label: "\u5206\u7C7B", selectionMode: "single", items: categories }) }), _jsx(ExampleSection, { title: "\u591A\u9009\u4E0E\u5C3A\u5BF8", description: "\u591A\u4E2A\u5174\u8DA3\u6807\u7B7E\u53EF\u540C\u65F6\u9009\u4E2D\u3002", children: ["sm", "md", "lg"].map(size => _jsx(TagGroup, { nativeHaptics: true, accessibilityLabel: size + "兴趣", size: size, selectionMode: "multiple", defaultSelectedKeys: ["travel"], items: categories }, size)) }), _jsx(ExampleSection, { title: "\u5BB9\u5668\u5916\u89C2", description: "\u6807\u7B7E\u53EF\u4EE5\u4F7F\u7528\u66F4\u8F7B\u7684\u8868\u9762\u80CC\u666F\u3002", children: _jsx(TagGroup, { nativeHaptics: true, variant: "surface", selectionMode: "single", accessibilityLabel: "\u5916\u89C2\u793A\u4F8B", items: categories }) }), _jsxs(ExampleSection, { title: "\u7981\u7528\u4E0E\u6821\u9A8C", description: "\u9009\u4E2D\u81F3\u5C11\u4E24\u4E2A\u5206\u7C7B\u53EF\u89E3\u9664\u9519\u8BEF\u63D0\u793A\u3002", children: [_jsx(TagGroup, { nativeHaptics: true, label: "\u5185\u5BB9\u504F\u597D", selectionMode: "multiple", selectedKeys: selected, onSelectionChange: setSelected, isInvalid: selected.size < 2, errorMessage: "\u8BF7\u81F3\u5C11\u9009\u62E9\u4E24\u4E2A\u5206\u7C7B\u3002", description: "\u6240\u9009\u5206\u7C7B\u5C06\u7528\u4E8E\u63A8\u8350\u3002", items: categories }), _jsx(TagGroup, { nativeHaptics: true, accessibilityLabel: "\u7981\u7528\u5206\u7C7B", selectionMode: "multiple", disabledKeys: ["travel"], items: categories })] }), _jsxs(ExampleSection, { title: "\u79FB\u9664\u6807\u7B7E", description: "\u4F7F\u7528\u5173\u95ED\u6309\u94AE\u79FB\u9664\uFF0C\u5168\u90E8\u79FB\u9664\u540E\u663E\u793A\u7A7A\u72B6\u6001\u3002", children: [_jsx(TagGroup, { nativeHaptics: true, accessibilityLabel: "\u53EF\u79FB\u9664\u5206\u7C7B", items: tags, onRemove: keys => setTags(current => current.filter(item => !keys.has(item.id))), emptyContent: "\u6682\u672A\u6DFB\u52A0\u5206\u7C7B" }), _jsx(Button, { nativeHaptics: true, variant: "ghost", size: "sm", title: "\u91CD\u7F6E\u6807\u7B7E", onPress: () => setTags(categories) })] })] });
+}

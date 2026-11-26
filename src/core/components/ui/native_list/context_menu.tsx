@@ -1,0 +1,80 @@
+import { useMenuConfig } from "../context_menu/menu_provider";
+import { createContext, type ReactNode, useContext } from "react";
+
+import type { NativeListContextMenuProps } from "./types";
+
+const NativeListContextMenuContext = createContext<
+  NativeListContextMenuProps | undefined
+>(undefined);
+const NativeListDisabledStyleContext = createContext(true);
+
+export function NativeListContextMenuProvider({
+  children,
+  contextMenuProps,
+  disabledStyle,
+}: {
+  children: ReactNode;
+  contextMenuProps?: NativeListContextMenuProps | false;
+  disabledStyle?: boolean;
+}) {
+  const inheritedContextMenuProps = useContext(NativeListContextMenuContext);
+  const inheritedDisabledStyle = useContext(NativeListDisabledStyleContext);
+  const resolvedContextMenuProps =
+    contextMenuProps === undefined
+      ? inheritedContextMenuProps
+      : contextMenuProps === false
+        ? undefined
+        : contextMenuProps;
+
+  return (
+    <NativeListContextMenuContext.Provider value={resolvedContextMenuProps}>
+      <NativeListDisabledStyleContext.Provider
+        value={disabledStyle ?? inheritedDisabledStyle}
+      >
+        {children}
+      </NativeListDisabledStyleContext.Provider>
+    </NativeListContextMenuContext.Provider>
+  );
+}
+
+export function useResolvedNativeListDisabledStyle(disabledStyle?: boolean) {
+  const inheritedDisabledStyle = useContext(NativeListDisabledStyleContext);
+
+  return resolveNativeListDisabledStyle(disabledStyle, inheritedDisabledStyle);
+}
+
+export function resolveNativeListDisabledStyle(
+  disabledStyle?: boolean,
+  inherited = true,
+) {
+  return disabledStyle ?? inherited;
+}
+
+export function resolveNativeListContextMenu(
+  contextMenuProps?: NativeListContextMenuProps | false,
+  inheritedContextMenuProps?: NativeListContextMenuProps,
+  disabled = false,
+) {
+  if (disabled || contextMenuProps === false) {
+    return undefined;
+  }
+
+  return contextMenuProps ?? inheritedContextMenuProps;
+}
+
+export function useResolvedNativeListContextMenu(
+  contextMenuProps?: NativeListContextMenuProps | false,
+  disabled = false,
+) {
+  const inheritedContextMenuProps = useContext(NativeListContextMenuContext);
+
+  const config = useMenuConfig();
+  const resolved = resolveNativeListContextMenu(
+    contextMenuProps,
+    inheritedContextMenuProps,
+    disabled,
+  );
+  return resolved && config.native !== undefined
+    ? { native: config.native, ...resolved }
+    : resolved;
+}

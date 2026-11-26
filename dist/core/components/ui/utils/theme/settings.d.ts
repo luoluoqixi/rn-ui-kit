@@ -1,0 +1,41 @@
+import { type ReactNode } from "react";
+import { type ColorSchemeName } from "react-native";
+import type { AccentThemeNames } from "./accent_theme";
+export { defaultUiPreferences, resolveUiPreferences, type ResolvedColorScheme, type ColorSchemeSetting, type UiPreferences, } from "./preferences";
+import { type ResolvedColorScheme, type ColorSchemeSetting, type UiPreferences } from "./preferences";
+export type UiPreferencesContextValue = {
+    accentThemeNames: AccentThemeNames;
+    error: unknown;
+    isLoaded: boolean;
+    isLoading: boolean;
+    patchPreferences: (updater: (currentPreferences: UiPreferences) => UiPreferences) => Promise<void>;
+    preferences: UiPreferences;
+    reload: () => Promise<void>;
+    save: () => Promise<void>;
+    setPreferences: (preferences: UiPreferences) => Promise<void>;
+    updateAndSave: (updater: (currentPreferences: UiPreferences) => UiPreferences) => Promise<void>;
+};
+export type UiPreferencesProviderProps = {
+    accentThemeNames?: AccentThemeNames;
+    children: ReactNode;
+    preferences?: Partial<UiPreferences>;
+};
+export declare function UiPreferencesProvider({ accentThemeNames, children, preferences, }: UiPreferencesProviderProps): import("react").JSX.Element;
+export declare function useUiPreferences(): UiPreferencesContextValue;
+export declare function resolveColorSchemeSettings(preferredColorScheme: ColorSchemeSetting, systemColorScheme: ColorSchemeName): ResolvedColorScheme;
+export declare function useResolvedeColorScheme(): ResolvedColorScheme;
+export declare function useColorSchemeSettings(): {
+    accentThemeNames: AccentThemeNames;
+    error: unknown;
+    isLoaded: boolean;
+    isLoading: boolean;
+    isSystemColorScheme: boolean;
+    preferredColorScheme: ColorSchemeSetting;
+    preferences: UiPreferences;
+    reload: () => Promise<void>;
+    resolvedColorScheme: ResolvedColorScheme;
+    save: () => Promise<void>;
+    setPreferredColorScheme: (nextColorScheme: ColorSchemeSetting) => Promise<void>;
+    setPreferredColorSchemeAndSave: (nextColorScheme: ColorSchemeSetting) => Promise<void>;
+    systemColorScheme: string;
+};
