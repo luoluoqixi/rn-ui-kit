@@ -48,7 +48,11 @@ export const SelectHeroUI = forwardRef<SelectHandle, SelectProps>(function Selec
     </HeroSelect.Trigger>
     <HeroSelect.Popover {...c?.herouiWebProps} UNSTABLE_portalContainer={container ?? undefined}
       className={c?.className} placement={c?.herouiWebProps?.placement ?? placement as ComponentProps<typeof HeroSelect.Popover>["placement"]}
-      offset={c?.sideOffset ?? 8} style={{ maxHeight: config.webContentMaxHeight, ...c?.herouiWebProps?.style }}>
+      offset={c?.sideOffset ?? 8} style={{
+        // Dialog / Sheet 的 portal 宿主没有宽度，不能用它的可用宽度收缩选项。
+        width: "max-content", maxWidth: "calc(100svw - 2rem)",
+        maxHeight: config.webContentMaxHeight, ...c?.herouiWebProps?.style,
+      }}>
       <HeroUIOverlayLayer><ListBox aria-label={p.accessibilityLabel ?? "选项"}>
         {m.groups.map(group => <ListBox.Section key={group.key} aria-label={typeof group.label === "string" ? group.label : "选项"}>
           {group.label != null && <Header>{resolveRenderProp(group.label, { value: m.value ?? "" })}</Header>}

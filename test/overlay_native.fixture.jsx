@@ -217,6 +217,16 @@ async function click(text) {const n=[...document.querySelectorAll("button")].fin
 const pause = ms => act(()=>new Promise(r=>setTimeout(r,ms)));
 afterEach(async()=>{await act(()=>{toastBridge.closeAll();root?.unmount();});root=undefined;document.body.replaceChildren();Object.keys(latest).forEach(k=>delete latest[k]);shown.length=0;hapticCalls.length=0;nativeWindows.length=0;disableMenuAnimations=false;optionPressables.clear();feedbackStates.length=0;highlightAnimations.length=0;});
 
+test("Native Dialog 忽略仅 Web 的 body 布局配置，显式 Native 配置才创建内容容器", async () => {
+  const content = <RNW.View testID="dialog-body-probe" />;
+  await render(<Dialog defaultOpen content={content}
+    bodyProps={{ herouiWebProps: { style: { display: "flex", overflow: "hidden" } } }} />);
+  expect(document.querySelector('[data-testid="dialog-body-probe"]').parentElement.dataset.content).toBe("dialog");
+  await render(<Dialog defaultOpen content={content}
+    bodyProps={{ herouiNativeProps: { testID: "native-body", style: { flex: 1 } } }} />);
+  expect(document.querySelector('[data-testid="dialog-body-probe"]').parentElement.dataset.testid).toBe("native-body");
+});
+
 test("Native Dialog owns a modal presenter and local overlay scope; reopening does not retain child sheet state", async () => {
   const contexts = [];
   const CallerContext = React.createContext("missing");

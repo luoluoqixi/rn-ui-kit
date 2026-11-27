@@ -175,6 +175,46 @@ const { MenubarHeroUI: Menubar } = await import("../src/core/components/ui/menub
 const { Drawer } = await import("../node_modules/@lodev09/react-native-true-sheet/src/web/vaul/index");
 const { SheetContentScope } = await import("../src/core/components/ui/sheet/native_sheet/true_sheet/sheet_content_scope.web");
 
+test("ContextMenu 添加触发区域尺寸时保留文件行布局及按压状态样式", async () => {
+  await render(<ContextMenu triggerProps={{ style: { width: "100%", height: 30 } }}
+    trigger={<RNW.Pressable role="treeitem" testID="tree-row" style={({ pressed }) => [
+      { flexDirection: "row", alignItems: "center", paddingLeft: 24 },
+      { opacity: pressed ? 0.5 : 1 },
+    ]}><RNW.Text>文件名.md</RNW.Text></RNW.Pressable>} items={[{ value: "open", label: "打开" }]} />);
+  const row = document.querySelector('[data-testid="tree-row"]');
+  expect(getComputedStyle(row).flexDirection).toBe("row");
+  expect(getComputedStyle(row).paddingLeft).toBe("24px");
+  expect(row.style.width).toBe("100%");
+  expect(row.style.height).toBe("30px");
+  await act(() => row.dispatchEvent(new win.MouseEvent("contextmenu", { bubbles: true, cancelable: true })));
+  await settle();
+  expect(byRole("menu")).toBeTruthy();
+});
+
+test("Dialog 可由业务内容接管滚动且保留固定标题和关闭按钮", async () => {
+  await render(<Dialog defaultOpen title="固定标题"
+    bodyClassName="consumer-body" bodyProps={{ herouiWebProps: { style: { display: "flex", flex: 1, minHeight: 0, overflow: "hidden" } } }}
+    content={<div>分栏独立滚动内容</div>} />);
+  const body = document.querySelector('[data-slot="modal-body"]');
+  expect(body.style.display).toBe("flex");
+  expect(body.style.overflow).toBe("hidden");
+  expect(body.classList.contains("consumer-body")).toBe(true);
+  expect(body.contains(document.querySelector('[aria-label="关闭"]'))).toBe(false);
+  expect(byRole("dialog").textContent).toContain("固定标题");
+});
+
+test("Dialog 中的 Select 按内容计算宽度，不受零尺寸 portal 宿主压缩", async () => {
+  await render(<Dialog defaultOpen title="菜单宽度" content={<Select
+    accessibilityLabel="菜单样式" defaultValue="app" options={[
+      { value: "system", label: "系统原生" }, { value: "app", label: "应用样式" },
+    ]} />} />);
+  await click(document.querySelector('[data-slot="select-trigger"]'));
+  const popover = byRole("listbox").closest('[data-slot="select-popover"]');
+  expect(popover.closest('[data-ui-overlay-scope]')).toBeTruthy();
+  expect(popover.style.width).toBe("max-content");
+  expect(popover.style.maxWidth).toBe("calc(100svw - 2rem)");
+});
+
 test("ContextMenu uses real HeroUI context trigger, retains short press, choices and keyboard focus", async () => {
   let pressed = 0, chosen = 0;
   const changes = [];
@@ -380,4 +420,41 @@ test("Dropdown right indicators preserve selection and caller item styles", asyn
   expect(byText("源码模式").querySelector('[data-slot="menu-item-indicator"]').hasAttribute("data-visible")).toBe(true);
   expect(byText("禁用选项").classList.contains("caller-disabled")).toBe(true);
   expect(byText("禁用选项").getAttribute("aria-disabled")).toBe("true");
+});
+
+test("Shared menu keeps one scroll owner within React Aria's viewport bound", async () => {
+  await render(<Menubar defaultValue="file" contentProps={{ maxHeight: 640 }} items={menuBarItems()} />);
+  const menu = byRole("menu");
+  const popover = menu.closest('[data-slot="dropdown-popover"]');
+  expect(popover.style.overflow).toBe("hidden");
+  expect(popover.style.display).toBe("flex");
+  expect(popover.style.flexDirection).toBe("column");
+  expect(menu.parentElement.style.display).toBe("flex");
+  expect(Number.parseFloat(menu.parentElement.style.minHeight)).toBe(0);
+  expect(menu.style.overflowY).toBe("auto");
+  expect(Number.parseFloat(menu.style.minHeight)).toBe(0);
+  expect(menu.style.maxHeight).toBe("640px");
+  await act(() => byText("测试子菜单").focus());
+  await key(document.activeElement, "ArrowRight");
+  const submenu = document.querySelector('[data-ui-submenu]');
+  expect(submenu.style.overflowY).toBe("auto");
+  expect(Number.parseFloat(submenu.style.minHeight)).toBe(0);
+  expect(submenu.closest('[data-slot="dropdown-popover"]').style.overflow).toBe("hidden");
+});
+
+test("Menubar open trigger retains its active paint and caller style", async () => {
+  document.body.style.setProperty("--segment", "rgb(110, 120, 130)");
+  await render(<Menubar items={[{ value: "file", title: "活动菜单", triggerProps: { style: { paddingLeft: 6 } },
+    items: [{ value: "new", label: "活动操作" }] }]} />);
+  const trigger = byText("活动菜单");
+  await click(trigger);
+  expect(trigger.getAttribute("aria-expanded")).toBe("true");
+  expect(getComputedStyle(trigger).backgroundColor).toBe("rgb(110, 120, 130)");
+  expect(trigger.style.paddingLeft).toBe("6px");
+  await key(document.activeElement, "Escape");
+  expect(trigger.style.backgroundColor).toBe("");
+  await render(<Menubar defaultValue="file" items={[{ value: "file", title: "自定义活动菜单",
+    triggerProps: { style: { backgroundColor: "rgb(10, 20, 30)" } },
+    items: [{ value: "new", label: "自定义活动操作" }] }]} />);
+  expect(getComputedStyle(byText("自定义活动菜单")).backgroundColor).toBe("rgba(10, 20, 30, 1.00)");
 });

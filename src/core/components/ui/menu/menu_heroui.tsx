@@ -15,6 +15,9 @@ import type { MenuEntry, MenuSurfaceProps } from "./types";
 const menuViewportStyle: CSSProperties = {
   minWidth: "min(calc(var(--spacing) * 55), calc(100svw - 2rem))",
   maxWidth: "calc(100svw - 2rem)",
+  display: "flex",
+  flexDirection: "column",
+  overflow: "hidden",
 };
 
 function MenuItems({ items, menubarOwner }: { items: MenuEntry[]; menubarOwner?: string }) {
@@ -47,7 +50,8 @@ function MenuItems({ items, menubarOwner }: { items: MenuEntry[]; menubarOwner?:
       <Menu.Item {...webProps} id={item.value} textValue={item.textValue} isDisabled={item.disabled}>{content}</Menu.Item>
       {/* Keep nested popovers in React Aria's own group, inside the root portal. */}
       <Menu.Popover style={menuViewportStyle} data-ui-menubar-owner={menubarOwner}>
-        <HeroUIOverlayLayer><Menu.Menu aria-label={item.textValue} style={font} data-ui-submenu="">
+        <HeroUIOverlayLayer><Menu.Menu aria-label={item.textValue}
+          style={{ ...font, minHeight: 0, overflowY: "auto" }} data-ui-submenu="">
           <MenuItems items={item.subMenu} menubarOwner={menubarOwner} />
         </Menu.Menu></HeroUIOverlayLayer>
       </Menu.Popover>
@@ -77,8 +81,9 @@ export function MenuSurface({ items, contentProps: c, accessibilityLabel, isNonM
   const align = c?.align ?? (horizontal ? "center" : "start");
   const edge = align === "center" ? "" : horizontal ? (align === "start" ? "top" : "bottom") : align;
   const placement = side + (edge ? " " + edge : "");
+  // 由 Menu 单独滚动；flex 收缩继续遵守 RAC 动态计算的 Popover 可用高度。
   const menu = <Menu.Menu aria-label={accessibilityLabel ?? "菜单"}
-    style={{ ...font, maxHeight: contentMaxHeight, overflowY: "auto" }}>
+    style={{ ...font, minHeight: 0, maxHeight: contentMaxHeight, overflowY: "auto" }}>
     <MenuItems items={items} menubarOwner={menubarOwner} />
   </Menu.Menu>;
   return <Menu.Popover {...webProps} UNSTABLE_portalContainer={container ?? undefined}
@@ -88,6 +93,7 @@ export function MenuSurface({ items, contentProps: c, accessibilityLabel, isNonM
     className={c?.className} placement={c?.herouiWebProps?.placement ?? placement as ComponentProps<typeof Menu.Popover>["placement"]}
     offset={c?.sideOffset ?? c?.herouiWebProps?.offset ?? 8}
     style={{ ...menuViewportStyle, ...c?.herouiWebProps?.style }}>
-    <HeroUIOverlayLayer>{onKeyDownCapture ? <div onKeyDownCapture={onKeyDownCapture}>{menu}</div> : menu}</HeroUIOverlayLayer>
+    <HeroUIOverlayLayer>{onKeyDownCapture ? <div onKeyDownCapture={onKeyDownCapture}
+      style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>{menu}</div> : menu}</HeroUIOverlayLayer>
   </Menu.Popover>;
 }

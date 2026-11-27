@@ -72,6 +72,9 @@ function TopMenu({ item, p, m, navigation: nav }: {
         size={item.triggerProps?.size ?? p.size ?? "sm"} variant={item.triggerProps?.variant ?? "ghost"}
         className={cn(item.triggerProps?.variant == null && open && "bg-segment", item.triggerProps?.className)}
         textClassName={cn(item.triggerProps?.variant == null && open && "text-segment-foreground", item.triggerProps?.textClassName)}
+        // RAC 在菜单展开时持续设置 pressed，内联背景避免被 HeroUI 的 pressed/hover 背景覆盖。
+        style={state => [item.triggerProps?.variant == null && open ? { backgroundColor: "var(--segment)" } : undefined,
+          typeof item.triggerProps?.style === "function" ? item.triggerProps.style(state) : item.triggerProps?.style]}
         isDisabled={disabled} role="menuitem" tabIndex={disabled || m.tabStop !== item.value ? -1 : 0} herouiWebProps={{ ...platform,
           render: (dom, state) => {
             const props = { ...dom, role: "menuitem", tabIndex: disabled || m.tabStop !== item.value ? -1 : 0 };

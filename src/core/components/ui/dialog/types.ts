@@ -1,6 +1,7 @@
 import type { ComponentProps, ReactNode } from "react";
 import type { Dialog as NativeDialog } from "heroui-native/dialog";
 import type { Modal } from "@heroui/react/modal";
+import type { View } from "react-native";
 import type { ButtonProps } from "../button";
 import type { TextProps } from "../text";
 import type { RenderProp } from "../utils/render";
@@ -18,6 +19,11 @@ export type DialogOverlayProps = OverlayPartProps<
 /** Native Modal owns the presentation order; only the container's layout is configurable. */
 export type DialogPortalProps = Pick<ComponentProps<typeof NativeDialog.Portal>, "className" | "style">;
 export type DialogTitleProps = TextProps;
+/** 内容区默认由组件滚动；分栏布局可显式接管滚动与 flex 约束。 */
+export type DialogBodyProps = OverlayPartProps<
+  Omit<ComponentProps<typeof View>, "children">,
+  Omit<ComponentProps<typeof Modal.Body<"div">>, "children">
+>;
 export type DialogDescriptionProps = TextProps;
 export type DialogProps = OverlayStateProps & {
   children?: ReactNode;
@@ -29,6 +35,8 @@ export type DialogProps = OverlayStateProps & {
   triggerClassName?: string;
   contentProps?: DialogContentProps;
   contentClassName?: string;
+  bodyProps?: DialogBodyProps;
+  bodyClassName?: string;
   overlayProps?: DialogOverlayProps;
   portalProps?: DialogPortalProps;
   titleProps?: DialogTitleProps;

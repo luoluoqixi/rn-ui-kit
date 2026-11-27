@@ -26,7 +26,9 @@ export function DialogHeroUI(p: DialogAdapterProps) {
               {m.title != null && <C.Heading className={cn(p.titleProps?.className, p.titleClassName)} style={titleStyle}>{m.title}</C.Heading>}
               {m.description != null && <AriaText slot="description" className={cn("text-muted text-sm", p.descriptionClassName)} style={descriptionStyle}>{m.description}</AriaText>}
             </C.Header>}
-            {m.content != null && <C.Body>{typeof m.content === "string" || typeof m.content === "number" ? <Text>{m.content}</Text> : m.content}</C.Body>}
+            {m.content != null && <C.Body {...p.bodyProps?.herouiWebProps}
+              className={cn(p.bodyClassName, p.bodyProps?.className, p.bodyProps?.herouiWebProps?.className)}>
+              {typeof m.content === "string" || typeof m.content === "number" ? <Text>{m.content}</Text> : m.content}</C.Body>}
             {(p.actions != null || p.cancelLabel != null || p.actionLabel != null || p.destructiveLabel != null) &&
               <C.Footer className={p.footerClassName}><DialogActions props={p} model={m} /></C.Footer>}
         </C.Dialog></HeroUIOverlayLayer></ModalContentScope>

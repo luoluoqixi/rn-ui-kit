@@ -13,6 +13,7 @@ export function DialogHeroUI(p: DialogAdapterProps) {
   const overlay = p.dismissOnOverlayPress ?? !p.isAlert;
   const titleStyle = useDefaultTextStyle(p.titleProps?.style, p.titleClassName);
   const descriptionStyle = useDefaultTextStyle(p.descriptionProps?.style, p.descriptionClassName);
+  const content = typeof m.content === "string" || typeof m.content === "number" ? <Text>{m.content}</Text> : m.content;
   return <HeroDialog {...p.herouiNativeProps} isOpen={m.open}
     onOpenChange={next => { if (next || back) m.setOpen(next); }}>
     {m.trigger && <HeroDialog.Trigger asChild>{m.trigger}</HeroDialog.Trigger>}
@@ -31,7 +32,8 @@ export function DialogHeroUI(p: DialogAdapterProps) {
           {m.title != null && <HeroDialog.Title {...p.titleProps} className={p.titleClassName} style={titleStyle}>{m.title}</HeroDialog.Title>}
           {m.description != null && <HeroDialog.Description {...p.descriptionProps} className={p.descriptionClassName} style={descriptionStyle}>{m.description}</HeroDialog.Description>}
         </View>}
-        {typeof m.content === "string" || typeof m.content === "number" ? <Text>{m.content}</Text> : m.content}
+        {p.bodyProps?.herouiNativeProps || p.bodyProps?.className || p.bodyClassName ? <View {...p.bodyProps?.herouiNativeProps}
+          className={cn(p.bodyClassName, p.bodyProps?.className, p.bodyProps?.herouiNativeProps?.className)}>{content}</View> : content}
         {(p.actions != null || p.cancelLabel != null || p.actionLabel != null || p.destructiveLabel != null) &&
           <View className={cn("flex-row flex-wrap justify-end gap-2", p.footerClassName)}><DialogActions props={p} model={m} /></View>}
       </HeroDialog.Content>
