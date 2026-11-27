@@ -7,6 +7,7 @@ import { useDefaultTextStyle } from "../provider/font_provider";
 import { textWebStyle } from "../text/text_style_web";
 import { useOverlayPortalContainer } from "../utils/overlay/overlay_portal_scope";
 import { HeroUIOverlayLayer } from "../utils/overlay/heroui_layer.web";
+import { cn } from "../utils/cn";
 import { useMenuConfig } from "../context_menu/menu_provider";
 import type { MenuEntry, MenuSurfaceProps } from "./types";
 
@@ -23,12 +24,19 @@ function MenuItems({ items, menubarOwner }: { items: MenuEntry[]; menubarOwner?:
       thickness={item.separatorVariant === "thick" ? 6 : undefined}
       className={item.separatorVariant === "thick" ? "-mx-1 my-1 opacity-25" : "mx-2 my-1 opacity-75"} />;
     const choice = item.checkbox || item.selected !== undefined;
-    const indicator = <Menu.ItemIndicator type={item.selectionIndicatorVariant}>
+    const rightIndicator = choice && item.selectionIndicatorPosition === "right";
+    const webProps: MenuEntry["herouiWebProps"] = {
+      ...item.herouiWebProps,
+      // HeroUI 为所有选择标记预留左侧空间，右侧标记需恢复普通行的缩进。
+      className: rightIndicator ? cn("ps-2.5", item.herouiWebProps?.className) : item.herouiWebProps?.className,
+    };
+    const indicator = <Menu.ItemIndicator type={item.selectionIndicatorVariant}
+      className={rightIndicator ? "static translate-y-0" : undefined}>
       {item.indicator == null ? undefined : <span style={{ visibility: item.selected ? "visible" : "hidden" }}>{item.indicator}</span>}
     </Menu.ItemIndicator>;
     const content = <>
       {choice && item.selectionIndicatorPosition !== "right" && indicator}
-      {(item.icon != null || item.reserveIconSpace) && <span className="size-5 shrink-0">{item.icon}</span>}
+      {(item.icon != null || item.reserveIconSpace) && <span className="flex size-5 shrink-0 items-center justify-center">{item.icon}</span>}
       <span className="flex min-w-0 flex-1 flex-col"><Label>{item.label}</Label>
         {item.subtitle && <Description>{item.subtitle}</Description>}</span>
       {item.shortcut != null && <span className="shrink-0 text-sm text-muted">{item.shortcut}</span>}
@@ -36,7 +44,7 @@ function MenuItems({ items, menubarOwner }: { items: MenuEntry[]; menubarOwner?:
       {item.subMenu && <Menu.SubmenuIndicator />}
     </>;
     if (item.subMenu) return <Menu.SubmenuTrigger key={item.value}>
-      <Menu.Item {...item.herouiWebProps} id={item.value} textValue={item.textValue} isDisabled={item.disabled}>{content}</Menu.Item>
+      <Menu.Item {...webProps} id={item.value} textValue={item.textValue} isDisabled={item.disabled}>{content}</Menu.Item>
       {/* Keep nested popovers in React Aria's own group, inside the root portal. */}
       <Menu.Popover style={menuViewportStyle} data-ui-menubar-owner={menubarOwner}>
         <HeroUIOverlayLayer><Menu.Menu aria-label={item.textValue} style={font} data-ui-submenu="">
@@ -44,7 +52,7 @@ function MenuItems({ items, menubarOwner }: { items: MenuEntry[]; menubarOwner?:
         </Menu.Menu></HeroUIOverlayLayer>
       </Menu.Popover>
     </Menu.SubmenuTrigger>;
-    const row = <Menu.Item {...item.herouiWebProps} id={item.value} textValue={item.textValue}
+    const row = <Menu.Item {...webProps} id={item.value} textValue={item.textValue}
       isDisabled={item.disabled} variant={item.destructive ? "danger" : "default"}
       shouldCloseOnSelect={item.shouldCloseOnSelect ?? item.herouiWebProps?.shouldCloseOnSelect ?? !item.checkbox}
       onAction={item.onAction}>{content}</Menu.Item>;

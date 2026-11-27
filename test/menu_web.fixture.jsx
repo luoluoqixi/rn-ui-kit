@@ -355,3 +355,29 @@ test("Shared menu uses HeroUI dot indicators and hides unselected custom indicat
   expect(byText("其他选项").querySelector('[data-type="dot"]').hasAttribute("data-visible")).toBe(false);
   expect(byText("自定义图标").querySelector('[data-slot="menu-item-indicator"] > span').style.visibility).toBe("hidden");
 });
+
+test("Dropdown right indicators preserve selection and caller item styles", async () => {
+  function Example() {
+    const [selected, setSelected] = React.useState(false);
+    return <Dropdown native={false} trigger="布局菜单" selectionIndicatorPosition="right" items={[
+      { value: "save", label: "保存文件", icon: <svg width="14" height="14" />, herouiWebProps: { className: "caller-save" } },
+      { value: "source", label: "源码模式", icon: <svg width="14" height="14" />, selected, shouldCloseOnSelect: false,
+        onPress: () => setSelected(value => !value),
+        herouiWebProps: { className: selected ? "caller-selected" : "caller-unselected" } },
+      { value: "disabled", label: "禁用选项", selected: false, disabled: true, herouiWebProps: { className: "caller-disabled" } },
+    ]} />;
+  }
+  await render(<Example />);
+  await click(byText("布局菜单"));
+  expect(byText("保存文件").classList.contains("caller-save")).toBe(true);
+  const source = byText("源码模式");
+  expect(source.getAttribute("aria-checked")).toBe("false");
+  expect(source.classList.contains("caller-unselected")).toBe(true);
+  expect(source.querySelector('[data-slot="menu-item-indicator"]').hasAttribute("data-visible")).toBe(false);
+  await click(source);
+  expect(byText("源码模式").getAttribute("aria-checked")).toBe("true");
+  expect(byText("源码模式").classList.contains("caller-selected")).toBe(true);
+  expect(byText("源码模式").querySelector('[data-slot="menu-item-indicator"]').hasAttribute("data-visible")).toBe(true);
+  expect(byText("禁用选项").classList.contains("caller-disabled")).toBe(true);
+  expect(byText("禁用选项").getAttribute("aria-disabled")).toBe("true");
+});
