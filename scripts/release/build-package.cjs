@@ -3,6 +3,8 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+const { validateReleasePackage, validatePackedContents } = require("./validate-package.cjs");
+const { withReleaseLock } = require("./release-lock.cjs");
 
 const repoRoot = path.resolve(__dirname, "../..");
 const sourcePackageDir = repoRoot;
@@ -60,6 +62,7 @@ function createReleaseManifest() {
   manifest["react-native"] = "./src/index.ts";
   manifest.types = "./dist/index.d.ts";
   manifest.exports = {
+    ...sourcePackage.exports,
     ".": releaseEntry("index"),
     "./core": releaseEntry("core"),
     "./debug": releaseEntry("debug"),
@@ -67,14 +70,7 @@ function createReleaseManifest() {
     "./styles.css": "./src/styles.css",
     "./package.json": "./package.json",
   };
-  manifest.files = [
-    "dist",
-    "src",
-    "patches",
-    "scripts/sync-patches.mjs",
-    "README.md",
-    "LICENSE",
-  ];
+  manifest.files = [...sourcePackage.files];
   manifest.scripts = {
     "sync-patches": sourcePackage.scripts?.["sync-patches"] ?? "bun scripts/sync-patches.mjs",
   };
@@ -84,24 +80,23 @@ function createReleaseManifest() {
 }
 
 function copyReleaseFiles() {
-  for (const fileName of ["README.md", "LICENSE"]) {
-    fs.copyFileSync(path.join(sourcePackageDir, fileName), path.join(packageDir, fileName));
-  }
-
-  for (const directoryName of ["src", "patches"]) {
-    const sourcePath = path.join(sourcePackageDir, directoryName);
-    if (fs.existsSync(sourcePath)) {
-      fs.cpSync(sourcePath, path.join(packageDir, directoryName), {
-        recursive: true,
-      });
+  // 发布清单只维护一份；dist 由后续编译生成，其余条目必须真实存在。
+  for (const entry of sourcePackage.files) {
+    if (entry === "dist") continue;
+    const sourcePath = path.resolve(sourcePackageDir, entry);
+    const relativePath = path.relative(sourcePackageDir, sourcePath);
+    if (
+      !relativePath ||
+      relativePath.startsWith("..") ||
+      path.isAbsolute(relativePath) ||
+      /[*?{}[\]]/.test(entry)
+    ) {
+      throw new Error(`Release files must use literal paths within the package: ${entry}`);
     }
-  }
-
-  const syncPatchesScript = path.join(sourcePackageDir, "scripts", "sync-patches.mjs");
-  if (fs.existsSync(syncPatchesScript)) {
-    const targetScriptsDir = path.join(packageDir, "scripts");
-    fs.mkdirSync(targetScriptsDir, { recursive: true });
-    fs.copyFileSync(syncPatchesScript, path.join(targetScriptsDir, "sync-patches.mjs"));
+    if (!fs.existsSync(sourcePath)) throw new Error(`Release file is missing: ${entry}`);
+    const targetPath = path.join(packageDir, entry);
+    fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+    fs.cpSync(sourcePath, targetPath, { recursive: true });
   }
 }
 
@@ -151,6 +146,17 @@ function pack() {
   if (!fs.existsSync(tarballPath)) {
     throw new Error(`Tarball not found: ${tarballPath}`);
   }
+
+  // npm 的嵌套 .npmignore 仍可能裁掉暂存目录内的文件，必须校验最终 tgz。
+  const verificationDir = path.join(distDir, `${releaseName}-verify`);
+  clearDirectory(verificationDir);
+  try {
+    run("tar", ["-xzf", tarballPath, "-C", verificationDir]);
+    validateReleasePackage(path.join(verificationDir, "package"));
+    validatePackedContents(packageDir, path.join(verificationDir, "package"));
+  } finally {
+    fs.rmSync(verificationDir, { recursive: true, force: true });
+  }
 }
 
 function main() {
@@ -158,13 +164,14 @@ function main() {
   writeJson(path.join(packageDir, "package.json"), createReleaseManifest());
   copyReleaseFiles();
   compile();
+  validateReleasePackage(packageDir);
   pack();
   console.log(`Package directory: ${packageDir}`);
   console.log(`Tarball: ${tarballPath}`);
 }
 
 try {
-  main();
+  withReleaseLock(repoRoot, main, process.env.RN_UI_KIT_RELEASE_LOCK_TOKEN);
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
   process.exit(1);

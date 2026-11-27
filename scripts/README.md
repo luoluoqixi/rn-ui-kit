@@ -16,6 +16,16 @@ bun run set-version 1.2.3 --push
 发布脚本位于 `scripts/release/`，Android 示例 APK 发布脚本位于
 `scripts/android/release-example-apk.cjs`。
 
+已发布版本若只是修复打包脚本或补齐漏发文件，可以运行：
+
+```shell
+bun run package-release --update-existing
+```
+
+该模式要求当前版本的本地发布分支已存在，仅追加产物提交，不重建分支或操作
+tag，不自动 push。存在分叉、远端读取失败或并发更新时会拒绝覆盖；完整说明见
+[`release/README.md`](./release/README.md#47-修补现有版本的发布分支)。
+
 推送 `v<semver>` tag 后，`.github/workflows/release.yml` 会先创建 GitHub
 Release。Release 说明会扫描上一个 tag 到当前 tag 的提交，按
 `feat`、`fix`、`perf`、`refactor`、`build` 和 `revert` 分类，并忽略

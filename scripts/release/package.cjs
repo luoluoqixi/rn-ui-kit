@@ -3,6 +3,8 @@
 const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
+const { validateReleasePackage } = require("./validate-package.cjs");
+const { withReleaseLock } = require("./release-lock.cjs");
 
 const repoRoot = path.resolve(__dirname, "../..");
 const packageJsonPath = path.join(repoRoot, "package.json");
@@ -17,9 +19,19 @@ const releaseRepoDir = path.join(distDir, branchName);
 const releaseExtractDir = path.join(distDir, `${branchName}-extract`);
 
 function parseOptions(argv) {
-  return {
+  const allowed = new Set(["--pack-only", "--no-commit", "--update-existing", "--help", "-h"]);
+  for (const arg of argv) {
+    if (!allowed.has(arg)) throw new Error(`Unknown option: ${arg}`);
+  }
+  const options = {
     packOnly: argv.includes("--pack-only") || argv.includes("--no-commit"),
+    updateExisting: argv.includes("--update-existing"),
+    help: argv.includes("--help") || argv.includes("-h"),
   };
+  if (options.packOnly && options.updateExisting) {
+    throw new Error("--pack-only / --no-commit cannot be combined with --update-existing");
+  }
+  return options;
 }
 
 function run(command, args, options = {}) {
@@ -131,38 +143,9 @@ function copyDirectoryContents(sourceDir, targetDir) {
 }
 
 function validateExtractedPackage(packageDir) {
-  const manifestPath = path.join(packageDir, "package.json");
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-  const requiredDirectories = ["src", "dist"];
-
-  for (const directoryName of requiredDirectories) {
-    if (!fs.existsSync(path.join(packageDir, directoryName))) {
-      throw new Error(`Release package is missing required directory: ${directoryName}`);
-    }
-  }
-
-  const expectedReactNativeEntries = {
-    ".": "./src/index.ts",
-    "./core": "./src/core.ts",
-    "./debug": "./src/debug.ts",
-    "./initialize": "./src/initialize.ts",
-  };
-
-  if (manifest["react-native"] !== expectedReactNativeEntries["."]) {
-    throw new Error(`Unexpected top-level react-native entry: ${manifest["react-native"] || "(missing)"}`);
-  }
-
-  for (const [exportName, expectedEntry] of Object.entries(expectedReactNativeEntries)) {
-    const actualEntry = manifest.exports?.[exportName]?.["react-native"];
-    if (actualEntry !== expectedEntry) {
-      throw new Error(`Unexpected react-native entry for ${exportName}: ${actualEntry || "(missing)"}`);
-    }
-  }
-
-  if (manifest.exports?.["./styles.css"] !== "./src/styles.css") {
-    throw new Error(
-      `Unexpected styles export: ${manifest.exports?.["./styles.css"] || "(missing)"}`,
-    );
+  const manifest = validateReleasePackage(packageDir);
+  if (manifest.name !== packageName || manifest.version !== version) {
+    throw new Error("Release package name/version does not match the current source package");
   }
 }
 
@@ -198,7 +181,9 @@ function fetchReleaseRef(cwd, remoteName) {
     "git",
     [
       "fetch",
-      "--prune",
+      "--no-tags",
+      "--no-prune",
+      "--no-prune-tags",
       remoteName,
       `refs/heads/${branchName}:refs/remotes/${remoteName}/${branchName}`,
     ],
@@ -212,19 +197,22 @@ function fetchReleaseRef(cwd, remoteName) {
   return result.status === 0;
 }
 
-function preferredPushRemoteUrl(remoteName) {
+function preferredPushRemoteUrl(remoteName, strict = false) {
   if (!remoteName) {
     return "";
   }
 
-  return tryRunCapture("git", ["remote", "get-url", remoteName]);
+  const read = strict ? runCapture : tryRunCapture;
+  const url = read("git", ["remote", "get-url", remoteName]);
+  if (strict && !url) throw new Error(`Remote URL is empty: ${remoteName}`);
+  return url;
 }
 
 function ensureReleaseRepo() {
   const gitDirPath = path.join(releaseRepoDir, ".git");
 
   if (!fs.existsSync(releaseRepoDir)) {
-    run("git", ["clone", "--no-local", repoRoot, releaseRepoDir], {
+    run("git", ["clone", "--no-local", "--no-tags", repoRoot, releaseRepoDir], {
       cwd: distDir,
     });
   } else if (!fs.existsSync(gitDirPath)) {
@@ -234,7 +222,7 @@ function ensureReleaseRepo() {
   ensureGitIdentity(releaseRepoDir);
 }
 
-function resolveReleaseBaseRef(publishRemoteName) {
+function resolveReleaseBaseRef(publishRemoteName, updateExisting = false) {
   const localBaseRef = refExists(releaseRepoDir, `refs/remotes/origin/${branchName}`)
     ? `origin/${branchName}`
     : "";
@@ -247,6 +235,11 @@ function resolveReleaseBaseRef(publishRemoteName) {
   if (localBaseRef && publishBaseRef) {
     if (isAncestor(releaseRepoDir, publishBaseRef, localBaseRef)) {
       return localBaseRef;
+    }
+    if (updateExisting && !isAncestor(releaseRepoDir, localBaseRef, publishBaseRef)) {
+      throw new Error(
+        "Local and remote release branches have diverged; refusing to overwrite history",
+      );
     }
 
     return publishBaseRef;
@@ -267,7 +260,15 @@ function resolveReleaseBaseRef(publishRemoteName) {
   return "";
 }
 
-function resetReleaseRepoBranch(baseRef) {
+function resetReleaseRepoBranch(baseRef, updateExisting = false) {
+  if (updateExisting) {
+    if (!baseRef) throw new Error("Existing release branch was not found in the dist repository");
+    // 在现有提交上以 detached HEAD 构建，不重建或重置任何发布分支。
+    run("git", ["switch", "--detach", baseRef], { cwd: releaseRepoDir });
+    run("git", ["rm", "-rf", ".", "--ignore-unmatch"], { cwd: releaseRepoDir });
+    run("git", ["clean", "-fdx"], { cwd: releaseRepoDir });
+    return;
+  }
   const activeBranch = currentBranch(releaseRepoDir);
 
   if (activeBranch === branchName) {
@@ -310,8 +311,9 @@ function hasStagedChanges(cwd) {
   throw new Error("git diff --cached --quiet failed");
 }
 
-function preferredPushRemote() {
-  const remoteNames = tryRunCapture("git", ["remote"])
+function preferredPushRemote(strict = false) {
+  const read = strict ? runCapture : tryRunCapture;
+  const remoteNames = read("git", ["remote"])
     .split(/\r?\n/)
     .map((name) => name.trim())
     .filter(Boolean);
@@ -323,48 +325,68 @@ function preferredPushRemote() {
   return remoteNames[0] || "";
 }
 
-function buildTarball() {
+function buildTarball(lockToken) {
   console.log("[1/4] Building the release package...");
-  run("node", ["scripts/release/build-package.cjs"]);
+  run("node", ["scripts/release/build-package.cjs"], {
+    env: { ...process.env, RN_UI_KIT_RELEASE_LOCK_TOKEN: lockToken },
+  });
 
   if (!fs.existsSync(tarballPath)) {
     throw new Error(`Tarball not found: ${tarballPath}`);
   }
 }
 
-function createReleaseBranchInDistRepo(pushRemoteName, pushRemoteUrl) {
+function createReleaseBranchInDistRepo(pushRemoteName, pushRemoteUrl, updateExisting = false) {
   console.log("[2/4] Creating release commit in the dist workspace...");
   clearDirectory(releaseExtractDir);
+  run("tar", ["-xzf", tarballPath, "-C", releaseExtractDir], { cwd: distDir });
+  const extractedPackageDir = path.join(releaseExtractDir, "package");
+  validateExtractedPackage(extractedPackageDir);
+
   ensureReleaseRepo();
 
-  run("git", ["fetch", "--prune", "origin"], { cwd: releaseRepoDir });
+  run(
+    "git",
+    [
+      "fetch",
+      "--no-tags",
+      updateExisting ? "--no-prune" : "--prune",
+      "--no-prune-tags",
+      "origin",
+      ...(updateExisting ? [`refs/heads/${branchName}:refs/remotes/origin/${branchName}`] : []),
+    ],
+    { cwd: releaseRepoDir },
+  );
 
   const publishRemoteName = pushRemoteName ? "publish" : "";
   if (publishRemoteName && pushRemoteUrl) {
     ensureGitRemote(releaseRepoDir, publishRemoteName, pushRemoteUrl);
-    fetchReleaseRef(releaseRepoDir, publishRemoteName);
+    const fetched = fetchReleaseRef(releaseRepoDir, publishRemoteName);
+    if (updateExisting && !fetched) {
+      throw new Error(
+        "Could not fetch the existing remote release branch; refusing to use stale history",
+      );
+    }
   }
 
-  const baseRef = resolveReleaseBaseRef(publishRemoteName);
-  resetReleaseRepoBranch(baseRef);
-
-  run("tar", ["-xzf", tarballPath, "-C", releaseExtractDir], {
-    cwd: distDir,
-  });
-
-  const extractedPackageDir = path.join(releaseExtractDir, "package");
-  if (!fs.existsSync(extractedPackageDir)) {
-    throw new Error(`Extracted package directory not found: ${extractedPackageDir}`);
-  }
-
-  validateExtractedPackage(extractedPackageDir);
+  const baseRef = resolveReleaseBaseRef(publishRemoteName, updateExisting);
+  resetReleaseRepoBranch(baseRef, updateExisting);
   copyDirectoryContents(extractedPackageDir, releaseRepoDir);
-  run("git", ["add", "-A"], { cwd: releaseRepoDir });
+  // 目录内仅有已验证产物，不受全局 ignore 或 clone 的 info/exclude 影响。
+  run("git", ["add", "-f", "-A", "--", "."], { cwd: releaseRepoDir });
 
   if (hasStagedChanges(releaseRepoDir)) {
-    run("git", ["commit", "-m", `release: ${branchName}`], {
-      cwd: releaseRepoDir,
-    });
+    run(
+      "git",
+      [
+        "commit",
+        "-m",
+        updateExisting ? `fix: 补全 ${branchName} 发布产物` : `release: ${branchName}`,
+      ],
+      {
+        cwd: releaseRepoDir,
+      },
+    );
   } else {
     console.log("No package changes detected; reusing the existing release commit.");
   }
@@ -374,8 +396,43 @@ function createReleaseBranchInDistRepo(pushRemoteName, pushRemoteUrl) {
   return releaseRepoDir;
 }
 
-function updateLocalBranchFromTempRepo(tempRepoDir) {
+function assertReleaseBranchNotCheckedOut() {
+  const checkout = runCapture("git", [
+    "for-each-ref",
+    "--format=%(worktreepath)",
+    `refs/heads/${branchName}`,
+  ]);
+  if (checkout)
+    throw new Error(`Release branch is checked out in another working directory: ${checkout}`);
+}
+
+function updateLocalBranchFromTempRepo(tempRepoDir, expectedTip = "") {
   console.log("[3/4] Updating the local release branch without switching...");
+  if (expectedTip) {
+    // 固定已验证的提交 OID，不依赖其他 fetch 可覆盖的 FETCH_HEAD。
+    const newTip = runCapture("git", ["rev-parse", "--verify", "HEAD^{commit}"], {
+      cwd: tempRepoDir,
+    });
+    run(
+      "git",
+      [
+        "fetch",
+        "--no-tags",
+        "--no-prune",
+        "--no-prune-tags",
+        "--no-write-fetch-head",
+        tempRepoDir,
+        newTip,
+      ],
+      { cwd: repoRoot },
+    );
+    if (!isAncestor(repoRoot, expectedTip, newTip)) {
+      throw new Error("Release update is not a fast-forward; refusing to overwrite history");
+    }
+    assertReleaseBranchNotCheckedOut();
+    run("git", ["update-ref", "--no-deref", `refs/heads/${branchName}`, newTip, expectedTip]);
+    return;
+  }
   run(
     "git",
     ["fetch", "--force", tempRepoDir, `refs/heads/${branchName}:refs/heads/${branchName}`],
@@ -385,58 +442,64 @@ function updateLocalBranchFromTempRepo(tempRepoDir) {
 
 function main() {
   const options = parseOptions(process.argv.slice(2));
+  if (options.help) {
+    console.log("用法：bun run package-release [--pack-only | --update-existing]");
+    console.log("--update-existing  仅更新已存在的本地发布分支，追加提交，不操作 tag 或 push");
+    return;
+  }
+  return withReleaseLock(repoRoot, (lockToken) => release(options, lockToken));
+}
+
+function release(options, lockToken) {
+  if (options.packOnly) {
+    buildTarball(lockToken);
+    console.log(`Tarball: ${tarballPath}`);
+    console.log("Skipped all Git operations.");
+    return;
+  }
   const startingBranch = currentBranch(repoRoot);
 
   if (startingBranch === branchName) {
-    console.error(
+    throw new Error(
       `Current branch is already ${branchName}. Switch to another branch before running this script.`,
     );
-    process.exit(1);
   }
 
-  try {
-    if (options.packOnly) {
-      console.log(
-        "Pack-only mode enabled; the script will build the tarball without creating a release commit.",
-      );
+  let expectedTip = "";
+  if (options.updateExisting) {
+    if (!branchExists(repoRoot, branchName)) {
+      throw new Error(`Existing local release branch is required: ${branchName}`);
     }
-
-    buildTarball();
-
-    if (options.packOnly) {
-      const endingBranch = currentBranch(repoRoot);
-      if (endingBranch !== startingBranch) {
-        throw new Error("Current workspace branch changed unexpectedly.");
-      }
-
-      console.log("[4/4] Done.");
-      console.log(`Current branch: ${endingBranch || "(detached HEAD)"}`);
-      console.log(`Tarball: ${tarballPath}`);
-      console.log("Skipped release commit and local release branch update.");
-      return;
-    }
-
-    const pushRemote = preferredPushRemote();
-    const pushRemoteUrl = preferredPushRemoteUrl(pushRemote);
-    const tempRepoDir = createReleaseBranchInDistRepo(pushRemote, pushRemoteUrl);
-    updateLocalBranchFromTempRepo(tempRepoDir);
-
-    const endingBranch = currentBranch(repoRoot);
-    if (endingBranch !== startingBranch) {
-      throw new Error("Current workspace branch changed unexpectedly.");
-    }
-
-    console.log("[4/4] Done.");
-    console.log(`Current branch: ${endingBranch || "(detached HEAD)"}`);
-    console.log(`Release branch: ${branchName}`);
-    console.log(`Tarball: ${tarballPath}`);
-    console.log(`Release repo: ${releaseRepoDir}`);
-    console.log(`Push command: git push -u ${pushRemote || "<remote>"} ${branchName}`);
-  } catch (error) {
-    console.error("Build failed.");
-    console.error(error instanceof Error ? error.message : error);
-    process.exit(1);
+    assertReleaseBranchNotCheckedOut();
+    expectedTip = runCapture("git", ["rev-parse", `refs/heads/${branchName}`]);
   }
+
+  const pushRemote = preferredPushRemote(options.updateExisting);
+  const pushRemoteUrl = preferredPushRemoteUrl(pushRemote, options.updateExisting);
+  buildTarball(lockToken);
+  const tempRepoDir = createReleaseBranchInDistRepo(
+    pushRemote,
+    pushRemoteUrl,
+    options.updateExisting,
+  );
+  const endingBranch = currentBranch(repoRoot);
+  if (endingBranch !== startingBranch) {
+    throw new Error("Current workspace branch changed unexpectedly.");
+  }
+  updateLocalBranchFromTempRepo(tempRepoDir, expectedTip);
+
+  console.log("[4/4] Done.");
+  console.log(`Current branch: ${endingBranch || "(detached HEAD)"}`);
+  console.log(`Release branch: ${branchName}`);
+  console.log(`Tarball: ${tarballPath}`);
+  console.log(`Release repo: ${releaseRepoDir}`);
+  console.log(`Push command: git push -u ${pushRemote || "<remote>"} ${branchName}`);
 }
 
-main();
+try {
+  main();
+} catch (error) {
+  console.error("Build failed.");
+  console.error(error instanceof Error ? error.message : error);
+  process.exit(1);
+}

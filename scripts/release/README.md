@@ -150,7 +150,7 @@ package.json
 ```json
 {
   "main": "./dist/index.js",
-  "react-native": "./dist/index.js",
+  "react-native": "./src/index.ts",
   "types": "./dist/index.d.ts"
 }
 ```
@@ -163,6 +163,7 @@ rn-ui-kit/core
 rn-ui-kit/debug
 rn-ui-kit/initialize
 rn-ui-kit/styles.css
+rn-ui-kit/metro
 rn-ui-kit/package.json
 ```
 
@@ -171,6 +172,7 @@ rn-ui-kit/package.json
 - 保留 `dependencies`
 - 保留 `peerDependencies`
 - 保留 `bin`
+- 保留源码 manifest 的额外 `exports` 和 `files`，仅转换四个编译入口
 - 删除 `devDependencies`
 - 删除构建和 typecheck 等开发脚本
 - 只保留 `sync-patches`
@@ -230,8 +232,10 @@ patches/
 scripts/
 ```
 
-其中只复制根目录的 `scripts/sync-patches.mjs`，不会把内部发布与 Android
-自动化脚本打进发布包。
+复制清单直接读取根 `package.json` 的 `files`，其中 `dist` 由编译生成，其余条目
+必须存在，且使用包内文件或目录的字面路径，不支持 glob。当前包含
+`scripts/sync-patches.mjs`、`scripts/clear-patch-cache.mjs` 和 `scripts/metro/`；
+内部发布与 Android 自动化脚本不在清单内，不会进入发布包。
 
 ### 3.6 生成 tarball
 
@@ -247,7 +251,18 @@ npm pack --ignore-scripts
 dist/rn-ui-kit-1.2.3.tgz
 ```
 
-`--pack-only` 到这里结束，不会：
+构建器会校验暂存目录，并将最终 tgz 再次解包，检查所有 `exports` 条件入口、
+`bin`、`main`、`types` 和 `react-native` 目标文件，同时逐一比较暂存目录内实际
+发布文件的内容，包括内部源码、CSS 依赖、补丁和编译模块。仅允许 npm 排除
+`.npmignore`、`.gitignore`、`.DS_Store` 这些控制或系统文件；其它文件被过滤
+或更改时会在构建阶段报错。
+
+`package-release` 和直接运行构建脚本共用 `dist/.package-release.lock/` 独占锁。
+并发运行时后启动的任务会报错，避免互相覆盖产物和临时仓库；正常完成或报错后
+自动释放锁。若进程被强制终止，先确认锁目录 `owner.json` 记录的 PID 已不在运行，
+再手动删除残留锁目录。
+
+`--pack-only`（兼容别名 `--no-commit`）到这里结束，完全不调用 Git，不会：
 
 - 创建发布分支
 - 创建 release commit
@@ -347,6 +362,35 @@ git push -u origin rn-ui-kit-1.2.3
 
 确认产物后手动执行该命令。
 
+### 4.7 修补现有版本的发布分支
+
+当版本已经发布，但需要修正打包脚本、补齐漏发的文件时，在源码工作目录中运行：
+
+```bash
+bun run package-release --update-existing
+```
+
+目标名称仍由当前 `package.json` 的版本决定，例如 `rn-ui-kit-2.0.0`。此模式：
+
+- 要求该本地发布分支已经存在；不会创建或重建发布分支。
+- 发布分支在其他工作目录被检出时拒绝更新，避免工作目录与分支引用不一致。
+- 使用当前源码工作区重新编译、打包和校验，版本号保持不变；未提交的源码改动也会进入产物。
+- 在已有发布历史上追加一个提交；产物无变化时不创建空提交。
+- 本地与远端处于同一历史链时，使用较新的 tip；如果分叉或无法读取已配置的远端发布分支，则报错。
+- 在临时仓库以 detached HEAD 生成提交，通过固定提交 OID、fast-forward 和旧 tip 比较更新本地发布引用；并发更新时拒绝覆盖。
+- 发布提交包含全部已校验产物，不受全局 Git ignore 或临时仓库排除规则影响。
+- 不创建、删除或移动 tag，不切换源码工作目录的分支，也不自动 push。
+- 不能与 `--pack-only` / `--no-commit` 同时使用。
+
+成功后确认产物，再手动推送发布分支即可，无需重新运行 `set-version` 或创建 tag：
+
+```bash
+git push origin rn-ui-kit-2.0.0
+```
+
+此操作只修补发布分支，不重建已有 GitHub Release 或 APK。外部应用若已锁定旧的
+发布提交，还需要显式更新依赖锁文件，才能取得这次修补。
+
 ## 5. 创建源码 Tag
 
 发布脚本不会创建 tag。源码版本提交后单独执行：
@@ -430,8 +474,9 @@ git push -u origin rn-ui-kit-1.2.3
 | `bun run set-version 1.2.3 --commit` | 更新版本、签名 commit 并创建 tag |
 | `bun run set-version 1.2.3 --commit --force` | 将已有工作区改动一并提交 |
 | `bun run set-version 1.2.3 --push` | commit、打包并推送发布分支、`main` 和 tag |
-| `bun run package-release --pack-only` | 生成发布目录和 tgz，不操作 Git 分支 |
+| `bun run package-release --pack-only` | 生成并校验发布目录和 tgz，不调用 Git |
 | `bun run package-release` | 生成发布目录、tgz 和本地发布分支 |
+| `bun run package-release --update-existing` | 只向已有发布分支追加产物提交，保持 tag 不变 |
 | `bun run release:notes v1.2.3` | 预览自动生成的 GitHub Release 说明 |
 | `git push -u origin rn-ui-kit-1.2.3` | 将发布分支推送到 GitHub |
 | `git tag -a v1.2.3 -m "v1.2.3"` | 为源码 commit 创建版本 tag |
